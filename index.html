@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>HostMatch</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --primary: #FF5A5F;
+      --dark: #222222;
+      --mid: #484848;
+      --light: #767676;
+      --border: #E8E8E8;
+      --bg: #F7F7F7;
+      --white: #FFFFFF;
+    }
+    html, body {
+      font-family: -apple-system, 'Hiragino Sans', sans-serif;
+      color: var(--dark); background: var(--bg);
+      max-width: 430px; margin: 0 auto;
+      min-height: 100vh; position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ===== SCREENS ===== */
+    .screen { display: none; flex-direction: column; min-height: 100vh; background: var(--bg); }
+    .screen.active { display: flex; }
+
+    /* ===== BOTTOM NAV ===== */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: white; border-top: 1px solid var(--border);
+      display: flex; z-index: 200;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+    .bnav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 10px 0 8px; cursor: pointer; color: var(--light);
+      font-size: 10px; font-weight: 500; gap: 3px; position: relative;
+    }
+    .bnav-item.active { color: var(--primary); }
+    .bnav-icon { font-size: 22px; line-height: 1; }
+    .bnav-badge {
+      position: absolute; top: 6px; right: calc(50% - 18px);
+      background: var(--primary); color: white;
+      font-size: 9px; font-weight: 800; min-width: 16px; height: 16px;
+      border-radius: 8px; padding: 0 4px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1.5px solid white;
+    }
+
+    /* ===== COMMON HEADER ===== */
+    .screen-header {
+      background: white; padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .screen-header h1 { font-size: 22px; font-weight: 800; }
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
+
+    /* ===== ① 検索画面 ===== */
+    .search-top-bar {
+      background: white; padding: 12px 16px 14px;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .search-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: white; border: 1px solid var(--border);
+      border-radius: 40px; padding: 12px 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.10);
+      cursor: pointer;
+    }
+    .search-pill-icon { color: var(--dark); flex-shrink: 0; }
+    .search-pill-texts { flex: 1; }
+    .search-pill-main { font-size: 14px; font-weight: 700; color: var(--dark); }
+    .search-pill-sub { font-size: 12px; color: var(--light); margin-top: 1px; }
+    .search-pill-filter {
+      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .results-label {
+      padding: 14px 16px 8px; font-size: 13px; color: var(--light);
+    }
+    .results-label strong { color: var(--dark); }
+
+    /* ===== SEARCH MODAL ===== */
+    .search-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(0,0,0,.4);
+    }
+    .search-modal-overlay.open { display: block; }
+    .search-modal {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; z-index: 501;
+      background: white; border-radius: 24px 24px 0 0;
+      padding: 0 0 env(safe-area-inset-bottom, 0);
+      max-height: 90vh; overflow-y: auto;
+    }
+    .modal-handle {
+      width: 40px; height: 4px; border-radius: 2px; background: var(--border);
+      margin: 12px auto 0;
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-title { font-size: 18px; font-weight: 800; }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1px solid var(--border); background: white;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; cursor: pointer; font-weight: 700;
+    }
+
+    .modal-section { padding: 20px; border-bottom: 1px solid var(--border); }
+    .modal-section:last-child { border-bottom: none; }
+    .modal-section-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; }
+
+    /* destination input */
+    .dest-input-wrap {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg); border-radius: 14px; padding: 12px 14px;
+      border: 1.5px solid var(--border);
+    }
+    .dest-input-wrap:focus-within { border-color: var(--dark); }
+    .dest-input {
+      flex: 1; border: none; outline: none; font-size: 15px;
+      background: transparent; color: var(--dark);
+    }
+    .dest-input::placeholder { color: var(--light); }
+
+    .suggest-list { margin-top: 12px; display: flex; flex-direction: column; gap: 2px; }
+    .suggest-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 10px; border-radius: 12px; cursor: pointer;
+    }
+    .suggest-item:hover { background: var(--bg); }
+    .suggest-icon {
+      width: 44px; height: 44px; border-radius: 12px; background: var(--bg);
+      display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;
+    }
+    .suggest-name { font-size: 14px; font-weight: 600; }
+    .suggest-desc { font-size: 12px; color: var(--light); margin-top: 2px; }
+
+    /* date row */
+    .date-row {
+      display: flex; gap: 10px;
+    }
+    .date-btn {
+      flex: 1; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 12px 14px; cursor: pointer; text-align: left;
+    }
+    .date-btn.selected { border-color: var(--dark); background: white; }
+    .date-btn-label { font-size: 11px; font-weight: 700; color: var(--light); }
+    .date-btn-val { font-size: 14px; font-weight: 600; margin-top: 2px; color: var(--dark); }
+    .date-btn-val.placeholder { color: var(--light); font-weight: 400; }
+
+    /* price range */
+    .price-range-row { display: flex; gap: 10px; }
+    .price-input-wrap {
+      flex: 1; background: var(--bg); border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 12px 14px;
+    }
+    .price-input-label { font-size: 11px; font-weight: 700; color: var(--light); }
+    .price-input {
+      display: flex; align-items: center; gap: 4px; margin-top: 4px;
+    }
+    .price-input span { font-size: 14px; font-weight: 600; }
+    .price-input input {
+      border: none; outline: none; font-size: 14px; font-weight: 600;
+      background: transparent; width: 80px; color: var(--dark);
+    }
+
+    /* toggles */
+    .toggle-list { display: flex; flex-direction: column; gap: 0; }
+    .toggle-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-item:last-child { border-bottom: none; }
+    .toggle-label { font-size: 14px; font-weight: 500; }
+    .toggle-sub { font-size: 12px; color: var(--light); margin-top: 2px; }
+    .toggle {
+      width: 44px; height: 26px; border-radius: 13px; background: var(--border);
+      position: relative; cursor: pointer; flex-shrink: 0; transition: background .2s;
+    }
+    .toggle.on { background: var(--dark); }
+    .toggle::after {
+      content: ''; position: absolute; top: 3px; left: 3px;
+      width: 20px; height: 20px; border-radius: 50%; background: white;
+      transition: left .2s; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .toggle.on::after { left: 21px; }
+
+    /* modal footer */
+    .modal-footer {
+      position: sticky; bottom: 0; background: white;
+      padding: 14px 20px; border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-clear { font-size: 14px; font-weight: 700; color: var(--dark); cursor: pointer; text-decoration: underline; }
+    .modal-search-btn {
+      background: var(--primary); color: white; border: none;
+      border-radius: 14px; padding: 14px 28px; font-size: 15px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ===== SEARCH SCREEN BODY ===== */
+    .search-body { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+
+    /* ===== MAP SECTION ===== */
+    .map-section { position: relative; margin: 0; height: 240px; overflow: hidden; cursor: pointer; }
+    .map-bg {
+      width: 100%; height: 100%;
+      background: #e8f0e9;
+      position: relative; overflow: hidden;
+    }
+    /* Roads */
+    .map-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(92deg, transparent 30%, #d4c9b0 30.5%, #d4c9b0 31%, transparent 31%) 0 0 / 100% 100%,
+        linear-gradient(175deg, transparent 45%, #d4c9b0 45.5%, #d4c9b0 46.2%, transparent 46.2%) 0 0 / 100% 100%,
+        linear-gradient(80deg, transparent 20%, #c8beaa 20.5%, #c8beaa 21.2%, transparent 21.2%) 0 0 / 100% 100%,
+        linear-gradient(160deg, transparent 60%, #d4c9b0 60.5%, #d4c9b0 61%, transparent 61%) 0 0 / 100% 100%,
+        linear-gradient(10deg, transparent 35%, #c8beaa 35.5%, #c8beaa 36.5%, transparent 36.5%) 0 0 / 100% 100%;
+    }
+    .map-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80px 60px at 25% 35%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 100px 70px at 70% 25%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 60px 50px at 55% 75%, #c8e6c9 0%, transparent 100%);
+    }
+    .map-price-pin {
+      position: absolute; background: white; border-radius: 20px;
+      padding: 5px 10px; font-size: 12px; font-weight: 700; color: var(--dark);
+      box-shadow: 0 2px 8px rgba(0,0,0,.2); cursor: pointer; white-space: nowrap;
+      transition: transform .15s, background .15s;
+      z-index: 2;
+    }
+    .map-price-pin:hover, .map-price-pin.active {
+      background: var(--dark); color: white; transform: scale(1.08);
+    }
+    .map-pin-loc {
+      position: absolute; background: white; border-radius: 20px;
+      padding: 5px 12px; font-size: 12px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2); display: flex; align-items: center; gap: 4px;
+      z-index: 3; left: 12px; top: 80px;
+    }
+    .map-expand-btn {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      background: white; border-radius: 20px; padding: 6px 16px;
+      font-size: 12px; font-weight: 700; color: var(--dark);
+      box-shadow: 0 2px 8px rgba(0,0,0,.2); cursor: pointer; z-index: 3;
+      display: flex; align-items: center; gap: 5px;
+    }
+
+    /* ===== MAP FULL OVERLAY ===== */
+    .map-overlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: #e8f0e9; flex-direction: column;
+      max-width: 430px; left: 50%; transform: translateX(-50%);
+    }
+    .map-overlay.open { display: flex; }
+    .map-overlay-header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+      padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .map-back-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: white; box-shadow: 0 2px 8px rgba(0,0,0,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; cursor: pointer; flex-shrink: 0;
+    }
+    .map-search-chip {
+      flex: 1; background: white; border-radius: 24px; padding: 10px 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12); font-size: 13px; font-weight: 700;
+    }
+    .map-full-bg {
+      flex: 1; position: relative; overflow: hidden;
+      background: #e8f0e9;
+    }
+    .map-full-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(92deg, transparent 30%, #d4c9b0 30.5%, #d4c9b0 31.5%, transparent 31.5%) 0 0 / 100% 100%,
+        linear-gradient(175deg, transparent 20%, #d4c9b0 20.5%, #d4c9b0 21.5%, transparent 21.5%) 0 0 / 100% 100%,
+        linear-gradient(80deg, transparent 50%, #c8beaa 50.5%, #c8beaa 52%, transparent 52%) 0 0 / 100% 100%,
+        linear-gradient(160deg, transparent 60%, #d4c9b0 60.5%, #d4c9b0 61.5%, transparent 61.5%) 0 0 / 100% 100%,
+        linear-gradient(10deg, transparent 40%, #c8beaa 40.5%, #c8beaa 42%, transparent 42%) 0 0 / 100% 100%,
+        linear-gradient(60deg, transparent 70%, #c8beaa 70.5%, #c8beaa 72%, transparent 72%) 0 0 / 100% 100%;
+    }
+    .map-full-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 100px 80px at 20% 30%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 120px 90px at 65% 20%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 80px 60px at 50% 65%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 70px 50px at 80% 75%, #c8e6c9 0%, transparent 100%);
+    }
+    .map-full-pins { position: absolute; inset: 0; z-index: 2; }
+    .map-bottom-sheet {
+      position: absolute; bottom: 70px; left: 0; right: 0;
+      padding: 0 16px; z-index: 5;
+    }
+    .map-card-strip {
+      display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;
+      padding: 4px 2px;
+    }
+    .map-card-strip::-webkit-scrollbar { display: none; }
+    .map-mini-card {
+      flex-shrink: 0; width: 180px; background: white; border-radius: 14px;
+      overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,.15); cursor: pointer;
+    }
+    .map-mini-img { height: 110px; display: flex; align-items: center; justify-content: center; font-size: 44px; }
+    .map-mini-body { padding: 10px 10px 10px; }
+    .map-mini-name { font-size: 12px; font-weight: 700; }
+    .map-mini-loc { font-size: 11px; color: var(--light); margin-top: 1px; }
+    .map-mini-footer { display: flex; justify-content: space-between; margin-top: 6px; }
+    .map-mini-price { font-size: 13px; font-weight: 800; }
+    .map-mini-rating { font-size: 11px; color: var(--mid); }
+
+    /* ===== SLIDER SECTION ===== */
+    .slider-section { padding: 16px 0 0; }
+    .slider-label {
+      font-size: 16px; font-weight: 800; padding: 0 16px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .slider-label a { font-size: 13px; font-weight: 600; color: var(--light); text-decoration: underline; cursor: pointer; }
+    .card-slider {
+      display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;
+      padding: 0 16px 12px; scroll-snap-type: x mandatory;
+    }
+    .card-slider::-webkit-scrollbar { display: none; }
+
+    /* ===== SMALL CARD (slider) ===== */
+    .s-card {
+      flex-shrink: 0; width: 130px; cursor: pointer; scroll-snap-align: start;
+    }
+    .s-card-img {
+      position: relative; width: 130px; height: 130px; border-radius: 14px; overflow: hidden;
+    }
+    .s-card-bg {
+      width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+      font-size: 44px;
+    }
+    .r1{background:linear-gradient(135deg,#e0c3fc,#8ec5fc);}
+    .r2{background:linear-gradient(135deg,#ffecd2,#fcb69f);}
+    .r3{background:linear-gradient(135deg,#a1c4fd,#c2e9fb);}
+    .r4{background:linear-gradient(135deg,#d4fc79,#96e6a1);}
+    .r5{background:linear-gradient(135deg,#f093fb,#f5576c);}
+    .r6{background:linear-gradient(135deg,#4facfe,#00f2fe);}
+    .r7{background:linear-gradient(135deg,#fa709a,#fee140);}
+    .r8{background:linear-gradient(135deg,#43e97b,#38f9d7);}
+    .r9{background:linear-gradient(135deg,#a18cd1,#fbc2eb);}
+
+    .s-save {
+      position: absolute; top: 7px; right: 8px;
+      font-size: 18px; filter: drop-shadow(0 1px 3px rgba(0,0,0,.3)); cursor: pointer;
+    }
+    .s-card-info { padding: 7px 2px 0; }
+    .s-card-name { font-size: 12px; font-weight: 700; line-height: 1.3; }
+    .s-card-row { display: flex; justify-content: space-between; align-items: center; margin-top: 3px; }
+    .s-card-price { font-size: 12px; font-weight: 800; }
+    .s-card-rating { font-size: 11px; color: var(--mid); }
+
+    /* ===== お気に入り・詳細 用カード (旧 host-card) ===== */
+    .host-card {
+      background: white; border-radius: 16px; overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,.07); cursor: pointer;
+    }
+    .card-img { position: relative; height: 180px; overflow: hidden; }
+    .card-room-bg {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center; font-size: 64px;
+    }
+    .card-flag {
+      position: absolute; top: 10px; left: 10px;
+      background: rgba(0,0,0,.48); backdrop-filter: blur(6px);
+      color: white; border-radius: 8px; padding: 4px 10px;
+      font-size: 12px; font-weight: 600;
+    }
+    .card-save-btn {
+      position: absolute; top: 10px; right: 12px;
+      font-size: 22px; cursor: pointer; line-height: 1;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,.25));
+    }
+    .card-avatar {
+      position: absolute; bottom: -16px; right: 14px;
+      width: 40px; height: 40px; border-radius: 50%; border: 3px solid white;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .av1{background:linear-gradient(135deg,#fddb92,#d1fdff);}
+    .av2{background:linear-gradient(135deg,#a8edea,#fed6e3);}
+    .av3{background:linear-gradient(135deg,#84fab0,#8fd3f4);}
+    .av4{background:linear-gradient(135deg,#f5af19,#f12711);}
+    .av5{background:linear-gradient(135deg,#667eea,#764ba2);}
+    .av6{background:linear-gradient(135deg,#fccb90,#d57eeb);}
+    .card-body { padding: 22px 14px 14px; }
+    .card-row1 { display: flex; justify-content: space-between; align-items: flex-start; }
+    .card-host-name { font-size: 15px; font-weight: 700; }
+    .card-rating { font-size: 13px; font-weight: 600; }
+    .card-location { font-size: 13px; color: var(--light); margin-top: 2px; }
+    .card-detail { font-size: 12px; color: var(--light); margin-top: 3px; }
+    .card-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px; }
+    .ctag { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 12px; background: var(--bg); color: var(--mid); }
+    .ctag.ok { background: #F0FFF8; color: #00875A; }
+    .ctag.ng { background: #FFF0F0; color: #D32F2F; }
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+    }
+    .card-price strong { font-size: 17px; font-weight: 800; }
+    .card-price span { font-size: 12px; color: var(--light); }
+    .card-meals-tag { font-size: 11px; background: #FFF9E6; color: #B8860B; padding: 3px 9px; border-radius: 10px; font-weight: 600; }
+
+    /* ===== ② 詳細画面 ===== */
+    #screen-detail { background: white; }
+    .detail-img { height: 260px; position: relative; overflow: hidden; }
+    .detail-back {
+      position: absolute; top: 16px; left: 14px; z-index: 10;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,.9); display: flex; align-items: center;
+      justify-content: center; font-size: 18px; cursor: pointer;
+    }
+    .detail-save {
+      position: absolute; top: 16px; right: 14px; z-index: 10;
+      font-size: 26px; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,.3));
+    }
+
+    .detail-scroll { flex: 1; overflow-y: auto; padding-bottom: 100px; }
+    .detail-host-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 20px 16px 0;
+    }
+    .detail-avatar {
+      width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 28px;
+      border: 2px solid var(--border);
+    }
+    .detail-host-name { font-size: 20px; font-weight: 800; }
+    .detail-host-meta { font-size: 13px; color: var(--light); margin-top: 2px; }
+    .detail-rating { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .detail-rating span { color: var(--light); font-weight: 400; }
+
+    .detail-section { padding: 16px 16px 0; }
+    .detail-section-title {
+      font-size: 14px; font-weight: 800; color: var(--dark);
+      margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    }
+    .dtag-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .dtag {
+      font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 16px;
+      background: var(--bg); color: var(--mid); border: 1px solid var(--border);
+    }
+    .dtag.green { background: #F0FFF8; color: #00875A; border-color: #B2EFE4; }
+    .dtag.red { background: #FFF0F0; color: var(--primary); border-color: #FFD5D5; }
+    .dtag.blue { background: #F0F4FF; color: #3366FF; border-color: #C5D3FF; }
+
+    .divider { height: 1px; background: var(--border); margin: 16px 0 0; }
+
+    .ls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .ls-cell {
+      background: var(--bg); border-radius: 12px; padding: 12px 10px; text-align: center;
+    }
+    .ls-icon { font-size: 22px; }
+    .ls-label { font-size: 10px; color: var(--light); margin-top: 3px; }
+    .ls-val { font-size: 13px; font-weight: 700; margin-top: 2px; }
+
+    .rule-list { display: flex; flex-direction: column; gap: 6px; }
+    .rule-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; padding: 9px 12px; border-radius: 10px; background: var(--bg);
+    }
+    .rule-ok { color: #00A699; }
+    .rule-ng { color: var(--primary); }
+
+    .info-grid { display: flex; flex-direction: column; gap: 6px; }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 14px; padding: 9px 12px; background: var(--bg); border-radius: 10px;
+    }
+    .info-label { color: var(--light); }
+    .info-val { font-weight: 700; }
+
+    .price-box { background: var(--bg); border-radius: 14px; padding: 14px 16px; }
+    .price-row { display: flex; justify-content: space-between; font-size: 14px; padding: 5px 0; }
+    .price-row.total {
+      border-top: 1px solid var(--border); margin-top: 6px; padding-top: 10px;
+      font-size: 16px; font-weight: 800;
+    }
+    .price-row.total span:last-child { color: var(--primary); }
+    .price-note { font-size: 11px; color: var(--light); margin-top: 8px; }
+
+    .detail-cta {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: white; padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0));
+      z-index: 150;
+    }
+    .btn-primary {
+      flex: 1; background: var(--primary); color: white; border: none;
+      border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+    .btn-outline {
+      flex: 1; background: white; color: var(--dark); border: 1.5px solid var(--dark);
+      border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+
+    /* ===== ③ メッセージ画面 ===== */
+    .msg-list { flex: 1; overflow-y: auto; padding: 12px 0 90px; }
+    .msg-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; background: white; cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    .msg-item.unread { background: #FFF8F8; }
+    .msg-avatar {
+      width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+    }
+    .msg-content { flex: 1; overflow: hidden; }
+    .msg-row1 { display: flex; justify-content: space-between; align-items: center; }
+    .msg-name { font-size: 15px; font-weight: 700; }
+    .msg-time { font-size: 11px; color: var(--light); }
+    .msg-preview { font-size: 13px; color: var(--light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-preview.unread { color: var(--dark); font-weight: 600; }
+    .msg-unread-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--primary); flex-shrink: 0;
+    }
+
+    /* ===== ④ お気に入り画面 ===== */
+    .fav-list { flex: 1; overflow-y: auto; padding: 12px 16px 90px; display: flex; flex-direction: column; gap: 14px; }
+    .fav-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--light); padding-bottom: 90px; }
+    .fav-empty-icon { font-size: 48px; }
+    .fav-empty-text { font-size: 15px; }
+
+    /* ===== ⑤ マイページ画面 ===== */
+    .mypage-scroll { flex: 1; overflow-y: auto; padding: 0 0 90px; }
+    .mypage-header {
+      background: white; padding: 24px 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .mypage-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, #fd79a8, #6c5ce7);
+      display: flex; align-items: center; justify-content: center; font-size: 32px;
+    }
+    .mypage-name { font-size: 20px; font-weight: 800; }
+    .mypage-meta { font-size: 13px; color: var(--light); margin-top: 2px; }
+    .mypage-section-title {
+      font-size: 12px; font-weight: 700; color: var(--light);
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 18px 16px 6px;
+    }
+    .mypage-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px; background: white; cursor: pointer;
+      border-bottom: 1px solid var(--border); font-size: 15px;
+    }
+    .mypage-item-icon { font-size: 20px; width: 28px; text-align: center; }
+    .mypage-item-label { flex: 1; }
+    .mypage-item-arrow { color: var(--light); font-size: 13px; }
+
+    /* ===== CHAT SCREEN ===== */
+    #screen-chat { background: var(--bg); }
+    .chat-header {
+      background: white; padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .chat-back { font-size: 22px; cursor: pointer; color: var(--dark); }
+    .chat-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .chat-title { font-size: 15px; font-weight: 700; }
+    .chat-subtitle { font-size: 12px; color: var(--light); }
+
+    .chat-messages { flex: 1; overflow-y: auto; padding: 16px 16px 80px; display: flex; flex-direction: column; gap: 12px; }
+    .bubble-wrap { display: flex; flex-direction: column; gap: 2px; }
+    .bubble-wrap.me { align-items: flex-end; }
+    .bubble-wrap.them { align-items: flex-start; }
+    .bubble {
+      max-width: 72%; padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.5;
+    }
+    .bubble.me { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .bubble.them { background: white; color: var(--dark); border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .bubble-time { font-size: 10px; color: var(--light); padding: 0 4px; }
+
+    .chat-input-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: white; border-top: 1px solid var(--border);
+      padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0));
+      display: flex; align-items: center; gap: 10px; z-index: 150;
+    }
+    .chat-input {
+      flex: 1; border: 1px solid var(--border); border-radius: 22px;
+      padding: 10px 16px; font-size: 14px; outline: none; background: var(--bg);
+    }
+    .chat-send {
+      width: 40px; height: 40px; border-radius: 50%; background: var(--primary);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* date bubble */
+    .date-label { text-align: center; font-size: 11px; color: var(--light); margin: 4px 0; }
+  </style>
+</head>
+<body>
+
+<!-- ==================== ① 検索画面 ==================== -->
+<div id="screen-search" class="screen active">
+
+  <!-- 最上部：検索ピル -->
+  <div class="search-top-bar">
+    <div class="search-pill" onclick="openSearchModal()">
+      <svg class="search-pill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <div class="search-pill-texts">
+        <div class="search-pill-main" id="pill-main">検索を開始</div>
+        <div class="search-pill-sub" id="pill-sub">目的地・日付・条件を選ぶ</div>
+      </div>
+      <div class="search-pill-filter">⚙️</div>
+    </div>
+  </div>
+
+  <div class="search-body">
+
+    <!-- ===== MAP ===== -->
+    <div class="map-section" onclick="openMap()">
+      <div class="map-bg">
+        <div class="map-pin-loc">📍 アメリカ全土</div>
+        <!-- price pins scattered -->
+        <div class="map-price-pin" style="top:22%;left:52%">$950</div>
+        <div class="map-price-pin active" style="top:35%;left:28%">$780</div>
+        <div class="map-price-pin" style="top:18%;left:68%">$1,100</div>
+        <div class="map-price-pin" style="top:55%;left:44%">$880</div>
+        <div class="map-price-pin" style="top:48%;left:15%">$820</div>
+        <div class="map-price-pin" style="top:66%;left:60%">$1,050</div>
+        <div class="map-price-pin" style="top:30%;left:76%">$850</div>
+        <div class="map-price-pin" style="top:72%;left:32%">$900</div>
+      </div>
+      <div class="map-expand-btn">🗺️ 地図で探す</div>
+    </div>
+
+    <!-- ===== SLIDER: おすすめ ===== -->
+    <div class="slider-section">
+      <div class="slider-label">
+        <span>✨ おすすめのホスト</span>
+        <a>すべて見る</a>
+      </div>
+      <div class="card-slider">
+        <div class="s-card" onclick="openDetail('sarah')">
+          <div class="s-card-img"><div class="s-card-bg r1">🛋️</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Sarah Johnson</div>
+            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('michael')">
+          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">❤️</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">M. & Lisa Chen</div>
+            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('emily')">
+          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Emily Williams</div>
+            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('robert')">
+          <div class="s-card-img"><div class="s-card-bg r4">🌆</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">R. & Mary Davis</div>
+            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('jennifer')">
+          <div class="s-card-img"><div class="s-card-bg r5">🌲</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Jennifer Park</div>
+            <div class="s-card-row"><div class="s-card-price">$820<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.89</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('thompson')">
+          <div class="s-card-img"><div class="s-card-bg r6">🌉</div><div class="s-save">❤️</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Thompson Family</div>
+            <div class="s-card-row"><div class="s-card-price">$1,050<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.97</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDER: 食事付き ===== -->
+    <div class="slider-section">
+      <div class="slider-label">
+        <span>🍳 食事付きホスト</span>
+        <a>すべて見る</a>
+      </div>
+      <div class="card-slider">
+        <div class="s-card" onclick="openDetail('robert')">
+          <div class="s-card-img"><div class="s-card-bg r4">🌆</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">R. & Mary Davis</div>
+            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('michael')">
+          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">M. & Lisa Chen</div>
+            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('sarah')">
+          <div class="s-card-img"><div class="s-card-bg r1">🛋️</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Sarah Johnson</div>
+            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('thompson')">
+          <div class="s-card-img"><div class="s-card-bg r6">🌉</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Thompson Family</div>
+            <div class="s-card-row"><div class="s-card-price">$1,050<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.97</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('emily')">
+          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Emily Williams</div>
+            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDER: 日本語対応 ===== -->
+    <div class="slider-section" style="padding-bottom:8px;">
+      <div class="slider-label">
+        <span>🌍 日本語対応ホスト</span>
+        <a>すべて見る</a>
+      </div>
+      <div class="card-slider">
+        <div class="s-card" onclick="openDetail('sarah')">
+          <div class="s-card-img"><div class="s-card-bg r7">🌸</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Sarah Johnson</div>
+            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('robert')">
+          <div class="s-card-img"><div class="s-card-bg r8">🍂</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">R. & Mary Davis</div>
+            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('jennifer')">
+          <div class="s-card-img"><div class="s-card-bg r9">🌿</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Jennifer Park</div>
+            <div class="s-card-row"><div class="s-card-price">$820<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.89</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('emily')">
+          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">❤️</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">Emily Williams</div>
+            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
+          </div>
+        </div>
+        <div class="s-card" onclick="openDetail('michael')">
+          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">🤍</div></div>
+          <div class="s-card-info">
+            <div class="s-card-name">M. & Lisa Chen</div>
+            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /search-body -->
+</div>
+
+<!-- ==================== 地図オーバーレイ ==================== -->
+<div class="map-overlay" id="map-overlay">
+  <div class="map-overlay-header">
+    <div class="map-back-btn" onclick="closeMap()">←</div>
+    <div class="map-search-chip">📍 アメリカ全土 · 124件</div>
+  </div>
+
+  <div class="map-full-bg">
+    <div class="map-full-pins">
+      <!-- pins -->
+      <div class="map-price-pin" style="top:18%;left:55%" onclick="mapPinClick(this,'sarah')">$950</div>
+      <div class="map-price-pin active" style="top:32%;left:22%" onclick="mapPinClick(this,'robert')">$780</div>
+      <div class="map-price-pin" style="top:14%;left:70%" onclick="mapPinClick(this,'michael')">$1,100</div>
+      <div class="map-price-pin" style="top:52%;left:42%" onclick="mapPinClick(this,'emily')">$880</div>
+      <div class="map-price-pin" style="top:44%;left:12%" onclick="mapPinClick(this,'jennifer')">$820</div>
+      <div class="map-price-pin" style="top:63%;left:62%" onclick="mapPinClick(this,'thompson')">$1,050</div>
+      <div class="map-price-pin" style="top:28%;left:78%" onclick="mapPinClick(this,'austin')">$850</div>
+      <div class="map-price-pin" style="top:70%;left:30%" onclick="mapPinClick(this,'miami')">$900</div>
+      <div class="map-price-pin" style="top:58%;left:82%" onclick="mapPinClick(this,'portland')">$750</div>
+    </div>
+  </div>
+
+  <!-- bottom cards -->
+  <div class="map-bottom-sheet">
+    <div class="map-card-strip" id="map-card-strip">
+      <div class="map-mini-card" onclick="openDetail('sarah')">
+        <div class="map-mini-img r1">🛋️</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">Sarah Johnson</div>
+          <div class="map-mini-loc">Manhattan, NY</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$950<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 4.98</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-mini-card" onclick="openDetail('robert')">
+        <div class="map-mini-img r4">🌆</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">R. & Mary Davis</div>
+          <div class="map-mini-loc">Lincoln Park, Chicago</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$780<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 4.95</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-mini-card" onclick="openDetail('michael')">
+        <div class="map-mini-img r2">🌴</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">M. & Lisa Chen</div>
+          <div class="map-mini-loc">Santa Monica, LA</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$1,100<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 4.92</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-mini-card" onclick="openDetail('emily')">
+        <div class="map-mini-img r3">🏛️</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">Emily Williams</div>
+          <div class="map-mini-loc">Cambridge, Boston</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$880<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 5.00</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-mini-card" onclick="openDetail('jennifer')">
+        <div class="map-mini-img r5">🌲</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">Jennifer Park</div>
+          <div class="map-mini-loc">Capitol Hill, Seattle</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$820<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 4.89</div>
+          </div>
+        </div>
+      </div>
+      <div class="map-mini-card" onclick="openDetail('thompson')">
+        <div class="map-mini-img r6">🌉</div>
+        <div class="map-mini-body">
+          <div class="map-mini-name">Thompson Family</div>
+          <div class="map-mini-loc">Mission District, SF</div>
+          <div class="map-mini-footer">
+            <div class="map-mini-price">$1,050<span style="font-size:10px;font-weight:400;color:var(--light)">/月</span></div>
+            <div class="map-mini-rating">★ 4.97</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- bottom nav inside map -->
+  <div style="height:64px;background:white;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;" onclick="closeMap()">
+    ☰ リスト表示に戻る
+  </div>
+</div>
+
+<!-- ==================== 検索モーダル ==================== -->
+<div class="search-modal-overlay" id="search-modal-overlay" onclick="closeSearchModal(event)">
+  <div class="search-modal" id="search-modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">条件を指定する</div>
+      <div class="modal-close" onclick="closeSearchModal()">✕</div>
+    </div>
+
+    <!-- 目的地 -->
+    <div class="modal-section">
+      <div class="modal-section-title">📍 目的地</div>
+      <div class="dest-input-wrap">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#767676" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input class="dest-input" id="dest-input" type="text" placeholder="都市・州・エリアを入力" oninput="filterSuggests(this.value)" />
+      </div>
+      <div class="suggest-list" id="suggest-list">
+        <div class="suggest-item" onclick="selectDest('New York, NY')">
+          <div class="suggest-icon">🗽</div>
+          <div><div class="suggest-name">New York, NY</div><div class="suggest-desc">アメリカ東海岸の中心都市</div></div>
+        </div>
+        <div class="suggest-item" onclick="selectDest('Los Angeles, CA')">
+          <div class="suggest-icon">🌴</div>
+          <div><div class="suggest-name">Los Angeles, CA</div><div class="suggest-desc">映画と温暖な気候の街</div></div>
+        </div>
+        <div class="suggest-item" onclick="selectDest('Boston, MA')">
+          <div class="suggest-icon">🏛️</div>
+          <div><div class="suggest-name">Boston, MA</div><div class="suggest-desc">Harvard・MIT周辺、留学生多数</div></div>
+        </div>
+        <div class="suggest-item" onclick="selectDest('Chicago, IL')">
+          <div class="suggest-icon">🌆</div>
+          <div><div class="suggest-name">Chicago, IL</div><div class="suggest-desc">ミシガン湖沿いの大都市</div></div>
+        </div>
+        <div class="suggest-item" onclick="selectDest('Seattle, WA')">
+          <div class="suggest-icon">🌲</div>
+          <div><div class="suggest-name">Seattle, WA</div><div class="suggest-desc">自然豊か・テック系多い</div></div>
+        </div>
+        <div class="suggest-item" onclick="selectDest('San Francisco, CA')">
+          <div class="suggest-icon">🌉</div>
+          <div><div class="suggest-name">San Francisco, CA</div><div class="suggest-desc">シリコンバレーの玄関口</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 入居・退去日 -->
+    <div class="modal-section">
+      <div class="modal-section-title">📅 入居・退去日</div>
+      <div class="date-row">
+        <div class="date-btn" id="date-from-btn" onclick="focusDate('from')">
+          <div class="date-btn-label">入居日</div>
+          <div class="date-btn-val placeholder" id="date-from-val">日付を追加</div>
+        </div>
+        <div class="date-btn" id="date-to-btn" onclick="focusDate('to')">
+          <div class="date-btn-label">退去日</div>
+          <div class="date-btn-val placeholder" id="date-to-val">日付を追加</div>
+        </div>
+      </div>
+      <!-- hidden inputs -->
+      <input type="date" id="input-date-from" style="display:none" onchange="setDate('from',this.value)">
+      <input type="date" id="input-date-to" style="display:none" onchange="setDate('to',this.value)">
+    </div>
+
+    <!-- 予算 -->
+    <div class="modal-section">
+      <div class="modal-section-title">💰 月額予算（USD）</div>
+      <div class="price-range-row">
+        <div class="price-input-wrap">
+          <div class="price-input-label">最低金額</div>
+          <div class="price-input"><span>$</span><input type="number" placeholder="500" id="price-min" min="0"></div>
+        </div>
+        <div class="price-input-wrap">
+          <div class="price-input-label">最高金額</div>
+          <div class="price-input"><span>$</span><input type="number" placeholder="2,000" id="price-max" min="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ルール・条件 -->
+    <div class="modal-section">
+      <div class="modal-section-title">📋 ルール・条件</div>
+      <div class="toggle-list">
+        <div class="toggle-item">
+          <div><div class="toggle-label">🍽️ 食事付き</div><div class="toggle-sub">朝食・夕食のいずれか含む</div></div>
+          <div class="toggle" id="t1" onclick="toggleSwitch('t1')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">🌍 日本語対応</div><div class="toggle-sub">ホストが日本語を話せる</div></div>
+          <div class="toggle" id="t2" onclick="toggleSwitch('t2')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">👩 女性ホスト限定</div><div class="toggle-sub">女性または女性家族が対応</div></div>
+          <div class="toggle" id="t3" onclick="toggleSwitch('t3')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">🚭 禁煙ホーム</div><div class="toggle-sub">家全体が禁煙</div></div>
+          <div class="toggle on" id="t4" onclick="toggleSwitch('t4')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">🐾 ペット可</div><div class="toggle-sub">ペット同伴・ペットがいるホスト</div></div>
+          <div class="toggle" id="t5" onclick="toggleSwitch('t5')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">🌙 夜型OK</div><div class="toggle-sub">門限なし・深夜帰宅歓迎</div></div>
+          <div class="toggle" id="t6" onclick="toggleSwitch('t6')"></div>
+        </div>
+        <div class="toggle-item">
+          <div><div class="toggle-label">👥 来客OK</div><div class="toggle-sub">友人・知人の訪問が可能</div></div>
+          <div class="toggle" id="t7" onclick="toggleSwitch('t7')"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="modal-clear" onclick="clearSearch()">すべてクリア</div>
+      <button class="modal-search-btn" onclick="applySearch()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        検索
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ② 詳細画面 ==================== -->
+<div id="screen-detail" class="screen">
+
+  <div class="detail-img" id="detail-img">
+    <div class="card-room-bg r1" id="detail-room-bg" style="height:260px;font-size:88px;">🛋️</div>
+    <div class="detail-back" onclick="navigate('detail','search')">←</div>
+    <div class="detail-save" id="detail-save">❤️</div>
+  </div>
+
+  <div class="detail-scroll">
+
+    <div class="detail-host-row">
+      <div class="detail-avatar av1" id="detail-avatar">👩</div>
+      <div>
+        <div class="detail-host-name" id="detail-name">Sarah Johnson</div>
+        <div class="detail-host-meta" id="detail-meta">🇺🇸 Manhattan, New York · ホスト歴3年</div>
+        <div class="detail-rating" id="detail-rating">★ 4.98 <span>(87件のレビュー)</span></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="dtag-row" id="detail-tags">
+        <span class="dtag green">✓ 日本語OK</span>
+        <span class="dtag red">✗ 喫煙NG</span>
+        <span class="dtag blue">👩 女性限定</span>
+        <span class="dtag green">✓ 留学生歓迎</span>
+        <span class="dtag red">✗ 来客宿泊NG</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">🌙 生活スタイル</div>
+      <div class="ls-grid">
+        <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">起床</div><div class="ls-val">7:00 AM</div></div>
+        <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">就寝</div><div class="ls-val">11:00 PM</div></div>
+        <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">会話量</div><div class="ls-val">普通〜多め</div></div>
+        <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">清潔度</div><div class="ls-val">きれい好き</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">📋 ハウスルール</div>
+      <div class="rule-list">
+        <div class="rule-row"><span class="rule-ok">✓</span> 門限 22:30（相談可）</div>
+        <div class="rule-row"><span class="rule-ok">✓</span> キッチン共有OK（〜21:00）</div>
+        <div class="rule-row"><span class="rule-ng">✗</span> 来客宿泊不可</div>
+        <div class="rule-row"><span class="rule-ok">✓</span> 掃除当番：週1（共有部分）</div>
+        <div class="rule-row"><span class="rule-ng">✗</span> 楽器演奏不可</div>
+        <div class="rule-row"><span class="rule-ok">✓</span> 朝食あり（平日のみ）</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">🏠 部屋情報</div>
+      <div class="info-grid">
+        <div class="info-row"><span class="info-label">広さ</span><span class="info-val">10㎡（約6畳）</span></div>
+        <div class="info-row"><span class="info-label">バス・トイレ</span><span class="info-val">共用（2人でシェア）</span></div>
+        <div class="info-row"><span class="info-label">日当たり</span><span class="info-val">東向き・午前良好</span></div>
+        <div class="info-row"><span class="info-label">Wi-Fi</span><span class="info-val">光回線・無制限</span></div>
+        <div class="info-row"><span class="info-label">最寄り</span><span class="info-val">72nd St 徒歩5分</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="detail-section" style="padding-bottom:16px;">
+      <div class="detail-section-title">💰 料金内訳</div>
+      <div class="price-box">
+        <div class="price-row"><span style="color:var(--light)">家賃</span><strong>$750 /月</strong></div>
+        <div class="price-row"><span style="color:var(--light)">朝食（平日）</span><strong>$100 /月</strong></div>
+        <div class="price-row"><span style="color:var(--light)">光熱費・Wi-Fi</span><strong>$100 /月</strong></div>
+        <div class="price-row total"><span>合計</span><span>$950 /月</span></div>
+        <div class="price-note">※ デポジット1ヶ月分・礼金なし・仲介手数料なし</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="detail-cta">
+    <button class="btn-outline" onclick="navigate('detail','chat')">💬 メッセージ</button>
+    <button class="btn-primary">📹 面談を申し込む</button>
+  </div>
+</div>
+
+<!-- ==================== ③ メッセージ一覧 ==================== -->
+<div id="screen-messages" class="screen">
+  <div class="screen-header">
+    <div class="header-row">
+      <h1>メッセージ</h1>
+    </div>
+  </div>
+  <div class="msg-list">
+    <div class="msg-item unread" onclick="navigate('messages','chat')">
+      <div class="msg-avatar av1">👩</div>
+      <div class="msg-content">
+        <div class="msg-row1">
+          <div class="msg-name">Sarah Johnson</div>
+          <div class="msg-time">14:32</div>
+        </div>
+        <div class="msg-preview unread">Hi! Thank you for your interest. I'd love to tell you more about the room 😊</div>
+      </div>
+      <div class="msg-unread-dot"></div>
+    </div>
+    <div class="msg-item unread" onclick="navigate('messages','chat')">
+      <div class="msg-avatar av2">👨</div>
+      <div class="msg-content">
+        <div class="msg-row1">
+          <div class="msg-name">Michael & Lisa Chen</div>
+          <div class="msg-time">昨日</div>
+        </div>
+        <div class="msg-preview unread">Sure, let's schedule a video call for this weekend!</div>
+      </div>
+      <div class="msg-unread-dot"></div>
+    </div>
+    <div class="msg-item" onclick="navigate('messages','chat')">
+      <div class="msg-avatar av3">👩</div>
+      <div class="msg-content">
+        <div class="msg-row1">
+          <div class="msg-name">Emily Williams</div>
+          <div class="msg-time">月曜</div>
+        </div>
+        <div class="msg-preview">The room is available from May 1st. Let me know!</div>
+      </div>
+    </div>
+    <div class="msg-item" onclick="navigate('messages','chat')">
+      <div class="msg-avatar av4">👨</div>
+      <div class="msg-content">
+        <div class="msg-row1">
+          <div class="msg-name">Robert & Mary Davis</div>
+          <div class="msg-time">4/5</div>
+        </div>
+        <div class="msg-preview">We usually have dinner together on weekdays 🍽️</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== チャット画面 ==================== -->
+<div id="screen-chat" class="screen">
+  <div class="chat-header">
+    <div class="chat-back" onclick="navigate('chat','messages')">←</div>
+    <div class="chat-avatar av1">👩</div>
+    <div>
+      <div class="chat-title">Sarah Johnson</div>
+      <div class="chat-subtitle">🇺🇸 Manhattan, NY</div>
+    </div>
+  </div>
+
+  <div class="chat-messages">
+    <div class="date-label">2026年4月8日</div>
+
+    <div class="bubble-wrap them">
+      <div class="bubble them">Hi! I saw you were interested in my room. Feel free to ask anything 😊</div>
+      <div class="bubble-time">10:15</div>
+    </div>
+
+    <div class="bubble-wrap me">
+      <div class="bubble me">こんにちは！部屋についていくつか質問してもいいですか？</div>
+      <div class="bubble-time">10:22</div>
+    </div>
+
+    <div class="bubble-wrap them">
+      <div class="bubble them">Of course! What would you like to know?</div>
+      <div class="bubble-time">10:24</div>
+    </div>
+
+    <div class="bubble-wrap me">
+      <div class="bubble me">部屋の広さと、バスルームを何人でシェアするか教えてください。</div>
+      <div class="bubble-time">10:30</div>
+    </div>
+
+    <div class="bubble-wrap them">
+      <div class="bubble them">The room is about 10㎡ with a big window facing east 🌅 The bathroom is shared with just one other person.</div>
+      <div class="bubble-time">10:35</div>
+    </div>
+
+    <div class="bubble-wrap me">
+      <div class="bubble me">ありがとうございます！朝食は毎日ありますか？</div>
+      <div class="bubble-time">10:40</div>
+    </div>
+
+    <div class="bubble-wrap them">
+      <div class="bubble them">Breakfast is available on weekdays (Mon–Fri). I usually make eggs, toast, and coffee ☕ On weekends you're on your own but you can use the kitchen freely!</div>
+      <div class="bubble-time">10:42</div>
+    </div>
+
+    <div class="date-label">今日</div>
+
+    <div class="bubble-wrap them">
+      <div class="bubble them">Hi! Thank you for your interest. I'd love to tell you more about the room 😊</div>
+      <div class="bubble-time">14:32</div>
+    </div>
+  </div>
+
+  <div class="chat-input-bar">
+    <input class="chat-input" type="text" placeholder="メッセージを入力..." />
+    <button class="chat-send">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ==================== ④ お気に入り ==================== -->
+<div id="screen-favorites" class="screen">
+  <div class="screen-header">
+    <div class="header-row"><h1>お気に入り</h1></div>
+  </div>
+  <div class="fav-list">
+
+    <div class="host-card" onclick="openDetail('michael')">
+      <div class="card-img">
+        <div class="card-room-bg r2">🌴</div>
+        <div class="card-flag">🇺🇸 Los Angeles, CA</div>
+        <div class="card-save-btn">❤️</div>
+        <div class="card-avatar av2">👨</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row1">
+          <div class="card-host-name">Michael & Lisa Chen</div>
+          <div class="card-rating">★ 4.92</div>
+        </div>
+        <div class="card-location">Santa Monica · 個室</div>
+        <div class="card-footer">
+          <div class="card-price"><strong>$1,100</strong><span> /月〜</span></div>
+          <div class="card-meals-tag">🍽️ 3食込み</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="host-card" onclick="openDetail('thompson')">
+      <div class="card-img">
+        <div class="card-room-bg r6">🌉</div>
+        <div class="card-flag">🇺🇸 San Francisco, CA</div>
+        <div class="card-save-btn">❤️</div>
+        <div class="card-avatar av6">👨</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row1">
+          <div class="card-host-name">The Thompson Family</div>
+          <div class="card-rating">★ 4.97</div>
+        </div>
+        <div class="card-location">Mission District · 個室</div>
+        <div class="card-footer">
+          <div class="card-price"><strong>$1,050</strong><span> /月〜</span></div>
+          <div class="card-meals-tag">🍳 朝食込み</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ==================== ⑤ マイページ ==================== -->
+<div id="screen-mypage" class="screen">
+  <div class="mypage-scroll">
+    <div class="mypage-header">
+      <div class="mypage-avatar">🧑</div>
+      <div>
+        <div class="mypage-name">Yuki Tanaka</div>
+        <div class="mypage-meta">yuki.tanaka@example.com</div>
+        <div style="font-size:12px;color:var(--light);margin-top:4px;">メンバー登録日：2026年3月</div>
+      </div>
+    </div>
+
+    <div class="mypage-section-title">プロフィール</div>
+    <div class="mypage-item"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
+
+    <div class="mypage-section-title">申請・履歴</div>
+    <div class="mypage-item"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
+
+    <div class="mypage-section-title">設定</div>
+    <div class="mypage-item"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label">言語・通貨</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
+  </div>
+</div>
+
+<!-- ==================== BOTTOM NAV ==================== -->
+<nav class="bottom-nav">
+  <div class="bnav-item active" id="bnav-search" onclick="navigate(currentScreen,'search')">
+    <div class="bnav-icon">🔍</div>
+    <div>探す</div>
+  </div>
+  <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')">
+    <div class="bnav-icon">💬</div>
+    <div>メッセージ</div>
+    <div class="bnav-badge">2</div>
+  </div>
+  <div class="bnav-item" id="bnav-favorites" onclick="navigate(currentScreen,'favorites')">
+    <div class="bnav-icon">❤️</div>
+    <div>お気に入り</div>
+  </div>
+  <div class="bnav-item" id="bnav-mypage" onclick="navigate(currentScreen,'mypage')">
+    <div class="bnav-icon">👤</div>
+    <div>マイページ</div>
+  </div>
+</nav>
+
+<script>
+  let currentScreen = 'search';
+
+  function navigate(from, to) {
+    document.getElementById('screen-' + from).classList.remove('active');
+    document.getElementById('screen-' + to).classList.add('active');
+    currentScreen = to;
+    document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
+    const bnav = document.getElementById('bnav-' + to);
+    if (bnav) bnav.classList.add('active');
+    const bottomNav = document.querySelector('.bottom-nav');
+    bottomNav.style.display = (to === 'detail' || to === 'chat') ? 'none' : 'flex';
+  }
+
+  function openDetail(host) {
+    // close map if open
+    document.getElementById('map-overlay').classList.remove('open');
+    navigate(currentScreen, 'detail');
+  }
+
+  /* ===== MAP ===== */
+  function openMap() {
+    document.getElementById('map-overlay').classList.add('open');
+    document.querySelector('.bottom-nav').style.display = 'none';
+  }
+
+  function closeMap() {
+    document.getElementById('map-overlay').classList.remove('open');
+    document.querySelector('.bottom-nav').style.display = 'flex';
+  }
+
+  function mapPinClick(el, host) {
+    // reset all pins
+    document.querySelectorAll('#map-overlay .map-price-pin').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    // scroll to matching card in strip
+    const cards = document.querySelectorAll('#map-card-strip .map-mini-card');
+    const hosts = ['sarah','robert','michael','emily','jennifer','thompson','austin','miami','portland'];
+    const idx = hosts.indexOf(host);
+    if (idx >= 0 && cards[idx]) {
+      cards[idx].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }
+
+  /* ===== SEARCH MODAL ===== */
+  function openSearchModal() {
+    document.getElementById('search-modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSearchModal(e) {
+    if (e && e.target !== document.getElementById('search-modal-overlay')) return;
+    document.getElementById('search-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Suggest filter
+  function filterSuggests(val) {
+    const items = document.querySelectorAll('#suggest-list .suggest-item');
+    items.forEach(item => {
+      const name = item.querySelector('.suggest-name').textContent.toLowerCase();
+      item.style.display = name.includes(val.toLowerCase()) ? 'flex' : 'none';
+    });
+  }
+
+  function selectDest(name) {
+    document.getElementById('dest-input').value = name;
+    document.getElementById('suggest-list').style.display = 'none';
+  }
+
+  // Date pickers — trigger native date input
+  function focusDate(type) {
+    document.getElementById('input-date-' + type).click();
+  }
+
+  function setDate(type, val) {
+    if (!val) return;
+    const d = new Date(val);
+    const label = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
+    const el = document.getElementById('date-' + type + '-val');
+    el.textContent = label;
+    el.classList.remove('placeholder');
+    document.getElementById('date-' + type + '-btn').classList.add('selected');
+  }
+
+  // Toggles
+  function toggleSwitch(id) {
+    document.getElementById(id).classList.toggle('on');
+  }
+
+  // Apply search → update pill summary & close
+  function applySearch() {
+    const dest = document.getElementById('dest-input').value.trim();
+    const from = document.getElementById('date-from-val').textContent;
+    const to   = document.getElementById('date-to-val').textContent;
+    const pMin = document.getElementById('price-min').value;
+    const pMax = document.getElementById('price-max').value;
+
+    // Update pill
+    document.getElementById('pill-main').textContent = dest || 'どこでも';
+    const parts = [];
+    if (from !== '日付を追加') parts.push(from + (to !== '日付を追加' ? ' – ' + to : ''));
+    if (pMin || pMax) parts.push('$' + (pMin||'0') + '–$' + (pMax||'∞'));
+    document.getElementById('pill-sub').textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
+
+    document.getElementById('search-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Clear all
+  function clearSearch() {
+    document.getElementById('dest-input').value = '';
+    document.getElementById('suggest-list').style.display = '';
+    filterSuggests('');
+    ['from','to'].forEach(t => {
+      const el = document.getElementById('date-' + t + '-val');
+      el.textContent = '日付を追加'; el.classList.add('placeholder');
+      document.getElementById('date-' + t + '-btn').classList.remove('selected');
+    });
+    document.getElementById('price-min').value = '';
+    document.getElementById('price-max').value = '';
+    ['t1','t2','t3','t5','t6','t7'].forEach(id => document.getElementById(id).classList.remove('on'));
+    document.getElementById('t4').classList.add('on');
+    document.getElementById('pill-main').textContent = '検索を開始';
+    document.getElementById('pill-sub').textContent = '目的地・日付・条件を選ぶ';
+  }
+</script>
+
+</body>
+</html>
