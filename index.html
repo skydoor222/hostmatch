@@ -427,7 +427,42 @@
 
     /* ===== ② 詳細画面 ===== */
     #screen-detail { background: white; }
-    .detail-img { height: 260px; position: relative; overflow: hidden; }
+
+    /* photo slider */
+    .detail-photo-slider { position: relative; height: 280px; overflow: hidden; }
+    .photo-track {
+      display: flex; height: 100%;
+      transition: transform .35s ease; will-change: transform;
+    }
+    .photo-slide {
+      flex-shrink: 0; width: 100%; height: 100%;
+      object-fit: cover; background: #ddd;
+    }
+    .photo-slide-fake {
+      flex-shrink: 0; width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center; font-size: 80px;
+    }
+    .photo-prev, .photo-next {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(255,255,255,.85); border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; z-index: 5; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+    }
+    .photo-prev { left: 12px; }
+    .photo-next { right: 12px; }
+    .photo-dots {
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 5px; z-index: 5;
+    }
+    .photo-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.6); }
+    .photo-dot.active { background: white; width: 18px; border-radius: 3px; }
+    .photo-counter {
+      position: absolute; bottom: 10px; right: 12px;
+      background: rgba(0,0,0,.5); color: white; border-radius: 10px;
+      padding: 2px 8px; font-size: 11px; font-weight: 600; z-index: 5;
+    }
+
     .detail-back {
       position: absolute; top: 16px; left: 14px; z-index: 10;
       width: 36px; height: 36px; border-radius: 50%;
@@ -643,23 +678,6 @@
   </div>
 
   <div class="search-body">
-
-    <!-- ===== MAP ===== -->
-    <div class="map-section" onclick="openMap()">
-      <div class="map-bg">
-        <div class="map-pin-loc">📍 アメリカ全土</div>
-        <!-- price pins scattered -->
-        <div class="map-price-pin" style="top:22%;left:52%">$950</div>
-        <div class="map-price-pin active" style="top:35%;left:28%">$780</div>
-        <div class="map-price-pin" style="top:18%;left:68%">$1,100</div>
-        <div class="map-price-pin" style="top:55%;left:44%">$880</div>
-        <div class="map-price-pin" style="top:48%;left:15%">$820</div>
-        <div class="map-price-pin" style="top:66%;left:60%">$1,050</div>
-        <div class="map-price-pin" style="top:30%;left:76%">$850</div>
-        <div class="map-price-pin" style="top:72%;left:32%">$900</div>
-      </div>
-      <div class="map-expand-btn">🗺️ 地図で探す</div>
-    </div>
 
     <!-- ===== SLIDER: おすすめ ===== -->
     <div class="slider-section">
@@ -1031,8 +1049,33 @@
 <!-- ==================== ② 詳細画面 ==================== -->
 <div id="screen-detail" class="screen">
 
-  <div class="detail-img" id="detail-img">
-    <div class="card-room-bg r1" id="detail-room-bg" style="height:260px;font-size:88px;">🛋️</div>
+  <!-- Photo Slider -->
+  <div class="detail-photo-slider" style="position:relative;">
+    <div class="photo-track" id="photo-track">
+      <!-- 部屋1 -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" alt="ベッドルーム" loading="lazy" />
+      <!-- リビング -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80" alt="リビング" loading="lazy" />
+      <!-- キッチン -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="キッチン" loading="lazy" />
+      <!-- 朝食 -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80" alt="朝食" loading="lazy" />
+      <!-- 外観 -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1449844908441-8829872d2607?w=800&q=80" alt="建物外観" loading="lazy" />
+      <!-- バスルーム -->
+      <img class="photo-slide" src="https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80" alt="バスルーム" loading="lazy" />
+    </div>
+    <button class="photo-prev" onclick="slidePhoto(-1)">‹</button>
+    <button class="photo-next" onclick="slidePhoto(1)">›</button>
+    <div class="photo-dots" id="photo-dots">
+      <div class="photo-dot active"></div>
+      <div class="photo-dot"></div>
+      <div class="photo-dot"></div>
+      <div class="photo-dot"></div>
+      <div class="photo-dot"></div>
+      <div class="photo-dot"></div>
+    </div>
+    <div class="photo-counter" id="photo-counter">1 / 6</div>
     <div class="detail-back" onclick="navigate('detail','search')">←</div>
     <div class="detail-save" id="detail-save">❤️</div>
   </div>
@@ -1368,6 +1411,30 @@
     document.querySelector('.bottom-nav').style.display = 'flex';
   }
 
+  /* ===== PHOTO SLIDER ===== */
+  let photoIndex = 0;
+  const photoTotal = 6;
+
+  function slidePhoto(dir) {
+    photoIndex = (photoIndex + dir + photoTotal) % photoTotal;
+    document.getElementById('photo-track').style.transform = `translateX(-${photoIndex * 100}%)`;
+    document.getElementById('photo-counter').textContent = (photoIndex + 1) + ' / ' + photoTotal;
+    document.querySelectorAll('.photo-dot').forEach((d, i) => d.classList.toggle('active', i === photoIndex));
+  }
+
+  // touch swipe support
+  (function() {
+    let startX = 0;
+    document.addEventListener('touchstart', e => {
+      if (e.target.closest('.detail-photo-slider')) startX = e.touches[0].clientX;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!e.target.closest('.detail-photo-slider')) return;
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
+    }, { passive: true });
+  })();
+
   function mapPinClick(el, host) {
     // reset all pins
     document.querySelectorAll('#map-overlay .map-price-pin').forEach(p => p.classList.remove('active'));
@@ -1427,7 +1494,7 @@
     document.getElementById(id).classList.toggle('on');
   }
 
-  // Apply search → update pill summary & close
+  // Apply search → update pill, close modal, open map
   function applySearch() {
     const dest = document.getElementById('dest-input').value.trim();
     const from = document.getElementById('date-from-val').textContent;
@@ -1442,8 +1509,15 @@
     if (pMin || pMax) parts.push('$' + (pMin||'0') + '–$' + (pMax||'∞'));
     document.getElementById('pill-sub').textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
 
+    // Update map header chip
+    const label = (dest || 'アメリカ全土') + ' · 124件';
+    document.querySelector('.map-search-chip').textContent = '📍 ' + label;
+
     document.getElementById('search-modal-overlay').classList.remove('open');
     document.body.style.overflow = '';
+
+    // 検索後に地図を表示
+    openMap();
   }
 
   // Clear all
