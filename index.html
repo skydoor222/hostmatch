@@ -375,6 +375,116 @@
     .s-card-price { font-size: 12px; font-weight: 800; }
     .s-card-rating { font-size: 11px; color: var(--mid); }
 
+    /* ===== MATCH LIST (AI matching vertical layout) ===== */
+    .match-list {
+      display: flex; flex-direction: column; gap: 20px;
+      padding: 16px;
+    }
+    .match-card {
+      background: white; border-radius: 18px; overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08); cursor: pointer;
+    }
+    .match-card-img {
+      position: relative; height: 200px; overflow: hidden;
+    }
+    .match-card-img .card-room-bg {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center; font-size: 64px;
+    }
+    .match-badge {
+      position: absolute; top: 12px; left: 12px;
+      background: linear-gradient(135deg, #FF5A5F, #FF385C);
+      color: white; border-radius: 20px; padding: 6px 14px;
+      font-size: 13px; font-weight: 800; z-index: 3;
+      box-shadow: 0 2px 8px rgba(255,90,95,.4);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .match-badge-icon { font-size: 14px; }
+    .match-badge-bar {
+      position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+      background: rgba(255,255,255,.3); z-index: 3;
+    }
+    .match-badge-bar-fill {
+      height: 100%; background: linear-gradient(90deg, #FF5A5F, #FF385C);
+      border-radius: 0 2px 2px 0;
+    }
+    .match-card-save {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 22px; cursor: pointer; line-height: 1;
+      filter: drop-shadow(0 1px 3px rgba(0,0,0,.25)); z-index: 3;
+    }
+    .match-card-avatar {
+      position: absolute; bottom: -18px; right: 16px;
+      width: 44px; height: 44px; border-radius: 50%; border: 3px solid white;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+      z-index: 3;
+    }
+    .match-card-flag {
+      position: absolute; top: 12px; right: 48px;
+      background: rgba(0,0,0,.48); backdrop-filter: blur(6px);
+      color: white; border-radius: 8px; padding: 4px 10px;
+      font-size: 12px; font-weight: 600; z-index: 3;
+    }
+    .match-card-body { padding: 24px 16px 14px; }
+    .match-card-row1 {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .match-card-name { font-size: 17px; font-weight: 800; }
+    .match-card-rating { font-size: 13px; font-weight: 600; color: var(--mid); }
+    .match-card-location { font-size: 13px; color: var(--light); margin-top: 3px; }
+    .match-card-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 10px; }
+    .match-card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .match-card-price strong { font-size: 18px; font-weight: 800; }
+    .match-card-price span { font-size: 12px; color: var(--light); }
+    .match-card-meals { font-size: 11px; background: #FFF9E6; color: #B8860B; padding: 4px 10px; border-radius: 10px; font-weight: 600; }
+
+    /* match card mini-map */
+    .match-card-map {
+      height: 120px; position: relative; overflow: hidden;
+      background: #e8f0e9; border-top: 1px solid var(--border);
+    }
+    .match-card-map::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(92deg, transparent 30%, #d4c9b0 30.5%, #d4c9b0 31%, transparent 31%) 0 0 / 100% 100%,
+        linear-gradient(175deg, transparent 45%, #d4c9b0 45.5%, #d4c9b0 46.2%, transparent 46.2%) 0 0 / 100% 100%,
+        linear-gradient(80deg, transparent 20%, #c8beaa 20.5%, #c8beaa 21.2%, transparent 21.2%) 0 0 / 100% 100%;
+    }
+    .match-card-map::after {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80px 60px at 25% 35%, #c8e6c9 0%, transparent 100%),
+        radial-gradient(ellipse 100px 70px at 70% 25%, #c8e6c9 0%, transparent 100%);
+    }
+    .match-map-pin {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--primary); color: white; border-radius: 20px;
+      padding: 5px 12px; font-size: 11px; font-weight: 700;
+      box-shadow: 0 2px 8px rgba(0,0,0,.2); z-index: 2;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .match-map-pin::after {
+      content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+      width: 0; height: 0; border-left: 6px solid transparent;
+      border-right: 6px solid transparent; border-top: 6px solid var(--primary);
+    }
+
+    .match-list-header {
+      padding: 14px 16px 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .match-list-title {
+      font-size: 18px; font-weight: 800;
+    }
+    .match-list-count {
+      font-size: 13px; color: var(--light);
+    }
+
     /* ===== お気に入り・詳細 用カード (旧 host-card) ===== */
     .host-card {
       background: white; border-radius: 16px; overflow: hidden;
@@ -485,6 +595,12 @@
       border: 2px solid var(--border);
     }
     .detail-host-name { font-size: 20px; font-weight: 800; }
+    .detail-match-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, #FF5A5F, #FF385C);
+      color: white; border-radius: 16px; padding: 4px 12px;
+      font-size: 13px; font-weight: 700; margin-top: 4px;
+    }
     .detail-host-meta { font-size: 13px; color: var(--light); margin-top: 2px; }
     .detail-rating { font-size: 13px; font-weight: 700; margin-top: 2px; }
     .detail-rating span { color: var(--light); font-weight: 400; }
@@ -679,146 +795,184 @@
 
   <div class="search-body">
 
-    <!-- ===== SLIDER: おすすめ ===== -->
-    <div class="slider-section">
-      <div class="slider-label">
-        <span>✨ おすすめのホスト</span>
-        <a>すべて見る</a>
-      </div>
-      <div class="card-slider">
-        <div class="s-card" onclick="openDetail('sarah')">
-          <div class="s-card-img"><div class="s-card-bg r1">🛋️</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Sarah Johnson</div>
-            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('michael')">
-          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">❤️</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">M. & Lisa Chen</div>
-            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('emily')">
-          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Emily Williams</div>
-            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('robert')">
-          <div class="s-card-img"><div class="s-card-bg r4">🌆</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">R. & Mary Davis</div>
-            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('jennifer')">
-          <div class="s-card-img"><div class="s-card-bg r5">🌲</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Jennifer Park</div>
-            <div class="s-card-row"><div class="s-card-price">$820<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.89</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('thompson')">
-          <div class="s-card-img"><div class="s-card-bg r6">🌉</div><div class="s-save">❤️</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Thompson Family</div>
-            <div class="s-card-row"><div class="s-card-price">$1,050<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.97</div></div>
-          </div>
-        </div>
-      </div>
+    <!-- ===== AI MATCH LIST: マッチ度順 ===== -->
+    <div class="match-list-header">
+      <div class="match-list-title">🤖 AIマッチング結果</div>
+      <div class="match-list-count">6件のホスト</div>
     </div>
 
-    <!-- ===== SLIDER: 食事付き ===== -->
-    <div class="slider-section">
-      <div class="slider-label">
-        <span>🍳 食事付きホスト</span>
-        <a>すべて見る</a>
-      </div>
-      <div class="card-slider">
-        <div class="s-card" onclick="openDetail('robert')">
-          <div class="s-card-img"><div class="s-card-bg r4">🌆</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">R. & Mary Davis</div>
-            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('michael')">
-          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">M. & Lisa Chen</div>
-            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('sarah')">
-          <div class="s-card-img"><div class="s-card-bg r1">🛋️</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Sarah Johnson</div>
-            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('thompson')">
-          <div class="s-card-img"><div class="s-card-bg r6">🌉</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Thompson Family</div>
-            <div class="s-card-row"><div class="s-card-price">$1,050<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.97</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('emily')">
-          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Emily Williams</div>
-            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div class="match-list">
 
-    <!-- ===== SLIDER: 日本語対応 ===== -->
-    <div class="slider-section" style="padding-bottom:8px;">
-      <div class="slider-label">
-        <span>🌍 日本語対応ホスト</span>
-        <a>すべて見る</a>
-      </div>
-      <div class="card-slider">
-        <div class="s-card" onclick="openDetail('sarah')">
-          <div class="s-card-img"><div class="s-card-bg r7">🌸</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Sarah Johnson</div>
-            <div class="s-card-row"><div class="s-card-price">$950<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.98</div></div>
-          </div>
+      <!-- 1. Sarah Johnson — マッチ度 96% -->
+      <div class="match-card" onclick="openDetail('sarah')">
+        <div class="match-card-img">
+          <div class="card-room-bg r1">🛋️</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：96%</div>
+          <div class="match-card-flag">🇺🇸 New York, NY</div>
+          <div class="match-card-save">🤍</div>
+          <div class="match-card-avatar av1">👩</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:96%"></div></div>
         </div>
-        <div class="s-card" onclick="openDetail('robert')">
-          <div class="s-card-img"><div class="s-card-bg r8">🍂</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">R. & Mary Davis</div>
-            <div class="s-card-row"><div class="s-card-price">$780<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.95</div></div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">Sarah Johnson</div>
+            <div class="match-card-rating">★ 4.98</div>
           </div>
-        </div>
-        <div class="s-card" onclick="openDetail('jennifer')">
-          <div class="s-card-img"><div class="s-card-bg r9">🌿</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Jennifer Park</div>
-            <div class="s-card-row"><div class="s-card-price">$820<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.89</div></div>
+          <div class="match-card-location">Manhattan · 個室 · ホスト歴3年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 日本語OK</span>
+            <span class="ctag ok">✓ 朝食付き</span>
+            <span class="ctag">🚭 禁煙</span>
+            <span class="ctag">👩 女性限定</span>
           </div>
-        </div>
-        <div class="s-card" onclick="openDetail('emily')">
-          <div class="s-card-img"><div class="s-card-bg r3">🏛️</div><div class="s-save">❤️</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Emily Williams</div>
-            <div class="s-card-row"><div class="s-card-price">$880<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 5.00</div></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('michael')">
-          <div class="s-card-img"><div class="s-card-bg r2">🌴</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">M. & Lisa Chen</div>
-            <div class="s-card-row"><div class="s-card-price">$1,100<span style="font-weight:400;font-size:10px;color:var(--light)">/月</span></div><div class="s-card-rating">★ 4.92</div></div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$950</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍳 朝食込み</div>
           </div>
         </div>
       </div>
+
+      <!-- 2. Michael & Lisa Chen — マッチ度 93% -->
+      <div class="match-card" onclick="openDetail('michael')">
+        <div class="match-card-img">
+          <div class="card-room-bg r2">🌴</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：93%</div>
+          <div class="match-card-flag">🇺🇸 Los Angeles, CA</div>
+          <div class="match-card-save">❤️</div>
+          <div class="match-card-avatar av2">👨</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:93%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">Michael & Lisa Chen</div>
+            <div class="match-card-rating">★ 4.92</div>
+          </div>
+          <div class="match-card-location">Santa Monica · 個室 · ホスト歴5年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 日本語OK</span>
+            <span class="ctag ok">✓ 3食付き</span>
+            <span class="ctag">🚭 禁煙</span>
+            <span class="ctag ok">✓ ペット可</span>
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$1,100</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍽️ 3食込み</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Emily Williams — マッチ度 91% -->
+      <div class="match-card" onclick="openDetail('emily')">
+        <div class="match-card-img">
+          <div class="card-room-bg r3">🏛️</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：91%</div>
+          <div class="match-card-flag">🇺🇸 Boston, MA</div>
+          <div class="match-card-save">🤍</div>
+          <div class="match-card-avatar av3">👩</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:91%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">Emily Williams</div>
+            <div class="match-card-rating">★ 5.00</div>
+          </div>
+          <div class="match-card-location">Cambridge · 個室 · ホスト歴2年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 留学生歓迎</span>
+            <span class="ctag ok">✓ 朝食付き</span>
+            <span class="ctag">🚭 禁煙</span>
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$880</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍳 朝食込み</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Thompson Family — マッチ度 88% -->
+      <div class="match-card" onclick="openDetail('thompson')">
+        <div class="match-card-img">
+          <div class="card-room-bg r6">🌉</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：88%</div>
+          <div class="match-card-flag">🇺🇸 San Francisco, CA</div>
+          <div class="match-card-save">❤️</div>
+          <div class="match-card-avatar av6">👨</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:88%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">The Thompson Family</div>
+            <div class="match-card-rating">★ 4.97</div>
+          </div>
+          <div class="match-card-location">Mission District · 個室 · ホスト歴4年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 朝食付き</span>
+            <span class="ctag">🚭 禁煙</span>
+            <span class="ctag ok">✓ 来客OK</span>
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$1,050</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍳 朝食込み</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. Jennifer Park — マッチ度 85% -->
+      <div class="match-card" onclick="openDetail('jennifer')">
+        <div class="match-card-img">
+          <div class="card-room-bg r5">🌲</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：85%</div>
+          <div class="match-card-flag">🇺🇸 Seattle, WA</div>
+          <div class="match-card-save">🤍</div>
+          <div class="match-card-avatar av5">👩</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:85%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">Jennifer Park</div>
+            <div class="match-card-rating">★ 4.89</div>
+          </div>
+          <div class="match-card-location">Capitol Hill · 個室 · ホスト歴1年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 夜型OK</span>
+            <span class="ctag ok">✓ 朝食付き</span>
+            <span class="ctag">🚭 禁煙</span>
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$820</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍳 朝食込み</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. Robert & Mary Davis — マッチ度 82% -->
+      <div class="match-card" onclick="openDetail('robert')">
+        <div class="match-card-img">
+          <div class="card-room-bg r4">🌆</div>
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：82%</div>
+          <div class="match-card-flag">🇺🇸 Chicago, IL</div>
+          <div class="match-card-save">🤍</div>
+          <div class="match-card-avatar av4">👨</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:82%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">Robert & Mary Davis</div>
+            <div class="match-card-rating">★ 4.95</div>
+          </div>
+          <div class="match-card-location">Lincoln Park · 個室 · ホスト歴6年</div>
+          <div class="match-card-tags">
+            <span class="ctag ok">✓ 夕食付き</span>
+            <span class="ctag ok">✓ ペット可</span>
+            <span class="ctag">🚭 禁煙</span>
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$780</strong><span> /月〜</span></div>
+            <div class="match-card-meals">🍽️ 夕食込み</div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /search-body -->
@@ -1086,6 +1240,7 @@
       <div class="detail-avatar av1" id="detail-avatar">👩</div>
       <div>
         <div class="detail-host-name" id="detail-name">Sarah Johnson</div>
+        <div class="detail-match-badge" id="detail-match-badge">🤖 マッチ度：96%</div>
         <div class="detail-host-meta" id="detail-meta">🇺🇸 Manhattan, New York · ホスト歴3年</div>
         <div class="detail-rating" id="detail-rating">★ 4.98 <span>(87件のレビュー)</span></div>
       </div>
@@ -1151,6 +1306,16 @@
         <div class="price-row total"><span>合計</span><span>$950 /月</span></div>
         <div class="price-note">※ デポジット1ヶ月分・礼金なし・仲介手数料なし</div>
       </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="detail-section" style="padding-bottom:16px;">
+      <div class="detail-section-title">📍 ロケーション</div>
+      <div class="match-card-map" style="border-radius:14px; height:160px; border:1px solid var(--border);">
+        <div class="match-map-pin" id="detail-map-pin">📍 Manhattan, New York</div>
+      </div>
+      <div style="font-size:12px; color:var(--light); margin-top:8px;">最寄り駅：72nd St 徒歩5分 · Central Park まで徒歩10分</div>
     </div>
 
   </div>
