@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HostMatch - 画面マップ</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Hiragino Sans', sans-serif;
+    background: #f5f5f7; color: #1d1d1f; padding: 32px;
+    min-height: 100vh;
+  }
+  h1 { font-size: 28px; font-weight: 800; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #86868b; margin-bottom: 32px; }
+  .subtitle a { color: #FF5A5F; text-decoration: none; }
+
+  /* Legend */
+  .legend {
+    display: flex; gap: 20px; margin-bottom: 28px; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 13px; color: #6e6e73;
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 3px;
+  }
+
+  /* Cards */
+  .section-title {
+    font-size: 18px; font-weight: 700; margin: 28px 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title .count {
+    background: #e8e8ed; border-radius: 10px; padding: 2px 10px;
+    font-size: 12px; font-weight: 600; color: #6e6e73;
+  }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+  .card {
+    background: white; border-radius: 16px; padding: 20px;
+    border: 1px solid #e8e8ed; cursor: default;
+    transition: box-shadow .2s, transform .2s;
+    position: relative;
+  }
+  .card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); transform: translateY(-2px); }
+
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .card-icon { font-size: 28px; }
+  .card-status {
+    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 8px;
+  }
+  .status-active { background: #e8faf0; color: #00875A; }
+  .status-planned { background: #fff3e0; color: #e65100; }
+  .status-deprecated { background: #fce4ec; color: #c62828; }
+
+  .card-name { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .card-id { font-size: 12px; color: #86868b; font-family: 'SF Mono', monospace; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: #6e6e73; line-height: 1.5; }
+
+  .card-links {
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid #f2f2f7;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .link-chip {
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    background: #f2f2f7; color: #6e6e73;
+  }
+  .link-chip.to { background: #e3f2fd; color: #1565c0; }
+  .link-chip.from { background: #fce4ec; color: #c62828; }
+
+  /* Flow diagram */
+  .flow-section { margin: 40px 0 20px; }
+  .flow-diagram {
+    background: white; border-radius: 16px; border: 1px solid #e8e8ed;
+    padding: 32px; overflow-x: auto;
+  }
+  .flow-row {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .flow-node {
+    background: #f2f2f7; border-radius: 12px; padding: 10px 16px;
+    font-size: 13px; font-weight: 600; white-space: nowrap;
+    border: 2px solid transparent;
+  }
+  .flow-node.main { background: #FF5A5F; color: white; }
+  .flow-node.screen { background: #e3f2fd; color: #1565c0; border-color: #90caf9; }
+  .flow-node.modal { background: #fff3e0; color: #e65100; border-color: #ffcc80; }
+  .flow-node.external { background: #e8faf0; color: #00875A; border-color: #a5d6a7; }
+  .flow-arrow { font-size: 18px; color: #86868b; }
+  .flow-label { font-size: 11px; color: #86868b; font-style: italic; }
+
+  /* Feature table */
+  .feature-table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 16px; overflow: hidden; border: 1px solid #e8e8ed;
+  }
+  .feature-table th {
+    text-align: left; padding: 12px 16px; background: #f9f9fb;
+    font-size: 12px; font-weight: 700; color: #6e6e73;
+    text-transform: uppercase; letter-spacing: .04em;
+  }
+  .feature-table td {
+    padding: 12px 16px; border-top: 1px solid #f2f2f7; font-size: 14px;
+  }
+  .feature-table tr:hover td { background: #fafafe; }
+  .feat-id { font-family: 'SF Mono', monospace; font-size: 12px; color: #86868b; }
+  .feat-status { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; }
+
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>HostMatch 画面マップ</h1>
+<p class="subtitle">全画面・機能の一覧と遷移フロー | <a href="index.html">アプリを開く</a> | <a href="SCREENS.md">管理ドキュメント</a></p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#00875A"></div> Active（実装済み）</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#e65100"></div> Planned（未実装）</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#c62828"></div> Deprecated（削除予定）</div>
+</div>
+
+<!-- ===== SCREENS ===== -->
+<div class="section-title">画面 <span class="count">6</span></div>
+<div class="cards">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🔍</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">検索（ホーム）</div>
+    <div class="card-id">screen-search</div>
+    <div class="card-desc">AIマッチング結果を1列縦並びで表示。検索ピルから条件入力モーダルを開く。アプリのメイン画面。</div>
+    <div class="card-links">
+      <span class="link-chip to">→ 詳細</span>
+      <span class="link-chip to">→ 検索モーダル</span>
+      <span class="link-chip to">→ 地図</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">詳細</div>
+    <div class="card-id">screen-detail</div>
+    <div class="card-desc">ホストの写真スライダー・マッチ度・プロフィール・生活スタイル・ルール・部屋情報・料金・地図を表示。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 検索</span>
+      <span class="link-chip from">← お気に入り</span>
+      <span class="link-chip to">→ チャット</span>
+      <span class="link-chip to">→ 面談モーダル</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">💬</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">メッセージ一覧</div>
+    <div class="card-id">screen-messages</div>
+    <div class="card-desc">ホストとの会話スレッド一覧。未読バッジ表示。タップでチャット画面へ。</div>
+    <div class="card-links">
+      <span class="link-chip to">→ チャット</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">✉️</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">チャット</div>
+    <div class="card-id">screen-chat</div>
+    <div class="card-desc">個別ホストとのメッセージ送受信。テキスト入力・送信・自動返信に対応。ホスト別に会話履歴が切り替わる。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 詳細</span>
+      <span class="link-chip from">← メッセージ一覧</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">❤️</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">お気に入り</div>
+    <div class="card-id">screen-favorites</div>
+    <div class="card-desc">ハートを押したホストの一覧。動的に追加/削除される。カードタップで詳細画面へ。</div>
+    <div class="card-links">
+      <span class="link-chip to">→ 詳細</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">マイページ</div>
+    <div class="card-id">screen-mypage</div>
+    <div class="card-desc">プロフィール編集・生活スタイル設定・NG条件・申請履歴・通知設定・言語設定。3つのサブ画面を実装済み。</div>
+    <div class="card-links">
+      <span class="link-chip to">→ プロフィール編集</span>
+      <span class="link-chip to">→ 生活スタイル設定</span>
+      <span class="link-chip to">→ NG条件・希望条件</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== SUB SCREENS ===== -->
+<div class="section-title">マイページ サブ画面 <span class="count">3</span></div>
+<div class="cards">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">プロフィール編集</div>
+    <div class="card-id">sub-profile</div>
+    <div class="card-desc">名前・メール・電話番号・生年月日・性別・国籍・渡航目的・英語レベル・自己紹介。保存するとマイページのヘッダーに反映。</div>
+    <div class="card-links">
+      <span class="link-chip from">← マイページ</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🌙</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">生活スタイル設定</div>
+    <div class="card-id">sub-lifestyle</div>
+    <div class="card-desc">起床/就寝時間・会話量の好み・性格タイプ・清潔度・食事の好み（ベジタリアン等）をチップ選択で設定。</div>
+    <div class="card-links">
+      <span class="link-chip from">← マイページ</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📋</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">NG条件・希望条件</div>
+    <div class="card-id">sub-preferences</div>
+    <div class="card-desc">月額予算の範囲・希望エリア（複数選択）・食事・ホスト性別・NG条件（喫煙OK等）・自由記述。AIマッチングの入力データになる想定。</div>
+    <div class="card-links">
+      <span class="link-chip from">← マイページ</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== OVERLAYS ===== -->
+<div class="section-title">オーバーレイ・モーダル <span class="count">4</span></div>
+<div class="cards">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🔎</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">検索モーダル</div>
+    <div class="card-id">search-modal-overlay</div>
+    <div class="card-desc">目的地・日付・予算・ルール条件を入力するボトムシート型モーダル。検索実行で地図に遷移。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 検索ピル</span>
+      <span class="link-chip to">→ 地図オーバーレイ</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🗺️</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">地図オーバーレイ</div>
+    <div class="card-id">map-overlay</div>
+    <div class="card-desc">全画面マップ表示。価格ピンをタップでカードにスクロール。カードタップで詳細へ。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 検索モーダル</span>
+      <span class="link-chip to">→ 詳細</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📹</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">面談申し込みモーダル</div>
+    <div class="card-id">interview-modal-overlay</div>
+    <div class="card-desc">ホスト名・月額料金・面談方法を確認。日付（6候補）と時間帯を選択して「面談を確定する」で完了画面へ。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 詳細</span>
+      <span class="link-chip to">→ 完了画面</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">✅</div>
+      <div class="card-status status-active">Active</div>
+    </div>
+    <div class="card-name">申し込み完了画面</div>
+    <div class="card-id">complete-overlay</div>
+    <div class="card-desc">面談確定メッセージ + デポジット金額表示。PayPayリンクへ遷移するボタンを含む。</div>
+    <div class="card-links">
+      <span class="link-chip from">← 面談モーダル</span>
+      <span class="link-chip to">→ PayPay（外部）</span>
+      <span class="link-chip to">→ メッセージ一覧</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== FLOW DIAGRAM ===== -->
+<div class="flow-section">
+  <div class="section-title">メインフロー（ユーザー体験順）</div>
+  <div class="flow-diagram">
+
+    <div class="flow-row">
+      <div class="flow-label">Step 1: 探す</div>
+      <div class="flow-node main">検索画面</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node modal">検索モーダル</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node modal">地図オーバーレイ</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-label">Step 2: 選ぶ</div>
+      <div class="flow-node main">検索画面</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node screen">ホスト詳細</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-label">Step 3: 聞く</div>
+      <div class="flow-node screen">ホスト詳細</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node screen">チャット</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-label">Step 4: 申し込む</div>
+      <div class="flow-node screen">ホスト詳細</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node modal">面談モーダル</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node modal">完了画面</div>
+    </div>
+
+    <div class="flow-row">
+      <div class="flow-label">Step 5: 支払う</div>
+      <div class="flow-node modal">完了画面</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node external">PayPay（外部）</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== FEATURE TABLE ===== -->
+<div class="section-title">機能一覧 <span class="count">14</span></div>
+<table class="feature-table">
+  <thead>
+    <tr><th>ID</th><th>機能名</th><th>対応画面</th><th>ステータス</th><th>説明</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="feat-id">F1</td><td>AIマッチングリスト</td><td>検索</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>マッチ度順の1列縦並びカード</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F2</td><td>検索フィルター</td><td>検索モーダル</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>目的地・日付・予算・ルール条件</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F3</td><td>地図表示</td><td>地図オーバーレイ</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>ピン付きマップ + カードストリップ</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F4</td><td>ホスト詳細（動的）</td><td>詳細</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>6人分のデータを動的切り替え</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F5</td><td>写真スライダー</td><td>詳細</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>スワイプ対応、ホスト別写真</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F6</td><td>お気に入り</td><td>検索・詳細・お気に入り</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>ハートで追加/解除、一覧表示</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F7</td><td>チャット送信</td><td>チャット</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>テキスト送信 + 自動返信</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F8</td><td>面談申し込み</td><td>詳細→モーダル→完了</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>確認→完了→PayPay導線</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F9</td><td>PayPay決済導線</td><td>完了画面</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>外部PayPayリンクへ遷移</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F10</td><td>プロフィール編集</td><td>マイページ → sub-profile</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>名前・留学情報・自己紹介の編集。保存でヘッダーに反映</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F11</td><td>生活スタイル設定</td><td>マイページ → sub-lifestyle</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>起床/就寝・会話量・性格・清潔度・食事の好み</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F12</td><td>NG条件・希望条件</td><td>マイページ → sub-preferences</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>予算・エリア・食事・NG条件の設定</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F13</td><td>面談日時選択</td><td>面談モーダル</td>
+      <td><span class="feat-status status-active">Done</span></td>
+      <td>日付6候補 + 時間帯セレクト。完了画面にも表示</td>
+    </tr>
+    <tr>
+      <td class="feat-id">F14</td><td>通知設定</td><td>マイページ</td>
+      <td><span class="feat-status status-planned">Planned</span></td>
+      <td>通知のON/OFF設定</td>
+    </tr>
+  </tbody>
+</table>
+
+<div style="margin-top:40px; padding:20px; background:white; border-radius:16px; border:1px solid #e8e8ed;">
+  <div style="font-size:16px; font-weight:700; margin-bottom:12px;">画面の追加・削除ガイド</div>
+  <div style="font-size:14px; color:#6e6e73; line-height:1.8;">
+    <strong>追加:</strong> index.html に <code>&lt;div id="screen-{名前}" class="screen"&gt;</code> を追加 → ボトムナビに表示する場合はナビにも追加 → この管理ページを更新<br>
+    <strong>削除:</strong> 該当の screen div を削除 → ボトムナビから削除 → 他画面からのリンク（onclick等）を削除 → この管理ページを更新<br>
+    <strong>注意:</strong> navigate() 関数は汎用的なので、IDさえ合えば自動で画面遷移が動きます。
+  </div>
+</div>
+
+<div style="text-align:center; padding:32px 0 16px; font-size:12px; color:#86868b;">
+  HostMatch Screen Map | Last updated: 2026-04-13
+</div>
+
+</body>
+</html>

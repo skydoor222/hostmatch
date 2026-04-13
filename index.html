@@ -774,6 +774,167 @@
 
     /* date bubble */
     .date-label { text-align: center; font-size: 11px; color: var(--light); margin: 4px 0; }
+
+    /* ===== MYPAGE SUB SCREENS ===== */
+    .mypage-sub {
+      display: none; flex-direction: column; min-height: 100vh;
+      background: var(--bg); position: fixed; inset: 0; z-index: 300;
+      max-width: 430px; left: 50%; transform: translateX(-50%);
+    }
+    .mypage-sub.open { display: flex; }
+    .mypage-sub-header {
+      background: white; padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .mypage-sub-back { font-size: 20px; cursor: pointer; }
+    .mypage-sub-title { font-size: 18px; font-weight: 800; }
+    .mypage-sub-body {
+      flex: 1; overflow-y: auto; padding: 0 0 100px;
+    }
+    .form-section { padding: 20px 16px 0; }
+    .form-section-title { font-size: 14px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { font-size: 12px; font-weight: 700; color: var(--light); margin-bottom: 6px; }
+    .form-input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 15px; outline: none; background: white;
+      color: var(--dark); font-family: inherit;
+    }
+    .form-input:focus { border-color: var(--dark); }
+    .form-textarea {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 15px; outline: none; background: white;
+      color: var(--dark); font-family: inherit; resize: vertical; min-height: 80px;
+    }
+    .form-textarea:focus { border-color: var(--dark); }
+    .form-select {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 15px; outline: none; background: white;
+      color: var(--dark); font-family: inherit; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23767676' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+    .form-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .form-chip {
+      padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--border); background: white; cursor: pointer;
+      color: var(--mid); transition: all .15s;
+    }
+    .form-chip.selected { border-color: var(--primary); background: #FFF0F0; color: var(--primary); }
+    .form-range-row { display: flex; gap: 10px; align-items: center; }
+    .form-range-input {
+      flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 15px; outline: none; background: white;
+      color: var(--dark); font-family: inherit; text-align: center;
+    }
+    .form-range-sep { font-size: 14px; color: var(--light); font-weight: 700; }
+    .form-save-bar {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; background: white;
+      padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0));
+      border-top: 1px solid var(--border); z-index: 310;
+    }
+    .form-save-btn {
+      width: 100%; background: var(--primary); color: white; border: none;
+      border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer;
+    }
+    .form-saved-toast {
+      position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+      background: var(--dark); color: white; border-radius: 12px;
+      padding: 12px 24px; font-size: 14px; font-weight: 600; z-index: 999;
+      opacity: 0; transition: opacity .3s; pointer-events: none;
+    }
+    .form-saved-toast.show { opacity: 1; }
+
+    /* interview date picker */
+    .interview-date-section { margin-top: 16px; }
+    .interview-date-label { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
+    .interview-date-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .interview-date-option {
+      padding: 10px 8px; border: 1.5px solid var(--border); border-radius: 12px;
+      text-align: center; cursor: pointer; background: white; transition: all .15s;
+    }
+    .interview-date-option.selected { border-color: var(--primary); background: #FFF0F0; }
+    .interview-date-day { font-size: 12px; font-weight: 700; color: var(--dark); }
+    .interview-date-date { font-size: 11px; color: var(--light); margin-top: 2px; }
+    .interview-time-row { margin-top: 10px; }
+    .interview-time-select {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 12px 14px; font-size: 14px; background: white; color: var(--dark);
+      font-family: inherit; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23767676' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center;
+    }
+
+    /* ===== INTERVIEW MODAL ===== */
+    .interview-overlay {
+      display: none; position: fixed; inset: 0; z-index: 600;
+      background: rgba(0,0,0,.5); align-items: center; justify-content: center;
+      max-width: 430px; left: 50%; transform: translateX(-50%);
+    }
+    .interview-overlay.open { display: flex; }
+    .interview-modal {
+      background: white; border-radius: 20px; margin: 24px;
+      padding: 28px 24px; width: calc(100% - 48px); text-align: center;
+    }
+    .interview-icon { font-size: 48px; margin-bottom: 12px; }
+    .interview-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .interview-sub { font-size: 14px; color: var(--light); margin-bottom: 20px; line-height: 1.5; }
+    .interview-info {
+      background: var(--bg); border-radius: 14px; padding: 16px;
+      margin-bottom: 20px; text-align: left;
+    }
+    .interview-info-row {
+      display: flex; justify-content: space-between; padding: 6px 0;
+      font-size: 14px;
+    }
+    .interview-info-row span:first-child { color: var(--light); }
+    .interview-info-row span:last-child { font-weight: 700; }
+    .interview-btn-primary {
+      width: 100%; background: var(--primary); color: white; border: none;
+      border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-bottom: 10px;
+    }
+    .interview-btn-cancel {
+      width: 100%; background: none; border: none;
+      font-size: 14px; font-weight: 600; color: var(--light);
+      cursor: pointer; padding: 8px;
+    }
+
+    /* ===== COMPLETE OVERLAY ===== */
+    .complete-overlay {
+      display: none; position: fixed; inset: 0; z-index: 700;
+      background: white; flex-direction: column; align-items: center; justify-content: center;
+      max-width: 430px; left: 50%; transform: translateX(-50%); padding: 32px;
+    }
+    .complete-overlay.open { display: flex; }
+    .complete-check { font-size: 64px; margin-bottom: 16px; }
+    .complete-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .complete-sub { font-size: 14px; color: var(--light); text-align: center; line-height: 1.6; margin-bottom: 24px; }
+    .complete-card {
+      background: var(--bg); border-radius: 16px; padding: 20px; width: 100%;
+      margin-bottom: 24px;
+    }
+    .complete-card-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+    .complete-card-row span:first-child { color: var(--light); }
+    .complete-card-row span:last-child { font-weight: 700; }
+    .complete-card-divider { height: 1px; background: var(--border); margin: 8px 0; }
+    .paypay-btn {
+      width: 100%; background: #FF0033; color: white; border: none;
+      border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-bottom: 10px; display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+    }
+    .complete-later {
+      width: 100%; background: none; border: 1.5px solid var(--border);
+      border-radius: 14px; padding: 14px; font-size: 14px; font-weight: 600;
+      color: var(--mid); cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -1321,8 +1482,8 @@
   </div>
 
   <div class="detail-cta">
-    <button class="btn-outline" onclick="navigate('detail','chat')">💬 メッセージ</button>
-    <button class="btn-primary">📹 面談を申し込む</button>
+    <button class="btn-outline" onclick="openChat()">💬 メッセージ</button>
+    <button class="btn-primary" onclick="requestInterview()">📹 面談を申し込む</button>
   </div>
 </div>
 
@@ -1334,7 +1495,7 @@
     </div>
   </div>
   <div class="msg-list">
-    <div class="msg-item unread" onclick="navigate('messages','chat')">
+    <div class="msg-item unread" onclick="openChat('sarah')">
       <div class="msg-avatar av1">👩</div>
       <div class="msg-content">
         <div class="msg-row1">
@@ -1345,7 +1506,7 @@
       </div>
       <div class="msg-unread-dot"></div>
     </div>
-    <div class="msg-item unread" onclick="navigate('messages','chat')">
+    <div class="msg-item unread" onclick="openChat('michael')">
       <div class="msg-avatar av2">👨</div>
       <div class="msg-content">
         <div class="msg-row1">
@@ -1356,7 +1517,7 @@
       </div>
       <div class="msg-unread-dot"></div>
     </div>
-    <div class="msg-item" onclick="navigate('messages','chat')">
+    <div class="msg-item" onclick="openChat('emily')">
       <div class="msg-avatar av3">👩</div>
       <div class="msg-content">
         <div class="msg-row1">
@@ -1366,7 +1527,7 @@
         <div class="msg-preview">The room is available from May 1st. Let me know!</div>
       </div>
     </div>
-    <div class="msg-item" onclick="navigate('messages','chat')">
+    <div class="msg-item" onclick="openChat('robert')">
       <div class="msg-avatar av4">👨</div>
       <div class="msg-content">
         <div class="msg-row1">
@@ -1507,9 +1668,9 @@
     </div>
 
     <div class="mypage-section-title">プロフィール</div>
-    <div class="mypage-item"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openSubScreen('profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openSubScreen('lifestyle')"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openSubScreen('preferences')"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">申請・履歴</div>
     <div class="mypage-item"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
@@ -1522,6 +1683,282 @@
     <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
+</div>
+
+<!-- ==================== プロフィール編集 ==================== -->
+<div class="mypage-sub" id="sub-profile">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="closeSubScreen('profile')">←</div>
+    <div class="mypage-sub-title">プロフィール編集</div>
+  </div>
+  <div class="mypage-sub-body">
+    <div class="form-section">
+      <div class="form-section-title">👤 基本情報</div>
+      <div class="form-group">
+        <div class="form-label">名前</div>
+        <input class="form-input" id="prof-name" type="text" value="Yuki Tanaka" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">メールアドレス</div>
+        <input class="form-input" id="prof-email" type="email" value="yuki.tanaka@example.com" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">電話番号</div>
+        <input class="form-input" id="prof-phone" type="tel" value="+81 90-1234-5678" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">生年月日</div>
+        <input class="form-input" id="prof-birthday" type="date" value="2004-08-15" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">性別</div>
+        <select class="form-select" id="prof-gender">
+          <option value="female">女性</option>
+          <option value="male">男性</option>
+          <option value="other">その他</option>
+          <option value="none">回答しない</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">国籍</div>
+        <input class="form-input" id="prof-nationality" type="text" value="日本" />
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">🎓 留学情報</div>
+      <div class="form-group">
+        <div class="form-label">渡航目的</div>
+        <select class="form-select" id="prof-purpose">
+          <option value="study" selected>語学留学</option>
+          <option value="university">大学留学</option>
+          <option value="work">ワーキングホリデー</option>
+          <option value="internship">インターンシップ</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">英語レベル</div>
+        <select class="form-select" id="prof-english">
+          <option value="beginner">初級（挨拶程度）</option>
+          <option value="elementary">初中級（日常会話が少し）</option>
+          <option value="intermediate" selected>中級（日常会話OK）</option>
+          <option value="upper">中上級（仕事で使える）</option>
+          <option value="advanced">上級（ネイティブ並み）</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">自己紹介（ホストへのメッセージ）</div>
+        <textarea class="form-textarea" id="prof-intro" rows="4">はじめまして、Yukiです。来年からNYで語学留学を予定しています。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="form-save-bar">
+    <button class="form-save-btn" onclick="saveSubScreen('profile')">保存する</button>
+  </div>
+</div>
+
+<!-- ==================== 生活スタイル設定 ==================== -->
+<div class="mypage-sub" id="sub-lifestyle">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="closeSubScreen('lifestyle')">←</div>
+    <div class="mypage-sub-title">生活スタイル設定</div>
+  </div>
+  <div class="mypage-sub-body">
+    <div class="form-section">
+      <div class="form-section-title">⏰ 生活リズム</div>
+      <div class="form-group">
+        <div class="form-label">起床時間</div>
+        <select class="form-select" id="ls-wake">
+          <option value="5:00">5:00 AM</option>
+          <option value="6:00">6:00 AM</option>
+          <option value="6:30">6:30 AM</option>
+          <option value="7:00" selected>7:00 AM</option>
+          <option value="7:30">7:30 AM</option>
+          <option value="8:00">8:00 AM</option>
+          <option value="9:00">9:00 AM 以降</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">就寝時間</div>
+        <select class="form-select" id="ls-sleep">
+          <option value="21:00">9:00 PM</option>
+          <option value="22:00">10:00 PM</option>
+          <option value="23:00" selected>11:00 PM</option>
+          <option value="0:00">12:00 AM</option>
+          <option value="1:00">1:00 AM 以降</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">💬 コミュニケーション</div>
+      <div class="form-group">
+        <div class="form-label">会話量の好み</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">少なめ</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip" onclick="toggleChip(this)">多め</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">性格タイプ</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">穏やか</div>
+          <div class="form-chip" onclick="toggleChip(this)">社交的</div>
+          <div class="form-chip" onclick="toggleChip(this)">アクティブ</div>
+          <div class="form-chip" onclick="toggleChip(this)">インドア派</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">🧹 生活習慣</div>
+      <div class="form-group">
+        <div class="form-label">清潔度</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">気にしない</div>
+          <div class="form-chip" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">きれい好き</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">食事の好み</div>
+        <div class="form-chip-row" id="food-chips">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">何でもOK</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ビーガン</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">アレルギーあり</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-save-bar">
+    <button class="form-save-btn" onclick="saveSubScreen('lifestyle')">保存する</button>
+  </div>
+</div>
+
+<!-- ==================== NG条件・希望条件 ==================== -->
+<div class="mypage-sub" id="sub-preferences">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="closeSubScreen('preferences')">←</div>
+    <div class="mypage-sub-title">NG条件・希望条件</div>
+  </div>
+  <div class="mypage-sub-body">
+    <div class="form-section">
+      <div class="form-section-title">✅ 希望条件</div>
+      <div class="form-group">
+        <div class="form-label">月額予算（USD）</div>
+        <div class="form-range-row">
+          <input class="form-range-input" id="pref-budget-min" type="number" value="500" placeholder="下限" />
+          <div class="form-range-sep">〜</div>
+          <input class="form-range-input" id="pref-budget-max" type="number" value="1200" placeholder="上限" />
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">希望エリア</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">New York</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">Boston</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">Los Angeles</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">San Francisco</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">Chicago</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">Seattle</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">食事</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">不要</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
+          <div class="form-chip" onclick="toggleChip(this)">朝夕食</div>
+          <div class="form-chip" onclick="toggleChip(this)">3食</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ホストの性別</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          <div class="form-chip" onclick="toggleChip(this)">女性</div>
+          <div class="form-chip" onclick="toggleChip(this)">男性</div>
+          <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">🚫 NG条件</div>
+      <div class="form-group">
+        <div class="form-label">絶対NGな条件を選んでください（複数選択可）</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙OK</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペットあり</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🎵 楽器NG</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🌙 夜型NG</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">その他のNG・希望（自由記述）</div>
+        <textarea class="form-textarea" id="pref-notes" rows="3" placeholder="例：Wi-Fiが安定している環境が必須です。アレルギーがあるので猫がいるお家は避けたいです。">Wi-Fiの速度が安定していることが重要です。</textarea>
+      </div>
+    </div>
+  </div>
+  <div class="form-save-bar">
+    <button class="form-save-btn" onclick="saveSubScreen('preferences')">保存する</button>
+  </div>
+</div>
+
+<!-- 保存完了トースト -->
+<div class="form-saved-toast" id="saved-toast">保存しました ✓</div>
+
+<!-- ==================== 面談申し込みモーダル ==================== -->
+<div class="interview-overlay" id="interview-modal-overlay" onclick="closeInterviewModal(event)">
+  <div class="interview-modal">
+    <div class="interview-icon">📹</div>
+    <div class="interview-title">面談を申し込む</div>
+    <div class="interview-sub">ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。</div>
+    <div class="interview-info">
+      <div class="interview-info-row"><span>ホスト</span><span id="interview-host-name">Sarah Johnson</span></div>
+      <div class="interview-info-row"><span>月額料金</span><span id="interview-price">$950</span></div>
+      <div class="interview-info-row"><span>面談方法</span><span>ビデオ通話（15分）</span></div>
+      <div class="interview-info-row"><span>費用</span><span style="color:#00875A">無料</span></div>
+    </div>
+    <div class="interview-date-section">
+      <div class="interview-date-label">📅 希望日を選択</div>
+      <div class="interview-date-grid" id="interview-date-grid">
+        <!-- JS で動的生成 -->
+      </div>
+      <div class="interview-time-row">
+        <select class="interview-time-select" id="interview-time">
+          <option value="">時間帯を選択...</option>
+          <option value="09:00">9:00 - 9:30 (JST)</option>
+          <option value="10:00">10:00 - 10:30 (JST)</option>
+          <option value="11:00">11:00 - 11:30 (JST)</option>
+          <option value="13:00">13:00 - 13:30 (JST)</option>
+          <option value="14:00">14:00 - 14:30 (JST)</option>
+          <option value="19:00">19:00 - 19:30 (JST)</option>
+          <option value="20:00">20:00 - 20:30 (JST)</option>
+          <option value="21:00">21:00 - 21:30 (JST)</option>
+        </select>
+      </div>
+    </div>
+    <button class="interview-btn-primary" onclick="confirmInterview()" style="margin-top:16px;">面談を確定する</button>
+    <button class="interview-btn-cancel" onclick="closeInterviewModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ==================== 申し込み完了画面 ==================== -->
+<div class="complete-overlay" id="complete-overlay">
+  <div class="complete-check">✅</div>
+  <div class="complete-title">面談が確定しました！</div>
+  <div class="complete-sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はデポジットのお支払いに進みます。</div>
+  <div class="complete-card">
+    <div class="complete-card-row"><span>ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
+    <div class="complete-card-row"><span>月額料金</span><span id="complete-price">$950 /月</span></div>
+    <div class="complete-card-divider"></div>
+    <div class="complete-card-row"><span>デポジット（1ヶ月分）</span><span id="complete-deposit" style="color:var(--primary);font-weight:800;">$950</span></div>
+  </div>
+  <button class="paypay-btn" onclick="goToPayPay()">💰 PayPayでデポジットを支払う</button>
+  <button class="complete-later" onclick="closeComplete()">あとで支払う</button>
 </div>
 
 <!-- ==================== BOTTOM NAV ==================== -->
@@ -1546,8 +1983,257 @@
 </nav>
 
 <script>
-  let currentScreen = 'search';
+  /* ===== HOST DATA ===== */
+  const HOSTS = {
+    sarah: {
+      name: 'Sarah Johnson', avatar: '👩', avClass: 'av1', roomBg: 'r1', roomEmoji: '🛋️',
+      match: 96, rating: 4.98, reviews: 87, years: 3, gender: 'female',
+      city: 'Manhattan', state: 'New York', stateShort: 'NY', country: '🇺🇸',
+      roomType: '個室', price: 950,
+      photos: [
+        'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
+        'https://images.unsplash.com/photo-1449844908441-8829872d2607?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 日本語OK', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '👩 女性限定', cls: 'blue' }, { text: '✓ 留学生歓迎', cls: 'green' },
+        { text: '✗ 来客宿泊NG', cls: 'red' }
+      ],
+      lifestyle: { wake: '7:00 AM', sleep: '11:00 PM', talk: '普通〜多め', clean: 'きれい好き' },
+      rules: [
+        { ok: true, text: '門限 22:30（相談可）' }, { ok: true, text: 'キッチン共有OK（〜21:00）' },
+        { ok: false, text: '来客宿泊不可' }, { ok: true, text: '掃除当番：週1（共有部分）' },
+        { ok: false, text: '楽器演奏不可' }, { ok: true, text: '朝食あり（平日のみ）' }
+      ],
+      room: [
+        { label: '広さ', val: '10㎡（約6畳）' }, { label: 'バス・トイレ', val: '共用（2人でシェア）' },
+        { label: '日当たり', val: '東向き・午前良好' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: '72nd St 徒歩5分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$750 /月' }, { label: '朝食（平日）', val: '$100 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍳 朝食込み', mapNote: '最寄り駅：72nd St 徒歩5分 · Central Park まで徒歩10分',
+      chatMessages: [
+        { from: 'them', text: 'Hi! I saw you were interested in my room. Feel free to ask anything 😊', time: '10:15' },
+        { from: 'me', text: 'こんにちは！部屋についていくつか質問してもいいですか？', time: '10:22' },
+        { from: 'them', text: 'Of course! What would you like to know?', time: '10:24' },
+        { from: 'me', text: '部屋の広さと、バスルームを何人でシェアするか教えてください。', time: '10:30' },
+        { from: 'them', text: 'The room is about 10㎡ with a big window facing east 🌅 The bathroom is shared with just one other person.', time: '10:35' },
+        { from: 'me', text: 'ありがとうございます！朝食は毎日ありますか？', time: '10:40' },
+        { from: 'them', text: 'Breakfast is available on weekdays (Mon–Fri). I usually make eggs, toast, and coffee ☕ On weekends you\'re on your own but you can use the kitchen freely!', time: '10:42' }
+      ]
+    },
+    michael: {
+      name: 'Michael & Lisa Chen', avatar: '👨', avClass: 'av2', roomBg: 'r2', roomEmoji: '🌴',
+      match: 93, rating: 4.92, reviews: 64, years: 5, gender: 'couple',
+      city: 'Santa Monica', state: 'Los Angeles', stateShort: 'CA', country: '🇺🇸',
+      roomType: '個室', price: 1100,
+      photos: [
+        'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80',
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1567521464027-f127ff144326?w=800&q=80',
+        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 日本語OK', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '✓ 3食付き', cls: 'green' }, { text: '✓ ペット可', cls: 'green' }
+      ],
+      lifestyle: { wake: '6:30 AM', sleep: '10:30 PM', talk: '多め', clean: 'きれい好き' },
+      rules: [
+        { ok: true, text: '門限なし' }, { ok: true, text: 'キッチン共有OK' },
+        { ok: true, text: '来客OK（事前連絡）' }, { ok: true, text: '3食提供（家庭料理）' },
+        { ok: false, text: '喫煙不可' }, { ok: true, text: 'ペット（犬1匹）います' }
+      ],
+      room: [
+        { label: '広さ', val: '14㎡（約8畳）' }, { label: 'バス・トイレ', val: '専用（部屋付き）' },
+        { label: '日当たり', val: '南向き・良好' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: '26th St/Bergamot 徒歩8分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$800 /月' }, { label: '食事（3食）', val: '$200 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍽️ 3食込み', mapNote: '最寄り駅：26th St/Bergamot 徒歩8分 · ビーチまで徒歩15分',
+      chatMessages: [
+        { from: 'them', text: 'Hi there! We\'re so glad you\'re interested in staying with us 🏡', time: '09:00' },
+        { from: 'me', text: 'お食事付きが魅力的で応募しました！', time: '09:15' },
+        { from: 'them', text: 'We love cooking! Lisa makes amazing Chinese and American fusion dishes. You\'ll love it 🥘', time: '09:20' },
+        { from: 'me', text: 'ペットがいるとのことですが、犬種は何ですか？', time: '09:30' },
+        { from: 'them', text: 'We have a golden retriever named Sunny! He\'s very friendly 🐕', time: '09:35' }
+      ]
+    },
+    emily: {
+      name: 'Emily Williams', avatar: '👩', avClass: 'av3', roomBg: 'r3', roomEmoji: '🏛️',
+      match: 91, rating: 5.00, reviews: 42, years: 2, gender: 'female',
+      city: 'Cambridge', state: 'Boston', stateShort: 'MA', country: '🇺🇸',
+      roomType: '個室', price: 880,
+      photos: [
+        'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
+        'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 留学生歓迎', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '✓ 朝食付き', cls: 'green' }, { text: '✓ 女性限定', cls: 'blue' }
+      ],
+      lifestyle: { wake: '7:30 AM', sleep: '11:30 PM', talk: '普通', clean: '普通' },
+      rules: [
+        { ok: true, text: '門限なし' }, { ok: true, text: 'キッチン自由利用' },
+        { ok: true, text: '来客OK' }, { ok: true, text: '朝食あり（毎日）' },
+        { ok: false, text: '喫煙不可' }, { ok: false, text: 'ペット不可' }
+      ],
+      room: [
+        { label: '広さ', val: '12㎡（約7畳）' }, { label: 'バス・トイレ', val: '共用（2人でシェア）' },
+        { label: '日当たり', val: '西向き・午後良好' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: 'Harvard Square 徒歩10分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$650 /月' }, { label: '朝食（毎日）', val: '$130 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍳 朝食込み', mapNote: '最寄り駅：Harvard Square 徒歩10分 · MIT まで自転車10分',
+      chatMessages: [
+        { from: 'them', text: 'Welcome! I\'m a Harvard grad student so I totally understand the student life 📚', time: '11:00' },
+        { from: 'me', text: '留学生歓迎とのことで、嬉しいです！', time: '11:10' },
+        { from: 'them', text: 'Absolutely! I\'ve hosted 3 Japanese students before. The room is available from May 1st. Let me know!', time: '11:15' }
+      ]
+    },
+    thompson: {
+      name: 'The Thompson Family', avatar: '👨', avClass: 'av6', roomBg: 'r6', roomEmoji: '🌉',
+      match: 88, rating: 4.97, reviews: 73, years: 4, gender: 'family',
+      city: 'Mission District', state: 'San Francisco', stateShort: 'CA', country: '🇺🇸',
+      roomType: '個室', price: 1050,
+      photos: [
+        'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=800&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
+        'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 朝食付き', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '✓ 来客OK', cls: 'green' }, { text: '✓ ファミリー', cls: 'blue' }
+      ],
+      lifestyle: { wake: '6:00 AM', sleep: '10:00 PM', talk: '多め', clean: 'きれい好き' },
+      rules: [
+        { ok: true, text: '門限 23:00' }, { ok: true, text: 'キッチン共有OK' },
+        { ok: true, text: '来客OK（22時まで）' }, { ok: true, text: '朝食あり（毎日）' },
+        { ok: false, text: '喫煙不可' }, { ok: true, text: '子供（10歳・7歳）がいます' }
+      ],
+      room: [
+        { label: '広さ', val: '13㎡（約8畳）' }, { label: 'バス・トイレ', val: '共用（家族とシェア）' },
+        { label: '日当たり', val: '南向き・良好' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: '24th St Mission BART 徒歩5分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$800 /月' }, { label: '朝食（毎日）', val: '$150 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍳 朝食込み', mapNote: '最寄り駅：24th St Mission BART 徒歩5分 · Dolores Park 徒歩3分',
+      chatMessages: [
+        { from: 'them', text: 'Hey! The kids are excited to meet someone from Japan 🇯🇵', time: '15:00' },
+        { from: 'me', text: 'お子さんがいらっしゃるんですね！楽しそうです。', time: '15:10' },
+        { from: 'them', text: 'Sure, let\'s schedule a video call for this weekend!', time: '15:15' }
+      ]
+    },
+    jennifer: {
+      name: 'Jennifer Park', avatar: '👩', avClass: 'av5', roomBg: 'r5', roomEmoji: '🌲',
+      match: 85, rating: 4.89, reviews: 31, years: 1, gender: 'female',
+      city: 'Capitol Hill', state: 'Seattle', stateShort: 'WA', country: '🇺🇸',
+      roomType: '個室', price: 820,
+      photos: [
+        'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
+        'https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 夜型OK', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '✓ 朝食付き', cls: 'green' }, { text: '✓ 来客OK', cls: 'green' }
+      ],
+      lifestyle: { wake: '9:00 AM', sleep: '1:00 AM', talk: '少なめ', clean: '普通' },
+      rules: [
+        { ok: true, text: '門限なし' }, { ok: true, text: 'キッチン自由利用' },
+        { ok: true, text: '来客OK' }, { ok: true, text: '朝食あり（平日のみ）' },
+        { ok: false, text: '喫煙不可' }, { ok: true, text: '夜間の音は配慮を' }
+      ],
+      room: [
+        { label: '広さ', val: '11㎡（約6.5畳）' }, { label: 'バス・トイレ', val: '共用（2人でシェア）' },
+        { label: '日当たり', val: '北向き・穏やか' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: 'Capitol Hill Station 徒歩7分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$620 /月' }, { label: '朝食（平日）', val: '$100 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍳 朝食込み', mapNote: '最寄り駅：Capitol Hill Station 徒歩7分 · Volunteer Park 徒歩5分',
+      chatMessages: [
+        { from: 'them', text: 'Hey! I\'m a night owl too so no worries about late nights 🌙', time: '23:00' },
+        { from: 'me', text: '夜型OKなのが嬉しいです！普段は何時頃まで起きてますか？', time: '23:10' },
+        { from: 'them', text: 'Usually until 1-2am! I work in tech so my schedule is pretty flexible 💻', time: '23:15' }
+      ]
+    },
+    robert: {
+      name: 'Robert & Mary Davis', avatar: '👨', avClass: 'av4', roomBg: 'r4', roomEmoji: '🌆',
+      match: 82, rating: 4.95, reviews: 95, years: 6, gender: 'couple',
+      city: 'Lincoln Park', state: 'Chicago', stateShort: 'IL', country: '🇺🇸',
+      roomType: '個室', price: 780,
+      photos: [
+        'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=800&q=80',
+        'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80',
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80',
+        'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&q=80',
+        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80',
+        'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80'
+      ],
+      tags: [
+        { text: '✓ 夕食付き', cls: 'green' }, { text: '✗ 喫煙NG', cls: 'red' },
+        { text: '✓ ペット可', cls: 'green' }, { text: '✓ 来客OK', cls: 'green' }
+      ],
+      lifestyle: { wake: '6:00 AM', sleep: '10:00 PM', talk: '普通', clean: 'きれい好き' },
+      rules: [
+        { ok: true, text: '門限 22:00（相談可）' }, { ok: true, text: 'キッチン共有OK' },
+        { ok: true, text: '来客OK（事前連絡）' }, { ok: true, text: '夕食あり（平日）' },
+        { ok: false, text: '喫煙不可' }, { ok: true, text: '猫（2匹）がいます' }
+      ],
+      room: [
+        { label: '広さ', val: '12㎡（約7畳）' }, { label: 'バス・トイレ', val: '専用（部屋付き）' },
+        { label: '日当たり', val: '東向き・午前良好' }, { label: 'Wi-Fi', val: '光回線・無制限' },
+        { label: '最寄り', val: 'Fullerton Station 徒歩6分' }
+      ],
+      priceBreakdown: [
+        { label: '家賃', val: '$550 /月' }, { label: '夕食（平日）', val: '$130 /月' },
+        { label: '光熱費・Wi-Fi', val: '$100 /月' }
+      ],
+      mealsTag: '🍽️ 夕食込み', mapNote: '最寄り駅：Fullerton Station 徒歩6分 · Lincoln Park Zoo 徒歩10分',
+      chatMessages: [
+        { from: 'them', text: 'Welcome! We usually have dinner together on weekdays 🍽️', time: '18:00' },
+        { from: 'me', text: '夕食付きが嬉しいです！どんなお料理が多いですか？', time: '18:10' },
+        { from: 'them', text: 'Mary loves cooking Italian and American classics. We also do BBQ on weekends sometimes! 🥩', time: '18:15' }
+      ]
+    }
+  };
 
+  /* ===== STATE ===== */
+  let currentScreen = 'search';
+  let currentHost = null;
+  let favorites = new Set(['michael', 'thompson']);
+
+  /* ===== NAVIGATION ===== */
   function navigate(from, to) {
     document.getElementById('screen-' + from).classList.remove('active');
     document.getElementById('screen-' + to).classList.add('active');
@@ -1557,12 +2243,270 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.querySelector('.bottom-nav');
     bottomNav.style.display = (to === 'detail' || to === 'chat') ? 'none' : 'flex';
+    if (to === 'favorites') renderFavorites();
+    if (to === 'search') window.scrollTo(0, 0);
   }
 
-  function openDetail(host) {
-    // close map if open
+  /* ===== DETAIL SCREEN ===== */
+  function openDetail(hostId) {
     document.getElementById('map-overlay').classList.remove('open');
+    const h = HOSTS[hostId];
+    if (!h) return;
+    currentHost = hostId;
+
+    // Photos
+    const track = document.getElementById('photo-track');
+    track.innerHTML = h.photos.map((src, i) =>
+      `<img class="photo-slide" src="${src}" alt="写真${i+1}" loading="lazy" />`
+    ).join('');
+    photoIndex = 0;
+    track.style.transform = 'translateX(0)';
+    document.getElementById('photo-counter').textContent = '1 / ' + h.photos.length;
+    const dots = document.getElementById('photo-dots');
+    dots.innerHTML = h.photos.map((_, i) =>
+      `<div class="photo-dot${i === 0 ? ' active' : ''}"></div>`
+    ).join('');
+
+    // Save btn
+    document.getElementById('detail-save').textContent = favorites.has(hostId) ? '❤️' : '🤍';
+
+    // Host info
+    document.getElementById('detail-avatar').className = 'detail-avatar ' + h.avClass;
+    document.getElementById('detail-avatar').textContent = h.avatar;
+    document.getElementById('detail-name').textContent = h.name;
+    document.getElementById('detail-match-badge').textContent = '🤖 マッチ度：' + h.match + '%';
+    document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ホスト歴' + h.years + '年';
+    document.getElementById('detail-rating').innerHTML = '★ ' + h.rating + ' <span>(' + h.reviews + '件のレビュー)</span>';
+
+    // Tags
+    document.getElementById('detail-tags').innerHTML = h.tags.map(t =>
+      `<span class="dtag ${t.cls}">${t.text}</span>`
+    ).join('');
+
+    // Lifestyle
+    const grid = document.querySelector('.ls-grid');
+    grid.innerHTML = `
+      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">起床</div><div class="ls-val">${h.lifestyle.wake}</div></div>
+      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">就寝</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
+      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">会話量</div><div class="ls-val">${h.lifestyle.talk}</div></div>
+      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">清潔度</div><div class="ls-val">${h.lifestyle.clean}</div></div>
+    `;
+
+    // Rules
+    document.querySelector('.rule-list').innerHTML = h.rules.map(r =>
+      `<div class="rule-row"><span class="${r.ok ? 'rule-ok' : 'rule-ng'}">${r.ok ? '✓' : '✗'}</span> ${r.text}</div>`
+    ).join('');
+
+    // Room info
+    document.querySelector('.info-grid').innerHTML = h.room.map(r =>
+      `<div class="info-row"><span class="info-label">${r.label}</span><span class="info-val">${r.val}</span></div>`
+    ).join('');
+
+    // Price
+    const priceBox = document.querySelector('.price-box');
+    priceBox.innerHTML = h.priceBreakdown.map(p =>
+      `<div class="price-row"><span style="color:var(--light)">${p.label}</span><strong>${p.val}</strong></div>`
+    ).join('') +
+      `<div class="price-row total"><span>合計</span><span>$${h.price.toLocaleString()} /月</span></div>
+       <div class="price-note">※ デポジット1ヶ月分・礼金なし・仲介手数料なし</div>`;
+
+    // Map
+    document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
+    document.querySelector('#screen-detail .match-card-map + div').textContent = h.mapNote;
+
+    // Scroll to top
+    document.querySelector('.detail-scroll').scrollTop = 0;
+
     navigate(currentScreen, 'detail');
+  }
+
+  /* ===== PHOTO SLIDER ===== */
+  let photoIndex = 0;
+
+  function slidePhoto(dir) {
+    if (!currentHost) return;
+    const total = HOSTS[currentHost].photos.length;
+    photoIndex = (photoIndex + dir + total) % total;
+    document.getElementById('photo-track').style.transform = `translateX(-${photoIndex * 100}%)`;
+    document.getElementById('photo-counter').textContent = (photoIndex + 1) + ' / ' + total;
+    document.querySelectorAll('.photo-dot').forEach((d, i) => d.classList.toggle('active', i === photoIndex));
+  }
+
+  (function() {
+    let startX = 0;
+    document.addEventListener('touchstart', e => {
+      if (e.target.closest('.detail-photo-slider')) startX = e.touches[0].clientX;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!e.target.closest('.detail-photo-slider')) return;
+      const diff = startX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
+    }, { passive: true });
+  })();
+
+  /* ===== FAVORITES ===== */
+  function toggleFavorite(hostId, event) {
+    if (event) event.stopPropagation();
+    if (favorites.has(hostId)) {
+      favorites.delete(hostId);
+    } else {
+      favorites.add(hostId);
+    }
+    updateFavIcons();
+  }
+
+  function toggleDetailFav() {
+    if (!currentHost) return;
+    toggleFavorite(currentHost);
+    document.getElementById('detail-save').textContent = favorites.has(currentHost) ? '❤️' : '🤍';
+  }
+
+  function updateFavIcons() {
+    document.querySelectorAll('.match-card-save').forEach(el => {
+      const card = el.closest('.match-card');
+      const onclick = card.getAttribute('onclick');
+      const m = onclick && onclick.match(/openDetail\('(\w+)'\)/);
+      if (m) el.textContent = favorites.has(m[1]) ? '❤️' : '🤍';
+    });
+  }
+
+  function renderFavorites() {
+    const list = document.querySelector('.fav-list');
+    if (favorites.size === 0) {
+      list.innerHTML = '<div class="fav-empty"><div class="fav-empty-icon">🤍</div><div class="fav-empty-text">お気に入りはまだありません</div></div>';
+      return;
+    }
+    list.innerHTML = '';
+    favorites.forEach(id => {
+      const h = HOSTS[id];
+      if (!h) return;
+      list.innerHTML += `
+        <div class="host-card" onclick="openDetail('${id}')">
+          <div class="card-img">
+            <div class="card-room-bg ${h.roomBg}">${h.roomEmoji}</div>
+            <div class="card-flag">${h.country} ${h.state}, ${h.stateShort}</div>
+            <div class="card-save-btn" onclick="toggleFavorite('${id}',event)">❤️</div>
+            <div class="card-avatar ${h.avClass}">${h.avatar}</div>
+          </div>
+          <div class="card-body">
+            <div class="card-row1">
+              <div class="card-host-name">${h.name}</div>
+              <div class="card-rating">★ ${h.rating}</div>
+            </div>
+            <div class="card-location">${h.city} · ${h.roomType}</div>
+            <div class="card-footer">
+              <div class="card-price"><strong>$${h.price.toLocaleString()}</strong><span> /月〜</span></div>
+              <div class="card-meals-tag">${h.mealsTag}</div>
+            </div>
+          </div>
+        </div>`;
+    });
+  }
+
+  /* ===== CHAT ===== */
+  function openChat(hostId) {
+    const h = HOSTS[hostId || currentHost];
+    if (!h) return;
+    currentHost = hostId || currentHost;
+
+    // Header
+    const header = document.querySelector('.chat-header');
+    header.querySelector('.chat-avatar').className = 'chat-avatar ' + h.avClass;
+    header.querySelector('.chat-avatar').textContent = h.avatar;
+    header.querySelector('.chat-title').textContent = h.name;
+    header.querySelector('.chat-subtitle').textContent = h.country + ' ' + h.city + ', ' + h.stateShort;
+
+    // Messages
+    const area = document.querySelector('.chat-messages');
+    area.innerHTML = '<div class="date-label">会話履歴</div>' +
+      h.chatMessages.map(m => `
+        <div class="bubble-wrap ${m.from}">
+          <div class="bubble ${m.from}">${m.text}</div>
+          <div class="bubble-time">${m.time}</div>
+        </div>
+      `).join('');
+
+    navigate(currentScreen, 'chat');
+    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
+  }
+
+  function sendMessage() {
+    const input = document.querySelector('.chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    const area = document.querySelector('.chat-messages');
+    const now = new Date();
+    const time = now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+
+    area.innerHTML += `
+      <div class="bubble-wrap me">
+        <div class="bubble me">${text}</div>
+        <div class="bubble-time">${time}</div>
+      </div>`;
+    input.value = '';
+    area.scrollTop = area.scrollHeight;
+
+    // Auto-reply after 1.5s
+    const h = HOSTS[currentHost];
+    if (h) {
+      setTimeout(() => {
+        const replies = [
+          'Thank you for your message! I\'ll get back to you soon 😊',
+          'That\'s a great question! Let me think about it.',
+          'Sure, I\'d be happy to help with that!',
+          'Sounds good! Feel free to ask anything else.',
+          'Thanks for reaching out! Looking forward to meeting you 🏡'
+        ];
+        const reply = replies[Math.floor(Math.random() * replies.length)];
+        const t = new Date();
+        area.innerHTML += `
+          <div class="bubble-wrap them">
+            <div class="bubble them">${reply}</div>
+            <div class="bubble-time">${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</div>
+          </div>`;
+        area.scrollTop = area.scrollHeight;
+      }, 1500);
+    }
+  }
+
+  /* ===== 面談申し込み ===== */
+  function requestInterview() {
+    if (!currentHost) return;
+    const h = HOSTS[currentHost];
+    const overlay = document.getElementById('interview-modal-overlay');
+    document.getElementById('interview-host-name').textContent = h.name;
+    document.getElementById('interview-price').textContent = '$' + h.price.toLocaleString();
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeInterviewModal(e) {
+    if (e && e.target !== document.getElementById('interview-modal-overlay')) return;
+    document.getElementById('interview-modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function confirmInterview() {
+    closeInterviewModal();
+    const h = HOSTS[currentHost];
+    // Show completion
+    document.getElementById('complete-host-name').textContent = h.name;
+    document.getElementById('complete-price').textContent = '$' + h.price.toLocaleString() + ' /月';
+    document.getElementById('complete-deposit').textContent = '$' + h.price.toLocaleString();
+    document.getElementById('complete-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeComplete() {
+    document.getElementById('complete-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+    navigate(currentScreen, 'messages');
+  }
+
+  function goToPayPay() {
+    closeComplete();
+    window.open('https://pay.paypay.ne.jp/', '_blank');
   }
 
   /* ===== MAP ===== */
@@ -1576,35 +2520,9 @@
     document.querySelector('.bottom-nav').style.display = 'flex';
   }
 
-  /* ===== PHOTO SLIDER ===== */
-  let photoIndex = 0;
-  const photoTotal = 6;
-
-  function slidePhoto(dir) {
-    photoIndex = (photoIndex + dir + photoTotal) % photoTotal;
-    document.getElementById('photo-track').style.transform = `translateX(-${photoIndex * 100}%)`;
-    document.getElementById('photo-counter').textContent = (photoIndex + 1) + ' / ' + photoTotal;
-    document.querySelectorAll('.photo-dot').forEach((d, i) => d.classList.toggle('active', i === photoIndex));
-  }
-
-  // touch swipe support
-  (function() {
-    let startX = 0;
-    document.addEventListener('touchstart', e => {
-      if (e.target.closest('.detail-photo-slider')) startX = e.touches[0].clientX;
-    }, { passive: true });
-    document.addEventListener('touchend', e => {
-      if (!e.target.closest('.detail-photo-slider')) return;
-      const diff = startX - e.changedTouches[0].clientX;
-      if (Math.abs(diff) > 40) slidePhoto(diff > 0 ? 1 : -1);
-    }, { passive: true });
-  })();
-
   function mapPinClick(el, host) {
-    // reset all pins
     document.querySelectorAll('#map-overlay .map-price-pin').forEach(p => p.classList.remove('active'));
     el.classList.add('active');
-    // scroll to matching card in strip
     const cards = document.querySelectorAll('#map-card-strip .map-mini-card');
     const hosts = ['sarah','robert','michael','emily','jennifer','thompson','austin','miami','portland'];
     const idx = hosts.indexOf(host);
@@ -1625,10 +2543,8 @@
     document.body.style.overflow = '';
   }
 
-  // Suggest filter
   function filterSuggests(val) {
-    const items = document.querySelectorAll('#suggest-list .suggest-item');
-    items.forEach(item => {
+    document.querySelectorAll('#suggest-list .suggest-item').forEach(item => {
       const name = item.querySelector('.suggest-name').textContent.toLowerCase();
       item.style.display = name.includes(val.toLowerCase()) ? 'flex' : 'none';
     });
@@ -1639,7 +2555,6 @@
     document.getElementById('suggest-list').style.display = 'none';
   }
 
-  // Date pickers — trigger native date input
   function focusDate(type) {
     document.getElementById('input-date-' + type).click();
   }
@@ -1654,12 +2569,10 @@
     document.getElementById('date-' + type + '-btn').classList.add('selected');
   }
 
-  // Toggles
   function toggleSwitch(id) {
     document.getElementById(id).classList.toggle('on');
   }
 
-  // Apply search → update pill, close modal, open map
   function applySearch() {
     const dest = document.getElementById('dest-input').value.trim();
     const from = document.getElementById('date-from-val').textContent;
@@ -1667,25 +2580,20 @@
     const pMin = document.getElementById('price-min').value;
     const pMax = document.getElementById('price-max').value;
 
-    // Update pill
     document.getElementById('pill-main').textContent = dest || 'どこでも';
     const parts = [];
     if (from !== '日付を追加') parts.push(from + (to !== '日付を追加' ? ' – ' + to : ''));
     if (pMin || pMax) parts.push('$' + (pMin||'0') + '–$' + (pMax||'∞'));
     document.getElementById('pill-sub').textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
 
-    // Update map header chip
     const label = (dest || 'アメリカ全土') + ' · 124件';
     document.querySelector('.map-search-chip').textContent = '📍 ' + label;
 
     document.getElementById('search-modal-overlay').classList.remove('open');
     document.body.style.overflow = '';
-
-    // 検索後に地図を表示
     openMap();
   }
 
-  // Clear all
   function clearSearch() {
     document.getElementById('dest-input').value = '';
     document.getElementById('suggest-list').style.display = '';
@@ -1702,6 +2610,122 @@
     document.getElementById('pill-main').textContent = '検索を開始';
     document.getElementById('pill-sub').textContent = '目的地・日付・条件を選ぶ';
   }
+
+  /* ===== MYPAGE SUB SCREENS ===== */
+  function openSubScreen(name) {
+    document.getElementById('sub-' + name).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSubScreen(name) {
+    document.getElementById('sub-' + name).classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function saveSubScreen(name) {
+    closeSubScreen(name);
+    // Update mypage header if profile was edited
+    if (name === 'profile') {
+      const newName = document.getElementById('prof-name').value.trim();
+      const newEmail = document.getElementById('prof-email').value.trim();
+      if (newName) document.querySelector('.mypage-name').textContent = newName;
+      if (newEmail) document.querySelector('.mypage-meta').textContent = newEmail;
+    }
+    showToast('保存しました ✓');
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('saved-toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  // Single-select chip (only one active in the same row)
+  function toggleChip(el) {
+    el.parentElement.querySelectorAll('.form-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // Multi-select chip (toggle independently)
+  function toggleMultiChip(el) {
+    el.classList.toggle('selected');
+  }
+
+  /* ===== INTERVIEW DATE PICKER ===== */
+  let selectedInterviewDate = null;
+
+  function generateInterviewDates() {
+    const grid = document.getElementById('interview-date-grid');
+    grid.innerHTML = '';
+    const days = ['日','月','火','水','木','金','土'];
+    const today = new Date();
+    // Show next 6 available days (skip today, start from tomorrow)
+    for (let i = 1; i <= 6; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dayName = days[d.getDay()];
+      const month = d.getMonth() + 1;
+      const date = d.getDate();
+      const dateStr = d.toISOString().split('T')[0];
+      grid.innerHTML += `
+        <div class="interview-date-option" onclick="selectInterviewDate(this,'${dateStr}')" data-date="${dateStr}">
+          <div class="interview-date-day">${dayName}曜日</div>
+          <div class="interview-date-date">${month}/${date}</div>
+        </div>`;
+    }
+    selectedInterviewDate = null;
+  }
+
+  function selectInterviewDate(el, dateStr) {
+    document.querySelectorAll('.interview-date-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedInterviewDate = dateStr;
+  }
+
+  // Override requestInterview to also generate dates
+  const _origRequestInterview = requestInterview;
+  requestInterview = function() {
+    _origRequestInterview();
+    generateInterviewDates();
+    document.getElementById('interview-time').value = '';
+  };
+
+  // Override confirmInterview to include date/time in completion
+  const _origConfirmInterview = confirmInterview;
+  confirmInterview = function() {
+    if (!selectedInterviewDate) {
+      showToast('日付を選択してください');
+      return;
+    }
+    const time = document.getElementById('interview-time').value;
+    if (!time) {
+      showToast('時間帯を選択してください');
+      return;
+    }
+    // Format date for display
+    const d = new Date(selectedInterviewDate);
+    const days = ['日','月','火','水','木','金','土'];
+    const dateLabel = (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）' + time;
+    _origConfirmInterview();
+    // Add date to completion screen
+    const card = document.querySelector('.complete-card');
+    const existing = document.getElementById('complete-date-row');
+    if (existing) existing.remove();
+    const row = document.createElement('div');
+    row.className = 'complete-card-row';
+    row.id = 'complete-date-row';
+    row.innerHTML = '<span>面談日時</span><span>' + dateLabel + '</span>';
+    card.insertBefore(row, card.querySelector('.complete-card-divider'));
+  };
+
+  /* ===== INIT ===== */
+  document.querySelector('.chat-send').addEventListener('click', sendMessage);
+  document.querySelector('.chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+  document.getElementById('detail-save').addEventListener('click', toggleDetailFav);
+  updateFavIcons();
 </script>
 
 </body>
