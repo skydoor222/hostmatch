@@ -264,13 +264,10 @@
       display: flex; align-items: center; gap: 5px;
     }
 
-    /* ===== MAP FULL OVERLAY ===== */
+    /* ===== MAP SCREEN ===== */
     .map-overlay {
-      display: none; position: fixed; inset: 0; z-index: 400;
-      background: #e8f0e9; flex-direction: column;
-      max-width: 430px; left: 50%; transform: translateX(-50%);
+      flex-direction: column; background: #e8f0e9;
     }
-    .map-overlay.open { display: flex; }
     .map-overlay-header {
       position: absolute; top: 0; left: 0; right: 0; z-index: 10;
       padding: 14px 16px; display: flex; align-items: center; gap: 10px;
@@ -776,12 +773,6 @@
     .date-label { text-align: center; font-size: 11px; color: var(--light); margin: 4px 0; }
 
     /* ===== MYPAGE SUB SCREENS ===== */
-    .mypage-sub {
-      display: none; flex-direction: column; min-height: 100vh;
-      background: var(--bg); position: fixed; inset: 0; z-index: 300;
-      max-width: 430px; left: 50%; transform: translateX(-50%);
-    }
-    .mypage-sub.open { display: flex; }
     .mypage-sub-header {
       background: white; padding: 14px 16px;
       border-bottom: 1px solid var(--border);
@@ -871,20 +862,13 @@
       background-repeat: no-repeat; background-position: right 14px center;
     }
 
-    /* ===== INTERVIEW MODAL ===== */
-    .interview-overlay {
-      display: none; position: fixed; inset: 0; z-index: 600;
-      background: rgba(0,0,0,.5); align-items: center; justify-content: center;
-      max-width: 430px; left: 50%; transform: translateX(-50%);
+    /* ===== INTERVIEW SCREEN ===== */
+    .interview-body {
+      flex: 1; overflow-y: auto; padding: 24px 20px 100px; display: flex; flex-direction: column; gap: 0;
     }
-    .interview-overlay.open { display: flex; }
-    .interview-modal {
-      background: white; border-radius: 20px; margin: 24px;
-      padding: 28px 24px; width: calc(100% - 48px); text-align: center;
-    }
-    .interview-icon { font-size: 48px; margin-bottom: 12px; }
-    .interview-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-    .interview-sub { font-size: 14px; color: var(--light); margin-bottom: 20px; line-height: 1.5; }
+    .interview-icon { font-size: 48px; margin-bottom: 12px; text-align: center; }
+    .interview-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; text-align: center; }
+    .interview-sub { font-size: 14px; color: var(--light); margin-bottom: 20px; line-height: 1.5; text-align: center; }
     .interview-info {
       background: var(--bg); border-radius: 14px; padding: 16px;
       margin-bottom: 20px; text-align: left;
@@ -905,20 +889,61 @@
       font-size: 14px; font-weight: 600; color: var(--light);
       cursor: pointer; padding: 8px;
     }
-
-    /* ===== COMPLETE OVERLAY ===== */
-    .complete-overlay {
-      display: none; position: fixed; inset: 0; z-index: 700;
-      background: white; flex-direction: column; align-items: center; justify-content: center;
-      max-width: 430px; left: 50%; transform: translateX(-50%); padding: 32px;
+    .interview-footer {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; background: white;
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0));
+      border-top: 1px solid var(--border);
     }
-    .complete-overlay.open { display: flex; }
+
+    /* ===== CHAT ACTION BANNER ===== */
+    .chat-action-banner {
+      background: #FFF8F0; border-bottom: 1px solid #FFE0B2;
+      padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .chat-banner-info { flex: 1; min-width: 0; }
+    .chat-banner-name { font-size: 13px; font-weight: 700; color: var(--dark); }
+    .chat-banner-sub { font-size: 11px; color: var(--light); margin-top: 1px; }
+    .chat-banner-btns { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+    .chat-banner-btn-detail {
+      font-size: 11px; font-weight: 700; color: var(--dark);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 5px 10px; background: white; cursor: pointer; white-space: nowrap;
+    }
+    .chat-banner-btn-apply {
+      font-size: 11px; font-weight: 700; color: white;
+      border: none; border-radius: 8px;
+      padding: 5px 10px; background: #FF8C00; cursor: pointer; white-space: nowrap;
+    }
+
+    /* ===== LIFESTYLE REVIEWS ===== */
+    .ls-review-list { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .ls-review-item { background: white; border-radius: 14px; padding: 14px 16px; border: 1px solid var(--border); }
+    .ls-review-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .ls-review-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .ls-review-meta { flex: 1; }
+    .ls-review-name { font-size: 12px; font-weight: 700; color: var(--dark); }
+    .ls-review-date { font-size: 11px; color: var(--light); }
+    .ls-review-stars { font-size: 12px; color: #F5A623; font-weight: 700; }
+    .ls-review-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .ls-review-chip {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; background: #F0F7FF; color: #1A73E8;
+    }
+    .ls-review-chip.warn { background: #FFF3E0; color: #E65100; }
+    .ls-review-text { font-size: 12px; color: var(--mid); line-height: 1.6; }
+
+    /* ===== COMPLETE / APPLY SCREENS ===== */
+    .complete-body {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 32px; text-align: center;
+    }
     .complete-check { font-size: 64px; margin-bottom: 16px; }
     .complete-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
     .complete-sub { font-size: 14px; color: var(--light); text-align: center; line-height: 1.6; margin-bottom: 24px; }
     .complete-card {
       background: var(--bg); border-radius: 16px; padding: 20px; width: 100%;
-      margin-bottom: 24px;
+      margin-bottom: 24px; text-align: left;
     }
     .complete-card-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
     .complete-card-row span:first-child { color: var(--light); }
@@ -934,6 +959,11 @@
       width: 100%; background: none; border: 1.5px solid var(--border);
       border-radius: 14px; padding: 14px; font-size: 14px; font-weight: 600;
       color: var(--mid); cursor: pointer;
+    }
+    .complete-msg-btn {
+      width: 100%; background: var(--primary); color: white; border: none;
+      border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
+      cursor: pointer; margin-bottom: 10px;
     }
   </style>
 </head>
@@ -1139,10 +1169,10 @@
   </div><!-- /search-body -->
 </div>
 
-<!-- ==================== 地図オーバーレイ ==================== -->
-<div class="map-overlay" id="map-overlay">
+<!-- ==================== 地図画面 ==================== -->
+<div class="screen map-overlay" id="screen-map">
   <div class="map-overlay-header">
-    <div class="map-back-btn" onclick="closeMap()">←</div>
+    <div class="map-back-btn" onclick="navigate('map','search')">←</div>
     <div class="map-search-chip">📍 アメリカ全土 · 124件</div>
   </div>
 
@@ -1421,12 +1451,12 @@
 
     <div class="detail-section">
       <div class="detail-section-title">🌙 生活スタイル</div>
-      <div class="ls-grid">
-        <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">起床</div><div class="ls-val">7:00 AM</div></div>
-        <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">就寝</div><div class="ls-val">11:00 PM</div></div>
-        <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">会話量</div><div class="ls-val">普通〜多め</div></div>
-        <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">清潔度</div><div class="ls-val">きれい好き</div></div>
-      </div>
+      <div class="ls-grid" id="detail-ls-grid"></div>
+    </div>
+
+    <div class="detail-section" style="padding-top:0;">
+      <div class="detail-section-title" style="font-size:13px; color:var(--light); font-weight:600;">💬 過去の留学生からの評価</div>
+      <div class="ls-review-list" id="detail-ls-reviews"></div>
     </div>
 
     <div class="divider"></div>
@@ -1483,7 +1513,7 @@
 
   <div class="detail-cta">
     <button class="btn-outline" onclick="openChat()">💬 メッセージ</button>
-    <button class="btn-primary" onclick="requestInterview()">📹 面談を申し込む</button>
+    <button class="btn-primary" id="detail-action-btn" onclick="requestInterview()">📹 面談を申し込む</button>
   </div>
 </div>
 
@@ -1548,6 +1578,17 @@
     <div>
       <div class="chat-title">Sarah Johnson</div>
       <div class="chat-subtitle">🇺🇸 Manhattan, NY</div>
+    </div>
+  </div>
+
+  <div class="chat-action-banner" id="chat-action-banner">
+    <div class="chat-banner-info">
+      <div class="chat-banner-name" id="chat-banner-name">Sarah Johnson</div>
+      <div class="chat-banner-sub">ホスト詳細・お申し込みはこちら</div>
+    </div>
+    <div class="chat-banner-btns">
+      <button class="chat-banner-btn-detail" onclick="openDetail(currentHost)">詳細を見る</button>
+      <button class="chat-banner-btn-apply" onclick="applyHost()">本申し込み →</button>
     </div>
   </div>
 
@@ -1668,9 +1709,9 @@
     </div>
 
     <div class="mypage-section-title">プロフィール</div>
-    <div class="mypage-item" onclick="openSubScreen('profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="openSubScreen('lifestyle')"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="openSubScreen('preferences')"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'preferences')"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">申請・履歴</div>
     <div class="mypage-item"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
@@ -1686,9 +1727,9 @@
 </div>
 
 <!-- ==================== プロフィール編集 ==================== -->
-<div class="mypage-sub" id="sub-profile">
+<div class="screen" id="screen-profile">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="closeSubScreen('profile')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
     <div class="mypage-sub-title">プロフィール編集</div>
   </div>
   <div class="mypage-sub-body">
@@ -1758,9 +1799,9 @@
 </div>
 
 <!-- ==================== 生活スタイル設定 ==================== -->
-<div class="mypage-sub" id="sub-lifestyle">
+<div class="screen" id="screen-lifestyle">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="closeSubScreen('lifestyle')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
     <div class="mypage-sub-title">生活スタイル設定</div>
   </div>
   <div class="mypage-sub-body">
@@ -1837,9 +1878,9 @@
 </div>
 
 <!-- ==================== NG条件・希望条件 ==================== -->
-<div class="mypage-sub" id="sub-preferences">
+<div class="screen" id="screen-preferences">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="closeSubScreen('preferences')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
     <div class="mypage-sub-title">NG条件・希望条件</div>
   </div>
   <div class="mypage-sub-body">
@@ -1910,9 +1951,13 @@
 <!-- 保存完了トースト -->
 <div class="form-saved-toast" id="saved-toast">保存しました ✓</div>
 
-<!-- ==================== 面談申し込みモーダル ==================== -->
-<div class="interview-overlay" id="interview-modal-overlay" onclick="closeInterviewModal(event)">
-  <div class="interview-modal">
+<!-- ==================== 面談申し込み画面 ==================== -->
+<div class="screen" id="screen-interview">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'detail')">←</div>
+    <div class="mypage-sub-title">面談を申し込む</div>
+  </div>
+  <div class="interview-body">
     <div class="interview-icon">📹</div>
     <div class="interview-title">面談を申し込む</div>
     <div class="interview-sub">ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。</div>
@@ -1924,9 +1969,7 @@
     </div>
     <div class="interview-date-section">
       <div class="interview-date-label">📅 希望日を選択</div>
-      <div class="interview-date-grid" id="interview-date-grid">
-        <!-- JS で動的生成 -->
-      </div>
+      <div class="interview-date-grid" id="interview-date-grid"></div>
       <div class="interview-time-row">
         <select class="interview-time-select" id="interview-time">
           <option value="">時間帯を選択...</option>
@@ -1941,24 +1984,42 @@
         </select>
       </div>
     </div>
-    <button class="interview-btn-primary" onclick="confirmInterview()" style="margin-top:16px;">面談を確定する</button>
-    <button class="interview-btn-cancel" onclick="closeInterviewModal()">キャンセル</button>
+  </div>
+  <div class="interview-footer">
+    <button class="interview-btn-primary" onclick="confirmInterview()">面談を確定する</button>
+    <button class="interview-btn-cancel" onclick="navigate(currentScreen,'detail')">キャンセル</button>
   </div>
 </div>
 
-<!-- ==================== 申し込み完了画面 ==================== -->
-<div class="complete-overlay" id="complete-overlay">
-  <div class="complete-check">✅</div>
-  <div class="complete-title">面談が確定しました！</div>
-  <div class="complete-sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はデポジットのお支払いに進みます。</div>
-  <div class="complete-card">
-    <div class="complete-card-row"><span>ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
-    <div class="complete-card-row"><span>月額料金</span><span id="complete-price">$950 /月</span></div>
-    <div class="complete-card-divider"></div>
-    <div class="complete-card-row"><span>デポジット（1ヶ月分）</span><span id="complete-deposit" style="color:var(--primary);font-weight:800;">$950</span></div>
+<!-- ==================== 面談確定画面 ==================== -->
+<div class="screen" id="screen-complete">
+  <div class="complete-body">
+    <div class="complete-check">✅</div>
+    <div class="complete-title">面談が確定しました！</div>
+    <div class="complete-sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。</div>
+    <div class="complete-card">
+      <div class="complete-card-row"><span>ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
+      <div class="complete-card-row"><span>月額料金</span><span id="complete-price">$950 /月</span></div>
+    </div>
+    <button class="complete-msg-btn" onclick="navigate(currentScreen,'messages')">💬 メッセージを確認する</button>
   </div>
-  <button class="paypay-btn" onclick="goToPayPay()">💰 PayPayでデポジットを支払う</button>
-  <button class="complete-later" onclick="closeComplete()">あとで支払う</button>
+</div>
+
+<!-- ==================== 正式申し込み確認画面 ==================== -->
+<div class="screen" id="screen-apply">
+  <div class="complete-body">
+    <div class="complete-check">🏠</div>
+    <div class="complete-title">正式に申し込みますか？</div>
+    <div class="complete-sub">このホストへの入居を正式に申し込みます。<br>申し込み後、デポジット（1ヶ月分）のお支払いに進みます。</div>
+    <div class="complete-card">
+      <div class="complete-card-row"><span>ホスト</span><span id="apply-host-name">Sarah Johnson</span></div>
+      <div class="complete-card-row"><span>月額料金</span><span id="apply-price">$950 /月</span></div>
+      <div class="complete-card-divider"></div>
+      <div class="complete-card-row"><span>デポジット（1ヶ月分）</span><span id="apply-deposit" style="color:var(--primary);font-weight:800;">$950</span></div>
+    </div>
+    <button class="paypay-btn" onclick="goToPayPay()">💰 PayPayでデポジットを支払う</button>
+    <button class="complete-later" onclick="navigate(currentScreen,'detail')">キャンセル</button>
+  </div>
 </div>
 
 <!-- ==================== BOTTOM NAV ==================== -->
@@ -2027,6 +2088,10 @@
         { from: 'them', text: 'The room is about 10㎡ with a big window facing east 🌅 The bathroom is shared with just one other person.', time: '10:35' },
         { from: 'me', text: 'ありがとうございます！朝食は毎日ありますか？', time: '10:40' },
         { from: 'them', text: 'Breakfast is available on weekdays (Mon–Fri). I usually make eggs, toast, and coffee ☕ On weekends you\'re on your own but you can use the kitchen freely!', time: '10:42' }
+      ],
+      lifestyleReviews: [
+        { avatar: '🧑', name: 'Kenji M.', date: '2025年9月', stars: 5, chips: ['早起き型', 'とても清潔', 'よく話す'], text: 'Sarahは本当に几帳面でお部屋も共有スペースも常にきれい。朝早いので夜更かしには向かないかも。' },
+        { avatar: '👩', name: 'Rina T.', date: '2025年5月', stars: 5, chips: ['ホスピタリティ高い', '朝食が充実'], text: '平日の朝食が毎日美味しくて感動。会話も多く、英語の練習になりました！' }
       ]
     },
     michael: {
@@ -2068,6 +2133,10 @@
         { from: 'them', text: 'We love cooking! Lisa makes amazing Chinese and American fusion dishes. You\'ll love it 🥘', time: '09:20' },
         { from: 'me', text: 'ペットがいるとのことですが、犬種は何ですか？', time: '09:30' },
         { from: 'them', text: 'We have a golden retriever named Sunny! He\'s very friendly 🐕', time: '09:35' }
+      ],
+      lifestyleReviews: [
+        { avatar: '👦', name: 'Takuya S.', date: '2025年11月', stars: 5, chips: ['3食が最高', 'フレンドリー', '犬が可愛い'], text: 'Lisaの料理が毎回本当に美味しかった。Sunnyもすぐ懐いてくれて癒し。朝は早めなので合わせた方がいい。' },
+        { avatar: '👩', name: 'Yui H.', date: '2025年7月', stars: 4, chips: ['会話が多い', '清潔'], warn: ['早起き必須'], text: '夫婦ともにとても明るくて英語を積極的に話す環境。6:30起床なので夜型の人は少し辛いかも。' }
       ]
     },
     emily: {
@@ -2107,6 +2176,10 @@
         { from: 'them', text: 'Welcome! I\'m a Harvard grad student so I totally understand the student life 📚', time: '11:00' },
         { from: 'me', text: '留学生歓迎とのことで、嬉しいです！', time: '11:10' },
         { from: 'them', text: 'Absolutely! I\'ve hosted 3 Japanese students before. The room is available from May 1st. Let me know!', time: '11:15' }
+      ],
+      lifestyleReviews: [
+        { avatar: '👩', name: 'Moe K.', date: '2026年1月', stars: 5, chips: ['勉強に集中できる', '静かな環境', '清潔'], text: 'Emilyも院生なので生活リズムが近くてとても快適。夜型だけど静かに過ごすので問題なし。' },
+        { avatar: '🧑', name: 'Sota R.', date: '2025年8月', stars: 5, chips: ['朝食が毎日ある', '女性限定で安心'], text: 'ハーバード周辺という立地最高。朝食を一緒にとりながら英語で話す習慣がついた。' }
       ]
     },
     thompson: {
@@ -2146,6 +2219,10 @@
         { from: 'them', text: 'Hey! The kids are excited to meet someone from Japan 🇯🇵', time: '15:00' },
         { from: 'me', text: 'お子さんがいらっしゃるんですね！楽しそうです。', time: '15:10' },
         { from: 'them', text: 'Sure, let\'s schedule a video call for this weekend!', time: '15:15' }
+      ],
+      lifestyleReviews: [
+        { avatar: '👩', name: 'Hana F.', date: '2025年12月', stars: 5, chips: ['家族の雰囲気が温かい', '子供が可愛い', '朝食豪華'], text: '子供たちが毎日話しかけてくれて自然と英語力アップ。早寝早起きの家庭なので生活リズムが整った。' },
+        { avatar: '👦', name: 'Daiki M.', date: '2025年6月', stars: 4, chips: ['賑やか', '清潔'], warn: ['夜は早め'], text: '家族みんなで夕食の話題が毎日盛り上がる。10時には消灯なので夜遊びしたい人には向かないかも。' }
       ]
     },
     jennifer: {
@@ -2185,6 +2262,10 @@
         { from: 'them', text: 'Hey! I\'m a night owl too so no worries about late nights 🌙', time: '23:00' },
         { from: 'me', text: '夜型OKなのが嬉しいです！普段は何時頃まで起きてますか？', time: '23:10' },
         { from: 'them', text: 'Usually until 1-2am! I work in tech so my schedule is pretty flexible 💻', time: '23:15' }
+      ],
+      lifestyleReviews: [
+        { avatar: '🧑', name: 'Riku T.', date: '2026年2月', stars: 5, chips: ['夜型に最適', '干渉少ない', 'マイペースOK'], text: 'Jenniferは自分のペースを大事にしてくれる人。深夜に帰っても気にしない。一人の時間が欲しい人にぴったり。' },
+        { avatar: '👩', name: 'Nana O.', date: '2025年10月', stars: 4, chips: ['静かな環境'], warn: ['会話は少なめ'], text: '干渉が少ない分、孤独に感じることもあったが、週末は話してくれた。清潔感は普通くらい。' }
       ]
     },
     robert: {
@@ -2224,6 +2305,10 @@
         { from: 'them', text: 'Welcome! We usually have dinner together on weekdays 🍽️', time: '18:00' },
         { from: 'me', text: '夕食付きが嬉しいです！どんなお料理が多いですか？', time: '18:10' },
         { from: 'them', text: 'Mary loves cooking Italian and American classics. We also do BBQ on weekends sometimes! 🥩', time: '18:15' }
+      ],
+      lifestyleReviews: [
+        { avatar: '👩', name: 'Ami K.', date: '2025年10月', stars: 5, chips: ['夕食が本格的', '猫が癒し', 'ホスト歴長い'], text: 'Maryの料理は本当に絶品。猫2匹が部屋に来てくれて癒された。朝6時に動き始めるので早起きは必要。' },
+        { avatar: '👦', name: 'Shun A.', date: '2025年4月', stars: 5, chips: ['安定感抜群', '清潔', '専用バスルーム'], text: 'ホスト歴6年の安心感がある。困ったことを相談すると丁寧に対応してくれた。シカゴの冬は寒いが家の中は暖かい。' }
       ]
     }
   };
@@ -2242,14 +2327,15 @@
     const bnav = document.getElementById('bnav-' + to);
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.querySelector('.bottom-nav');
-    bottomNav.style.display = (to === 'detail' || to === 'chat') ? 'none' : 'flex';
+    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map'];
+    bottomNav.style.display = noNav.includes(to) ? 'none' : 'flex';
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
   }
 
   /* ===== DETAIL SCREEN ===== */
   function openDetail(hostId) {
-    document.getElementById('map-overlay').classList.remove('open');
+    // mapから来た場合、screen-mapを非アクティブにする（navigate内で処理）
     const h = HOSTS[hostId];
     if (!h) return;
     currentHost = hostId;
@@ -2284,13 +2370,31 @@
     ).join('');
 
     // Lifestyle
-    const grid = document.querySelector('.ls-grid');
-    grid.innerHTML = `
+    document.getElementById('detail-ls-grid').innerHTML = `
       <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">起床</div><div class="ls-val">${h.lifestyle.wake}</div></div>
       <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">就寝</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
       <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">会話量</div><div class="ls-val">${h.lifestyle.talk}</div></div>
       <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">清潔度</div><div class="ls-val">${h.lifestyle.clean}</div></div>
     `;
+
+    // Lifestyle reviews
+    document.getElementById('detail-ls-reviews').innerHTML = h.lifestyleReviews.map(r => `
+      <div class="ls-review-item">
+        <div class="ls-review-header">
+          <div class="ls-review-avatar">${r.avatar}</div>
+          <div class="ls-review-meta">
+            <div class="ls-review-name">${r.name}</div>
+            <div class="ls-review-date">${r.date}に滞在</div>
+          </div>
+          <div class="ls-review-stars">${'★'.repeat(r.stars)}</div>
+        </div>
+        <div class="ls-review-chips">
+          ${(r.chips || []).map(c => `<span class="ls-review-chip">${c}</span>`).join('')}
+          ${(r.warn || []).map(c => `<span class="ls-review-chip warn">${c}</span>`).join('')}
+        </div>
+        <div class="ls-review-text">${r.text}</div>
+      </div>
+    `).join('');
 
     // Rules
     document.querySelector('.rule-list').innerHTML = h.rules.map(r =>
@@ -2313,6 +2417,9 @@
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
     document.querySelector('#screen-detail .match-card-map + div').textContent = h.mapNote;
+
+    // Update action button state
+    updateDetailActionBtn();
 
     // Scroll to top
     document.querySelector('.detail-scroll').scrollTop = 0;
@@ -2416,6 +2523,12 @@
     header.querySelector('.chat-title').textContent = h.name;
     header.querySelector('.chat-subtitle').textContent = h.country + ' ' + h.city + ', ' + h.stateShort;
 
+    // Banner
+    document.getElementById('chat-banner-name').textContent = h.name;
+    // 面談済みなら「本申し込み」ボタンを強調、未面談なら非表示
+    const applyBtn = document.querySelector('.chat-banner-btn-apply');
+    applyBtn.style.display = interviewedHosts.has(currentHost) ? 'block' : 'none';
+
     // Messages
     const area = document.querySelector('.chat-messages');
     area.innerHTML = '<div class="date-label">会話履歴</div>' +
@@ -2471,57 +2584,80 @@
   }
 
   /* ===== 面談申し込み ===== */
+  const interviewedHosts = new Set();
+
   function requestInterview() {
     if (!currentHost) return;
     const h = HOSTS[currentHost];
-    const overlay = document.getElementById('interview-modal-overlay');
     document.getElementById('interview-host-name').textContent = h.name;
     document.getElementById('interview-price').textContent = '$' + h.price.toLocaleString();
-    overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeInterviewModal(e) {
-    if (e && e.target !== document.getElementById('interview-modal-overlay')) return;
-    document.getElementById('interview-modal-overlay').classList.remove('open');
-    document.body.style.overflow = '';
+    generateInterviewDates();
+    document.getElementById('interview-time').value = '';
+    navigate(currentScreen, 'interview');
   }
 
   function confirmInterview() {
-    closeInterviewModal();
+    if (!selectedInterviewDate) { showToast('日付を選択してください'); return; }
+    const time = document.getElementById('interview-time').value;
+    if (!time) { showToast('時間帯を選択してください'); return; }
     const h = HOSTS[currentHost];
-    // Show completion
+    interviewedHosts.add(currentHost);
     document.getElementById('complete-host-name').textContent = h.name;
     document.getElementById('complete-price').textContent = '$' + h.price.toLocaleString() + ' /月';
-    document.getElementById('complete-deposit').textContent = '$' + h.price.toLocaleString();
-    document.getElementById('complete-overlay').classList.add('open');
-    document.body.style.overflow = 'hidden';
+    // Add date row
+    const card = document.querySelector('#screen-complete .complete-card');
+    const existing = document.getElementById('complete-date-row');
+    if (existing) existing.remove();
+    const d = new Date(selectedInterviewDate);
+    const days = ['日','月','火','水','木','金','土'];
+    const dateLabel = (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）' + time;
+    const row = document.createElement('div');
+    row.className = 'complete-card-row'; row.id = 'complete-date-row';
+    row.innerHTML = '<span>面談日時</span><span>' + dateLabel + '</span>';
+    card.appendChild(row);
+    updateDetailActionBtn();
+    navigate(currentScreen, 'complete');
   }
 
-  function closeComplete() {
-    document.getElementById('complete-overlay').classList.remove('open');
-    document.body.style.overflow = '';
-    navigate(currentScreen, 'messages');
+  function applyHost() {
+    if (!currentHost) return;
+    const h = HOSTS[currentHost];
+    document.getElementById('apply-host-name').textContent = h.name;
+    document.getElementById('apply-price').textContent = '$' + h.price.toLocaleString() + ' /月';
+    document.getElementById('apply-deposit').textContent = '$' + h.price.toLocaleString();
+    navigate(currentScreen, 'apply');
   }
 
   function goToPayPay() {
-    closeComplete();
+    navigate(currentScreen, 'search');
     window.open('https://pay.paypay.ne.jp/', '_blank');
+  }
+
+  function updateDetailActionBtn() {
+    const btn = document.getElementById('detail-action-btn');
+    if (!btn || !currentHost) return;
+    if (interviewedHosts.has(currentHost)) {
+      btn.textContent = '🏠 正式に申し込む';
+      btn.onclick = applyHost;
+      btn.style.background = '#FF8C00';
+    } else {
+      btn.textContent = '📹 面談を申し込む';
+      btn.onclick = requestInterview;
+      btn.style.background = '';
+    }
   }
 
   /* ===== MAP ===== */
   function openMap() {
-    document.getElementById('map-overlay').classList.add('open');
-    document.querySelector('.bottom-nav').style.display = 'none';
+    navigate(currentScreen, 'map');
   }
 
   function closeMap() {
-    document.getElementById('map-overlay').classList.remove('open');
-    document.querySelector('.bottom-nav').style.display = 'flex';
+    navigate('map', 'search');
   }
 
   function mapPinClick(el, host) {
-    document.querySelectorAll('#map-overlay .map-price-pin').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('#screen-map .map-price-pin').forEach(p => p.classList.remove('active'));
     el.classList.add('active');
     const cards = document.querySelectorAll('#map-card-strip .map-mini-card');
     const hosts = ['sarah','robert','michael','emily','jennifer','thompson','austin','miami','portland'];
@@ -2612,18 +2748,7 @@
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
-  function openSubScreen(name) {
-    document.getElementById('sub-' + name).classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeSubScreen(name) {
-    document.getElementById('sub-' + name).classList.remove('open');
-    document.body.style.overflow = '';
-  }
-
   function saveSubScreen(name) {
-    closeSubScreen(name);
     // Update mypage header if profile was edited
     if (name === 'profile') {
       const newName = document.getElementById('prof-name').value.trim();
@@ -2632,6 +2757,7 @@
       if (newEmail) document.querySelector('.mypage-meta').textContent = newEmail;
     }
     showToast('保存しました ✓');
+    navigate(currentScreen, 'mypage');
   }
 
   function showToast(msg) {
@@ -2682,42 +2808,6 @@
     el.classList.add('selected');
     selectedInterviewDate = dateStr;
   }
-
-  // Override requestInterview to also generate dates
-  const _origRequestInterview = requestInterview;
-  requestInterview = function() {
-    _origRequestInterview();
-    generateInterviewDates();
-    document.getElementById('interview-time').value = '';
-  };
-
-  // Override confirmInterview to include date/time in completion
-  const _origConfirmInterview = confirmInterview;
-  confirmInterview = function() {
-    if (!selectedInterviewDate) {
-      showToast('日付を選択してください');
-      return;
-    }
-    const time = document.getElementById('interview-time').value;
-    if (!time) {
-      showToast('時間帯を選択してください');
-      return;
-    }
-    // Format date for display
-    const d = new Date(selectedInterviewDate);
-    const days = ['日','月','火','水','木','金','土'];
-    const dateLabel = (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）' + time;
-    _origConfirmInterview();
-    // Add date to completion screen
-    const card = document.querySelector('.complete-card');
-    const existing = document.getElementById('complete-date-row');
-    if (existing) existing.remove();
-    const row = document.createElement('div');
-    row.className = 'complete-card-row';
-    row.id = 'complete-date-row';
-    row.innerHTML = '<span>面談日時</span><span>' + dateLabel + '</span>';
-    card.insertBefore(row, card.querySelector('.complete-card-divider'));
-  };
 
   /* ===== INIT ===== */
   document.querySelector('.chat-send').addEventListener('click', sendMessage);
