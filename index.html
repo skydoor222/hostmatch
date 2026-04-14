@@ -896,6 +896,89 @@
       border-top: 1px solid var(--border);
     }
 
+    /* ===== LOGIN SCREEN ===== */
+    .login-screen {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 40px 28px; background: white; text-align: center;
+    }
+    .login-logo { font-size: 52px; margin-bottom: 12px; }
+    .login-brand { font-size: 28px; font-weight: 900; color: var(--dark); margin-bottom: 6px; }
+    .login-tagline { font-size: 14px; color: var(--light); margin-bottom: 40px; line-height: 1.6; }
+    .login-form { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+    .login-or { font-size: 12px; color: var(--light); margin: 4px 0; }
+    .login-social-btn {
+      width: 100%; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 700;
+      cursor: pointer; border: 1.5px solid var(--border); background: white;
+      display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--dark);
+    }
+    .login-btn {
+      width: 100%; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700;
+      cursor: pointer; border: none; background: var(--primary); color: white;
+    }
+    .login-switch { font-size: 13px; color: var(--light); margin-top: 16px; }
+    .login-switch span { color: var(--primary); font-weight: 700; cursor: pointer; }
+
+    /* ===== ONBOARDING (希望入力) ===== */
+    .onboard-header {
+      background: white; padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .onboard-progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .onboard-step { font-size: 12px; color: var(--light); font-weight: 600; }
+    .onboard-progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+    .onboard-progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width .3s; }
+    .onboard-title { font-size: 20px; font-weight: 800; }
+    .onboard-sub { font-size: 13px; color: var(--light); margin-top: 4px; }
+    .onboard-body { flex: 1; overflow-y: auto; padding: 20px 16px 120px; }
+    .onboard-footer {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px; background: white;
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0));
+      border-top: 1px solid var(--border);
+      display: flex; gap: 10px;
+    }
+    .onboard-btn-back {
+      flex: 0 0 auto; padding: 14px 20px; border-radius: 14px; font-size: 15px; font-weight: 700;
+      border: 1.5px solid var(--border); background: white; color: var(--mid); cursor: pointer;
+    }
+    .onboard-btn-next {
+      flex: 1; padding: 15px; border-radius: 14px; font-size: 15px; font-weight: 700;
+      border: none; background: var(--primary); color: white; cursor: pointer;
+    }
+    .onboard-step-panel { display: none; }
+    .onboard-step-panel.active { display: block; }
+
+    /* ===== MATCHING SCREEN ===== */
+    .matching-screen {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; background: white; padding: 40px 28px; text-align: center;
+    }
+    .matching-anim {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: linear-gradient(135deg, #FF5A5F 0%, #FF8C00 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px; margin-bottom: 28px;
+      animation: pulse-ring 1.5s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(255,90,95,.4);
+    }
+    @keyframes pulse-ring {
+      0% { box-shadow: 0 0 0 0 rgba(255,90,95,.4); }
+      70% { box-shadow: 0 0 0 20px rgba(255,90,95,0); }
+      100% { box-shadow: 0 0 0 0 rgba(255,90,95,0); }
+    }
+    .matching-title { font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+    .matching-sub { font-size: 14px; color: var(--light); line-height: 1.7; margin-bottom: 28px; }
+    .matching-steps { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+    .matching-step-item {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg); border-radius: 12px; padding: 12px 16px;
+      font-size: 13px; font-weight: 600; color: var(--mid);
+      opacity: 0; transform: translateY(8px); transition: all .4s ease;
+    }
+    .matching-step-item.show { opacity: 1; transform: translateY(0); }
+    .matching-step-item.done { color: #00875A; }
+    .matching-step-icon { font-size: 18px; }
+
     /* ===== CHAT ACTION BANNER ===== */
     .chat-action-banner {
       background: #FFF8F0; border-bottom: 1px solid #FFE0B2;
@@ -1710,8 +1793,7 @@
 
     <div class="mypage-section-title">プロフィール</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🌙</span><span class="mypage-item-label">生活スタイル設定</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'preferences')"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">NG条件・希望条件</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">申請・履歴</div>
     <div class="mypage-item"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
@@ -1722,6 +1804,13 @@
     <div class="mypage-item"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label">言語・通貨</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+
+    <div class="mypage-section-title">サポート</div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">💬</span><span class="mypage-item-label">チャットサポート</span><span style="background:#E8F5E9;color:#2E7D32;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">オンライン</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">📖</span><span class="mypage-item-label">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">📧</span><span class="mypage-item-label">メールで問い合わせ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
+
     <div class="mypage-item" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
@@ -1798,92 +1887,14 @@
   </div>
 </div>
 
-<!-- ==================== 生活スタイル設定 ==================== -->
+<!-- ==================== 生活スタイル＆希望条件（統合） ==================== -->
 <div class="screen" id="screen-lifestyle">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">生活スタイル設定</div>
+    <div class="mypage-sub-title">生活スタイル・希望条件</div>
   </div>
   <div class="mypage-sub-body">
-    <div class="form-section">
-      <div class="form-section-title">⏰ 生活リズム</div>
-      <div class="form-group">
-        <div class="form-label">起床時間</div>
-        <select class="form-select" id="ls-wake">
-          <option value="5:00">5:00 AM</option>
-          <option value="6:00">6:00 AM</option>
-          <option value="6:30">6:30 AM</option>
-          <option value="7:00" selected>7:00 AM</option>
-          <option value="7:30">7:30 AM</option>
-          <option value="8:00">8:00 AM</option>
-          <option value="9:00">9:00 AM 以降</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">就寝時間</div>
-        <select class="form-select" id="ls-sleep">
-          <option value="21:00">9:00 PM</option>
-          <option value="22:00">10:00 PM</option>
-          <option value="23:00" selected>11:00 PM</option>
-          <option value="0:00">12:00 AM</option>
-          <option value="1:00">1:00 AM 以降</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-section-title">💬 コミュニケーション</div>
-      <div class="form-group">
-        <div class="form-label">会話量の好み</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">少なめ</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">普通</div>
-          <div class="form-chip" onclick="toggleChip(this)">多め</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">性格タイプ</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">穏やか</div>
-          <div class="form-chip" onclick="toggleChip(this)">社交的</div>
-          <div class="form-chip" onclick="toggleChip(this)">アクティブ</div>
-          <div class="form-chip" onclick="toggleChip(this)">インドア派</div>
-        </div>
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-section-title">🧹 生活習慣</div>
-      <div class="form-group">
-        <div class="form-label">清潔度</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">気にしない</div>
-          <div class="form-chip" onclick="toggleChip(this)">普通</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">きれい好き</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">食事の好み</div>
-        <div class="form-chip-row" id="food-chips">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">何でもOK</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ビーガン</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">アレルギーあり</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="form-save-bar">
-    <button class="form-save-btn" onclick="saveSubScreen('lifestyle')">保存する</button>
-  </div>
-</div>
 
-<!-- ==================== NG条件・希望条件 ==================== -->
-<div class="screen" id="screen-preferences">
-  <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">NG条件・希望条件</div>
-  </div>
-  <div class="mypage-sub-body">
     <div class="form-section">
       <div class="form-section-title">✅ 希望条件</div>
       <div class="form-group">
@@ -1924,10 +1935,80 @@
         </div>
       </div>
     </div>
+
+    <div class="form-section">
+      <div class="form-section-title">⏰ 生活リズム</div>
+      <div class="form-group">
+        <div class="form-label">起床時間</div>
+        <select class="form-select" id="ls-wake">
+          <option value="5:00">5:00 AM</option>
+          <option value="6:00">6:00 AM</option>
+          <option value="6:30">6:30 AM</option>
+          <option value="7:00" selected>7:00 AM</option>
+          <option value="7:30">7:30 AM</option>
+          <option value="8:00">8:00 AM</option>
+          <option value="9:00">9:00 AM 以降</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">就寝時間</div>
+        <select class="form-select" id="ls-sleep">
+          <option value="21:00">9:00 PM</option>
+          <option value="22:00">10:00 PM</option>
+          <option value="23:00" selected>11:00 PM</option>
+          <option value="0:00">12:00 AM</option>
+          <option value="1:00">1:00 AM 以降</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">💬 コミュニケーション</div>
+      <div class="form-group">
+        <div class="form-label">会話量の好み</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">少なめ</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip" onclick="toggleChip(this)">多め</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">性格タイプ</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">穏やか</div>
+          <div class="form-chip" onclick="toggleChip(this)">社交的</div>
+          <div class="form-chip" onclick="toggleChip(this)">アクティブ</div>
+          <div class="form-chip" onclick="toggleChip(this)">インドア派</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🧹 生活習慣</div>
+      <div class="form-group">
+        <div class="form-label">清潔度</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">気にしない</div>
+          <div class="form-chip" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">きれい好き</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">食事の好み</div>
+        <div class="form-chip-row" id="food-chips">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">何でもOK</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ビーガン</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">アレルギーあり</div>
+        </div>
+      </div>
+    </div>
+
     <div class="form-section">
       <div class="form-section-title">🚫 NG条件</div>
       <div class="form-group">
-        <div class="form-label">絶対NGな条件を選んでください（複数選択可）</div>
+        <div class="form-label">絶対NGな条件（複数選択可）</div>
         <div class="form-chip-row">
           <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙OK</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペットあり</div>
@@ -1939,12 +2020,262 @@
       </div>
       <div class="form-group">
         <div class="form-label">その他のNG・希望（自由記述）</div>
-        <textarea class="form-textarea" id="pref-notes" rows="3" placeholder="例：Wi-Fiが安定している環境が必須です。アレルギーがあるので猫がいるお家は避けたいです。">Wi-Fiの速度が安定していることが重要です。</textarea>
+        <textarea class="form-textarea" id="pref-notes" rows="3" placeholder="例：Wi-Fiが安定している環境が必須です。">Wi-Fiの速度が安定していることが重要です。</textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <div class="form-section-title">🎨 趣味・興味</div>
+      <div class="form-group">
+        <div class="form-label">好きなことを教えてください（複数選択可）</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleMultiChip(this)">🎵 音楽</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🎬 映画</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">📚 読書</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🍳 料理</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🏃 スポーツ</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🎮 ゲーム</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">✈️ 旅行</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🌿 アウトドア</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🎨 アート</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">💪 ジム</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 動物好き</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">📸 写真</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">留学の目的</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">語学習得</div>
+          <div class="form-chip" onclick="toggleChip(this)">大学・大学院</div>
+          <div class="form-chip" onclick="toggleChip(this)">インターン</div>
+          <div class="form-chip" onclick="toggleChip(this)">ワーキングホリデー</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="form-save-bar">
+    <button class="form-save-btn" onclick="saveSubScreen('lifestyle')">保存する</button>
+  </div>
+</div>
+
+<!-- ※ screen-preferences は screen-lifestyle に統合されました -->
+
+<!-- ==================== サポート画面 ==================== -->
+<div class="screen" id="screen-support">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-title">サポート</div>
+  </div>
+  <div class="mypage-sub-body" style="padding: 20px 16px 100px;">
+    <div style="background:linear-gradient(135deg,#FF5A5F,#FF8C00);border-radius:16px;padding:20px;color:white;margin-bottom:20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">💬</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">チャットサポート</div>
+      <div style="font-size:12px;opacity:.85;">平日 10:00〜18:00 · 平均返答時間 5分</div>
+      <div style="margin-top:6px;display:inline-block;background:rgba(255,255,255,.25);border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;">🟢 オンライン</div>
+    </div>
+
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">よくある質問</div>
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">ホームステイの申し込み方法は？<span style="color:var(--light)">›</span></div>
+      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">面談はどうやって行いますか？<span style="color:var(--light)">›</span></div>
+      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">キャンセル・返金ポリシーは？<span style="color:var(--light)">›</span></div>
+      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">デポジットはいつ返金されますか？<span style="color:var(--light)">›</span></div>
+      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">トラブルが起きたときは？<span style="color:var(--light)">›</span></div>
+    </div>
+
+    <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">その他のお問い合わせ</div>
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
+        <div style="font-size:24px;margin-bottom:6px;">📧</div>
+        <div style="font-size:12px;font-weight:700;">メール</div>
+        <div style="font-size:10px;color:var(--light);margin-top:2px;">24時間受付</div>
+      </div>
+      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
+        <div style="font-size:24px;margin-bottom:6px;">📞</div>
+        <div style="font-size:12px;font-weight:700;">電話</div>
+        <div style="font-size:10px;color:var(--light);margin-top:2px;">平日 10〜18時</div>
+      </div>
+      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
+        <div style="font-size:24px;margin-bottom:6px;">📖</div>
+        <div style="font-size:12px;font-weight:700;">FAQ</div>
+        <div style="font-size:10px;color:var(--light);margin-top:2px;">全50項目</div>
       </div>
     </div>
   </div>
-  <div class="form-save-bar">
-    <button class="form-save-btn" onclick="saveSubScreen('preferences')">保存する</button>
+</div>
+
+<!-- ==================== ログイン画面 ==================== -->
+<div class="screen" id="screen-login">
+  <div class="login-screen">
+    <div class="login-logo">🏠</div>
+    <div class="login-brand">HostMatch</div>
+    <div class="login-tagline">AIがあなたにぴったりの<br>ホームステイ先を見つけます</div>
+
+    <div class="login-form">
+      <div class="form-group" style="text-align:left;">
+        <div class="form-label">メールアドレス</div>
+        <input class="form-input" id="login-email" type="email" placeholder="example@email.com" />
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <div class="form-label">パスワード</div>
+        <input class="form-input" id="login-password" type="password" placeholder="••••••••" />
+      </div>
+      <button class="login-btn" onclick="doLogin()">ログイン</button>
+      <div class="login-or">または</div>
+      <button class="login-social-btn" onclick="doLogin()">
+        <span>🇬</span> Googleでログイン
+      </button>
+      <button class="login-social-btn" onclick="doLogin()">
+        <span>🍎</span> Appleでログイン
+      </button>
+    </div>
+
+    <div class="login-switch">
+      アカウントをお持ちでない方は <span onclick="doLogin()">新規登録</span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== オンボーディング（希望入力） ==================== -->
+<div class="screen" id="screen-onboarding">
+  <div class="onboard-header">
+    <div class="onboard-progress-row">
+      <span class="onboard-step" id="onboard-step-label">STEP 1 / 3</span>
+      <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="onboard-progress" style="width:33%"></div></div>
+    </div>
+    <div class="onboard-title" id="onboard-title">渡航先を教えてください</div>
+    <div class="onboard-sub" id="onboard-sub">希望する都市を選んでください（複数可）</div>
+  </div>
+
+  <div class="onboard-body">
+    <!-- Step 1: エリア・期間 -->
+    <div class="onboard-step-panel active" id="onboard-panel-1">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">希望エリア（複数可）</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🗽 New York</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🎓 Boston</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🌴 Los Angeles</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🌉 San Francisco</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🌆 Chicago</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🌲 Seattle</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">滞在期間</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">1ヶ月未満</div>
+            <div class="form-chip" onclick="toggleChip(this)">1〜3ヶ月</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">3〜6ヶ月</div>
+            <div class="form-chip" onclick="toggleChip(this)">6ヶ月以上</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">月額予算（USD）</div>
+          <div class="form-range-row">
+            <input class="form-range-input" type="number" value="500" placeholder="下限" />
+            <div class="form-range-sep">〜</div>
+            <input class="form-range-input" type="number" value="1200" placeholder="上限" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 生活スタイル -->
+    <div class="onboard-step-panel" id="onboard-panel-2">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">あなたの生活リズムは？</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">🌅 朝型（〜7時起床）</div>
+            <div class="form-chip" onclick="toggleChip(this)">☀️ 普通（7〜9時）</div>
+            <div class="form-chip" onclick="toggleChip(this)">🌙 夜型（9時以降）</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">ホストとの会話は？</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">あまり話さない</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
+            <div class="form-chip" onclick="toggleChip(this)">たくさん話したい</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">ホストの家族構成</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+            <div class="form-chip" onclick="toggleChip(this)">女性のみ</div>
+            <div class="form-chip" onclick="toggleChip(this)">カップル</div>
+            <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">食事</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">不要</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
+            <div class="form-chip" onclick="toggleChip(this)">朝夕食</div>
+            <div class="form-chip" onclick="toggleChip(this)">3食</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 趣味・NG -->
+    <div class="onboard-step-panel" id="onboard-panel-3">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">趣味・興味（複数可）</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleMultiChip(this)">🎵 音楽</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🎬 映画</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">📚 読書</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🍳 料理</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🏃 スポーツ</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🎮 ゲーム</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🌿 アウトドア</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🎨 アート</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 動物好き</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">絶対NGな条件</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペット</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">ひとこと（ホストへの自己紹介）</div>
+          <textarea class="form-textarea" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="onboard-footer">
+    <button class="onboard-btn-back" id="onboard-back-btn" onclick="onboardBack()" style="display:none;">戻る</button>
+    <button class="onboard-btn-next" id="onboard-next-btn" onclick="onboardNext()">次へ →</button>
+  </div>
+</div>
+
+<!-- ==================== AIマッチング中画面 ==================== -->
+<div class="screen" id="screen-matching">
+  <div class="matching-screen">
+    <div class="matching-anim">🤖</div>
+    <div class="matching-title">AIがマッチング中...</div>
+    <div class="matching-sub">あなたの希望条件をもとに<br>最適なホストを探しています</div>
+    <div class="matching-steps">
+      <div class="matching-step-item" id="mstep-1"><span class="matching-step-icon">📊</span>希望条件を分析中...</div>
+      <div class="matching-step-item" id="mstep-2"><span class="matching-step-icon">🏠</span>ホストデータと照合中...</div>
+      <div class="matching-step-item" id="mstep-3"><span class="matching-step-icon">🎯</span>マッチ度スコアを計算中...</div>
+      <div class="matching-step-item" id="mstep-4"><span class="matching-step-icon">✨</span>マッチング完了！</div>
+    </div>
   </div>
 </div>
 
@@ -2314,7 +2645,7 @@
   };
 
   /* ===== STATE ===== */
-  let currentScreen = 'search';
+  let currentScreen = 'login';
   let currentHost = null;
   let favorites = new Set(['michael', 'thompson']);
 
@@ -2327,7 +2658,7 @@
     const bnav = document.getElementById('bnav-' + to);
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.querySelector('.bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','support'];
     bottomNav.style.display = noNav.includes(to) ? 'none' : 'flex';
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
@@ -2809,6 +3140,79 @@
     selectedInterviewDate = dateStr;
   }
 
+  /* ===== LOGIN ===== */
+  function doLogin() {
+    navigate('login', 'onboarding');
+    onboardStep = 1;
+    renderOnboardStep();
+  }
+
+  /* ===== ONBOARDING ===== */
+  let onboardStep = 1;
+  const onboardTotal = 3;
+  const onboardTitles = [
+    '渡航先を教えてください',
+    'あなたの生活スタイルは？',
+    '趣味・NGを教えてください'
+  ];
+  const onboardSubs = [
+    '希望エリア・期間・予算を選んでください',
+    'ホストとの相性を高めるための情報です',
+    'AIマッチングの精度が上がります'
+  ];
+
+  function renderOnboardStep() {
+    document.getElementById('onboard-step-label').textContent = `STEP ${onboardStep} / ${onboardTotal}`;
+    document.getElementById('onboard-progress').style.width = (onboardStep / onboardTotal * 100) + '%';
+    document.getElementById('onboard-title').textContent = onboardTitles[onboardStep - 1];
+    document.getElementById('onboard-sub').textContent = onboardSubs[onboardStep - 1];
+    document.querySelectorAll('.onboard-step-panel').forEach((p, i) => {
+      p.classList.toggle('active', i + 1 === onboardStep);
+    });
+    document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
+    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? 'AIマッチングを開始 🤖' : '次へ →';
+  }
+
+  function onboardNext() {
+    if (onboardStep < onboardTotal) {
+      onboardStep++;
+      renderOnboardStep();
+    } else {
+      navigate('onboarding', 'matching');
+      startMatching();
+    }
+  }
+
+  function onboardBack() {
+    if (onboardStep > 1) {
+      onboardStep--;
+      renderOnboardStep();
+    }
+  }
+
+  /* ===== AI MATCHING ===== */
+  function startMatching() {
+    // reset
+    document.querySelectorAll('.matching-step-item').forEach(el => {
+      el.classList.remove('show', 'done');
+    });
+    const steps = ['mstep-1','mstep-2','mstep-3','mstep-4'];
+    const delays = [400, 1100, 1900, 2700];
+    steps.forEach((id, i) => {
+      setTimeout(() => {
+        document.getElementById(id).classList.add('show');
+        if (i < steps.length - 1) {
+          setTimeout(() => document.getElementById(id).classList.add('done'), 500);
+        }
+      }, delays[i]);
+    });
+    // 最後のステップ後に結果画面へ
+    setTimeout(() => {
+      document.getElementById('mstep-4').classList.add('done');
+      setTimeout(() => navigate('matching', 'search'), 600);
+    }, 3400);
+  }
+
   /* ===== INIT ===== */
   document.querySelector('.chat-send').addEventListener('click', sendMessage);
   document.querySelector('.chat-input').addEventListener('keydown', e => {
@@ -2816,6 +3220,8 @@
   });
   document.getElementById('detail-save').addEventListener('click', toggleDetailFav);
   updateFavIcons();
+  // 初期画面をloginに設定
+  document.getElementById('screen-login').classList.add('active');
 </script>
 
 </body>
