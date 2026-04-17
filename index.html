@@ -2335,7 +2335,10 @@
       <div class="complete-card-divider"></div>
       <div class="complete-card-row"><span>デポジット（1ヶ月分）</span><span id="apply-deposit" style="color:var(--primary);font-weight:800;">$950</span></div>
     </div>
-    <button class="paypay-btn" onclick="goToPayPay()">💰 PayPayでデポジットを支払う</button>
+    <button class="paypay-btn" onclick="goToPayPay()">
+      <img src="https://www.paypay.ne.jp/opa/doc/v1.0/logo_paypay_yoko_red_rgb.png" alt="PayPay" style="height:22px;margin-right:6px;" onerror="this.style.display='none'">
+      PayPayで支払う
+    </button>
     <button class="complete-later" onclick="navigate(currentScreen,'detail')">キャンセル</button>
   </div>
 </div>
@@ -2989,8 +2992,9 @@
   }
 
   function goToPayPay() {
-    navigate(currentScreen, 'search');
-    window.open('https://pay.paypay.ne.jp/', '_blank');
+    // PayPay for Business 支払いリンク（発行後にURLを差し替え）
+    const payUrl = 'https://qr.paypay.ne.jp/hostmatch-deposit'; // TODO: 実際のPayPay支払いリンクに差し替え
+    window.open(payUrl, '_blank');
   }
 
   function updateDetailActionBtn() {
