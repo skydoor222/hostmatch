@@ -1811,7 +1811,7 @@
     <div class="mypage-item"><span class="mypage-item-icon">📧</span><span class="mypage-item-label">メールで問い合わせ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-item" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
+    <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
 
@@ -2085,23 +2085,15 @@
       <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">トラブルが起きたときは？<span style="color:var(--light)">›</span></div>
     </div>
 
-    <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">その他のお問い合わせ</div>
-    <div style="display:flex;gap:10px;">
-      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:24px;margin-bottom:6px;">📧</div>
-        <div style="font-size:12px;font-weight:700;">メール</div>
-        <div style="font-size:10px;color:var(--light);margin-top:2px;">24時間受付</div>
+    <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">お問い合わせ</div>
+    <div onclick="window.open('https://forms.gle/qReg8VrHaNLdmdZ3A','_blank')"
+         style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;margin-bottom:10px;">
+      <div style="font-size:28px;">📝</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;">お問い合わせフォーム</div>
+        <div style="font-size:12px;color:var(--light);margin-top:2px;">Google Formで受け付けています</div>
       </div>
-      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:24px;margin-bottom:6px;">📞</div>
-        <div style="font-size:12px;font-weight:700;">電話</div>
-        <div style="font-size:10px;color:var(--light);margin-top:2px;">平日 10〜18時</div>
-      </div>
-      <div style="flex:1;background:white;border:1.5px solid var(--border);border-radius:14px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:24px;margin-bottom:6px;">📖</div>
-        <div style="font-size:12px;font-weight:700;">FAQ</div>
-        <div style="font-size:10px;color:var(--light);margin-top:2px;">全50項目</div>
-      </div>
+      <div style="font-size:18px;color:var(--light);">›</div>
     </div>
   </div>
 </div>
@@ -2114,26 +2106,29 @@
     <div class="login-tagline">AIがあなたにぴったりの<br>ホームステイ先を見つけます</div>
 
     <div class="login-form">
+      <div class="form-group" style="text-align:left;" id="login-name-group" style="display:none;">
+        <div class="form-label">お名前</div>
+        <input class="form-input" id="login-name" type="text" placeholder="山田 太郎" />
+      </div>
       <div class="form-group" style="text-align:left;">
         <div class="form-label">メールアドレス</div>
         <input class="form-input" id="login-email" type="email" placeholder="example@email.com" />
       </div>
       <div class="form-group" style="text-align:left;">
         <div class="form-label">パスワード</div>
-        <input class="form-input" id="login-password" type="password" placeholder="••••••••" />
+        <input class="form-input" id="login-password" type="password" placeholder="6文字以上" />
       </div>
-      <button class="login-btn" onclick="doLogin()">ログイン</button>
+      <div id="login-error" style="color:#FF5A5F; font-size:13px; text-align:center; margin:-4px 0 8px; min-height:18px;"></div>
+      <button class="login-btn" id="login-submit-btn" onclick="doLogin()">ログイン</button>
       <div class="login-or">または</div>
-      <button class="login-social-btn" onclick="doLogin()">
-        <span>🇬</span> Googleでログイン
-      </button>
-      <button class="login-social-btn" onclick="doLogin()">
-        <span>🍎</span> Appleでログイン
+      <button class="login-social-btn" onclick="doGoogleLogin()">
+        <span>🔵</span> Googleでログイン
       </button>
     </div>
 
     <div class="login-switch">
-      アカウントをお持ちでない方は <span onclick="doLogin()">新規登録</span>
+      <span id="login-switch-text">アカウントをお持ちでない方は</span>
+      <span id="login-switch-link" onclick="toggleLoginMode()" style="color:var(--primary);font-weight:700;cursor:pointer;"> 新規登録</span>
     </div>
   </div>
 </div>
@@ -2373,6 +2368,48 @@
     <div>マイページ</div>
   </div>
 </nav>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAstdZhTnegb8zkxfPmTv_zMP9Hj2wJ5Zg",
+    authDomain: "hostmatch-ae66f.firebaseapp.com",
+    projectId: "hostmatch-ae66f",
+    storageBucket: "hostmatch-ae66f.firebasestorage.app",
+    messagingSenderId: "1024991411505",
+    appId: "1:1024991411505:web:06273771e5ce2304634410",
+    measurementId: "G-5SNZBF7M8S"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  // Firebaseのインスタンスをグローバルに公開
+  window._fbAuth = auth;
+  window._fbDb = db;
+  window._fbCreateUser = createUserWithEmailAndPassword;
+  window._fbSignIn = signInWithEmailAndPassword;
+  window._fbGoogleSignIn = () => signInWithPopup(auth, googleProvider);
+  window._fbSignOut = () => signOut(auth);
+  window._fbSetDoc = setDoc;
+  window._fbGetDoc = getDoc;
+  window._fbDoc = doc;
+  window._fbServerTimestamp = serverTimestamp;
+
+  // 認証状態監視
+  onAuthStateChanged(auth, (user) => {
+    window._currentUser = user;
+    if (user) {
+      console.log('ログイン済み:', user.email);
+    }
+  });
+</script>
 
 <script>
   /* ===== HOST DATA ===== */
@@ -3141,10 +3178,117 @@
   }
 
   /* ===== LOGIN ===== */
-  function doLogin() {
+  let isSignupMode = false;
+
+  function toggleLoginMode() {
+    isSignupMode = !isSignupMode;
+    const nameGroup = document.getElementById('login-name-group');
+    const submitBtn = document.getElementById('login-submit-btn');
+    const switchText = document.getElementById('login-switch-text');
+    const switchLink = document.getElementById('login-switch-link');
+    if (isSignupMode) {
+      nameGroup.style.display = 'block';
+      submitBtn.textContent = '新規登録';
+      switchText.textContent = 'すでにアカウントをお持ちの方は';
+      switchLink.textContent = ' ログイン';
+    } else {
+      nameGroup.style.display = 'none';
+      submitBtn.textContent = 'ログイン';
+      switchText.textContent = 'アカウントをお持ちでない方は';
+      switchLink.textContent = ' 新規登録';
+    }
+    document.getElementById('login-error').textContent = '';
+  }
+
+  function showLoginError(msg) {
+    document.getElementById('login-error').textContent = msg;
+  }
+
+  function afterLoginSuccess(user) {
     navigate('login', 'onboarding');
     onboardStep = 1;
     renderOnboardStep();
+  }
+
+  async function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    document.getElementById('login-error').textContent = '';
+
+    if (!email || !password) {
+      showLoginError('メールアドレスとパスワードを入力してください');
+      return;
+    }
+
+    const btn = document.getElementById('login-submit-btn');
+    btn.disabled = true;
+    btn.textContent = '処理中...';
+
+    try {
+      if (isSignupMode) {
+        // 新規登録
+        const cred = await window._fbCreateUser(window._fbAuth, email, password);
+        const name = document.getElementById('login-name').value.trim() || 'ゲスト';
+        // Firestoreにユーザー情報を保存
+        await window._fbSetDoc(window._fbDoc(window._fbDb, 'users', cred.user.uid), {
+          name: name,
+          email: email,
+          createdAt: window._fbServerTimestamp()
+        });
+        afterLoginSuccess(cred.user);
+      } else {
+        // ログイン
+        const cred = await window._fbSignIn(window._fbAuth, email, password);
+        afterLoginSuccess(cred.user);
+      }
+    } catch(e) {
+      let msg = 'エラーが発生しました';
+      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        msg = 'メールアドレスまたはパスワードが間違っています';
+      } else if (e.code === 'auth/email-already-in-use') {
+        msg = 'このメールアドレスはすでに使用されています';
+      } else if (e.code === 'auth/weak-password') {
+        msg = 'パスワードは6文字以上で入力してください';
+      } else if (e.code === 'auth/invalid-email') {
+        msg = '正しいメールアドレスを入力してください';
+      }
+      showLoginError(msg);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = isSignupMode ? '新規登録' : 'ログイン';
+    }
+  }
+
+  async function doLogout() {
+    try {
+      if (window._fbSignOut) await window._fbSignOut();
+    } catch(e) {}
+    navigate(currentScreen, 'login');
+    // フォームリセット
+    document.getElementById('login-email').value = '';
+    document.getElementById('login-password').value = '';
+    document.getElementById('login-error').textContent = '';
+  }
+
+  async function doGoogleLogin() {
+    try {
+      const cred = await window._fbGoogleSignIn();
+      // 初回ログインならFirestoreに保存
+      const userRef = window._fbDoc(window._fbDb, 'users', cred.user.uid);
+      const snap = await window._fbGetDoc(userRef);
+      if (!snap.exists()) {
+        await window._fbSetDoc(userRef, {
+          name: cred.user.displayName || 'ゲスト',
+          email: cred.user.email,
+          createdAt: window._fbServerTimestamp()
+        });
+      }
+      afterLoginSuccess(cred.user);
+    } catch(e) {
+      if (e.code !== 'auth/popup-closed-by-user') {
+        showLoginError('Googleログインに失敗しました');
+      }
+    }
   }
 
   /* ===== ONBOARDING ===== */
