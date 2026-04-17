@@ -2401,7 +2401,13 @@
   onAuthStateChanged(auth, (user) => {
     window._currentUser = user;
     if (user) {
+      // ログイン済み：ログイン画面にいた場合はそのままにする（afterLoginSuccessで遷移）
       console.log('ログイン済み:', user.email);
+    } else {
+      // 未ログイン：強制的にログイン画面へ
+      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+      document.getElementById('screen-login').classList.add('active');
+      window.currentScreen = 'login';
     }
   });
 </script>
