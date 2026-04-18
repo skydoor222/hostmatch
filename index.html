@@ -1406,18 +1406,33 @@
     <div class="modal-section">
       <div class="modal-section-title">📅 入居・退去日</div>
       <div class="date-row">
-        <div class="date-btn" id="date-from-btn" onclick="focusDate('from')">
+        <div class="date-btn" id="date-from-btn" onclick="openCalendar('from')">
           <div class="date-btn-label">入居日</div>
           <div class="date-btn-val placeholder" id="date-from-val">日付を追加</div>
         </div>
-        <div class="date-btn" id="date-to-btn" onclick="focusDate('to')">
+        <div class="date-btn" id="date-to-btn" onclick="openCalendar('to')">
           <div class="date-btn-label">退去日</div>
           <div class="date-btn-val placeholder" id="date-to-val">日付を追加</div>
         </div>
       </div>
-      <!-- hidden inputs -->
-      <input type="date" id="input-date-from" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="setDate('from',this.value)">
-      <input type="date" id="input-date-to" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="setDate('to',this.value)">
+      <!-- カスタムカレンダー -->
+      <div id="custom-calendar" style="display:none;margin-top:12px;background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);">
+          <button onclick="calPrev()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">‹</button>
+          <div id="cal-title" style="font-size:15px;font-weight:800;"></div>
+          <button onclick="calNext()" style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;">›</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:8px 4px 4px;">
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">日</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">月</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">火</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">水</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">木</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">金</div>
+          <div style="font-size:11px;font-weight:700;color:var(--light);padding:4px 0;">土</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;padding:0 4px 12px;gap:2px;"></div>
+      </div>
     </div>
 
     <!-- 予算 -->
@@ -3073,22 +3088,101 @@
     document.getElementById('suggest-list').style.display = 'none';
   }
 
-  function focusDate(type) {
-    const el = document.getElementById('input-date-' + type);
-    el.style.pointerEvents = 'auto';
-    el.focus();
-    el.click();
-    el.style.pointerEvents = 'none';
+  /* ===== カスタムカレンダー ===== */
+  let calMode = 'from'; // 'from' or 'to'
+  let calYear, calMonth;
+  let selectedFrom = null, selectedTo = null;
+
+  function openCalendar(type) {
+    calMode = type;
+    const now = new Date();
+    calYear = now.getFullYear();
+    calMonth = now.getMonth();
+    document.getElementById('custom-calendar').style.display = 'block';
+    renderCalendar();
+  }
+
+  function calPrev() {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  }
+
+  function calNext() {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  }
+
+  function renderCalendar() {
+    const months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    document.getElementById('cal-title').textContent = calYear + '年 ' + months[calMonth]
+      + (calMode === 'from' ? '　入居日を選択' : '　退去日を選択');
+
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const today = new Date(); today.setHours(0,0,0,0);
+
+    // 空白セル
+    for (let i = 0; i < firstDay; i++) {
+      grid.insertAdjacentHTML('beforeend', '<div></div>');
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(calYear, calMonth, d);
+      const isPast = date < today;
+      const dateStr = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const isFrom = selectedFrom === dateStr;
+      const isTo = selectedTo === dateStr;
+
+      let bg = 'transparent', color = isPast ? '#ccc' : 'var(--dark)', fw = '500', radius = '50%';
+      if (isFrom || isTo) { bg = 'var(--primary)'; color = 'white'; fw = '800'; }
+
+      const click = isPast ? '' : `onclick="selectCalDay('${dateStr}')"`;
+      grid.insertAdjacentHTML('beforeend',
+        `<div ${click} style="padding:6px 0;cursor:${isPast?'default':'pointer'};">
+          <div style="width:34px;height:34px;margin:0 auto;display:flex;align-items:center;justify-content:center;
+            border-radius:${radius};background:${bg};color:${color};font-size:13px;font-weight:${fw};">${d}</div>
+        </div>`
+      );
+    }
+  }
+
+  function selectCalDay(dateStr) {
+    if (calMode === 'from') {
+      selectedFrom = dateStr;
+      selectedTo = null;
+      document.getElementById('date-to-val').textContent = '日付を追加';
+      document.getElementById('date-to-val').classList.add('placeholder');
+      document.getElementById('date-to-btn').classList.remove('selected');
+    } else {
+      if (selectedFrom && dateStr <= selectedFrom) {
+        selectedFrom = dateStr;
+      } else {
+        selectedTo = dateStr;
+      }
+    }
+    const d = new Date(dateStr + 'T00:00:00');
+    const label = (d.getMonth()+1) + '月' + d.getDate() + '日';
+    const key = calMode === 'from' ? 'from' : 'to';
+    const el = document.getElementById('date-' + key + '-val');
+    el.textContent = label;
+    el.classList.remove('placeholder');
+    document.getElementById('date-' + key + '-btn').classList.add('selected');
+
+    if (calMode === 'from') {
+      // 入居日選択後、退去日選択モードへ
+      calMode = 'to';
+      renderCalendar();
+    } else {
+      document.getElementById('custom-calendar').style.display = 'none';
+    }
   }
 
   function setDate(type, val) {
-    if (!val) return;
-    const d = new Date(val);
-    const label = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric' });
-    const el = document.getElementById('date-' + type + '-val');
-    el.textContent = label;
-    el.classList.remove('placeholder');
-    document.getElementById('date-' + type + '-btn').classList.add('selected');
+    // 後方互換（使用しないが残す）
   }
 
   function toggleSwitch(id) {
