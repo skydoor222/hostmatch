@@ -1048,12 +1048,24 @@
       border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
       cursor: pointer; margin-bottom: 10px;
     }
+  #app-loading {
+    position: fixed; inset: 0; background: white; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 12px;
+  }
+  #app-loading .loading-logo { font-size: 48px; }
+  #app-loading .loading-text { font-size: 16px; font-weight: 700; color: #FF5A5F; }
   </style>
 </head>
 <body>
 
+<div id="app-loading">
+  <div class="loading-logo">🏠</div>
+  <div class="loading-text">HostMatch</div>
+</div>
+
 <!-- ==================== ① 検索画面 ==================== -->
-<div id="screen-search" class="screen active">
+<div id="screen-search" class="screen">
 
   <!-- 最上部：検索ピル -->
   <div class="search-top-bar">
@@ -2400,9 +2412,15 @@
   // 認証状態監視
   onAuthStateChanged(auth, (user) => {
     window._currentUser = user;
+    document.getElementById('app-loading').style.display = 'none';
     if (user) {
-      // ログイン済み：ログイン画面にいた場合はそのままにする（afterLoginSuccessで遷移）
+      // ログイン済み：既にsearch等にいる場合はそのまま、loginにいる場合のみsearchへ
       console.log('ログイン済み:', user.email);
+      if (!window.currentScreen || window.currentScreen === 'login') {
+        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+        document.getElementById('screen-search').classList.add('active');
+        window.currentScreen = 'search';
+      }
     } else {
       // 未ログイン：強制的にログイン画面へ
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -3391,8 +3409,7 @@
   });
   document.getElementById('detail-save').addEventListener('click', toggleDetailFav);
   updateFavIcons();
-  // 初期画面をloginに設定
-  document.getElementById('screen-login').classList.add('active');
+  // 初期画面はonAuthStateChangedで制御（Firebase認証確定後に表示）
 </script>
 
 </body>
