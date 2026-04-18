@@ -1416,8 +1416,8 @@
         </div>
       </div>
       <!-- hidden inputs -->
-      <input type="date" id="input-date-from" style="display:none" onchange="setDate('from',this.value)">
-      <input type="date" id="input-date-to" style="display:none" onchange="setDate('to',this.value)">
+      <input type="date" id="input-date-from" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="setDate('from',this.value)">
+      <input type="date" id="input-date-to" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;" onchange="setDate('to',this.value)">
     </div>
 
     <!-- 予算 -->
@@ -3074,7 +3074,11 @@
   }
 
   function focusDate(type) {
-    document.getElementById('input-date-' + type).click();
+    const el = document.getElementById('input-date-' + type);
+    el.style.pointerEvents = 'auto';
+    el.focus();
+    el.click();
+    el.style.pointerEvents = 'none';
   }
 
   function setDate(type, val) {
