@@ -1842,6 +1842,7 @@
     <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
+    <div class="mypage-item" onclick="navigate(currentScreen,'service-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">サービスを切り替える</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
@@ -2414,8 +2415,9 @@
       </div>
     </div>
 
-    <div style="margin-top:24px;">
+    <div style="margin-top:24px;display:flex;gap:12px;align-items:center;">
       <button onclick="toggleLang()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;" id="lang-btn">🌐 English</button>
+      <button onclick="doLogout()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:white;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;">🚪 ログアウト</button>
     </div>
   </div>
 </div>
@@ -2588,8 +2590,14 @@
 <!-- ==================== ホスト側ダッシュボード ==================== -->
 <div class="screen" id="screen-host-dashboard">
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
-    <h1 data-i18n="host_dashboard">ホストダッシュボード</h1>
-    <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-hd">🌐</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="navigate(currentScreen,'service-select')" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;">←</button>
+      <h1 data-i18n="host_dashboard">ホストダッシュボード</h1>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-hd">🌐</button>
+      <button onclick="doLogout()" style="background:none;border:1.5px solid #FF5A5F;color:#FF5A5F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">ログアウト</button>
+    </div>
   </div>
   <div style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
     <!-- 収益サマリー -->
