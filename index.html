@@ -4107,9 +4107,7 @@
       }
     } catch(e) { console.warn('Firestore取得エラー:', e); }
 
-    navigate('login', 'onboarding');
-    onboardStep = 1;
-    renderOnboardStep();
+    navigate('login', 'role-select');
   }
 
   async function doLogin() {
