@@ -1048,7 +1048,10 @@
       border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
       cursor: pointer; margin-bottom: 10px;
     }
-  /* ===== サービス選択 ===== */
+  /* ===== モード切り替えシート ===== */
+  .mode-sheet-btn { display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid var(--border);cursor:pointer;transition:all .15s; }
+  .mode-sheet-btn-active { border-color:var(--primary);background:#FFF5F5; }
+  /* ===== サービス選択（後方互換のため残す） ===== */
   .svc-card { background:white;border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.08); }
   .svc-card-icon { font-size:30px;width:48px;text-align:center;flex-shrink:0; }
   .svc-card-body { flex:1; }
@@ -1842,7 +1845,7 @@
     <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-item" onclick="navigate(currentScreen,'service-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">サービスを切り替える</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openSearchTab()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">サービスを切り替える</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
@@ -2425,10 +2428,7 @@
 <!-- ==================== シェアハウス探す ==================== -->
 <div class="screen" id="screen-sharehouse">
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button onclick="navigate(currentScreen,'service-select')" style="background:none;border:none;font-size:22px;cursor:pointer;">←</button>
-      <h1 data-i18n="svc_sharehouse">シェアハウスを探す</h1>
-    </div>
+    <h1 data-i18n="svc_sharehouse">シェアハウスを探す</h1>
     <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-sh">🌐</button>
   </div>
   <div style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
@@ -2507,10 +2507,7 @@
 <!-- ==================== ルームメイト探す ==================== -->
 <div class="screen" id="screen-roommate">
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <button onclick="navigate(currentScreen,'service-select')" style="background:none;border:none;font-size:22px;cursor:pointer;">←</button>
-      <h1 data-i18n="svc_roommate">ルームメイトを探す</h1>
-    </div>
+    <h1 data-i18n="svc_roommate">ルームメイトを探す</h1>
     <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-rm">🌐</button>
   </div>
   <div style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
@@ -2590,10 +2587,7 @@
 <!-- ==================== ホスト側ダッシュボード ==================== -->
 <div class="screen" id="screen-host-dashboard">
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="navigate(currentScreen,'service-select')" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;">←</button>
-      <h1 data-i18n="host_dashboard">ホストダッシュボード</h1>
-    </div>
+    <h1 data-i18n="host_dashboard">ホストダッシュボード</h1>
     <div style="display:flex;gap:8px;align-items:center;">
       <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-hd">🌐</button>
       <button onclick="doLogout()" style="background:none;border:1.5px solid #FF5A5F;color:#FF5A5F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">ログアウト</button>
@@ -2930,10 +2924,11 @@
 </div>
 
 <!-- ==================== BOTTOM NAV ==================== -->
-<nav class="bottom-nav">
-  <div class="bnav-item active" id="bnav-search" onclick="navigate(currentScreen,'search')">
-    <div class="bnav-icon">🔍</div>
-    <div>探す</div>
+<nav class="bottom-nav" id="bottom-nav">
+  <!-- 探すタブ：ゲスト/ホスト切り替えトグル内蔵 -->
+  <div class="bnav-item active" id="bnav-search" onclick="openSearchTab()">
+    <div class="bnav-icon" id="bnav-search-icon">🔍</div>
+    <div id="bnav-search-label">探す</div>
   </div>
   <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')">
     <div class="bnav-icon">💬</div>
@@ -2949,6 +2944,44 @@
     <div>マイページ</div>
   </div>
 </nav>
+
+<!-- モード切り替えシート（探すタブタップで出現） -->
+<div id="mode-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(0,0,0,.4);" onclick="closeModeSheet()">
+  <div style="background:white;border-radius:24px 24px 0 0;padding:20px 20px 40px;" onclick="event.stopPropagation()">
+    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
+    <div style="font-size:15px;font-weight:800;color:var(--dark);margin-bottom:16px;text-align:center;">どちらを探しますか？</div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div onclick="switchMode('guest-homestay')" id="mode-btn-homestay" class="mode-sheet-btn mode-sheet-btn-active">
+        <span style="font-size:24px;">🏡</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;">ホームステイ先を探す</div>
+          <div style="font-size:12px;color:var(--light);">ホストファミリーと暮らす</div>
+        </div>
+      </div>
+      <div onclick="switchMode('guest-sharehouse')" id="mode-btn-sharehouse" class="mode-sheet-btn">
+        <span style="font-size:24px;">🏢</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;">シェアハウスを探す</div>
+          <div style="font-size:12px;color:var(--light);">物件を検索してルームメイトと暮らす</div>
+        </div>
+      </div>
+      <div onclick="switchMode('guest-roommate')" id="mode-btn-roommate" class="mode-sheet-btn">
+        <span style="font-size:24px;">🤝</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;">ルームメイトを探す</div>
+          <div style="font-size:12px;color:var(--light);">一緒に住む人を見つける</div>
+        </div>
+      </div>
+      <div onclick="switchMode('host')" id="mode-btn-host" class="mode-sheet-btn">
+        <span style="font-size:24px;">🏠</span>
+        <div>
+          <div style="font-size:15px;font-weight:800;">ホストとして管理する</div>
+          <div style="font-size:12px;color:var(--light);">応募者・収益・カレンダーを管理</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -2990,10 +3023,11 @@
     if (user) {
       console.log('ログイン済み:', user.email);
       if (!window.currentScreen || window.currentScreen === 'login') {
-        // ログイン後はサービス選択画面へ
+        // ログイン後は検索画面へ（モードはボトムナビで切り替え）
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.getElementById('screen-service-select').classList.add('active');
-        window.currentScreen = 'service-select';
+        document.getElementById('screen-search').classList.add('active');
+        document.getElementById('bottom-nav').style.display = 'flex';
+        window.currentScreen = 'search';
         applyLang();
       }
     } else {
@@ -3288,10 +3322,24 @@
     const bnav = document.getElementById('bnav-' + to);
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.querySelector('.bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','support','service-select','sharehouse','roommate','host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','payment'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','support','sharehouse','roommate','host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','payment'];
     bottomNav.style.display = noNav.includes(to) ? 'none' : 'flex';
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
+    // 探すタブのアイコンをモードに合わせて同期
+    if (['search','sharehouse','roommate','host-dashboard'].includes(to)) {
+      const cfg = modeConfig[currentMode] || modeConfig['guest-homestay'];
+      const iconEl = document.getElementById('bnav-search-icon');
+      const labelEl = document.getElementById('bnav-search-label');
+      if (iconEl) iconEl.textContent = cfg.icon;
+      if (labelEl) labelEl.textContent = cfg.label;
+      // bnav-searchをactive扱いにする
+      document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
+      const bnavSearch = document.getElementById('bnav-search');
+      if (['search','sharehouse','roommate','host-dashboard'].includes(to) && bnavSearch) {
+        bnavSearch.classList.add('active');
+      }
+    }
   }
 
   /* ===== DETAIL SCREEN ===== */
@@ -4137,22 +4185,64 @@
     applyLang();
   }
 
-  /* ===== サービス選択 ===== */
-  function selectService(type) {
-    window._serviceType = type;
-    if (type === 'host') {
+  /* ===== モード切り替え ===== */
+  let currentMode = 'guest-homestay'; // guest-homestay | guest-sharehouse | guest-roommate | host
+
+  const modeConfig = {
+    'guest-homestay':  { icon:'🏡', label:'探す', screen:'search' },
+    'guest-sharehouse':{ icon:'🏢', label:'探す', screen:'sharehouse' },
+    'guest-roommate':  { icon:'🤝', label:'探す', screen:'roommate' },
+    'host':            { icon:'🏠', label:'管理', screen:'host-dashboard' },
+  };
+
+  function openSearchTab() {
+    // 既に探す系の画面にいる場合もシートを出す
+    document.getElementById('mode-sheet').style.display = 'block';
+  }
+
+  function closeModeSheet() {
+    document.getElementById('mode-sheet').style.display = 'none';
+  }
+
+  function switchMode(mode) {
+    currentMode = mode;
+    closeModeSheet();
+
+    // ボタンのactive切り替え
+    ['homestay','sharehouse','roommate','host'].forEach(k => {
+      const btn = document.getElementById('mode-btn-' + k);
+      if (btn) btn.classList.remove('mode-sheet-btn-active');
+    });
+    const activeKey = mode === 'guest-homestay' ? 'homestay'
+                    : mode === 'guest-sharehouse' ? 'sharehouse'
+                    : mode === 'guest-roommate' ? 'roommate' : 'host';
+    const activeBtn = document.getElementById('mode-btn-' + activeKey);
+    if (activeBtn) activeBtn.classList.add('mode-sheet-btn-active');
+
+    // ボトムナビの「探す」アイコン・ラベル更新
+    const cfg = modeConfig[mode];
+    document.getElementById('bnav-search-icon').textContent = cfg.icon;
+    document.getElementById('bnav-search-label').textContent = cfg.label;
+
+    // 画面遷移
+    if (mode === 'host') {
       navigate(currentScreen, 'host-dashboard');
       renderHostCalendar();
-    } else if (type === 'sharehouse-guest') {
+    } else if (mode === 'guest-sharehouse') {
       navigate(currentScreen, 'sharehouse');
-    } else if (type === 'roommate-guest') {
+    } else if (mode === 'guest-roommate') {
       navigate(currentScreen, 'roommate');
     } else {
-      // homestay-guest → 既存のオンボーディングへ
-      navigate(currentScreen, 'onboarding');
-      onboardStep = 1;
-      renderOnboardStep();
+      navigate(currentScreen, 'search');
     }
+  }
+
+  /* ===== selectService（後方互換） ===== */
+  function selectService(type) {
+    switchMode(type === 'host' ? 'host'
+      : type === 'sharehouse-guest' ? 'guest-sharehouse'
+      : type === 'roommate-guest'   ? 'guest-roommate'
+      : 'guest-homestay');
   }
 
   /* ===== ホストカレンダー ===== */
