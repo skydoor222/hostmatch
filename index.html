@@ -1132,7 +1132,6 @@
   <div class="cat-chip-row">
     <div class="cat-chip active" id="chip-homestay" onclick="switchSearchCat('homestay')">🏡 ホームステイ</div>
     <div class="cat-chip" id="chip-sharehouse" onclick="switchSearchCat('sharehouse')">🏢 シェアハウス</div>
-    <div class="cat-chip" id="chip-roommate" onclick="switchSearchCat('roommate')">🤝 ルームメイト</div>
   </div>
 
   <div class="search-body">
@@ -1315,77 +1314,92 @@
   </div><!-- /search-content-homestay -->
 
   <!-- シェアハウスコンテンツ -->
-  <div id="search-content-sharehouse" style="display:none;padding:16px;display:none;flex-direction:column;gap:16px;padding-bottom:100px;">
+  <!-- シェアハウスコンテンツ（ルームメイト募集バッジ付き） -->
+  <div id="search-content-sharehouse" style="display:none;padding:16px;flex-direction:column;gap:16px;padding-bottom:100px;">
+
+    <!-- ルームメイト募集中フィルタ説明 -->
+    <div style="background:#F0F7FF;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;">
+      <span style="font-size:18px;">👥</span>
+      <div style="font-size:13px;color:#1A73E8;font-weight:600;">「ルームメイト募集中」の物件は<br>入居者に直接連絡できます</div>
+    </div>
+
+    <!-- sh1: ルームメイト募集中あり -->
     <div class="sh-card" onclick="openSharehouseDetail('sh1')">
-      <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="position:relative;">
+        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+        <div style="position:absolute;top:10px;left:10px;background:#1A73E8;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;">👥 ルームメイト募集中</div>
+        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
+      </div>
       <div style="padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">Tokyo House Shinjuku</div><div style="font-size:12px;color:var(--light);margin-top:2px;">新宿区 · 個室 · 4名入居中</div></div>
+          <div><div style="font-size:16px;font-weight:800;">Tokyo House Shinjuku</div><div style="font-size:12px;color:var(--light);margin-top:2px;">新宿区 · 個室 · 残り1室</div></div>
           <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥65,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 初期費用なし</span><span class="ctag ok">✓ 家具付き</span><span class="ctag">🚭 禁煙</span></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <span class="ctag ok">✓ 初期費用なし</span><span class="ctag ok">✓ 家具付き</span><span class="ctag">🚭 禁煙</span>
+        </div>
+        <!-- 入居中メンバー -->
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--light);font-weight:700;margin-bottom:8px;">現在の入居者</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="display:flex;gap:-4px;">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;">👩</div>
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-8px;">👨</div>
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-8px;">👩</div>
+            </div>
+            <div style="font-size:12px;color:var(--light);">3名入居中 · あと1名募集</div>
+            <button onclick="event.stopPropagation();openRoommateContact('sh1')" style="margin-left:auto;background:var(--primary);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">連絡する</button>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- sh2: 満室（ルームメイト募集なし） -->
     <div class="sh-card" onclick="openSharehouseDetail('sh2')">
-      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="position:relative;">
+        <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+        <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">満室</div>
+        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
+      </div>
       <div style="padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">渋谷クロスハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">渋谷区 · 個室 · 6名入居中</div></div>
+          <div><div style="font-size:16px;font-weight:800;">渋谷クロスハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">渋谷区 · 個室 · 6名満室</div></div>
           <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥72,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 駅徒歩3分</span><span class="ctag ok">✓ Wi-Fi完備</span><span class="ctag ok">✓ 女性専用フロア</span></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <span class="ctag ok">✓ 駅徒歩3分</span><span class="ctag ok">✓ Wi-Fi完備</span><span class="ctag ok">✓ 女性専用フロア</span>
+        </div>
       </div>
     </div>
+
+    <!-- sh3: ルームメイト募集中あり -->
     <div class="sh-card" onclick="openSharehouseDetail('sh3')">
-      <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="position:relative;">
+        <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+        <div style="position:absolute;top:10px;left:10px;background:#1A73E8;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;">👥 ルームメイト募集中</div>
+        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
+      </div>
       <div style="padding:14px;">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">目黒ガーデンハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">目黒区 · 個室 · 3名入居中</div></div>
+          <div><div style="font-size:16px;font-weight:800;">目黒ガーデンハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">目黒区 · 個室 · 残り2室</div></div>
           <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥58,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 庭付き</span><span class="ctag ok">✓ ペット可</span></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <span class="ctag ok">✓ 庭付き</span><span class="ctag ok">✓ ペット可</span>
+        </div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--light);font-weight:700;margin-bottom:8px;">現在の入居者</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="display:flex;">
+              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;">👨</div>
+            </div>
+            <div style="font-size:12px;color:var(--light);">1名入居中 · あと2名募集</div>
+            <button onclick="event.stopPropagation();openRoommateContact('sh3')" style="margin-left:auto;background:var(--primary);color:white;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">連絡する</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- ルームメイトコンテンツ -->
-  <div id="search-content-roommate" style="display:none;padding:16px;display:none;flex-direction:column;gap:14px;padding-bottom:100px;">
-    <div class="rm-card">
-      <div style="display:flex;gap:14px;align-items:flex-start;">
-        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👩</div>
-        <div style="flex:1;">
-          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">田中 あおい</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 94%</div></div>
-          <div style="font-size:12px;color:var(--light);margin-top:2px;">24歳 · 会社員 · 新宿希望</div>
-          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「清潔感を大切にしています。週末は静かに過ごしたいです。」</div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ 早起き</span></div>
-          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">❤️</button></div>
-        </div>
-      </div>
-    </div>
-    <div class="rm-card">
-      <div style="display:flex;gap:14px;align-items:flex-start;">
-        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👨</div>
-        <div style="flex:1;">
-          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">佐藤 けんじ</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 89%</div></div>
-          <div style="font-size:12px;color:var(--light);margin-top:2px;">27歳 · エンジニア · 渋谷〜恵比寿希望</div>
-          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「リモートワーク中心。静かな環境が好きです。」</div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ ペット可</span></div>
-          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">🤍</button></div>
-        </div>
-      </div>
-    </div>
-    <div class="rm-card">
-      <div style="display:flex;gap:14px;align-items:flex-start;">
-        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👩</div>
-        <div style="flex:1;">
-          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">鈴木 みさき</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 85%</div></div>
-          <div style="font-size:12px;color:var(--light);margin-top:2px;">22歳 · 大学院生 · 目黒・品川希望</div>
-          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「勉強中心。自炊が好き。共有キッチンが広い部屋希望。」</div>
-          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ 早起き</span></div>
-          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">🤍</button></div>
-        </div>
-      </div>
-    </div>
   </div>
 
   </div><!-- /search-body -->
@@ -4347,17 +4361,19 @@
 
   function switchSearchCat(cat) {
     currentSearchCat = cat;
-    ['homestay','sharehouse','roommate'].forEach(k => {
+    ['homestay','sharehouse'].forEach(k => {
       const el = document.getElementById('chip-' + k);
       if (el) el.classList.toggle('active', k === cat);
     });
-    // コンテンツ切り替え
     const homestayContent = document.getElementById('search-content-homestay');
     const sharehouseContent = document.getElementById('search-content-sharehouse');
-    const roommateContent = document.getElementById('search-content-roommate');
     if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
-    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'block' : 'none';
-    if (roommateContent) roommateContent.style.display = cat === 'roommate' ? 'block' : 'none';
+    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
+  }
+
+  function openRoommateContact(shId) {
+    // シェアハウス詳細のチャット画面へ（将来はシェアハウス別の入居者チャットへ）
+    navigate(currentScreen, 'chat');
   }
 
   /* ===== 後方互換 ===== */
