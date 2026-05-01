@@ -1048,20 +1048,56 @@
       border-radius: 14px; padding: 16px; font-size: 16px; font-weight: 700;
       cursor: pointer; margin-bottom: 10px;
     }
-  /* ===== モード切り替えシート ===== */
-  .mode-sheet-btn { display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid var(--border);cursor:pointer;transition:all .15s; }
-  .mode-sheet-btn-active { border-color:var(--primary);background:#FFF5F5; }
-  /* ===== サービス選択（後方互換のため残す） ===== */
-  .svc-card { background:white;border-radius:18px;padding:18px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.08); }
-  .svc-card-icon { font-size:30px;width:48px;text-align:center;flex-shrink:0; }
-  .svc-card-body { flex:1; }
-  .svc-card-title { font-size:15px;font-weight:800;color:#222; }
-  .svc-card-sub { font-size:12px;color:#767676;margin-top:3px; }
-  .svc-card-arrow { font-size:22px;color:#767676; }
-  .lang-toggle-btn { background:none;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer; }
+  /* ===== ロール選択 ===== */
+  .role-screen {
+    min-height:100vh; background:white;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 24px;
+  }
+  .role-logo { font-size:52px; margin-bottom:12px; }
+  .role-brand { font-size:26px; font-weight:900; color:var(--dark); margin-bottom:6px; }
+  .role-sub { font-size:14px; color:var(--light); margin-bottom:40px; line-height:1.6; text-align:center; }
+  .role-cards { width:100%; display:flex; flex-direction:column; gap:14px; }
+  .role-card {
+    border-radius:20px; border:2px solid var(--border); padding:22px 20px;
+    cursor:pointer; transition:all .18s; background:white;
+    display:flex; align-items:center; gap:16px;
+  }
+  .role-card:active { transform:scale(.98); }
+  .role-card-icon { font-size:36px; flex-shrink:0; }
+  .role-card-text { flex:1; }
+  .role-card-title { font-size:17px; font-weight:800; color:var(--dark); }
+  .role-card-desc { font-size:13px; color:var(--light); margin-top:4px; line-height:1.5; }
+  .role-card-arrow { font-size:20px; color:var(--border); }
+  .role-card.guest:hover, .role-card.guest:active { border-color:var(--primary); background:#FFF5F5; }
+  .role-card.host:hover, .role-card.host:active { border-color:#635BFF; background:#F5F4FF; }
+
+  /* ===== カテゴリチップ（探す画面上部） ===== */
+  .cat-chip-row {
+    display:flex; gap:8px; padding:12px 16px 4px; overflow-x:auto; scrollbar-width:none;
+    background:white; border-bottom:1px solid var(--border);
+  }
+  .cat-chip-row::-webkit-scrollbar { display:none; }
+  .cat-chip {
+    flex-shrink:0; padding:8px 16px; border-radius:20px; font-size:13px; font-weight:700;
+    border:1.5px solid var(--border); background:white; cursor:pointer; color:var(--mid);
+    white-space:nowrap; transition:all .15s;
+  }
+  .cat-chip.active { border-color:var(--dark); background:var(--dark); color:white; }
+
   /* ===== シェアハウス・ルームメイト ===== */
   .sh-card { background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;cursor:pointer; }
   .rm-card { background:white;border-radius:16px;border:1px solid var(--border);padding:16px; }
+
+  /* ===== ホスト専用ボトムナビ ===== */
+  .host-bottom-nav {
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px;
+    background:white; border-top:1px solid var(--border);
+    display:none; z-index:200;
+    padding-bottom:env(safe-area-inset-bottom,0);
+  }
+  .lang-toggle-btn { background:none;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer; }
   #app-loading {
     position: fixed; inset: 0; background: white; z-index: 9999;
     display: flex; align-items: center; justify-content: center;
@@ -1081,7 +1117,7 @@
 <!-- ==================== ① 検索画面 ==================== -->
 <div id="screen-search" class="screen">
 
-  <!-- 最上部：検索ピル -->
+  <!-- 最上部：検索ピル + カテゴリチップ -->
   <div class="search-top-bar">
     <div class="search-pill" onclick="openSearchModal()">
       <svg class="search-pill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -1092,9 +1128,17 @@
       <div class="search-pill-filter">⚙️</div>
     </div>
   </div>
+  <!-- カテゴリチップ（探す種別） -->
+  <div class="cat-chip-row">
+    <div class="cat-chip active" id="chip-homestay" onclick="switchSearchCat('homestay')">🏡 ホームステイ</div>
+    <div class="cat-chip" id="chip-sharehouse" onclick="switchSearchCat('sharehouse')">🏢 シェアハウス</div>
+    <div class="cat-chip" id="chip-roommate" onclick="switchSearchCat('roommate')">🤝 ルームメイト</div>
+  </div>
 
   <div class="search-body">
 
+  <!-- ホームステイコンテンツ -->
+  <div id="search-content-homestay">
     <!-- ===== AI MATCH LIST: マッチ度順 ===== -->
     <div class="match-list-header">
       <div class="match-list-title">🤖 AIマッチング結果</div>
@@ -1268,6 +1312,81 @@
       </div>
 
     </div>
+  </div><!-- /search-content-homestay -->
+
+  <!-- シェアハウスコンテンツ -->
+  <div id="search-content-sharehouse" style="display:none;padding:16px;display:none;flex-direction:column;gap:16px;padding-bottom:100px;">
+    <div class="sh-card" onclick="openSharehouseDetail('sh1')">
+      <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-size:16px;font-weight:800;">Tokyo House Shinjuku</div><div style="font-size:12px;color:var(--light);margin-top:2px;">新宿区 · 個室 · 4名入居中</div></div>
+          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥65,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 初期費用なし</span><span class="ctag ok">✓ 家具付き</span><span class="ctag">🚭 禁煙</span></div>
+      </div>
+    </div>
+    <div class="sh-card" onclick="openSharehouseDetail('sh2')">
+      <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-size:16px;font-weight:800;">渋谷クロスハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">渋谷区 · 個室 · 6名入居中</div></div>
+          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥72,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 駅徒歩3分</span><span class="ctag ok">✓ Wi-Fi完備</span><span class="ctag ok">✓ 女性専用フロア</span></div>
+      </div>
+    </div>
+    <div class="sh-card" onclick="openSharehouseDetail('sh3')">
+      <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
+      <div style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div><div style="font-size:16px;font-weight:800;">目黒ガーデンハウス</div><div style="font-size:12px;color:var(--light);margin-top:2px;">目黒区 · 個室 · 3名入居中</div></div>
+          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥58,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;"><span class="ctag ok">✓ 庭付き</span><span class="ctag ok">✓ ペット可</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ルームメイトコンテンツ -->
+  <div id="search-content-roommate" style="display:none;padding:16px;display:none;flex-direction:column;gap:14px;padding-bottom:100px;">
+    <div class="rm-card">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👩</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">田中 あおい</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 94%</div></div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;">24歳 · 会社員 · 新宿希望</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「清潔感を大切にしています。週末は静かに過ごしたいです。」</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ 早起き</span></div>
+          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">❤️</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="rm-card">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👨</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">佐藤 けんじ</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 89%</div></div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;">27歳 · エンジニア · 渋谷〜恵比寿希望</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「リモートワーク中心。静かな環境が好きです。」</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ ペット可</span></div>
+          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">🤍</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="rm-card">
+      <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">👩</div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;"><div style="font-size:16px;font-weight:800;">鈴木 みさき</div><div style="font-size:12px;background:#FFF0F0;color:var(--primary);padding:3px 10px;border-radius:10px;font-weight:700;">マッチ度 85%</div></div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;">22歳 · 大学院生 · 目黒・品川希望</div>
+          <div style="font-size:13px;margin-top:6px;color:var(--mid);">「勉強中心。自炊が好き。共有キッチンが広い部屋希望。」</div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"><span class="ctag ok">✓ 非喫煙</span><span class="ctag ok">✓ 早起き</span></div>
+          <div style="margin-top:10px;display:flex;gap:8px;"><button style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">連絡する</button><button style="background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;cursor:pointer;font-size:16px;">🤍</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   </div><!-- /search-body -->
 </div>
@@ -1845,7 +1964,7 @@
     <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-item" onclick="openSearchTab()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">サービスを切り替える</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'role-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">ホスト／ゲストを切り替える</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
@@ -2376,7 +2495,37 @@
   </div>
 </div>
 
-<!-- ==================== サービス選択画面 ==================== -->
+<!-- ==================== ロール選択画面 ==================== -->
+<div class="screen" id="screen-role-select">
+  <div class="role-screen">
+    <div class="role-logo">🏠</div>
+    <div class="role-brand">HostMatch</div>
+    <div class="role-sub">あなたの利用目的を<br>教えてください</div>
+    <div class="role-cards">
+      <div class="role-card guest" onclick="chooseRole('guest')">
+        <div class="role-card-icon">🧳</div>
+        <div class="role-card-text">
+          <div class="role-card-title">住む場所を探している</div>
+          <div class="role-card-desc">ホームステイ・シェアハウス・<br>ルームメイトを探す</div>
+        </div>
+        <div class="role-card-arrow">›</div>
+      </div>
+      <div class="role-card host" onclick="chooseRole('host')">
+        <div class="role-card-icon">🏠</div>
+        <div class="role-card-text">
+          <div class="role-card-title">部屋を提供したい</div>
+          <div class="role-card-desc">ホストとして入居者を<br>受け入れる・収益を管理する</div>
+        </div>
+        <div class="role-card-arrow">›</div>
+      </div>
+    </div>
+    <div style="margin-top:28px;">
+      <button onclick="toggleLang()" style="background:none;border:1.5px solid var(--border);border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;color:var(--mid);" id="lang-btn">🌐 English</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== サービス選択画面（廃止済み・後方互換） ==================== -->
 <div class="screen" id="screen-service-select">
   <div style="min-height:100vh;background:linear-gradient(160deg,#FF5A5F 0%,#FF8C00 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;">
     <div style="font-size:48px;margin-bottom:8px;">🏠</div>
@@ -2876,6 +3025,18 @@
       </div>
       <button style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
     </div>
+    <!-- アカウント操作 -->
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+      <div onclick="chooseRole('guest')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border);">
+        <span style="font-size:20px;width:28px;text-align:center;">🔄</span>
+        <span style="font-size:15px;font-weight:600;flex:1;">ゲストモードに切り替える</span>
+        <span style="color:var(--light);">›</span>
+      </div>
+      <div onclick="doLogout()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;color:var(--primary);">
+        <span style="font-size:20px;width:28px;text-align:center;">🚪</span>
+        <span style="font-size:15px;font-weight:600;flex:1;">ログアウト</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2924,11 +3085,11 @@
 </div>
 
 <!-- ==================== BOTTOM NAV ==================== -->
+<!-- ゲスト用ボトムナビ -->
 <nav class="bottom-nav" id="bottom-nav">
-  <!-- 探すタブ：ゲスト/ホスト切り替えトグル内蔵 -->
-  <div class="bnav-item active" id="bnav-search" onclick="openSearchTab()">
-    <div class="bnav-icon" id="bnav-search-icon">🔍</div>
-    <div id="bnav-search-label">探す</div>
+  <div class="bnav-item active" id="bnav-search" onclick="navigate(currentScreen,'search')">
+    <div class="bnav-icon">🔍</div>
+    <div>探す</div>
   </div>
   <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')">
     <div class="bnav-icon">💬</div>
@@ -2937,7 +3098,7 @@
   </div>
   <div class="bnav-item" id="bnav-favorites" onclick="navigate(currentScreen,'favorites')">
     <div class="bnav-icon">❤️</div>
-    <div>お気に入り</div>
+    <div>保存済み</div>
   </div>
   <div class="bnav-item" id="bnav-mypage" onclick="navigate(currentScreen,'mypage')">
     <div class="bnav-icon">👤</div>
@@ -2945,43 +3106,27 @@
   </div>
 </nav>
 
-<!-- モード切り替えシート（探すタブタップで出現） -->
-<div id="mode-sheet" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:rgba(0,0,0,.4);" onclick="closeModeSheet()">
-  <div style="background:white;border-radius:24px 24px 0 0;padding:20px 20px 40px;" onclick="event.stopPropagation()">
-    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 20px;"></div>
-    <div style="font-size:15px;font-weight:800;color:var(--dark);margin-bottom:16px;text-align:center;">どちらを探しますか？</div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div onclick="switchMode('guest-homestay')" id="mode-btn-homestay" class="mode-sheet-btn mode-sheet-btn-active">
-        <span style="font-size:24px;">🏡</span>
-        <div>
-          <div style="font-size:15px;font-weight:800;">ホームステイ先を探す</div>
-          <div style="font-size:12px;color:var(--light);">ホストファミリーと暮らす</div>
-        </div>
-      </div>
-      <div onclick="switchMode('guest-sharehouse')" id="mode-btn-sharehouse" class="mode-sheet-btn">
-        <span style="font-size:24px;">🏢</span>
-        <div>
-          <div style="font-size:15px;font-weight:800;">シェアハウスを探す</div>
-          <div style="font-size:12px;color:var(--light);">物件を検索してルームメイトと暮らす</div>
-        </div>
-      </div>
-      <div onclick="switchMode('guest-roommate')" id="mode-btn-roommate" class="mode-sheet-btn">
-        <span style="font-size:24px;">🤝</span>
-        <div>
-          <div style="font-size:15px;font-weight:800;">ルームメイトを探す</div>
-          <div style="font-size:12px;color:var(--light);">一緒に住む人を見つける</div>
-        </div>
-      </div>
-      <div onclick="switchMode('host')" id="mode-btn-host" class="mode-sheet-btn">
-        <span style="font-size:24px;">🏠</span>
-        <div>
-          <div style="font-size:15px;font-weight:800;">ホストとして管理する</div>
-          <div style="font-size:12px;color:var(--light);">応募者・収益・カレンダーを管理</div>
-        </div>
-      </div>
-    </div>
+<!-- ホスト用ボトムナビ -->
+<nav class="host-bottom-nav" id="host-bottom-nav">
+  <div class="bnav-item active" id="hbnav-dashboard" onclick="hostNavigate('host-dashboard')">
+    <div class="bnav-icon">📊</div>
+    <div>ホーム</div>
   </div>
-</div>
+  <div class="bnav-item" id="hbnav-applicants" onclick="hostNavigate('host-applicants')">
+    <div class="bnav-icon">📋</div>
+    <div>応募者</div>
+    <div class="bnav-badge">3</div>
+  </div>
+  <div class="bnav-item" id="hbnav-host-messages" onclick="hostNavigate('host-messages')">
+    <div class="bnav-icon">💬</div>
+    <div>メッセージ</div>
+    <div class="bnav-badge">5</div>
+  </div>
+  <div class="bnav-item" id="hbnav-host-mypage" onclick="hostNavigate('host-profile')">
+    <div class="bnav-icon">⚙️</div>
+    <div>設定</div>
+  </div>
+</nav>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -3023,11 +3168,10 @@
     if (user) {
       console.log('ログイン済み:', user.email);
       if (!window.currentScreen || window.currentScreen === 'login') {
-        // ログイン後は検索画面へ（モードはボトムナビで切り替え）
+        // ログイン後はロール選択へ（初回のみ）
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.getElementById('screen-search').classList.add('active');
-        document.getElementById('bottom-nav').style.display = 'flex';
-        window.currentScreen = 'search';
+        document.getElementById('screen-role-select').classList.add('active');
+        window.currentScreen = 'role-select';
         applyLang();
       }
     } else {
@@ -3321,25 +3465,19 @@
     document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
     const bnav = document.getElementById('bnav-' + to);
     if (bnav) bnav.classList.add('active');
-    const bottomNav = document.querySelector('.bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','support','sharehouse','roommate','host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','payment'];
-    bottomNav.style.display = noNav.includes(to) ? 'none' : 'flex';
+    const bottomNav = document.getElementById('bottom-nav');
+    const hostNav = document.getElementById('host-bottom-nav');
+    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','support','role-select','service-select','payment'];
+    const hostScreens = ['host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
+    const isHostScreen = hostScreens.includes(to);
+    bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
+    if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
-    // 探すタブのアイコンをモードに合わせて同期
-    if (['search','sharehouse','roommate','host-dashboard'].includes(to)) {
-      const cfg = modeConfig[currentMode] || modeConfig['guest-homestay'];
-      const iconEl = document.getElementById('bnav-search-icon');
-      const labelEl = document.getElementById('bnav-search-label');
-      if (iconEl) iconEl.textContent = cfg.icon;
-      if (labelEl) labelEl.textContent = cfg.label;
-      // bnav-searchをactive扱いにする
-      document.querySelectorAll('.bnav-item').forEach(el => el.classList.remove('active'));
-      const bnavSearch = document.getElementById('bnav-search');
-      if (['search','sharehouse','roommate','host-dashboard'].includes(to) && bnavSearch) {
-        bnavSearch.classList.add('active');
-      }
-    }
+    // ホスト用ナビのアクティブ同期
+    document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
+    const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-applicants':'hbnav-applicants','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-mypage'};
+    if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
   }
 
   /* ===== DETAIL SCREEN ===== */
@@ -4185,64 +4323,53 @@
     applyLang();
   }
 
-  /* ===== モード切り替え ===== */
-  let currentMode = 'guest-homestay'; // guest-homestay | guest-sharehouse | guest-roommate | host
+  /* ===== ロール選択 ===== */
+  let currentRole = 'guest'; // 'guest' | 'host'
 
-  const modeConfig = {
-    'guest-homestay':  { icon:'🏡', label:'探す', screen:'search' },
-    'guest-sharehouse':{ icon:'🏢', label:'探す', screen:'sharehouse' },
-    'guest-roommate':  { icon:'🤝', label:'探す', screen:'roommate' },
-    'host':            { icon:'🏠', label:'管理', screen:'host-dashboard' },
-  };
-
-  function openSearchTab() {
-    // 既に探す系の画面にいる場合もシートを出す
-    document.getElementById('mode-sheet').style.display = 'block';
-  }
-
-  function closeModeSheet() {
-    document.getElementById('mode-sheet').style.display = 'none';
-  }
-
-  function switchMode(mode) {
-    currentMode = mode;
-    closeModeSheet();
-
-    // ボタンのactive切り替え
-    ['homestay','sharehouse','roommate','host'].forEach(k => {
-      const btn = document.getElementById('mode-btn-' + k);
-      if (btn) btn.classList.remove('mode-sheet-btn-active');
-    });
-    const activeKey = mode === 'guest-homestay' ? 'homestay'
-                    : mode === 'guest-sharehouse' ? 'sharehouse'
-                    : mode === 'guest-roommate' ? 'roommate' : 'host';
-    const activeBtn = document.getElementById('mode-btn-' + activeKey);
-    if (activeBtn) activeBtn.classList.add('mode-sheet-btn-active');
-
-    // ボトムナビの「探す」アイコン・ラベル更新
-    const cfg = modeConfig[mode];
-    document.getElementById('bnav-search-icon').textContent = cfg.icon;
-    document.getElementById('bnav-search-label').textContent = cfg.label;
-
-    // 画面遷移
-    if (mode === 'host') {
-      navigate(currentScreen, 'host-dashboard');
+  function chooseRole(role) {
+    currentRole = role;
+    if (role === 'host') {
+      navigate('role-select', 'host-dashboard');
       renderHostCalendar();
-    } else if (mode === 'guest-sharehouse') {
-      navigate(currentScreen, 'sharehouse');
-    } else if (mode === 'guest-roommate') {
-      navigate(currentScreen, 'roommate');
     } else {
-      navigate(currentScreen, 'search');
+      navigate('role-select', 'search');
     }
   }
 
-  /* ===== selectService（後方互換） ===== */
+  /* ===== ホスト専用ナビ ===== */
+  function hostNavigate(screen) {
+    navigate(currentScreen, screen);
+    if (screen === 'host-dashboard') renderHostCalendar();
+  }
+
+  /* ===== 検索カテゴリ切り替え ===== */
+  let currentSearchCat = 'homestay';
+
+  function switchSearchCat(cat) {
+    currentSearchCat = cat;
+    ['homestay','sharehouse','roommate'].forEach(k => {
+      const el = document.getElementById('chip-' + k);
+      if (el) el.classList.toggle('active', k === cat);
+    });
+    // コンテンツ切り替え
+    const homestayContent = document.getElementById('search-content-homestay');
+    const sharehouseContent = document.getElementById('search-content-sharehouse');
+    const roommateContent = document.getElementById('search-content-roommate');
+    if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
+    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'block' : 'none';
+    if (roommateContent) roommateContent.style.display = cat === 'roommate' ? 'block' : 'none';
+  }
+
+  /* ===== 後方互換 ===== */
+  function openSearchTab() { navigate(currentScreen, 'search'); }
+  function closeModeSheet() {}
+  function switchMode(mode) {
+    if (mode === 'host') chooseRole('host');
+    else chooseRole('guest');
+  }
   function selectService(type) {
-    switchMode(type === 'host' ? 'host'
-      : type === 'sharehouse-guest' ? 'guest-sharehouse'
-      : type === 'roommate-guest'   ? 'guest-roommate'
-      : 'guest-homestay');
+    if (type === 'host') chooseRole('host');
+    else chooseRole('guest');
   }
 
   /* ===== ホストカレンダー ===== */
