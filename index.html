@@ -1919,7 +1919,8 @@
     <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-item" onclick="navigate(currentScreen,'role-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">ホスト／ゲストを切り替える</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-section-title">サービス</div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
   </div>
 </div>
@@ -2353,6 +2354,127 @@
         </div>
       </div>
     </div>
+
+    <!-- シェアハウス用 Step 1: 希望エリア・家賃・入居時期 -->
+    <div class="onboard-step-panel" id="sh-onboard-panel-1" style="display:none;">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">希望エリア（複数可）</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">新宿区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">渋谷区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">目黒区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">港区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">世田谷区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">中野区</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">大阪</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">その他</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">月額家賃</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">〜5万円</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">5〜7万円</div>
+            <div class="form-chip" onclick="toggleChip(this)">7〜10万円</div>
+            <div class="form-chip" onclick="toggleChip(this)">10万円〜</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">入居希望時期</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">すぐ</div>
+            <div class="form-chip" onclick="toggleChip(this)">1ヶ月以内</div>
+            <div class="form-chip" onclick="toggleChip(this)">3ヶ月以内</div>
+            <div class="form-chip" onclick="toggleChip(this)">未定</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- シェアハウス用 Step 2: 自分の生活スタイル -->
+    <div class="onboard-step-panel" id="sh-onboard-panel-2" style="display:none;">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">起床時間</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">6時前</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div>
+            <div class="form-chip" onclick="toggleChip(this)">8〜10時</div>
+            <div class="form-chip" onclick="toggleChip(this)">10時以降</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">就寝時間</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">22時前</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">22〜24時</div>
+            <div class="form-chip" onclick="toggleChip(this)">0〜2時</div>
+            <div class="form-chip" onclick="toggleChip(this)">2時以降</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">在宅時間</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">ほぼ在宅</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">夜だけ</div>
+            <div class="form-chip" onclick="toggleChip(this)">週末のみ</div>
+            <div class="form-chip" onclick="toggleChip(this)">ほぼ外出</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">清潔感</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">かなり気にする</div>
+            <div class="form-chip" onclick="toggleChip(this)">普通</div>
+            <div class="form-chip" onclick="toggleChip(this)">あまり気にしない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">喫煙</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">🚭 吸わない</div>
+            <div class="form-chip" onclick="toggleChip(this)">外なら吸う</div>
+            <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- シェアハウス用 Step 3: 求めるルームメイト像 -->
+    <div class="onboard-step-panel" id="sh-onboard-panel-3" style="display:none;">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">騒音・音楽</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
+            <div class="form-chip" onclick="toggleChip(this)">普通</div>
+            <div class="form-chip" onclick="toggleChip(this)">にぎやかでもOK</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">来客</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">NG</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">事前相談</div>
+            <div class="form-chip" onclick="toggleChip(this)">自由</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">交流スタイル</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">一人で過ごしたい</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">たまに交流</div>
+            <div class="form-chip" onclick="toggleChip(this)">積極的に交流</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">どんな人と住みたいか（一言）</div>
+          <textarea class="form-textarea" rows="3" placeholder="例：在宅ワーカーで静かに過ごせる方がいいです。料理が好きな方だと嬉しいです。"></textarea>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div class="onboard-footer">
@@ -2381,116 +2503,445 @@
   <div style="background:white;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;">
     <button onclick="navigate(currentScreen,'search')" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;line-height:1;">←</button>
     <div style="flex:1;">
-      <div style="font-size:17px;font-weight:800;">AIマッチング結果</div>
-      <div style="font-size:12px;color:var(--light);margin-top:1px;">あなたの条件に合うホスト · 6件</div>
+      <div style="font-size:17px;font-weight:800;" id="ai-result-title">AIマッチング結果</div>
+      <div style="font-size:12px;color:var(--light);margin-top:1px;" id="ai-result-subtitle">あなたの条件に合うホスト · 6件</div>
     </div>
     <button onclick="startAiFlow()" style="background:var(--bg);border:none;border-radius:20px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;">🔄 再診断</button>
   </div>
   <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
-    <div class="match-list" style="padding:16px;">
-
-      <div class="match-card" onclick="openDetail('sarah')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：96%</div>
-          <div class="match-card-flag">🇺🇸 New York, NY</div>
-          <div class="match-card-save">🤍</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:96%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">Sarah Johnson</div><div class="match-card-rating">★ 4.98</div></div>
-          <div class="match-card-location">Manhattan · 個室 · ホスト歴3年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag">👩 女性限定</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$950</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-        </div>
-      </div>
-
-      <div class="match-card" onclick="openDetail('michael')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：93%</div>
-          <div class="match-card-flag">🇺🇸 Los Angeles, CA</div>
-          <div class="match-card-save">❤️</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:93%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">Michael & Lisa Chen</div><div class="match-card-rating">★ 4.92</div></div>
-          <div class="match-card-location">Santa Monica · 個室 · ホスト歴5年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 3食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ ペット可</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$1,100</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 3食込み</div></div>
-        </div>
-      </div>
-
-      <div class="match-card" onclick="openDetail('emily')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：91%</div>
-          <div class="match-card-flag">🇺🇸 Boston, MA</div>
-          <div class="match-card-save">🤍</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:91%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">Emily Williams</div><div class="match-card-rating">★ 5.00</div></div>
-          <div class="match-card-location">Cambridge · 個室 · ホスト歴2年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 留学生歓迎</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$880</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-        </div>
-      </div>
-
-      <div class="match-card" onclick="openDetail('thompson')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：88%</div>
-          <div class="match-card-flag">🇺🇸 San Francisco, CA</div>
-          <div class="match-card-save">❤️</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:88%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">The Thompson Family</div><div class="match-card-rating">★ 4.97</div></div>
-          <div class="match-card-location">Mission District · 個室 · ホスト歴4年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ 来客OK</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$1,050</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-        </div>
-      </div>
-
-      <div class="match-card" onclick="openDetail('jennifer')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：85%</div>
-          <div class="match-card-flag">🇺🇸 Seattle, WA</div>
-          <div class="match-card-save">🤍</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:85%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">Jennifer Park</div><div class="match-card-rating">★ 4.89</div></div>
-          <div class="match-card-location">Capitol Hill · 個室 · ホスト歴1年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 夜型OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$820</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-        </div>
-      </div>
-
-      <div class="match-card" onclick="openDetail('robert')">
-        <div class="match-card-img">
-          <img src="https://images.unsplash.com/photo-1505693314120-0d443867891c?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：82%</div>
-          <div class="match-card-flag">🇺🇸 Chicago, IL</div>
-          <div class="match-card-save">🤍</div>
-          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:82%"></div></div>
-        </div>
-        <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">Robert & Mary Davis</div><div class="match-card-rating">★ 4.95</div></div>
-          <div class="match-card-location">Lincoln Park · 個室 · ホスト歴6年</div>
-          <div class="match-card-tags"><span class="ctag ok">✓ 夕食付き</span><span class="ctag ok">✓ ペット可</span><span class="ctag">🚭 禁煙</span></div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>$780</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 夕食込み</div></div>
-        </div>
-      </div>
-
+    <div class="match-list" style="padding:16px;" id="ai-result-list">
+      <!-- JSのrenderAiResult()で動的に生成 -->
     </div>
+  </div>
+</div>
+
+<!-- ==================== シェアハウス詳細画面 ==================== -->
+<div class="screen" id="screen-sharehouse-detail">
+  <div style="position:relative;">
+    <div class="detail-photo-slider" style="height:240px;">
+      <div class="photo-track" id="sh-photo-track">
+        <img class="photo-slide" src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:240px;object-fit:cover;flex-shrink:0;" />
+        <img class="photo-slide" src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:240px;object-fit:cover;flex-shrink:0;" />
+        <img class="photo-slide" src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:240px;object-fit:cover;flex-shrink:0;" />
+      </div>
+      <button class="photo-prev" onclick="shPhotoNav(-1)">‹</button>
+      <button class="photo-next" onclick="shPhotoNav(1)">›</button>
+      <div class="photo-counter" id="sh-photo-counter">1 / 3</div>
+    </div>
+    <div class="detail-back" onclick="navigate(currentScreen,'ai-result')" style="position:absolute;top:16px;left:14px;z-index:10;">←</div>
+    <div class="detail-save" style="position:absolute;top:16px;right:14px;z-index:10;">🤍</div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;padding:16px;padding-bottom:100px;">
+    <!-- 物件基本情報 -->
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px;">
+      <div style="font-size:18px;font-weight:900;margin-bottom:4px;">Tokyo House Shinjuku</div>
+      <div style="font-size:13px;color:var(--light);margin-bottom:12px;">📍 新宿区 · 個室 · 残り1室</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--light);font-weight:700;">家賃</div>
+          <div style="font-size:14px;font-weight:800;margin-top:2px;color:var(--primary);">¥65,000</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--light);font-weight:700;">部屋タイプ</div>
+          <div style="font-size:14px;font-weight:800;margin-top:2px;">個室</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:10px;color:var(--light);font-weight:700;">入居可能</div>
+          <div style="font-size:14px;font-weight:800;margin-top:2px;">即入居</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 入居メンバーセクションタイトル -->
+    <div style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+      <span>👥</span> 入居メンバー <span style="font-size:13px;color:var(--light);font-weight:400;">2名</span>
+    </div>
+
+    <!-- メンバーカード1: 田中あおい -->
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;">
+      <div style="padding:16px;display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--border);">
+        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">👩</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:16px;font-weight:800;">田中 あおい</div>
+            <div style="background:#E8F4FD;color:#1A73E8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ 本人確認済み</div>
+          </div>
+          <div style="font-size:13px;color:var(--light);margin-top:3px;">24歳 · 日本 · 女性 · 会社員</div>
+          <div style="font-size:13px;color:var(--mid);margin-top:6px;line-height:1.5;">「週末は静かに過ごしたいです。料理が好きで、キッチンをよく使います。」</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">⏰ 生活スタイル</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">起床</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">7:00頃</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">就寝</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">23:00頃</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">在宅</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">夜のみ</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">清潔感</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">かなり気にする</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">🏠 ルール・価値観</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="ctag ok">✓ 非喫煙</span>
+          <span class="ctag ok">✓ 静かに過ごしたい</span>
+          <span class="ctag">来客：事前相談</span>
+          <span class="ctag ok">✓ 掃除当番OK</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- メンバーカード2: 佐藤けんじ -->
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;">
+      <div style="padding:16px;display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--border);">
+        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">👨</div>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="font-size:16px;font-weight:800;">佐藤 けんじ</div>
+            <div style="background:#E8F4FD;color:#1A73E8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ 本人確認済み</div>
+          </div>
+          <div style="font-size:13px;color:var(--light);margin-top:3px;">27歳 · 日本 · 男性 · エンジニア</div>
+          <div style="font-size:13px;color:var(--mid);margin-top:6px;line-height:1.5;">「在宅ワーク多めです。基本は夜型ですが静かに過ごすのが好きです。ペット（猫）がいます。」</div>
+        </div>
+      </div>
+      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">⏰ 生活スタイル</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">起床</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">9:00頃</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">就寝</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">1:00頃</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">在宅</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">ほぼ在宅</div>
+          </div>
+          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
+            <div style="font-size:10px;color:var(--light);font-weight:700;">清潔感</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px;">普通</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">🏠 ルール・価値観</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span class="ctag ok">✓ 非喫煙</span>
+          <span class="ctag ok">✓ ペット可（猫）</span>
+          <span class="ctag">来客：自由</span>
+          <span class="ctag ok">✓ 在宅ワーク環境あり</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="detail-cta">
+    <button class="btn-outline" onclick="navigate(currentScreen,'chat')" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;cursor:pointer;">💬 メッセージ</button>
+    <button class="btn-primary" onclick="navigate(currentScreen,'interview')" style="flex:2;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">このシェアハウスに申し込む</button>
   </div>
 </div>
 
 <!-- 保存完了トースト -->
 <div class="form-saved-toast" id="saved-toast">保存しました ✓</div>
+
+<!-- ==================== ホストオンボーディング ==================== -->
+<div class="screen" id="screen-host-onboarding">
+  <div class="onboard-header">
+    <div class="onboard-progress-row">
+      <span class="onboard-step" id="host-ob-step-label">STEP 1 / 2</span>
+      <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="host-ob-progress" style="width:50%"></div></div>
+    </div>
+    <div class="onboard-title" id="host-ob-title">ホスト情報を教えてください</div>
+    <div class="onboard-sub" id="host-ob-sub">あなたのプロフィールがゲストへの第一印象になります</div>
+  </div>
+  <div class="onboard-body">
+    <!-- STEP1 -->
+    <div class="onboard-step-panel active" id="host-ob-panel-1">
+      <div class="form-group">
+        <div class="form-label">ホスト名（家族名でもOK）</div>
+        <input class="form-input" type="text" placeholder="山田ファミリー" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">家族構成</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">一人暮らし</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">夫婦</div>
+          <div class="form-chip" onclick="toggleChip(this)">夫婦＋子供</div>
+          <div class="form-chip" onclick="toggleChip(this)">その他</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">対応言語</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🇯🇵 日本語</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🇬🇧 英語</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🇰🇷 韓国語</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🇨🇳 中国語</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ホスト自己紹介</div>
+        <textarea class="form-textarea" placeholder="家族の雰囲気や、ゲストへのメッセージを書いてください"></textarea>
+      </div>
+    </div>
+    <!-- STEP2 -->
+    <div class="onboard-step-panel" id="host-ob-panel-2">
+      <div class="form-group">
+        <div class="form-label">エリア</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">🗽 New York</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">🌴 Los Angeles</div>
+          <div class="form-chip" onclick="toggleChip(this)">🎓 Boston</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌉 San Francisco</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌆 Chicago</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌲 Seattle</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">月額料金（USD）</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">〜$700</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">$700〜$1,000</div>
+          <div class="form-chip" onclick="toggleChip(this)">$1,000〜$1,500</div>
+          <div class="form-chip" onclick="toggleChip(this)">$1,500〜</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">食事</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">食事なし</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
+          <div class="form-chip" onclick="toggleChip(this)">朝・夕食</div>
+          <div class="form-chip" onclick="toggleChip(this)">3食付き</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ハウスルール</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;"><input type="checkbox" checked /> 禁煙</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;"><input type="checkbox" /> ペット可</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;"><input type="checkbox" checked /> 門限あり（22時）</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:14px;"><input type="checkbox" /> 来客OK</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">受け入れ可能人数</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">1名</div>
+          <div class="form-chip" onclick="toggleChip(this)">2名</div>
+          <div class="form-chip" onclick="toggleChip(this)">3名以上</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="onboard-footer">
+    <button class="onboard-btn-back" id="host-ob-back-btn" onclick="hostObBack()" style="display:none;">← 戻る</button>
+    <button class="onboard-btn-next" id="host-ob-next-btn" onclick="hostObNext()">次へ →</button>
+  </div>
+</div>
+
+<!-- ==================== 入居者登録フロー（resident-onboarding） ==================== -->
+<div class="screen" id="screen-resident-onboarding">
+  <div class="onboard-header">
+    <div class="onboard-progress-row">
+      <span class="onboard-step" id="res-step-label">STEP 1 / 3</span>
+      <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="res-progress" style="width:33%"></div></div>
+    </div>
+    <div class="onboard-title" id="res-title">プロフィールを教えてください</div>
+    <div class="onboard-sub" id="res-sub">入居希望者があなたの情報を見て判断します</div>
+  </div>
+  <div class="onboard-body">
+    <!-- STEP1: 基本プロフィール -->
+    <div class="onboard-step-panel active" id="res-panel-1">
+      <div class="form-group">
+        <div class="form-label">お名前（ニックネームOK）</div>
+        <input class="form-input" type="text" placeholder="田中 あおい" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">年齢</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">10代</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">20代</div>
+          <div class="form-chip" onclick="toggleChip(this)">30代</div>
+          <div class="form-chip" onclick="toggleChip(this)">40代以上</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">国籍</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">🇯🇵 日本</div>
+          <div class="form-chip" onclick="toggleChip(this)">🇰🇷 韓国</div>
+          <div class="form-chip" onclick="toggleChip(this)">🇨🇳 中国</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌏 その他アジア</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌍 その他</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">性別</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
+          <div class="form-chip" onclick="toggleChip(this)">男性</div>
+          <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">職業</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">会社員</div>
+          <div class="form-chip" onclick="toggleChip(this)">フリーランス</div>
+          <div class="form-chip" onclick="toggleChip(this)">学生</div>
+          <div class="form-chip" onclick="toggleChip(this)">留学生</div>
+          <div class="form-chip" onclick="toggleChip(this)">その他</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">自己紹介</div>
+        <textarea class="form-textarea" placeholder="趣味や生活スタイルについて一言（入居希望者が最初に読む文章です）"></textarea>
+      </div>
+    </div>
+    <!-- STEP2: 生活スタイル -->
+    <div class="onboard-step-panel" id="res-panel-2">
+      <div class="form-group">
+        <div class="form-label">起床時間</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">6時前</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div>
+          <div class="form-chip" onclick="toggleChip(this)">8〜10時</div>
+          <div class="form-chip" onclick="toggleChip(this)">10時以降</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">就寝時間</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">22時前</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">22〜24時</div>
+          <div class="form-chip" onclick="toggleChip(this)">0〜2時</div>
+          <div class="form-chip" onclick="toggleChip(this)">2時以降</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">在宅時間</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">ほぼ在宅</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">夜だけ</div>
+          <div class="form-chip" onclick="toggleChip(this)">週末のみ</div>
+          <div class="form-chip" onclick="toggleChip(this)">ほぼ外出</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">清潔感</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">かなり気にする</div>
+          <div class="form-chip" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip" onclick="toggleChip(this)">あまり気にしない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">喫煙</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">🚭 吸わない</div>
+          <div class="form-chip" onclick="toggleChip(this)">外なら吸う</div>
+          <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">騒音・音楽</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
+          <div class="form-chip" onclick="toggleChip(this)">普通</div>
+          <div class="form-chip" onclick="toggleChip(this)">にぎやかでもOK</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">来客</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">NG</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">事前相談</div>
+          <div class="form-chip" onclick="toggleChip(this)">自由</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ルームメイトとの交流</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">一人で過ごしたい</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">たまに交流</div>
+          <div class="form-chip" onclick="toggleChip(this)">積極的に交流</div>
+        </div>
+      </div>
+    </div>
+    <!-- STEP3: 物件情報 -->
+    <div class="onboard-step-panel" id="res-panel-3">
+      <div style="background:#F0F7FF;border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#1A73E8;font-weight:600;">
+        📌 あなたが住んでいる物件の基本情報を入力してください。入居希望者の参考になります。
+      </div>
+      <div class="form-group">
+        <div class="form-label">エリア</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">新宿区</div>
+          <div class="form-chip" onclick="toggleChip(this)">渋谷区</div>
+          <div class="form-chip" onclick="toggleChip(this)">目黒区</div>
+          <div class="form-chip" onclick="toggleChip(this)">港区</div>
+          <div class="form-chip" onclick="toggleChip(this)">世田谷区</div>
+          <div class="form-chip" onclick="toggleChip(this)">中野区</div>
+          <div class="form-chip" onclick="toggleChip(this)">大阪</div>
+          <div class="form-chip" onclick="toggleChip(this)">その他</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">月額家賃（管理費込み目安）</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">〜5万円</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">5〜7万円</div>
+          <div class="form-chip" onclick="toggleChip(this)">7〜10万円</div>
+          <div class="form-chip" onclick="toggleChip(this)">10万円〜</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">部屋タイプ</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">個室</div>
+          <div class="form-chip" onclick="toggleChip(this)">相部屋</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">現在の空き室数</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">1室</div>
+          <div class="form-chip" onclick="toggleChip(this)">2室</div>
+          <div class="form-chip" onclick="toggleChip(this)">3室以上</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">入居可能時期</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">即入居可</div>
+          <div class="form-chip" onclick="toggleChip(this)">1ヶ月以内</div>
+          <div class="form-chip" onclick="toggleChip(this)">3ヶ月以内</div>
+          <div class="form-chip" onclick="toggleChip(this)">未定</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="onboard-footer">
+    <button class="onboard-btn-back" id="res-back-btn" onclick="resOnboardBack()" style="display:none;">← 戻る</button>
+    <button class="onboard-btn-next" id="res-next-btn" onclick="resOnboardNext()">次へ →</button>
+  </div>
+</div>
 
 <!-- ==================== 面談申し込み画面 ==================== -->
 <div class="screen" id="screen-interview">
@@ -2563,32 +3014,44 @@
   </div>
 </div>
 
-<!-- ==================== ロール選択画面 ==================== -->
-<div class="screen" id="screen-role-select">
+<!-- ==================== サービス種別選択画面（type-select） ==================== -->
+<div class="screen" id="screen-type-select">
   <div class="role-screen">
     <div class="role-logo">🏠</div>
     <div class="role-brand">HostMatch</div>
-    <div class="role-sub">あなたの利用目的を<br>教えてください</div>
+    <div class="role-sub">どんな暮らしを探していますか？</div>
     <div class="role-cards">
-      <div class="role-card guest" onclick="chooseRole('guest')">
-        <div class="role-card-icon">🧳</div>
+      <div class="role-card guest" onclick="chooseType('homestay')">
+        <div class="role-card-icon">🏡</div>
         <div class="role-card-text">
-          <div class="role-card-title">住む場所を探している</div>
-          <div class="role-card-desc">ホームステイ・シェアハウス・<br>ルームメイトを探す</div>
+          <div class="role-card-title">ホームステイ</div>
+          <div class="role-card-desc">ホストファミリーと一緒に暮らす</div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
-      <div class="role-card host" onclick="chooseRole('host')">
-        <div class="role-card-icon">🏠</div>
+      <div class="role-card host" onclick="chooseType('sharehouse')">
+        <div class="role-card-icon">🏢</div>
         <div class="role-card-text">
-          <div class="role-card-title">部屋を提供したい</div>
-          <div class="role-card-desc">ホストとして入居者を<br>受け入れる・収益を管理する</div>
+          <div class="role-card-title">シェアハウス</div>
+          <div class="role-card-desc">ライフスタイルが合う人と住む</div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
     </div>
-    <div style="margin-top:28px;">
-      <button onclick="toggleLang()" style="background:none;border:1.5px solid var(--border);border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;color:var(--mid);" id="lang-btn">🌐 English</button>
+  </div>
+</div>
+
+<!-- ==================== ロール選択画面 ==================== -->
+<div class="screen" id="screen-role-select">
+  <div class="role-screen">
+    <div style="font-size:32px;margin-bottom:8px;" id="role-select-emoji">🏡</div>
+    <div class="role-brand" id="role-select-brand">ホームステイ</div>
+    <div class="role-sub">あなたの立場を教えてください</div>
+    <div class="role-cards" id="role-cards-container">
+      <!-- JSで動的に生成 -->
+    </div>
+    <div style="margin-top:20px;">
+      <button onclick="navigate(currentScreen,'type-select')" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 戻る</button>
     </div>
   </div>
 </div>
@@ -3236,10 +3699,10 @@
     if (user) {
       console.log('ログイン済み:', user.email);
       if (!window.currentScreen || window.currentScreen === 'login') {
-        // ログイン後はロール選択へ（初回のみ）
+        // ログイン後はサービス選択へ（初回のみ）
         document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.getElementById('screen-role-select').classList.add('active');
-        window.currentScreen = 'role-select';
+        document.getElementById('screen-type-select').classList.add('active');
+        window.currentScreen = 'type-select';
         applyLang();
       }
     } else {
@@ -3535,13 +3998,14 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','ai-result','support','role-select','service-select','payment'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
+    if (to === 'ai-result') renderAiResult();
     // ホスト用ナビのアクティブ同期
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-applicants':'hbnav-applicants','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-mypage'};
@@ -4161,7 +4625,7 @@
       }
     } catch(e) { console.warn('Firestore取得エラー:', e); }
 
-    navigate('login', 'role-select');
+    navigate('login', 'type-select');
   }
 
   async function doLogin() {
@@ -4248,25 +4712,51 @@
   /* ===== ONBOARDING ===== */
   let onboardStep = 1;
   const onboardTotal = 3;
-  const onboardTitles = [
+
+  const onboardHomestayTitles = [
     '渡航先を教えてください',
     'あなたの生活スタイルは？',
     '趣味・NGを教えてください'
   ];
-  const onboardSubs = [
+  const onboardHomestayS = [
     '希望エリア・期間・予算を選んでください',
     'ホストとの相性を高めるための情報です',
     'AIマッチングの精度が上がります'
   ];
+  const onboardSharehouseTitles = [
+    '希望条件を教えてください',
+    'あなたの生活スタイルは？',
+    'どんなルームメイトを探していますか？'
+  ];
+  const onboardSharehouseSubs = [
+    '希望エリア・家賃・入居時期を選んでください',
+    '正直に入力するほど相性の良い人が見つかります',
+    'AIマッチングの精度が上がります'
+  ];
 
   function renderOnboardStep() {
+    const type = window._serviceType || 'homestay';
+    const titles = type === 'sharehouse' ? onboardSharehouseTitles : onboardHomestayTitles;
+    const subs = type === 'sharehouse' ? onboardSharehouseSubs : onboardHomestayS;
+
     document.getElementById('onboard-step-label').textContent = `STEP ${onboardStep} / ${onboardTotal}`;
     document.getElementById('onboard-progress').style.width = (onboardStep / onboardTotal * 100) + '%';
-    document.getElementById('onboard-title').textContent = onboardTitles[onboardStep - 1];
-    document.getElementById('onboard-sub').textContent = onboardSubs[onboardStep - 1];
-    document.querySelectorAll('.onboard-step-panel').forEach((p, i) => {
-      p.classList.toggle('active', i + 1 === onboardStep);
+    document.getElementById('onboard-title').textContent = titles[onboardStep - 1];
+    document.getElementById('onboard-sub').textContent = subs[onboardStep - 1];
+
+    // ホームステイ用パネル（onboard-panel-1〜3）とシェアハウス用パネル（sh-onboard-panel-1〜3）を切り替え
+    [1,2,3].forEach(n => {
+      const hPanel = document.getElementById('onboard-panel-' + n);
+      const shPanel = document.getElementById('sh-onboard-panel-' + n);
+      if (type === 'sharehouse') {
+        if (hPanel) { hPanel.classList.remove('active'); hPanel.style.display = 'none'; }
+        if (shPanel) { shPanel.style.display = (n === onboardStep) ? 'block' : 'none'; if (n === onboardStep) shPanel.classList.add('active'); else shPanel.classList.remove('active'); }
+      } else {
+        if (shPanel) { shPanel.classList.remove('active'); shPanel.style.display = 'none'; }
+        if (hPanel) { hPanel.style.display = ''; hPanel.classList.toggle('active', n === onboardStep); }
+      }
     });
+
     document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
     document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? 'AIマッチングを開始 🤖' : '次へ →';
   }
@@ -4396,16 +4886,79 @@
     applyLang();
   }
 
+  /* ===== サービス種別選択 ===== */
+  function chooseType(type) {
+    window._serviceType = type;
+    const emoji = document.getElementById('role-select-emoji');
+    const brand = document.getElementById('role-select-brand');
+    const container = document.getElementById('role-cards-container');
+
+    if (type === 'homestay') {
+      if (emoji) emoji.textContent = '🏡';
+      if (brand) brand.textContent = 'ホームステイ';
+      if (container) container.innerHTML = `
+        <div class="role-card guest" onclick="chooseRole('guest')">
+          <div class="role-card-icon">🧳</div>
+          <div class="role-card-text">
+            <div class="role-card-title">住む場所を探している</div>
+            <div class="role-card-desc">ホームステイ先を探す</div>
+          </div>
+          <div class="role-card-arrow">›</div>
+        </div>
+        <div class="role-card host" onclick="chooseRole('host')">
+          <div class="role-card-icon">🏠</div>
+          <div class="role-card-text">
+            <div class="role-card-title">ホストとして登録する</div>
+            <div class="role-card-desc">ゲストを受け入れて収入を得る</div>
+          </div>
+          <div class="role-card-arrow">›</div>
+        </div>
+      `;
+    } else {
+      if (emoji) emoji.textContent = '🏢';
+      if (brand) brand.textContent = 'シェアハウス';
+      if (container) container.innerHTML = `
+        <div class="role-card guest" onclick="chooseRole('guest')">
+          <div class="role-card-icon">🔍</div>
+          <div class="role-card-text">
+            <div class="role-card-title">入居先を探している</div>
+            <div class="role-card-desc">ルームメイトのプロフィールを見て選ぶ</div>
+          </div>
+          <div class="role-card-arrow">›</div>
+        </div>
+        <div class="role-card host" onclick="chooseRole('resident')">
+          <div class="role-card-icon">🤝</div>
+          <div class="role-card-text">
+            <div class="role-card-title">入居中・ルームメイトを募集</div>
+            <div class="role-card-desc">自分のプロフィールを登録して募集する</div>
+          </div>
+          <div class="role-card-arrow">›</div>
+        </div>
+      `;
+    }
+    // マイページ種別ラベル更新
+    const typeLabel = document.getElementById('mypage-current-type');
+    if (typeLabel) typeLabel.textContent = type === 'homestay' ? 'ホームステイ' : 'シェアハウス';
+    navigate('type-select', 'role-select');
+  }
+
   /* ===== ロール選択 ===== */
-  let currentRole = 'guest'; // 'guest' | 'host'
+  let currentRole = 'guest'; // 'guest' | 'host' | 'resident'
 
   function chooseRole(role) {
     currentRole = role;
-    if (role === 'host') {
-      navigate('role-select', 'host-dashboard');
-      renderHostCalendar();
-    } else {
-      navigate('role-select', 'search');
+    if (role === 'guest') {
+      navigate('role-select', 'onboarding');
+      onboardStep = 1;
+      renderOnboardStep();
+    } else if (role === 'host') {
+      hostObStep = 1;
+      navigate('role-select', 'host-onboarding');
+      renderHostObStep();
+    } else if (role === 'resident') {
+      resStep = 1;
+      navigate('role-select', 'resident-onboarding');
+      renderResStep();
     }
   }
 
@@ -4549,8 +5102,317 @@
   }
 
   function openSharehouseDetail(id) {
-    // TODO: シェアハウス詳細画面（将来実装）
-    alert('シェアハウス詳細（実装予定）');
+    navigate(currentScreen, 'sharehouse-detail');
+    shPhotoIndex = 0;
+    const track = document.getElementById('sh-photo-track');
+    if (track) track.style.transform = 'translateX(0)';
+    const counter = document.getElementById('sh-photo-counter');
+    if (counter) counter.textContent = '1 / 3';
+  }
+
+  let shPhotoIndex = 0;
+  function shPhotoNav(dir) {
+    const track = document.getElementById('sh-photo-track');
+    const slides = track ? track.querySelectorAll('.photo-slide') : [];
+    const total = slides.length;
+    if (!total) return;
+    shPhotoIndex = (shPhotoIndex + dir + total) % total;
+    track.style.transform = `translateX(-${shPhotoIndex * 100}%)`;
+    const counter = document.getElementById('sh-photo-counter');
+    if (counter) counter.textContent = `${shPhotoIndex + 1} / ${total}`;
+  }
+
+  /* ===== ホストオンボーディング ===== */
+  let hostObStep = 1;
+  const hostObTotal = 2;
+
+  function renderHostObStep() {
+    const titles = ['ホスト情報を教えてください','部屋・ルールを設定してください'];
+    const subs = ['あなたのプロフィールがゲストへの第一印象になります','詳しく設定するほどマッチング精度が上がります'];
+    document.getElementById('host-ob-step-label').textContent = `STEP ${hostObStep} / ${hostObTotal}`;
+    document.getElementById('host-ob-progress').style.width = (hostObStep / hostObTotal * 100) + '%';
+    document.getElementById('host-ob-title').textContent = titles[hostObStep - 1];
+    document.getElementById('host-ob-sub').textContent = subs[hostObStep - 1];
+    document.querySelectorAll('[id^="host-ob-panel-"]').forEach((p, i) => {
+      p.classList.toggle('active', i + 1 === hostObStep);
+    });
+    document.getElementById('host-ob-back-btn').style.display = hostObStep > 1 ? 'block' : 'none';
+    document.getElementById('host-ob-next-btn').textContent = hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →';
+  }
+
+  function hostObNext() {
+    if (hostObStep < hostObTotal) { hostObStep++; renderHostObStep(); }
+    else { navigate('host-onboarding', 'host-dashboard'); }
+  }
+
+  function hostObBack() {
+    if (hostObStep > 1) { hostObStep--; renderHostObStep(); }
+  }
+
+  /* ===== 入居者オンボーディング ===== */
+  let resStep = 1;
+  const resTotal = 3;
+  const resTitles = ['プロフィールを教えてください','あなたの生活スタイルは？','物件情報を入力してください'];
+  const resSubs = ['入居希望者があなたの情報を見て判断します','正直に入力するほど相性の良い人が集まります','あなたの家の基本情報です（任意項目）'];
+
+  function renderResStep() {
+    document.getElementById('res-step-label').textContent = `STEP ${resStep} / ${resTotal}`;
+    document.getElementById('res-progress').style.width = (resStep / resTotal * 100) + '%';
+    document.getElementById('res-title').textContent = resTitles[resStep - 1];
+    document.getElementById('res-sub').textContent = resSubs[resStep - 1];
+    document.querySelectorAll('.onboard-step-panel[id^="res-panel"]').forEach((p, i) => {
+      p.classList.toggle('active', i + 1 === resStep);
+    });
+    document.getElementById('res-back-btn').style.display = resStep > 1 ? 'block' : 'none';
+    document.getElementById('res-next-btn').textContent = resStep === resTotal ? '登録完了 ✓' : '次へ →';
+  }
+
+  function resOnboardNext() {
+    if (resStep < resTotal) {
+      resStep++;
+      renderResStep();
+    } else {
+      navigate('resident-onboarding', 'host-dashboard');
+    }
+  }
+
+  function resOnboardBack() {
+    if (resStep > 1) { resStep--; renderResStep(); }
+  }
+
+  /* ===== AIマッチング結果レンダリング ===== */
+  function renderAiResult() {
+    const type = window._serviceType || 'homestay';
+    const titleEl = document.getElementById('ai-result-title');
+    const subtitleEl = document.getElementById('ai-result-subtitle');
+    const listEl = document.getElementById('ai-result-list');
+    if (!listEl) return;
+
+    if (type === 'sharehouse') {
+      if (titleEl) titleEl.textContent = 'AIマッチング結果';
+      if (subtitleEl) subtitleEl.textContent = 'あなたのライフスタイルに合うシェアハウス · 3件';
+      listEl.innerHTML = `
+        <!-- sh1 -->
+        <div class="match-card" onclick="openSharehouseDetail('sh1')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            <div class="match-badge"><span>🤖</span> マッチ度：94%</div>
+            <div class="match-card-flag">📍 新宿区 · ¥65,000/月</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:94%"></div></div>
+          </div>
+          <div style="padding:14px 14px 6px;">
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:8px;">入居中のメンバー（2名）</div>
+            <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;">
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">👩</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">田中あおい</div>
+                <div style="font-size:10px;color:var(--light);">24歳・会社員</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">👨</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">佐藤けんじ</div>
+                <div style="font-size:10px;color:var(--light);">27歳・エンジニア</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:22px;">＋</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;color:var(--primary);">空き1室</div>
+                <div style="font-size:10px;color:var(--light);">あなたの部屋</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:0 14px 14px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="ctag ok">✓ 全員非喫煙</span>
+              <span class="ctag ok">✓ 在宅ワーク多め</span>
+              <span class="ctag">🕐 夜型</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+              <div><strong style="font-size:16px;">¥65,000</strong><span style="font-size:12px;color:var(--light);"> /月</span></div>
+              <div style="font-size:12px;color:var(--light);">新宿区 · 個室 · 残り1室</div>
+            </div>
+          </div>
+        </div>
+        <!-- sh2 -->
+        <div class="match-card" onclick="openSharehouseDetail('sh2')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            <div class="match-badge"><span>🤖</span> マッチ度：89%</div>
+            <div class="match-card-flag">📍 渋谷区 · ¥78,000/月</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:89%"></div></div>
+          </div>
+          <div style="padding:14px 14px 6px;">
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:8px;">入居中のメンバー（3名）</div>
+            <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;">
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#a18cd1,#fbc2eb);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">👩</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">山田みか</div>
+                <div style="font-size:10px;color:var(--light);">23歳・学生</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#ffecd2,#fcb69f);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">🧑</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">高橋りょう</div>
+                <div style="font-size:10px;color:var(--light);">25歳・デザイナー</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">👨</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">伊藤まさき</div>
+                <div style="font-size:10px;color:var(--light);">29歳・営業</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:22px;">＋</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;color:var(--primary);">空き2室</div>
+                <div style="font-size:10px;color:var(--light);">募集中</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:0 14px 14px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="ctag ok">✓ 全員非喫煙</span>
+              <span class="ctag ok">✓ 朝型〜普通</span>
+              <span class="ctag">🎨 クリエイター系</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+              <div><strong style="font-size:16px;">¥78,000</strong><span style="font-size:12px;color:var(--light);"> /月</span></div>
+              <div style="font-size:12px;color:var(--light);">渋谷区 · 個室 · 残り2室</div>
+            </div>
+          </div>
+        </div>
+        <!-- sh3 -->
+        <div class="match-card" onclick="openSharehouseDetail('sh3')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
+            <div class="match-badge"><span>🤖</span> マッチ度：85%</div>
+            <div class="match-card-flag">📍 目黒区 · ¥55,000/月</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:85%"></div></div>
+          </div>
+          <div style="padding:14px 14px 6px;">
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:8px;">入居中のメンバー（1名）</div>
+            <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;">
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#f093fb,#f5576c);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:26px;">👩</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;">中村さくら</div>
+                <div style="font-size:10px;color:var(--light);">26歳・看護師</div>
+              </div>
+              <div style="flex-shrink:0;width:80px;text-align:center;">
+                <div style="width:52px;height:52px;border-radius:50%;background:var(--bg);border:2px dashed var(--border);margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:22px;">＋</div>
+                <div style="font-size:11px;font-weight:700;margin-top:4px;color:var(--primary);">空き1室</div>
+                <div style="font-size:10px;color:var(--light);">あなたの部屋</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:0 14px 14px;">
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="ctag ok">✓ 非喫煙</span>
+              <span class="ctag ok">✓ 静かな環境</span>
+              <span class="ctag">🌙 夜帰宅</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+              <div><strong style="font-size:16px;">¥55,000</strong><span style="font-size:12px;color:var(--light);"> /月</span></div>
+              <div style="font-size:12px;color:var(--light);">目黒区 · 個室 · 残り1室</div>
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      // ホームステイ：既存HTMLに戻す
+      if (titleEl) titleEl.textContent = 'AIマッチング結果';
+      if (subtitleEl) subtitleEl.textContent = 'あなたの条件に合うホスト · 6件';
+      listEl.innerHTML = `
+        <div class="match-card" onclick="openDetail('sarah')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：96%</div>
+            <div class="match-card-flag">🇺🇸 New York, NY</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:96%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">Sarah Johnson</div><div class="match-card-rating">★ 4.98</div></div>
+            <div class="match-card-location">Manhattan · 個室 · ホスト歴3年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag">👩 女性限定</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$950</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
+          </div>
+        </div>
+        <div class="match-card" onclick="openDetail('michael')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：93%</div>
+            <div class="match-card-flag">🇺🇸 Los Angeles, CA</div>
+            <div class="match-card-save">❤️</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:93%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">Michael & Lisa Chen</div><div class="match-card-rating">★ 4.92</div></div>
+            <div class="match-card-location">Santa Monica · 個室 · ホスト歴5年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 3食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ ペット可</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$1,100</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 3食込み</div></div>
+          </div>
+        </div>
+        <div class="match-card" onclick="openDetail('emily')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：91%</div>
+            <div class="match-card-flag">🇺🇸 Boston, MA</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:91%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">Emily Williams</div><div class="match-card-rating">★ 5.00</div></div>
+            <div class="match-card-location">Cambridge · 個室 · ホスト歴2年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 留学生歓迎</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$880</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
+          </div>
+        </div>
+        <div class="match-card" onclick="openDetail('thompson')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：88%</div>
+            <div class="match-card-flag">🇺🇸 San Francisco, CA</div>
+            <div class="match-card-save">❤️</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:88%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">The Thompson Family</div><div class="match-card-rating">★ 4.97</div></div>
+            <div class="match-card-location">Mission District · 個室 · ホスト歴4年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ 来客OK</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$1,050</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
+          </div>
+        </div>
+        <div class="match-card" onclick="openDetail('jennifer')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：85%</div>
+            <div class="match-card-flag">🇺🇸 Seattle, WA</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:85%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">Jennifer Park</div><div class="match-card-rating">★ 4.89</div></div>
+            <div class="match-card-location">Capitol Hill · 個室 · ホスト歴1年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 夜型OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$820</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
+          </div>
+        </div>
+        <div class="match-card" onclick="openDetail('robert')">
+          <div class="match-card-img">
+            <img src="https://images.unsplash.com/photo-1505693314120-0d443867891c?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：82%</div>
+            <div class="match-card-flag">🇺🇸 Chicago, IL</div>
+            <div class="match-card-save">🤍</div>
+            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:82%"></div></div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">Robert & Mary Davis</div><div class="match-card-rating">★ 4.95</div></div>
+            <div class="match-card-location">Lincoln Park · 個室 · ホスト歴6年</div>
+            <div class="match-card-tags"><span class="ctag ok">✓ 夕食付き</span><span class="ctag ok">✓ ペット可</span><span class="ctag">🚭 禁煙</span></div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>$780</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 夕食込み</div></div>
+          </div>
+        </div>
+      `;
+    }
   }
 
   /* ===== INIT ===== */
