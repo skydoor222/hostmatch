@@ -4814,24 +4814,7 @@
   }
 
   async function doGoogleLogin() {
-    try {
-      const cred = await window._fbGoogleSignIn();
-      // 初回ログインならFirestoreに保存
-      const userRef = window._fbDoc(window._fbDb, 'users', cred.user.uid);
-      const snap = await window._fbGetDoc(userRef);
-      if (!snap.exists()) {
-        await window._fbSetDoc(userRef, {
-          name: cred.user.displayName || 'ゲスト',
-          email: cred.user.email,
-          createdAt: window._fbServerTimestamp()
-        });
-      }
-      afterLoginSuccess(cred.user);
-    } catch(e) {
-      if (e.code !== 'auth/popup-closed-by-user') {
-        showLoginError('Googleログインに失敗しました');
-      }
-    }
+    showLoginError('Googleログインは現在準備中です');
   }
 
   /* ===== ONBOARDING ===== */
