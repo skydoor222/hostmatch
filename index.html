@@ -1758,7 +1758,7 @@
 <!-- ==================== チャット画面 ==================== -->
 <div id="screen-chat" class="screen">
   <div class="chat-header">
-    <div class="chat-back" onclick="navigate('chat','messages')">←</div>
+    <div class="chat-back" onclick="navigate(currentScreen, chatBackScreen)">←</div>
     <div class="chat-avatar av1">👩</div>
     <div>
       <div class="chat-title">Sarah Johnson</div>
@@ -1772,7 +1772,7 @@
       <div class="chat-banner-sub">ホスト詳細・お申し込みはこちら</div>
     </div>
     <div class="chat-banner-btns">
-      <button class="chat-banner-btn-detail" onclick="openDetail(currentHost)">詳細を見る</button>
+      <button class="chat-banner-btn-detail" onclick="openChatDetail()">詳細を見る</button>
       <button class="chat-banner-btn-apply" onclick="applyHost()">本申し込み →</button>
     </div>
   </div>
@@ -2647,7 +2647,7 @@
 
   <!-- CTA -->
   <div class="detail-cta">
-    <button class="btn-outline" onclick="navigate(currentScreen,'chat')" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;cursor:pointer;">💬 メッセージ</button>
+    <button class="btn-outline" onclick="openChat(currentHost)" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;cursor:pointer;">💬 メッセージ</button>
     <button class="btn-primary" onclick="navigate(currentScreen,'interview')" style="flex:2;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">このシェアハウスに申し込む</button>
   </div>
 </div>
@@ -3523,7 +3523,7 @@
 <!-- ==================== ホスト応募者詳細 ==================== -->
 <div class="screen" id="screen-host-applicant-detail">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'host-applicants')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,applicantDetailBackScreen)">←</div>
     <div class="mypage-sub-title">応募者詳細</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
@@ -3559,7 +3559,7 @@
     <div class="mypage-sub-title" data-i18n="host_messages">メッセージ</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:2px;padding-bottom:100px;">
-    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);" onclick="navigate(currentScreen,'chat')">
+    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('sakura')">
       <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👩</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;">
@@ -3568,9 +3568,10 @@
         </div>
         <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">入居日について確認したいのですが...</div>
       </div>
+      <button onclick="event.stopPropagation();openApplicantDetail('sakura','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">詳細を見る</button>
       <div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>
     </div>
-    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);">
+    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('minjun')">
       <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👨</div>
       <div style="flex:1;min-width:0;">
         <div style="display:flex;justify-content:space-between;">
@@ -3579,6 +3580,7 @@
         </div>
         <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">ありがとうございます！よろしくお願いします</div>
       </div>
+      <button onclick="event.stopPropagation();openApplicantDetail('minjun','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">詳細を見る</button>
     </div>
   </div>
 </div>
@@ -4140,6 +4142,9 @@
   /* ===== STATE ===== */
   let currentScreen = 'login';
   let currentHost = null;
+  let currentChatApplicant = null;
+  let chatBackScreen = 'messages';
+  let chatDetailMode = 'host';
   let favorites = new Set(['michael', 'thompson']);
 
   /* ===== NAVIGATION ===== */
@@ -4347,6 +4352,9 @@
     const h = HOSTS[hostId || currentHost];
     if (!h) return;
     currentHost = hostId || currentHost;
+    currentChatApplicant = null;
+    chatBackScreen = 'messages';
+    chatDetailMode = 'host';
 
     // Header
     const header = document.querySelector('.chat-header');
@@ -4357,6 +4365,7 @@
 
     // Banner
     document.getElementById('chat-banner-name').textContent = h.name;
+    document.querySelector('.chat-banner-sub').textContent = 'ホスト詳細・お申し込みはこちら';
     // 面談済みなら「本申し込み」ボタンを強調、未面談なら非表示
     const applyBtn = document.querySelector('.chat-banner-btn-apply');
     applyBtn.style.display = interviewedHosts.has(currentHost) ? 'block' : 'none';
@@ -4373,6 +4382,50 @@
 
     navigate(currentScreen, 'chat');
     setTimeout(() => area.scrollTop = area.scrollHeight, 50);
+  }
+
+  function openHostApplicantChat(applicantId) {
+    const applicant = APPLICANTS[applicantId];
+    if (!applicant) return;
+    currentChatApplicant = applicantId;
+    chatBackScreen = 'host-messages';
+    chatDetailMode = 'applicant';
+
+    const header = document.querySelector('.chat-header');
+    const avatar = header.querySelector('.chat-avatar');
+    avatar.className = 'chat-avatar';
+    avatar.textContent = applicant.avatar;
+    avatar.style.background = applicant.avatarBg;
+    header.querySelector('.chat-title').textContent = applicant.name;
+    header.querySelector('.chat-subtitle').textContent = applicant.age + ' · ' + applicant.nationality;
+
+    document.getElementById('chat-banner-name').textContent = applicant.name;
+    document.querySelector('.chat-banner-sub').textContent = '応募者詳細はこちら';
+    document.querySelector('.chat-banner-btn-apply').style.display = 'none';
+
+    const messages = applicant.chatMessages || [
+      { from: 'them', text: '入居について相談したいです。よろしくお願いします。', time: '14:32' },
+      { from: 'me', text: 'ご連絡ありがとうございます。希望時期を教えてください。', time: '14:40' }
+    ];
+    const area = document.querySelector('.chat-messages');
+    area.innerHTML = '<div class="date-label">会話履歴</div>' +
+      messages.map(m => `
+        <div class="bubble-wrap ${m.from}">
+          <div class="bubble ${m.from}">${m.text}</div>
+          <div class="bubble-time">${m.time}</div>
+        </div>
+      `).join('');
+
+    navigate(currentScreen, 'chat');
+    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
+  }
+
+  function openChatDetail() {
+    if (chatDetailMode === 'applicant' && currentChatApplicant) {
+      openApplicantDetail(currentChatApplicant, 'host-messages');
+      return;
+    }
+    openDetail(currentHost);
   }
 
   function sendMessage() {
@@ -5195,7 +5248,12 @@
       lifestyle: '朝型・適度に交流したい',
       hobbies: '料理、映画、アウトドア',
       stay: '2025年2月から3ヶ月',
-      area: 'ボストン、ニューヨーク'
+      area: 'ボストン、ニューヨーク',
+      chatMessages: [
+        { from: 'them', text: '入居日について確認したいのですが、2025年2月上旬から滞在可能でしょうか？', time: '14:32' },
+        { from: 'me', text: 'お問い合わせありがとうございます。2月上旬から受け入れ可能です。', time: '14:45' },
+        { from: 'them', text: 'ありがとうございます。生活ルールも詳しく知りたいです。', time: '14:52' }
+      ]
     },
     minjun: {
       avatar: '👨',
@@ -5207,7 +5265,11 @@
       lifestyle: '普通・一人時間も大切',
       hobbies: '読書、音楽、カフェ巡り',
       stay: '2025年3月から6ヶ月',
-      area: 'シカゴ、トロント'
+      area: 'シカゴ、トロント',
+      chatMessages: [
+        { from: 'them', text: 'ありがとうございます！よろしくお願いします。', time: '昨日' },
+        { from: 'me', text: 'こちらこそよろしくお願いします。希望滞在期間を確認させてください。', time: '昨日' }
+      ]
     },
     emma: {
       avatar: '👩',
@@ -5223,9 +5285,12 @@
     }
   };
 
-  function openApplicantDetail(id) {
+  let applicantDetailBackScreen = 'host-applicants';
+
+  function openApplicantDetail(id, backScreen = 'host-applicants') {
     const applicant = APPLICANTS[id];
     if (!applicant) return;
+    applicantDetailBackScreen = backScreen;
     const avatar = document.getElementById('applicant-detail-avatar');
     avatar.textContent = applicant.avatar;
     avatar.style.background = applicant.avatarBg;
