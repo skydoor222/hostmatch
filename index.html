@@ -1687,7 +1687,6 @@
         <div class="price-row"><span style="color:var(--light)">朝食（平日）</span><strong>$100 /月</strong></div>
         <div class="price-row"><span style="color:var(--light)">光熱費・Wi-Fi</span><strong>$100 /月</strong></div>
         <div class="price-row total"><span>合計</span><span>$950 /月</span></div>
-        <div class="price-note">※ デポジット1ヶ月分・礼金なし・仲介手数料なし</div>
       </div>
     </div>
 
@@ -4209,8 +4208,7 @@
     priceBox.innerHTML = h.priceBreakdown.map(p =>
       `<div class="price-row"><span style="color:var(--light)">${p.label}</span><strong>${p.val}</strong></div>`
     ).join('') +
-      `<div class="price-row total"><span>合計</span><span>$${h.price.toLocaleString()} /月</span></div>
-       <div class="price-note">※ デポジット1ヶ月分・礼金なし・仲介手数料なし</div>`;
+      `<div class="price-row total"><span>合計</span><span>$${h.price.toLocaleString()} /月</span></div>`;
 
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
