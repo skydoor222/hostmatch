@@ -3468,7 +3468,7 @@
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;">
     <!-- 応募者カード -->
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div onclick="openApplicantDetail('sakura')" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;cursor:pointer;">
       <div style="display:flex;gap:12px;align-items:flex-start;">
         <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:24px;">👩</div>
         <div style="flex:1;">
@@ -3479,14 +3479,14 @@
           <div style="font-size:12px;color:var(--light);margin-top:2px;">23歳 · 留学生 · 入居希望：2025年2月</div>
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">「日本語も英語も話せます。料理が好きでお手伝いもできます！」</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
-            <button onclick="approveApplicant(this)" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;" data-i18n="approve">承認する</button>
-            <button onclick="rejectApplicant(this)" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="decline">お断りする</button>
+            <button onclick="event.stopPropagation();approveApplicant(this)" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;" data-i18n="approve">承認する</button>
+            <button onclick="event.stopPropagation();rejectApplicant(this)" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="decline">お断りする</button>
           </div>
         </div>
       </div>
     </div>
 
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div onclick="openApplicantDetail('minjun')" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;cursor:pointer;">
       <div style="display:flex;gap:12px;align-items:flex-start;">
         <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:24px;">👨</div>
         <div style="flex:1;">
@@ -3497,14 +3497,14 @@
           <div style="font-size:12px;color:var(--light);margin-top:2px;">26歳 · ワーホリ · 入居希望：2025年3月</div>
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">「韓国から来ます。日本語N2取得済みです。」</div>
           <div style="display:flex;gap:8px;margin-top:10px;">
-            <button onclick="approveApplicant(this)" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;" data-i18n="approve">承認する</button>
-            <button onclick="rejectApplicant(this)" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="decline">お断りする</button>
+            <button onclick="event.stopPropagation();approveApplicant(this)" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;" data-i18n="approve">承認する</button>
+            <button onclick="event.stopPropagation();rejectApplicant(this)" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="decline">お断りする</button>
           </div>
         </div>
       </div>
     </div>
 
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div onclick="openApplicantDetail('emma')" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;cursor:pointer;">
       <div style="display:flex;gap:12px;align-items:flex-start;">
         <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:24px;">👩</div>
         <div style="flex:1;">
@@ -3517,6 +3517,38 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ==================== ホスト応募者詳細 ==================== -->
+<div class="screen" id="screen-host-applicant-detail">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'host-applicants')">←</div>
+    <div class="mypage-sub-title">応募者詳細</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:20px;text-align:center;">
+      <div id="applicant-detail-avatar" style="width:84px;height:84px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:42px;"></div>
+      <div id="applicant-detail-name" style="font-size:22px;font-weight:900;"></div>
+      <div id="applicant-detail-meta" style="font-size:13px;color:var(--light);margin-top:4px;"></div>
+    </div>
+
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px;">自己紹介</div>
+      <div id="applicant-detail-bio" style="font-size:14px;color:var(--mid);line-height:1.7;"></div>
+    </div>
+
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;">希望条件</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">生活リズム</span><strong id="applicant-detail-lifestyle" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">趣味</span><strong id="applicant-detail-hobbies" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望滞在期間</span><strong id="applicant-detail-stay" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望エリア</span><strong id="applicant-detail-area" style="text-align:right;"></strong></div>
+      </div>
+    </div>
+
+    <button onclick="navigate(currentScreen,'host-messages')" style="background:var(--primary);color:white;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;">💬 メッセージ</button>
   </div>
 </div>
 
@@ -4121,7 +4153,7 @@
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
     const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
-    const hostScreens = ['host-dashboard','host-applicants','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
+    const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
@@ -5152,6 +5184,61 @@
   }
 
   /* ===== 応募者操作 ===== */
+  const APPLICANTS = {
+    sakura: {
+      avatar: '👩',
+      avatarBg: 'linear-gradient(135deg,#a8edea,#fed6e3)',
+      name: '中村 さくら',
+      age: '23歳',
+      nationality: '日本',
+      bio: '日本語も英語も話せます。料理が好きで、ホストファミリーのお手伝いも積極的にしたいです。初めての海外生活なので、生活ルールを大切にしながら楽しく過ごしたいです。',
+      lifestyle: '朝型・適度に交流したい',
+      hobbies: '料理、映画、アウトドア',
+      stay: '2025年2月から3ヶ月',
+      area: 'ボストン、ニューヨーク'
+    },
+    minjun: {
+      avatar: '👨',
+      avatarBg: 'linear-gradient(135deg,#fddb92,#d1fdff)',
+      name: '김 민준',
+      age: '26歳',
+      nationality: '韓国',
+      bio: '韓国からワーキングホリデーで滞在予定です。日本語N2を取得しており、静かな環境で現地の生活に慣れていきたいです。',
+      lifestyle: '普通・一人時間も大切',
+      hobbies: '読書、音楽、カフェ巡り',
+      stay: '2025年3月から6ヶ月',
+      area: 'シカゴ、トロント'
+    },
+    emma: {
+      avatar: '👩',
+      avatarBg: 'linear-gradient(135deg,#667eea,#764ba2)',
+      name: 'Smith Emma',
+      age: '21歳',
+      nationality: 'アメリカ',
+      bio: 'I am studying Japanese and love cooking. I enjoy sharing meals and learning about different cultures, and I always keep shared spaces clean.',
+      lifestyle: '夜型・たくさん話したい',
+      hobbies: '料理、語学、アート',
+      stay: '入居中',
+      area: 'ニューヨーク'
+    }
+  };
+
+  function openApplicantDetail(id) {
+    const applicant = APPLICANTS[id];
+    if (!applicant) return;
+    const avatar = document.getElementById('applicant-detail-avatar');
+    avatar.textContent = applicant.avatar;
+    avatar.style.background = applicant.avatarBg;
+    document.getElementById('applicant-detail-name').textContent = applicant.name;
+    document.getElementById('applicant-detail-meta').textContent = applicant.age + ' · ' + applicant.nationality;
+    document.getElementById('applicant-detail-bio').textContent = applicant.bio;
+    document.getElementById('applicant-detail-lifestyle').textContent = applicant.lifestyle;
+    document.getElementById('applicant-detail-hobbies').textContent = applicant.hobbies;
+    document.getElementById('applicant-detail-stay').textContent = applicant.stay;
+    document.getElementById('applicant-detail-area').textContent = applicant.area;
+    navigate(currentScreen, 'host-applicant-detail');
+  }
+
   function approveApplicant(btn) {
     const card = btn.closest('[style*="border-radius:16px"]');
     const badge = card.querySelector('span[data-i18n]');
