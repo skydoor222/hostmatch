@@ -2209,7 +2209,7 @@
     <div class="login-tagline">AIがあなたに合う人と<br>住まいを繋ぎます</div>
 
     <div class="login-form">
-      <div class="form-group" style="text-align:left;" id="login-name-group" style="display:none;">
+      <div class="form-group" id="login-name-group" style="text-align:left; display:none;">
         <div class="form-label">お名前</div>
         <input class="form-input" id="login-name" type="text" placeholder="山田 太郎" />
       </div>
@@ -2231,7 +2231,7 @@
 
     <div class="login-switch">
       <span id="login-switch-text">アカウントをお持ちでない方は</span>
-      <span id="login-switch-link" onclick="toggleLoginMode()" style="color:var(--primary);font-weight:700;cursor:pointer;"> 新規登録</span>
+      <button type="button" id="login-switch-link" onclick="toggleLoginMode(event)" style="background:none;border:none;padding:0;color:var(--primary);font-weight:700;cursor:pointer;font:inherit;pointer-events:auto;"> 新規登録</button>
     </div>
   </div>
 </div>
@@ -4691,12 +4691,13 @@
   /* ===== LOGIN ===== */
   let isSignupMode = false;
 
-  function toggleLoginMode() {
-    isSignupMode = !isSignupMode;
+  function setLoginMode(signup) {
+    isSignupMode = signup;
     const nameGroup = document.getElementById('login-name-group');
     const submitBtn = document.getElementById('login-submit-btn');
     const switchText = document.getElementById('login-switch-text');
     const switchLink = document.getElementById('login-switch-link');
+    if (!nameGroup || !submitBtn || !switchText || !switchLink) return;
     if (isSignupMode) {
       nameGroup.style.display = 'block';
       submitBtn.textContent = '新規登録';
@@ -4710,6 +4711,14 @@
     }
     document.getElementById('login-error').textContent = '';
   }
+
+  function toggleLoginMode(event) {
+    if (event) event.preventDefault();
+    setLoginMode(!isSignupMode);
+  }
+
+  window.setLoginMode = setLoginMode;
+  window.toggleLoginMode = toggleLoginMode;
 
   function showLoginError(msg) {
     document.getElementById('login-error').textContent = msg;
