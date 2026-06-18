@@ -2698,24 +2698,21 @@
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
       <div class="form-group">
-        <div class="form-label">エリア</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">🗽 New York</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">🌴 Los Angeles</div>
-          <div class="form-chip" onclick="toggleChip(this)">🎓 Boston</div>
-          <div class="form-chip" onclick="toggleChip(this)">🌉 San Francisco</div>
-          <div class="form-chip" onclick="toggleChip(this)">🌆 Chicago</div>
-          <div class="form-chip" onclick="toggleChip(this)">🌲 Seattle</div>
-        </div>
+        <div class="form-label">住所</div>
+        <input class="form-input" type="text" placeholder="都道府県、市区町村、番地、郵便番号などを入力してください" />
       </div>
       <div class="form-group">
-        <div class="form-label">月額料金（USD）</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">〜$700</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">$700〜$1,000</div>
-          <div class="form-chip" onclick="toggleChip(this)">$1,000〜$1,500</div>
-          <div class="form-chip" onclick="toggleChip(this)">$1,500〜</div>
-        </div>
+        <div class="form-label">1泊あたりの料金</div>
+        <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="金額を入力してください" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">写真を登録</div>
+        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+          <span style="font-size:28px;">📷</span>
+          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span>
+          <span style="font-size:12px;color:var(--light);">画像を選択</span>
+          <input type="file" accept="image/*" multiple style="display:none;" />
+        </label>
       </div>
       <div class="form-group">
         <div class="form-label">食事</div>
