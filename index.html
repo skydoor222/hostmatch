@@ -1607,7 +1607,7 @@
       <div class="photo-dot"></div>
     </div>
     <div class="photo-counter" id="photo-counter">1 / 6</div>
-    <div class="detail-back" onclick="navigate('detail','search')">←</div>
+    <div class="detail-back" onclick="navigate(currentScreen, detailBackScreen)">←</div>
     <div class="detail-save" id="detail-save">❤️</div>
   </div>
 
@@ -1898,7 +1898,7 @@
     <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">申請・履歴</div>
-    <div class="mypage-item"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'pending-hosts')"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
@@ -1915,6 +1915,35 @@
     <div class="mypage-section-title">サービス</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
+  </div>
+</div>
+
+<!-- ==================== 申請中のホスト ==================== -->
+<div class="screen" id="screen-pending-hosts">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-title">申請中のホスト</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;">
+    <div class="host-card" onclick="openDetail('sarah','pending-hosts')" style="cursor:pointer;">
+      <div class="card-img">
+        <div class="card-room-bg r1">🛋️</div>
+        <div class="card-flag">🇺🇸 New York, NY</div>
+        <div class="card-save-btn">🤍</div>
+        <div class="card-avatar av1">👩</div>
+      </div>
+      <div class="card-body">
+        <div class="card-row1">
+          <div class="card-host-name">Sarah Johnson</div>
+          <div class="card-rating">★ 4.98</div>
+        </div>
+        <div class="card-location">Manhattan · 個室 · 申請中</div>
+        <div class="card-footer">
+          <div class="card-price"><strong>$950</strong><span> /月〜</span></div>
+          <button onclick="event.stopPropagation();openDetail('sarah','pending-hosts')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;">詳細を見る</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4025,6 +4054,7 @@
   /* ===== STATE ===== */
   let currentScreen = 'login';
   let currentHost = null;
+  let detailBackScreen = 'search';
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
@@ -4040,7 +4070,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4055,11 +4085,12 @@
   }
 
   /* ===== DETAIL SCREEN ===== */
-  function openDetail(hostId) {
+  function openDetail(hostId, backScreen = 'search') {
     // mapから来た場合、screen-mapを非アクティブにする（navigate内で処理）
     const h = HOSTS[hostId];
     if (!h) return;
     currentHost = hostId;
+    detailBackScreen = backScreen;
 
     // Photos
     const track = document.getElementById('photo-track');
