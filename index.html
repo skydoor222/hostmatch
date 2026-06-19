@@ -1926,62 +1926,37 @@
   </div>
   <div class="mypage-sub-body">
     <div class="form-section">
-      <div class="form-section-title">👤 基本情報</div>
+      <div class="form-section-title">✅ 希望エリア・期間・予算</div>
       <div class="form-group">
-        <div class="form-label">名前</div>
-        <input class="form-input" id="prof-name" type="text" value="" />
+        <div class="form-label">希望エリア（複数可）</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">ボストン</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">ニューヨーク</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">シカゴ</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">バンクーバー</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
+        </div>
       </div>
       <div class="form-group">
-        <div class="form-label">メールアドレス</div>
-        <input class="form-input" id="prof-email" type="email" value="" />
+        <div class="form-label">滞在期間</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">数日</div>
+          <div class="form-chip" onclick="toggleChip(this)">1週間</div>
+          <div class="form-chip" onclick="toggleChip(this)">2週間</div>
+          <div class="form-chip" onclick="toggleChip(this)">3週間</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">1ヶ月</div>
+          <div class="form-chip" onclick="toggleChip(this)">2ヶ月</div>
+          <div class="form-chip" onclick="toggleChip(this)">3ヶ月</div>
+          <div class="form-chip" onclick="toggleChip(this)">6ヶ月</div>
+        </div>
       </div>
       <div class="form-group">
-        <div class="form-label">電話番号</div>
-        <input class="form-input" id="prof-phone" type="tel" value="+81 90-1234-5678" />
-      </div>
-      <div class="form-group">
-        <div class="form-label">生年月日</div>
-        <input class="form-input" id="prof-birthday" type="date" value="2004-08-15" />
-      </div>
-      <div class="form-group">
-        <div class="form-label">性別</div>
-        <select class="form-select" id="prof-gender">
-          <option value="female">女性</option>
-          <option value="male">男性</option>
-          <option value="other">その他</option>
-          <option value="none">回答しない</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">国籍</div>
-        <input class="form-input" id="prof-nationality" type="text" value="日本" />
-      </div>
-    </div>
-    <div class="form-section">
-      <div class="form-section-title">🎓 留学情報</div>
-      <div class="form-group">
-        <div class="form-label">渡航目的</div>
-        <select class="form-select" id="prof-purpose">
-          <option value="study" selected>語学留学</option>
-          <option value="university">大学留学</option>
-          <option value="work">ワーキングホリデー</option>
-          <option value="internship">インターンシップ</option>
-          <option value="other">その他</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">英語レベル</div>
-        <select class="form-select" id="prof-english">
-          <option value="beginner">初級（挨拶程度）</option>
-          <option value="elementary">初中級（日常会話が少し）</option>
-          <option value="intermediate" selected>中級（日常会話OK）</option>
-          <option value="upper">中上級（仕事で使える）</option>
-          <option value="advanced">上級（ネイティブ並み）</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">自己紹介（ホストへのメッセージ）</div>
-        <textarea class="form-textarea" id="prof-intro" rows="4">はじめまして、Yukiです。来年からNYで語学留学を予定しています。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！</textarea>
+        <div class="form-label">月額予算（USD）</div>
+        <div class="form-range-row">
+          <input class="form-range-input" type="number" value="500" placeholder="下限" />
+          <div class="form-range-sep">〜</div>
+          <input class="form-range-input" type="number" value="1200" placeholder="上限" />
+        </div>
       </div>
     </div>
   </div>
@@ -1997,26 +1972,31 @@
     <div class="mypage-sub-title">生活スタイル・希望条件</div>
   </div>
   <div class="mypage-sub-body">
-
     <div class="form-section">
-      <div class="form-section-title">✅ 希望条件</div>
+      <div class="form-section-title">⏰ 生活スタイル</div>
       <div class="form-group">
-        <div class="form-label">月額予算（USD）</div>
-        <div class="form-range-row">
-          <input class="form-range-input" id="pref-budget-min" type="number" value="500" placeholder="下限" />
-          <div class="form-range-sep">〜</div>
-          <input class="form-range-input" id="pref-budget-max" type="number" value="1200" placeholder="上限" />
+        <div class="form-label">あなたの生活リズムは？</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">🌅 朝型（〜7時起床）</div>
+          <div class="form-chip" onclick="toggleChip(this)">☀️ 普通（7〜9時）</div>
+          <div class="form-chip" onclick="toggleChip(this)">🌙 夜型（9時以降）</div>
         </div>
       </div>
       <div class="form-group">
-        <div class="form-label">希望エリア</div>
+        <div class="form-label">ホストとの会話は？</div>
         <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">New York</div>
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">Boston</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">Los Angeles</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">San Francisco</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">Chicago</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">Seattle</div>
+          <div class="form-chip" onclick="toggleChip(this)">あまり話さない</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
+          <div class="form-chip" onclick="toggleChip(this)">たくさん話したい</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ホストの家族構成</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          <div class="form-chip" onclick="toggleChip(this)">女性のみ</div>
+          <div class="form-chip" onclick="toggleChip(this)">カップル</div>
+          <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
         </div>
       </div>
       <div class="form-group">
@@ -2028,109 +2008,12 @@
           <div class="form-chip" onclick="toggleChip(this)">3食</div>
         </div>
       </div>
-      <div class="form-group">
-        <div class="form-label">ホストの性別</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
-          <div class="form-chip" onclick="toggleChip(this)">女性</div>
-          <div class="form-chip" onclick="toggleChip(this)">男性</div>
-          <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
-        </div>
-      </div>
     </div>
 
     <div class="form-section">
-      <div class="form-section-title">⏰ 生活リズム</div>
+      <div class="form-section-title">🎨 趣味・NG</div>
       <div class="form-group">
-        <div class="form-label">起床時間</div>
-        <select class="form-select" id="ls-wake">
-          <option value="5:00">5:00 AM</option>
-          <option value="6:00">6:00 AM</option>
-          <option value="6:30">6:30 AM</option>
-          <option value="7:00" selected>7:00 AM</option>
-          <option value="7:30">7:30 AM</option>
-          <option value="8:00">8:00 AM</option>
-          <option value="9:00">9:00 AM 以降</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <div class="form-label">就寝時間</div>
-        <select class="form-select" id="ls-sleep">
-          <option value="21:00">9:00 PM</option>
-          <option value="22:00">10:00 PM</option>
-          <option value="23:00" selected>11:00 PM</option>
-          <option value="0:00">12:00 AM</option>
-          <option value="1:00">1:00 AM 以降</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-section-title">💬 コミュニケーション</div>
-      <div class="form-group">
-        <div class="form-label">会話量の好み</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">少なめ</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">普通</div>
-          <div class="form-chip" onclick="toggleChip(this)">多め</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">性格タイプ</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">穏やか</div>
-          <div class="form-chip" onclick="toggleChip(this)">社交的</div>
-          <div class="form-chip" onclick="toggleChip(this)">アクティブ</div>
-          <div class="form-chip" onclick="toggleChip(this)">インドア派</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-section-title">🧹 生活習慣</div>
-      <div class="form-group">
-        <div class="form-label">清潔度</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">気にしない</div>
-          <div class="form-chip" onclick="toggleChip(this)">普通</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">きれい好き</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">食事の好み</div>
-        <div class="form-chip-row" id="food-chips">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">何でもOK</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ビーガン</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">アレルギーあり</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-section-title">🚫 NG条件</div>
-      <div class="form-group">
-        <div class="form-label">絶対NGな条件（複数選択可）</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙OK</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペットあり</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🎵 楽器NG</div>
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">🌙 夜型NG</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">その他のNG・希望（自由記述）</div>
-        <textarea class="form-textarea" id="pref-notes" rows="3" placeholder="例：Wi-Fiが安定している環境が必須です。">Wi-Fiの速度が安定していることが重要です。</textarea>
-      </div>
-    </div>
-
-    <div class="form-section">
-      <div class="form-section-title">🎨 趣味・興味</div>
-      <div class="form-group">
-        <div class="form-label">好きなことを教えてください（複数選択可）</div>
+        <div class="form-label">趣味・興味（複数可）</div>
         <div class="form-chip-row">
           <div class="form-chip" onclick="toggleMultiChip(this)">🎵 音楽</div>
           <div class="form-chip selected" onclick="toggleMultiChip(this)">🎬 映画</div>
@@ -2138,25 +2021,25 @@
           <div class="form-chip selected" onclick="toggleMultiChip(this)">🍳 料理</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🏃 スポーツ</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🎮 ゲーム</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">✈️ 旅行</div>
           <div class="form-chip selected" onclick="toggleMultiChip(this)">🌿 アウトドア</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🎨 アート</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">💪 ジム</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🐾 動物好き</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">📸 写真</div>
         </div>
       </div>
       <div class="form-group">
-        <div class="form-label">留学の目的</div>
+        <div class="form-label">絶対NGな条件</div>
         <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">語学習得</div>
-          <div class="form-chip" onclick="toggleChip(this)">大学・大学院</div>
-          <div class="form-chip" onclick="toggleChip(this)">インターン</div>
-          <div class="form-chip" onclick="toggleChip(this)">ワーキングホリデー</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペット</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
         </div>
       </div>
+      <div class="form-group">
+        <div class="form-label">ひとこと（ホストへの自己紹介）</div>
+        <textarea class="form-textarea" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！">はじめまして、Yukiです。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！</textarea>
+      </div>
     </div>
-
   </div>
   <div class="form-save-bar">
     <button class="form-save-btn" onclick="saveSubScreen('lifestyle')">保存する</button>
