@@ -724,6 +724,25 @@
     .mypage-item-icon { font-size: 20px; width: 28px; text-align: center; }
     .mypage-item-label { flex: 1; }
     .mypage-item-arrow { color: var(--light); font-size: 13px; }
+    .notification-setting-row {
+      display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      padding: 16px; border-bottom: 1px solid var(--border);
+    }
+    .notification-setting-row:last-child { border-bottom: none; }
+    .notification-setting-title { font-size: 14px; font-weight: 800; color: var(--dark); }
+    .notification-setting-sub { font-size: 12px; color: var(--light); margin-top: 4px; line-height: 1.4; }
+    .toggle-switch {
+      width: 48px; height: 28px; border: none; border-radius: 999px;
+      background: #D1D5DB; cursor: pointer; padding: 3px; flex-shrink: 0;
+      position: relative; transition: background .2s ease;
+    }
+    .toggle-switch::after {
+      content: ""; position: absolute; width: 22px; height: 22px; border-radius: 50%;
+      background: white; top: 3px; left: 3px; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+      transition: transform .2s ease;
+    }
+    .toggle-switch.on { background: var(--primary); }
+    .toggle-switch.on::after { transform: translateX(20px); }
 
     /* ===== CHAT SCREEN ===== */
     #screen-chat { background: var(--bg); }
@@ -1903,7 +1922,7 @@
     <div class="mypage-item" onclick="openReviewForm()"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">設定</div>
-    <div class="mypage-item"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label">言語・通貨</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
 
@@ -1986,6 +2005,56 @@
 
     <button type="button" onclick="submitStayReview()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;">レビューを投稿する</button>
     <div id="review-submit-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;">レビューを投稿しました</div>
+  </div>
+</div>
+
+<!-- ==================== 通知設定 ==================== -->
+<div class="screen" id="screen-notification-settings">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-title">通知設定</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div class="notification-setting-row">
+        <div>
+          <div class="notification-setting-title">メッセージが届いた時</div>
+          <div class="notification-setting-sub">ホストからの新着メッセージを通知</div>
+        </div>
+        <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="メッセージが届いた時"></button>
+      </div>
+      <div class="notification-setting-row">
+        <div>
+          <div class="notification-setting-title">リクエストが承諾された時</div>
+          <div class="notification-setting-sub">申請が承諾された時に通知</div>
+        </div>
+        <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="リクエストが承諾された時"></button>
+      </div>
+      <div class="notification-setting-row">
+        <div>
+          <div class="notification-setting-title">リクエストが否認された時</div>
+          <div class="notification-setting-sub">申請結果が否認だった時に通知</div>
+        </div>
+        <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="リクエストが否認された時"></button>
+      </div>
+      <div class="notification-setting-row">
+        <div>
+          <div class="notification-setting-title">新しいおすすめホストが見つかった時</div>
+          <div class="notification-setting-sub">条件に合うホストのおすすめを通知</div>
+        </div>
+        <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="新しいおすすめホストが見つかった時"></button>
+      </div>
+      <div class="notification-setting-row">
+        <div>
+          <div class="notification-setting-title">滞在前のリマインド</div>
+          <div class="notification-setting-sub">滞在開始前の確認を通知</div>
+        </div>
+        <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="滞在前のリマインド"></button>
+      </div>
+    </div>
+
+    <button type="button" onclick="saveNotificationSettings()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;">保存する</button>
+    <div id="notification-save-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;">通知設定を保存しました</div>
   </div>
 </div>
 
@@ -4136,7 +4205,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4234,6 +4303,27 @@
 
   function submitStayReview() {
     const message = document.getElementById('review-submit-message');
+    if (message) message.style.display = 'block';
+  }
+
+  function openNotificationSettings() {
+    const message = document.getElementById('notification-save-message');
+    if (message) message.style.display = 'none';
+    document.querySelectorAll('#screen-notification-settings .toggle-switch').forEach(toggle => {
+      toggle.setAttribute('aria-pressed', toggle.classList.contains('on') ? 'true' : 'false');
+    });
+    navigate(currentScreen, 'notification-settings');
+  }
+
+  function toggleNotificationSwitch(toggle) {
+    toggle.classList.toggle('on');
+    toggle.setAttribute('aria-pressed', toggle.classList.contains('on') ? 'true' : 'false');
+    const message = document.getElementById('notification-save-message');
+    if (message) message.style.display = 'none';
+  }
+
+  function saveNotificationSettings() {
+    const message = document.getElementById('notification-save-message');
     if (message) message.style.display = 'block';
   }
 
