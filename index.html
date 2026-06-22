@@ -1900,7 +1900,7 @@
     <div class="mypage-section-title">申請・履歴</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'pending-hosts')"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
     <div class="mypage-item" onclick="openStayHistory()"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openReviewForm()"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">設定</div>
     <div class="mypage-item"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
@@ -1954,6 +1954,39 @@
     <div class="mypage-sub-title">過去の滞在履歴</div>
   </div>
   <div class="mypage-sub-body" id="stay-history-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
+</div>
+
+<!-- ==================== レビューを書く ==================== -->
+<div class="screen" id="screen-write-review">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-title">レビューを書く</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;">滞在したホスト</div>
+      <div id="review-host-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">星評価</div>
+      <div id="review-stars" style="display:flex;gap:8px;font-size:32px;line-height:1;">
+        <button type="button" onclick="setReviewRating(1)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
+        <button type="button" onclick="setReviewRating(2)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
+        <button type="button" onclick="setReviewRating(3)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
+        <button type="button" onclick="setReviewRating(4)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
+        <button type="button" onclick="setReviewRating(5)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
+      </div>
+    </div>
+
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">レビュー本文</div>
+      <textarea id="review-text" placeholder="滞在してよかった点や、これから滞在する人へのメッセージを書いてください" style="width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+    </div>
+
+    <button type="button" onclick="submitStayReview()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;">レビューを投稿する</button>
+    <div id="review-submit-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;">レビューを投稿しました</div>
+  </div>
 </div>
 
 <!-- ==================== プロフィール編集 ==================== -->
@@ -4090,6 +4123,7 @@
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
+  let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
 
   /* ===== NAVIGATION ===== */
@@ -4102,7 +4136,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4153,6 +4187,54 @@
         </div>
       </div>
     `).join('');
+  }
+
+  function openReviewForm() {
+    renderReviewHosts();
+    setReviewRating(0);
+    const text = document.getElementById('review-text');
+    const message = document.getElementById('review-submit-message');
+    if (text) text.value = '';
+    if (message) message.style.display = 'none';
+    navigate(currentScreen, 'write-review');
+  }
+
+  function renderReviewHosts() {
+    const list = document.getElementById('review-host-list');
+    if (!list) return;
+
+    if (!STAY_HISTORY.length) {
+      list.innerHTML = `
+        <div style="background:var(--bg);border-radius:12px;padding:16px;text-align:center;color:var(--light);font-size:13px;font-weight:700;">
+          レビューできる滞在履歴はありません
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = STAY_HISTORY.map((stay, index) => `
+      <label style="display:flex;gap:12px;align-items:flex-start;border:1.5px solid ${index === 0 ? 'var(--primary)' : 'var(--border)'};border-radius:14px;padding:12px;cursor:pointer;background:${index === 0 ? '#FFF7F4' : 'white'};">
+        <input type="radio" name="review-host" value="${index}" ${index === 0 ? 'checked' : ''} style="margin-top:18px;accent-color:var(--primary);">
+        <div style="width:46px;height:46px;border-radius:14px;background:${stay.avatarBg};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${stay.avatar}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;color:var(--dark);">${stay.hostName}</div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;">${stay.location}</div>
+          <div style="font-size:12px;color:var(--mid);margin-top:6px;">${stay.period}</div>
+        </div>
+      </label>
+    `).join('');
+  }
+
+  function setReviewRating(rating) {
+    currentReviewRating = rating;
+    document.querySelectorAll('#review-stars button').forEach((star, index) => {
+      star.style.color = index < rating ? '#F5A623' : '#D1D5DB';
+    });
+  }
+
+  function submitStayReview() {
+    const message = document.getElementById('review-submit-message');
+    if (message) message.style.display = 'block';
   }
 
   /* ===== DETAIL SCREEN ===== */
