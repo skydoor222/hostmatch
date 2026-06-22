@@ -743,6 +743,23 @@
     }
     .toggle-switch.on { background: var(--primary); }
     .toggle-switch.on::after { transform: translateX(20px); }
+    .faq-list { display: flex; flex-direction: column; gap: 8px; }
+    .faq-item {
+      background: white; border: 1px solid var(--border); border-radius: 12px;
+      overflow: hidden;
+    }
+    .faq-question {
+      width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      padding: 14px 16px; background: white; border: none; cursor: pointer;
+      font-size: 14px; font-weight: 700; color: var(--dark); text-align: left;
+    }
+    .faq-arrow { color: var(--light); transition: transform .2s ease; }
+    .faq-answer {
+      display: none; padding: 0 16px 14px; font-size: 13px; line-height: 1.7;
+      color: var(--mid);
+    }
+    .faq-item.open .faq-answer { display: block; }
+    .faq-item.open .faq-arrow { transform: rotate(90deg); }
 
     /* ===== CHAT SCREEN ===== */
     #screen-chat { background: var(--bg); }
@@ -2196,12 +2213,23 @@
   </div>
   <div class="mypage-sub-body" style="padding: 20px 16px 100px;">
     <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">よくある質問</div>
-    <div style="display:flex;flex-direction:column;gap:2px;">
-      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">ホームステイの申し込み方法は？<span style="color:var(--light)">›</span></div>
-      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">面談はどうやって行いますか？<span style="color:var(--light)">›</span></div>
-      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">キャンセル・返金ポリシーは？<span style="color:var(--light)">›</span></div>
-      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">デポジットはいつ返金されますか？<span style="color:var(--light)">›</span></div>
-      <div style="background:white;border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600;">トラブルが起きたときは？<span style="color:var(--light)">›</span></div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <button type="button" class="faq-question" onclick="toggleFaq(this)">ホームステイの申し込み方法は？<span class="faq-arrow">›</span></button>
+        <div class="faq-answer">ホスト詳細の下部分にある「面談の申し込み」から面談を申し込み、面談後に正式な申し込み画面が表示されます。そこから申し込みできます。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" class="faq-question" onclick="toggleFaq(this)">面談はどうやって行いますか？<span class="faq-arrow">›</span></button>
+        <div class="faq-answer">ホスト詳細画面から申し込みできます。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" class="faq-question" onclick="toggleFaq(this)">キャンセル・返金ポリシーは？<span class="faq-arrow">›</span></button>
+        <div class="faq-answer">キャンセル・返金ポリシーは現在準備中です。詳しくはお問い合わせフォームからご連絡ください。</div>
+      </div>
+      <div class="faq-item">
+        <button type="button" class="faq-question" onclick="toggleFaq(this)">トラブルが起きたときは？<span class="faq-arrow">›</span></button>
+        <div class="faq-answer">下のお問い合わせフォームからお問い合わせください。</div>
+      </div>
     </div>
 
     <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">お問い合わせ</div>
@@ -4325,6 +4353,11 @@
   function saveNotificationSettings() {
     const message = document.getElementById('notification-save-message');
     if (message) message.style.display = 'block';
+  }
+
+  function toggleFaq(button) {
+    const item = button.closest('.faq-item');
+    if (item) item.classList.toggle('open');
   }
 
   /* ===== DETAIL SCREEN ===== */
