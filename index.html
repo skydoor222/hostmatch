@@ -1899,7 +1899,7 @@
 
     <div class="mypage-section-title">申請・履歴</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'pending-hosts')"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openStayHistory()"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">設定</div>
@@ -1945,6 +1945,15 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ==================== 過去の滞在履歴 ==================== -->
+<div class="screen" id="screen-stay-history">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-title">過去の滞在履歴</div>
+  </div>
+  <div class="mypage-sub-body" id="stay-history-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
 </div>
 
 <!-- ==================== プロフィール編集 ==================== -->
@@ -4051,6 +4060,29 @@
     }
   };
 
+  const STAY_HISTORY = [
+    {
+      hostName: 'Emily Williams',
+      avatar: '👩',
+      avatarBg: 'linear-gradient(135deg,#ffecd2,#fcb69f)',
+      location: 'Cambridge, Boston',
+      period: '2025年5月1日〜2025年7月31日',
+      roomType: '個室',
+      price: '$880 /月',
+      status: '滞在完了'
+    },
+    {
+      hostName: 'Sarah Johnson',
+      avatar: '👩',
+      avatarBg: 'linear-gradient(135deg,#a1c4fd,#c2e9fb)',
+      location: 'Manhattan, New York',
+      period: '2024年9月1日〜2024年12月20日',
+      roomType: '個室',
+      price: '$950 /月',
+      status: '滞在完了'
+    }
+  ];
+
   /* ===== STATE ===== */
   let currentScreen = 'login';
   let currentHost = null;
@@ -4070,7 +4102,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4082,6 +4114,45 @@
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-applicants':'hbnav-applicants','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-mypage'};
     if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
+  }
+
+  function openStayHistory() {
+    renderStayHistory();
+    navigate(currentScreen, 'stay-history');
+  }
+
+  function renderStayHistory() {
+    const list = document.getElementById('stay-history-list');
+    if (!list) return;
+
+    if (!STAY_HISTORY.length) {
+      list.innerHTML = `
+        <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:28px 18px;text-align:center;color:var(--light);font-size:14px;font-weight:700;">
+          過去の滞在履歴はありません
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = STAY_HISTORY.map(stay => `
+      <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:54px;height:54px;border-radius:16px;background:${stay.avatarBg};display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${stay.avatar}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+            <div>
+              <div style="font-size:15px;font-weight:800;color:var(--dark);">${stay.hostName}</div>
+              <div style="font-size:12px;color:var(--light);margin-top:2px;">${stay.location}</div>
+            </div>
+            <span style="background:#E8F7EF;color:#167A45;font-size:11px;font-weight:700;padding:4px 8px;border-radius:10px;white-space:nowrap;">${stay.status}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:13px;color:var(--mid);">
+            <div><strong style="color:var(--dark);">滞在期間：</strong>${stay.period}</div>
+            <div><strong style="color:var(--dark);">部屋タイプ：</strong>${stay.roomType}</div>
+            <div><strong style="color:var(--dark);">料金：</strong>${stay.price}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
   }
 
   /* ===== DETAIL SCREEN ===== */
