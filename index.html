@@ -899,8 +899,12 @@
     }
 
     /* ===== INTERVIEW SCREEN ===== */
+    #screen-interview { height: 100vh; overflow: hidden; }
     .interview-body {
-      flex: 1; overflow-y: auto; padding: 24px 20px 100px; display: flex; flex-direction: column; gap: 0;
+      flex: 1; min-height: 0; overflow-y: auto;
+      padding: 24px 20px calc(180px + env(safe-area-inset-bottom, 0));
+      display: flex; flex-direction: column; gap: 0;
+      -webkit-overflow-scrolling: touch;
     }
     .interview-icon { font-size: 48px; margin-bottom: 12px; text-align: center; }
     .interview-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; text-align: center; }
@@ -929,7 +933,7 @@
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 430px; background: white;
       padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0));
-      border-top: 1px solid var(--border);
+      border-top: 1px solid var(--border); z-index: 320;
     }
 
     /* ===== LOGIN SCREEN ===== */
@@ -1934,7 +1938,7 @@
     <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title">申請・履歴</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'pending-hosts')"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のホスト</span><span style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;">1件</span></div>
+    <div class="mypage-item" onclick="openGuestRequests()"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のリクエスト</span><span id="guest-request-badge" style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;">0件</span></div>
     <div class="mypage-item" onclick="openStayHistory()"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" onclick="openReviewForm()"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
@@ -1954,33 +1958,13 @@
   </div>
 </div>
 
-<!-- ==================== 申請中のホスト ==================== -->
+<!-- ==================== 申請中のリクエスト ==================== -->
 <div class="screen" id="screen-pending-hosts">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">申請中のホスト</div>
+    <div class="mypage-sub-title">申請中のリクエスト</div>
   </div>
-  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;">
-    <div class="host-card" onclick="openDetail('sarah','pending-hosts')" style="cursor:pointer;">
-      <div class="card-img">
-        <div class="card-room-bg r1">🛋️</div>
-        <div class="card-flag">🇺🇸 New York, NY</div>
-        <div class="card-save-btn">🤍</div>
-        <div class="card-avatar av1">👩</div>
-      </div>
-      <div class="card-body">
-        <div class="card-row1">
-          <div class="card-host-name">Sarah Johnson</div>
-          <div class="card-rating">★ 4.98</div>
-        </div>
-        <div class="card-location">Manhattan · 個室 · 申請中</div>
-        <div class="card-footer">
-          <div class="card-price"><strong>$950</strong><span> /月〜</span></div>
-          <button onclick="event.stopPropagation();openDetail('sarah','pending-hosts')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;">詳細を見る</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <div class="mypage-sub-body" id="guest-request-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
 </div>
 
 <!-- ==================== 過去の滞在履歴 ==================== -->
@@ -2699,7 +2683,7 @@
   <!-- CTA -->
   <div class="detail-cta">
     <button class="btn-outline" onclick="openChat(currentHost)" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;cursor:pointer;">💬 メッセージ</button>
-    <button class="btn-primary" onclick="navigate(currentScreen,'interview')" style="flex:2;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">このシェアハウスに申し込む</button>
+    <button class="btn-primary" id="sharehouse-action-btn" onclick="requestSharehouseInterview()" style="flex:2;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">📹 面談を申し込む</button>
   </div>
 </div>
 
@@ -3106,7 +3090,7 @@
 <!-- ==================== 面談申し込み画面 ==================== -->
 <div class="screen" id="screen-interview">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'detail')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,interviewBackScreen)">←</div>
     <div class="mypage-sub-title">面談を申し込む</div>
   </div>
   <div class="interview-body">
@@ -3114,12 +3098,17 @@
     <div class="interview-title">面談を申し込む</div>
     <div class="interview-sub">ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。</div>
     <div class="interview-info">
-      <div class="interview-info-row"><span>ホスト</span><span id="interview-host-name">Sarah Johnson</span></div>
+      <div class="interview-info-row"><span id="interview-listing-label">ホスト</span><span id="interview-host-name">Sarah Johnson</span></div>
       <div class="interview-info-row"><span>月額料金</span><span id="interview-price">$950</span></div>
       <div class="interview-info-row"><span>面談方法</span><span>ビデオ通話（15分）</span></div>
       <div class="interview-info-row"><span>費用</span><span style="color:#00875A">無料</span></div>
     </div>
     <div class="interview-date-section">
+      <div class="form-group" style="margin-bottom:12px;">
+        <div class="form-label">日付を選択</div>
+        <input class="form-input" id="interview-date-input" type="date" onchange="setInterviewDateFromInput(this.value)" />
+        <div style="font-size:12px;color:var(--light);margin-top:6px;">希望日を選択してください</div>
+      </div>
       <div class="interview-date-label">📅 希望日を選択</div>
       <div class="interview-date-grid" id="interview-date-grid"></div>
       <div class="interview-time-row">
@@ -3139,7 +3128,7 @@
   </div>
   <div class="interview-footer">
     <button class="interview-btn-primary" onclick="confirmInterview()">面談を確定する</button>
-    <button class="interview-btn-cancel" onclick="navigate(currentScreen,'detail')">キャンセル</button>
+    <button class="interview-btn-cancel" onclick="navigate(currentScreen,interviewBackScreen)">キャンセル</button>
   </div>
 </div>
 
@@ -3150,9 +3139,10 @@
     <div class="complete-title">面談が確定しました！</div>
     <div class="complete-sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。</div>
     <div class="complete-card">
-      <div class="complete-card-row"><span>ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
+      <div class="complete-card-row"><span id="complete-listing-label">ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
       <div class="complete-card-row"><span>月額料金</span><span id="complete-price">$950 /月</span></div>
     </div>
+    <button class="paypay-btn" onclick="navigate(currentScreen,interviewBackScreen)" style="background:var(--primary);">詳細画面へ戻る</button>
     <button class="complete-msg-btn" onclick="navigate(currentScreen,'messages')">💬 メッセージを確認する</button>
   </div>
 </div>
@@ -3162,15 +3152,32 @@
   <div class="complete-body">
     <div class="complete-check">🏠</div>
     <div class="complete-title">正式に申し込みますか？</div>
-    <div class="complete-sub">このホストへの入居を正式に申し込みます。<br>申し込み後、デポジット（1ヶ月分）のお支払いに進みます。</div>
+    <div class="complete-sub">入居希望のリクエストを送信します。<br>ホストが承諾するまで決済には進めません。</div>
     <div class="complete-card">
-      <div class="complete-card-row"><span>ホスト</span><span id="apply-host-name">Sarah Johnson</span></div>
+      <div class="complete-card-row"><span id="apply-listing-label">ホスト</span><span id="apply-host-name">Sarah Johnson</span></div>
       <div class="complete-card-row"><span>月額料金</span><span id="apply-price">$950 /月</span></div>
       <div class="complete-card-divider"></div>
-      <div class="complete-card-row"><span>デポジット（1ヶ月分）</span><span id="apply-deposit" style="color:var(--primary);font-weight:800;">$950</span></div>
+      <div class="complete-card-row"><span>ステータス</span><span style="color:#B26A00;font-weight:800;">承諾待ち</span></div>
     </div>
-    <button class="paypay-btn" onclick="openPaymentScreen()" style="background:var(--primary);">💳 お支払い方法を選択する</button>
-    <button class="complete-later" onclick="navigate(currentScreen,'detail')">キャンセル</button>
+    <button class="paypay-btn" onclick="submitFormalApplication()" style="background:var(--primary);">申し込みリクエストを送信する</button>
+    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)">キャンセル</button>
+  </div>
+</div>
+
+<!-- ==================== 正式申し込み送信完了画面 ==================== -->
+<div class="screen" id="screen-application-sent">
+  <div class="complete-body">
+    <div class="complete-check">📨</div>
+    <div class="complete-title">申し込みリクエストを送信しました</div>
+    <div class="complete-sub">ホスト側のリクエスト管理に申請が表示される想定です。<br>承諾されるまで決済へは進めません。</div>
+    <div class="complete-card">
+      <div class="complete-card-row"><span id="application-sent-label">ホスト</span><span id="application-sent-name">Sarah Johnson</span></div>
+      <div class="complete-card-row"><span>月額料金</span><span id="application-sent-price">$950 /月</span></div>
+      <div class="complete-card-divider"></div>
+      <div class="complete-card-row"><span>ステータス</span><span id="application-sent-status" style="color:#B26A00;font-weight:800;">承諾待ち</span></div>
+    </div>
+    <button class="paypay-btn" id="application-payment-btn" onclick="openPaymentScreen()" style="display:none;background:var(--primary);">💳 決済へ進む</button>
+    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)">詳細画面へ戻る</button>
   </div>
 </div>
 
@@ -3518,7 +3525,25 @@
     <div class="mypage-sub-title" data-i18n="host_applicants">応募者管理</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;">
-    <!-- 応募者カード -->
+    <div id="host-formal-empty" style="background:white;border-radius:16px;border:1px solid var(--border);padding:24px 16px;text-align:center;color:var(--light);font-size:14px;font-weight:700;">正式申し込みリクエストはありません</div>
+    <div id="host-formal-request-card" style="display:none;background:white;border-radius:16px;border:1.5px solid var(--primary);padding:16px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+        <div>
+          <div style="font-size:12px;color:var(--primary);font-weight:800;margin-bottom:4px;">正式申し込みリクエスト</div>
+          <div style="font-size:15px;font-weight:800;" id="formal-request-guest-name">Yuki Tanaka</div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;" id="formal-request-target">Sarah Johnson · $950 /月</div>
+        </div>
+        <span id="formal-request-status" style="background:#FFF3CD;color:#856404;font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;white-space:nowrap;">承諾待ち</span>
+      </div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:10px;">面談後の正式な入居申し込みです。承諾するとゲスト側に「決済へ進む」ボタンが表示される想定です。</div>
+      <div id="formal-request-actions" style="display:flex;gap:8px;margin-top:12px;">
+        <button onclick="approveFormalRequest()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">リクエストを承諾</button>
+        <button onclick="rejectFormalRequest()" style="flex:1;background:none;border:1.5px solid var(--border);border-radius:10px;padding:10px;font-size:13px;font-weight:600;cursor:pointer;">リクエストを否認</button>
+      </div>
+    </div>
+
+    <div style="display:none;">
+    <!-- 通常応募者カード（正式申し込みリクエストではないため非表示） -->
     <div onclick="openApplicantDetail('sakura')" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;cursor:pointer;">
       <div style="display:flex;gap:12px;align-items:flex-start;">
         <div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:24px;">👩</div>
@@ -3567,6 +3592,7 @@
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">「I'm studying Japanese and love cooking!」</div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </div>
@@ -3781,7 +3807,7 @@
 <!-- ==================== 決済画面（Stripe） ==================== -->
 <div class="screen" id="screen-payment">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'apply')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'application-sent')">←</div>
     <div class="mypage-sub-title" data-i18n="payment_title">お支払い方法</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
@@ -4190,6 +4216,12 @@
     }
   };
 
+  const SHAREHOUSE_LISTINGS = {
+    sh1: { type: 'sharehouse', id: 'sh1', name: 'Tokyo House Shinjuku', price: 65000, pricePrefix: '¥', detailScreen: 'sharehouse-detail', label: '物件' },
+    sh2: { type: 'sharehouse', id: 'sh2', name: 'Meguro Living House', price: 72000, pricePrefix: '¥', detailScreen: 'sharehouse-detail', label: '物件' },
+    sh3: { type: 'sharehouse', id: 'sh3', name: 'Osaka Share Residence', price: 58000, pricePrefix: '¥', detailScreen: 'sharehouse-detail', label: '物件' }
+  };
+
   const STAY_HISTORY = [
     {
       hostName: 'Emily Williams',
@@ -4216,12 +4248,18 @@
   /* ===== STATE ===== */
   let currentScreen = 'login';
   let currentHost = null;
+  let currentListing = null;
   let detailBackScreen = 'search';
+  let interviewBackScreen = 'detail';
+  let applicationBackScreen = 'detail';
+  let currentApplicationId = null;
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
+  const interviewedListings = new Set();
+  const formalApplications = {};
 
   /* ===== NAVIGATION ===== */
   function navigate(from, to) {
@@ -4233,7 +4271,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','apply','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','apply','application-sent','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4241,6 +4279,8 @@
     if (to === 'favorites') renderFavorites();
     if (to === 'search') window.scrollTo(0, 0);
     if (to === 'ai-result') renderAiResult();
+    if (to === 'pending-hosts') renderGuestRequestList();
+    if (to === 'host-applicants') syncHostFormalRequestCard();
     // ホスト用ナビのアクティブ同期
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-applicants':'hbnav-applicants','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-mypage'};
@@ -4366,6 +4406,15 @@
     const h = HOSTS[hostId];
     if (!h) return;
     currentHost = hostId;
+    currentListing = {
+      type: 'homestay',
+      id: hostId,
+      name: h.name,
+      price: h.price,
+      pricePrefix: '$',
+      detailScreen: 'detail',
+      label: 'ホスト'
+    };
     detailBackScreen = backScreen;
 
     // Photos
@@ -4558,7 +4607,8 @@
     document.querySelector('.chat-banner-sub').textContent = 'ホスト詳細・お申し込みはこちら';
     // 面談済みなら「本申し込み」ボタンを強調、未面談なら非表示
     const applyBtn = document.querySelector('.chat-banner-btn-apply');
-    applyBtn.style.display = interviewedHosts.has(currentHost) ? 'block' : 'none';
+    const chatListingKey = 'homestay:' + currentHost;
+    applyBtn.style.display = interviewedListings.has(chatListingKey) ? 'block' : 'none';
 
     // Messages
     const area = document.querySelector('.chat-messages');
@@ -4659,48 +4709,193 @@
   }
 
   /* ===== 面談申し込み ===== */
-  const interviewedHosts = new Set();
+  function formatListingPrice(listing) {
+    if (!listing) return '$950';
+    return (listing.pricePrefix || '$') + Number(listing.price).toLocaleString();
+  }
+
+  function getCurrentListing() {
+    if (currentListing) return currentListing;
+    if (currentHost && HOSTS[currentHost]) {
+      const h = HOSTS[currentHost];
+      currentListing = { type: 'homestay', id: currentHost, name: h.name, price: h.price, pricePrefix: '$', detailScreen: 'detail', label: 'ホスト' };
+    }
+    return currentListing;
+  }
 
   function requestInterview() {
-    if (!currentHost) return;
-    const h = HOSTS[currentHost];
-    document.getElementById('interview-host-name').textContent = h.name;
-    document.getElementById('interview-price').textContent = '$' + h.price.toLocaleString();
+    const listing = getCurrentListing();
+    if (!listing) return;
+    requestInterviewForListing(listing);
+  }
+
+  function requestSharehouseInterview() {
+    const listing = getCurrentListing() || SHAREHOUSE_LISTINGS.sh1;
+    requestInterviewForListing(listing);
+  }
+
+  function requestInterviewForListing(listing) {
+    currentListing = listing;
+    currentApplicationId = listing.type + ':' + listing.id;
+    interviewBackScreen = listing.detailScreen;
+    document.getElementById('interview-listing-label').textContent = listing.label;
+    document.getElementById('interview-host-name').textContent = listing.name;
+    document.getElementById('interview-price').textContent = formatListingPrice(listing);
     generateInterviewDates();
+    const dateInput = document.getElementById('interview-date-input');
+    if (dateInput) dateInput.value = '';
     document.getElementById('interview-time').value = '';
     navigate(currentScreen, 'interview');
   }
 
   function confirmInterview() {
-    if (!selectedInterviewDate) { showToast('日付を選択してください'); return; }
+    const dateInput = document.getElementById('interview-date-input');
+    const selectedDate = selectedInterviewDate || (dateInput ? dateInput.value : '');
+    if (!selectedDate) { showToast('日付を選択してください'); return; }
     const time = document.getElementById('interview-time').value;
     if (!time) { showToast('時間帯を選択してください'); return; }
-    const h = HOSTS[currentHost];
-    interviewedHosts.add(currentHost);
-    document.getElementById('complete-host-name').textContent = h.name;
-    document.getElementById('complete-price').textContent = '$' + h.price.toLocaleString() + ' /月';
-    // Add date row
+    const listing = getCurrentListing();
+    if (!listing) return;
+    currentApplicationId = listing.type + ':' + listing.id;
+    interviewedListings.add(currentApplicationId);
+    document.getElementById('complete-listing-label').textContent = listing.label;
+    document.getElementById('complete-host-name').textContent = listing.name;
+    document.getElementById('complete-price').textContent = formatListingPrice(listing) + ' /月';
     const card = document.querySelector('#screen-complete .complete-card');
     const existing = document.getElementById('complete-date-row');
     if (existing) existing.remove();
-    const d = new Date(selectedInterviewDate);
+    const d = new Date(selectedDate);
     const days = ['日','月','火','水','木','金','土'];
-    const dateLabel = (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）' + time;
+    const dayLabel = isNaN(d.getTime()) ? selectedDate : (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）';
     const row = document.createElement('div');
     row.className = 'complete-card-row'; row.id = 'complete-date-row';
-    row.innerHTML = '<span>面談日時</span><span>' + dateLabel + '</span>';
+    row.innerHTML = '<span>面談日時</span><span>' + dayLabel + ' ' + time + '</span>';
     card.appendChild(row);
-    updateDetailActionBtn();
+    updateListingActionButtons();
     navigate(currentScreen, 'complete');
   }
 
   function applyHost() {
-    if (!currentHost) return;
-    const h = HOSTS[currentHost];
-    document.getElementById('apply-host-name').textContent = h.name;
-    document.getElementById('apply-price').textContent = '$' + h.price.toLocaleString() + ' /月';
-    document.getElementById('apply-deposit').textContent = '$' + h.price.toLocaleString();
+    const listing = getCurrentListing();
+    if (!listing) return;
+    currentApplicationId = listing.type + ':' + listing.id;
+    applicationBackScreen = listing.detailScreen;
+    document.getElementById('apply-listing-label').textContent = listing.label;
+    document.getElementById('apply-host-name').textContent = listing.name;
+    document.getElementById('apply-price').textContent = formatListingPrice(listing) + ' /月';
     navigate(currentScreen, 'apply');
+  }
+
+  function submitFormalApplication() {
+    const listing = getCurrentListing();
+    if (!listing) return;
+    currentApplicationId = listing.type + ':' + listing.id;
+    formalApplications[currentApplicationId] = { status: 'pending', listing };
+    renderApplicationSent();
+    syncHostFormalRequestCard();
+    renderGuestRequestList();
+    navigate(currentScreen, 'application-sent');
+  }
+
+  function renderApplicationSent() {
+    const listing = getCurrentListing();
+    if (!listing) return;
+    const status = formalApplications[currentApplicationId]?.status || 'pending';
+    document.getElementById('application-sent-label').textContent = listing.label;
+    document.getElementById('application-sent-name').textContent = listing.name;
+    document.getElementById('application-sent-price').textContent = formatListingPrice(listing) + ' /月';
+    const statusEl = document.getElementById('application-sent-status');
+    const paymentBtn = document.getElementById('application-payment-btn');
+    if (status === 'approved') {
+      statusEl.textContent = '承諾済み';
+      statusEl.style.color = '#167A45';
+      paymentBtn.style.display = 'block';
+    } else if (status === 'rejected') {
+      statusEl.textContent = '否認済み';
+      statusEl.style.color = 'var(--primary)';
+      paymentBtn.style.display = 'none';
+    } else {
+      statusEl.textContent = '承諾待ち';
+      statusEl.style.color = '#B26A00';
+      paymentBtn.style.display = 'none';
+    }
+    updateGuestRequestBadge();
+  }
+
+  function openGuestRequests() {
+    renderGuestRequestList();
+    navigate(currentScreen, 'pending-hosts');
+  }
+
+  function updateGuestRequestBadge() {
+    const badge = document.getElementById('guest-request-badge');
+    if (!badge) return;
+    const count = Object.keys(formalApplications).length;
+    badge.textContent = count + '件';
+    badge.style.display = count > 0 ? 'inline-block' : 'none';
+  }
+
+  function getApplicationStatusMeta(status) {
+    if (status === 'approved') {
+      return { text: '承諾済み', bg: '#D4EDDA', color: '#155724', note: 'ホストが承諾しました。決済へ進めます。' };
+    }
+    if (status === 'rejected') {
+      return { text: '否認されました', bg: '#F8D7DA', color: '#842029', note: '今回は否認されました。決済へは進めません。' };
+    }
+    return { text: 'リクエスト送信中', bg: '#FFF3CD', color: '#856404', note: 'ホストの承諾待ちです。承諾されるまで決済へは進めません。' };
+  }
+
+  function renderGuestRequestList() {
+    const list = document.getElementById('guest-request-list');
+    if (!list) return;
+    const applications = Object.entries(formalApplications);
+    updateGuestRequestBadge();
+
+    if (!applications.length) {
+      list.innerHTML = `
+        <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:28px 18px;text-align:center;color:var(--light);font-size:14px;font-weight:700;">
+          申請中のリクエストはありません
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = applications.map(([key, app]) => {
+      const listing = app.listing;
+      const status = getApplicationStatusMeta(app.status);
+      const typeText = listing.type === 'sharehouse' ? 'シェアハウス' : 'ホームステイ';
+      const detailAction = listing.type === 'sharehouse'
+        ? `openSharehouseDetail('${listing.id}')`
+        : `openDetail('${listing.id}','pending-hosts')`;
+      const paymentButton = app.status === 'approved'
+        ? `<button onclick="event.stopPropagation();openPaymentForApplication('${key}')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">決済へ進む</button>`
+        : `<button disabled style="background:#F1F1F1;color:var(--light);border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;">決済不可</button>`;
+      return `
+        <div onclick="${detailAction}" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;">
+          <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+            <div>
+              <div style="font-size:12px;color:var(--light);font-weight:700;">${typeText}</div>
+              <div style="font-size:16px;font-weight:900;margin-top:3px;">${listing.name}</div>
+              <div style="font-size:13px;color:var(--mid);margin-top:4px;">${formatListingPrice(listing)} /月</div>
+            </div>
+            <span style="background:${status.bg};color:${status.color};font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;white-space:nowrap;">${status.text}</span>
+          </div>
+          <div style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:10px;">${status.note}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;">
+            <button onclick="event.stopPropagation();${detailAction}" style="background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">詳細を見る</button>
+            ${paymentButton}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openPaymentForApplication(key) {
+    const app = formalApplications[key];
+    if (!app) return;
+    currentApplicationId = key;
+    currentListing = app.listing;
+    openPaymentScreen();
   }
 
   function goToPayPay() {
@@ -4709,18 +4904,46 @@
     window.open(payUrl, '_blank');
   }
 
-  function updateDetailActionBtn() {
+  function updateListingActionButtons() {
     const btn = document.getElementById('detail-action-btn');
-    if (!btn || !currentHost) return;
-    if (interviewedHosts.has(currentHost)) {
-      btn.textContent = '🏠 正式に申し込む';
-      btn.onclick = applyHost;
-      btn.style.background = '#FF8C00';
-    } else {
-      btn.textContent = '📹 面談を申し込む';
-      btn.onclick = requestInterview;
-      btn.style.background = '';
+    if (btn && currentListing?.type === 'homestay') {
+      const key = currentListing.type + ':' + currentListing.id;
+      if (formalApplications[key]?.status === 'approved') {
+        btn.textContent = '💳 決済へ進む';
+        btn.onclick = openPaymentScreen;
+        btn.style.background = 'var(--primary)';
+      } else if (interviewedListings.has(key)) {
+        btn.textContent = '🏠 正式に申し込む';
+        btn.onclick = applyHost;
+        btn.style.background = '#FF8C00';
+      } else {
+        btn.textContent = '📹 面談を申し込む';
+        btn.onclick = requestInterview;
+        btn.style.background = '';
+      }
     }
+
+    const shBtn = document.getElementById('sharehouse-action-btn');
+    if (shBtn && currentListing?.type === 'sharehouse') {
+      const key = currentListing.type + ':' + currentListing.id;
+      if (formalApplications[key]?.status === 'approved') {
+        shBtn.textContent = '💳 決済へ進む';
+        shBtn.onclick = openPaymentScreen;
+        shBtn.style.background = 'var(--primary)';
+      } else if (interviewedListings.has(key)) {
+        shBtn.textContent = '🏠 正式に申し込む';
+        shBtn.onclick = applyHost;
+        shBtn.style.background = '#FF8C00';
+      } else {
+        shBtn.textContent = '📹 面談を申し込む';
+        shBtn.onclick = requestSharehouseInterview;
+        shBtn.style.background = 'var(--primary)';
+      }
+    }
+  }
+
+  function updateDetailActionBtn() {
+    updateListingActionButtons();
   }
 
   /* ===== MAP ===== */
@@ -4945,6 +5168,12 @@
     grid.innerHTML = '';
     const days = ['日','月','火','水','木','金','土'];
     const today = new Date();
+    const dateInput = document.getElementById('interview-date-input');
+    if (dateInput) {
+      const minDate = new Date(today);
+      minDate.setDate(today.getDate() + 1);
+      dateInput.min = minDate.toISOString().split('T')[0];
+    }
     // Show next 6 available days (skip today, start from tomorrow)
     for (let i = 1; i <= 6; i++) {
       const d = new Date(today);
@@ -4962,10 +5191,19 @@
     selectedInterviewDate = null;
   }
 
+  function setInterviewDateFromInput(dateStr) {
+    selectedInterviewDate = dateStr;
+    document.querySelectorAll('.interview-date-option').forEach(o => {
+      o.classList.toggle('selected', o.dataset.date === dateStr);
+    });
+  }
+
   function selectInterviewDate(el, dateStr) {
     document.querySelectorAll('.interview-date-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
     selectedInterviewDate = dateStr;
+    const dateInput = document.getElementById('interview-date-input');
+    if (dateInput) dateInput.value = dateStr;
   }
 
   /* ===== LOGIN ===== */
@@ -5505,12 +5743,88 @@
     btn.closest('[style*="display:flex;gap:8px"]').style.display='none';
   }
 
+  function syncHostFormalRequestCard() {
+    const card = document.getElementById('host-formal-request-card');
+    const empty = document.getElementById('host-formal-empty');
+    if (!card) return;
+    let app = formalApplications[currentApplicationId];
+    let key = currentApplicationId;
+    if (!app) {
+      const first = Object.entries(formalApplications)[0];
+      if (first) {
+        key = first[0];
+        app = first[1];
+        currentApplicationId = key;
+        currentListing = app.listing;
+      }
+    }
+    if (!app) {
+      card.style.display = 'none';
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    card.style.display = 'block';
+    if (empty) empty.style.display = 'none';
+    const listing = app.listing;
+    document.getElementById('formal-request-target').textContent = listing.name + ' · ' + formatListingPrice(listing) + ' /月';
+    const statusEl = document.getElementById('formal-request-status');
+    const actions = document.getElementById('formal-request-actions');
+    const status = app?.status || 'pending';
+    if (status === 'approved') {
+      statusEl.textContent = '承諾済み';
+      statusEl.style.background = '#D4EDDA';
+      statusEl.style.color = '#155724';
+      actions.style.display = 'none';
+    } else if (status === 'rejected') {
+      statusEl.textContent = '否認済み';
+      statusEl.style.background = '#F8D7DA';
+      statusEl.style.color = '#842029';
+      actions.style.display = 'none';
+    } else {
+      statusEl.textContent = '承諾待ち';
+      statusEl.style.background = '#FFF3CD';
+      statusEl.style.color = '#856404';
+      actions.style.display = 'flex';
+    }
+  }
+
+  function approveFormalRequest() {
+    const listing = getCurrentListing() || SHAREHOUSE_LISTINGS.sh1;
+    const key = currentApplicationId || (listing.type + ':' + listing.id);
+    formalApplications[key] = { status: 'approved', listing };
+    currentApplicationId = key;
+    currentListing = listing;
+    syncHostFormalRequestCard();
+    renderApplicationSent();
+    renderGuestRequestList();
+    updateListingActionButtons();
+    showToast('リクエストを承諾しました');
+  }
+
+  function rejectFormalRequest() {
+    const listing = getCurrentListing() || SHAREHOUSE_LISTINGS.sh1;
+    const key = currentApplicationId || (listing.type + ':' + listing.id);
+    formalApplications[key] = { status: 'rejected', listing };
+    currentApplicationId = key;
+    currentListing = listing;
+    syncHostFormalRequestCard();
+    renderApplicationSent();
+    renderGuestRequestList();
+    updateListingActionButtons();
+    showToast('リクエストを否認しました');
+  }
+
   /* ===== Stripe / PayPay 決済 ===== */
   let selectedPaymentMethod = 'stripe';
 
   function openPaymentScreen() {
-    const host = window.HOSTS && window.currentHost ? window.HOSTS[window.currentHost] : null;
-    const price = host ? host.price : '$950';
+    const listing = getCurrentListing();
+    const key = listing ? listing.type + ':' + listing.id : currentApplicationId;
+    if (!key || formalApplications[key]?.status !== 'approved') {
+      showToast('ホストが承諾した後に決済へ進めます');
+      return;
+    }
+    const price = listing ? formatListingPrice(listing) : '$950';
     const el = document.getElementById('payment-amount-display');
     if(el) el.textContent = price + ' (デポジット)';
     navigate(currentScreen, 'payment');
@@ -5557,12 +5871,17 @@
   }
 
   function openSharehouseDetail(id) {
+    currentListing = SHAREHOUSE_LISTINGS[id] || SHAREHOUSE_LISTINGS.sh1;
+    currentApplicationId = currentListing.type + ':' + currentListing.id;
+    applicationBackScreen = currentListing.detailScreen;
+    interviewBackScreen = currentListing.detailScreen;
     navigate(currentScreen, 'sharehouse-detail');
     shPhotoIndex = 0;
     const track = document.getElementById('sh-photo-track');
     if (track) track.style.transform = 'translateX(0)';
     const counter = document.getElementById('sh-photo-counter');
     if (counter) counter.textContent = '1 / 3';
+    updateListingActionButtons();
   }
 
   let shPhotoIndex = 0;
