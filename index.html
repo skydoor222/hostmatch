@@ -2086,9 +2086,45 @@
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
     <div class="mypage-sub-title" data-i18n="profile_edit">プロフィール編集</div>
   </div>
-  <div class="mypage-sub-body">
-    <div class="form-section">
-      <div class="form-section-title">✅ 希望エリア・期間・予算</div>
+	  <div class="mypage-sub-body">
+	    <div class="form-section">
+	      <div class="form-section-title">👤 自分の簡単な情報</div>
+	      <div class="form-group">
+	        <div class="form-label">写真</div>
+	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	          <span style="font-size:34px;">🧑</span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">プロフィール写真を選択</span>
+	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
+	          <input type="file" accept="image/*" style="display:none;" />
+	        </label>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">名前</div>
+	        <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">生年月日</div>
+	        <input class="form-input" type="date" value="2002-04-12" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">年齢</div>
+	        <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">国籍</div>
+	        <input class="form-input" type="text" placeholder="国籍を入力してください" value="日本" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">性別</div>
+	        <div class="form-chip-row">
+	          <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
+	          <div class="form-chip" onclick="toggleChip(this)">男性</div>
+	          <div class="form-chip" onclick="toggleChip(this)">選択しない</div>
+	        </div>
+	      </div>
+	    </div>
+	    <div class="form-section">
+	      <div class="form-section-title">✅ 希望エリア・期間・予算</div>
       <div class="form-group">
         <div class="form-label">希望エリア（複数可）</div>
         <div class="form-chip-row">
@@ -2098,20 +2134,17 @@
           <div class="form-chip" onclick="toggleMultiChip(this)">バンクーバー</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
         </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">滞在期間</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">数日</div>
-          <div class="form-chip" onclick="toggleChip(this)">1週間</div>
-          <div class="form-chip" onclick="toggleChip(this)">2週間</div>
-          <div class="form-chip" onclick="toggleChip(this)">3週間</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">1ヶ月</div>
-          <div class="form-chip" onclick="toggleChip(this)">2ヶ月</div>
-          <div class="form-chip" onclick="toggleChip(this)">3ヶ月</div>
-          <div class="form-chip" onclick="toggleChip(this)">6ヶ月</div>
-        </div>
-      </div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">滞在開始日</div>
+	        <input class="form-input" id="profile-stay-start" type="date" value="2026-07-01" onchange="syncGuestStayDatesFromProfile()" />
+	        <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">滞在終了日</div>
+	        <input class="form-input" id="profile-stay-end" type="date" value="2026-09-30" onchange="syncGuestStayDatesFromProfile()" />
+	        <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
+	      </div>
       <div class="form-group">
         <div class="form-label">月額予算（USD）</div>
         <div class="form-range-row">
@@ -2295,16 +2328,55 @@
 <div class="screen" id="screen-onboarding">
   <div class="onboard-header">
     <div class="onboard-progress-row">
-      <span class="onboard-step" id="onboard-step-label">STEP 1 / 3</span>
-      <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="onboard-progress" style="width:33%"></div></div>
+      <span class="onboard-step" id="onboard-step-label">STEP 1 / 4</span>
+      <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="onboard-progress" style="width:25%"></div></div>
     </div>
     <div class="onboard-title" id="onboard-title">渡航先を教えてください</div>
     <div class="onboard-sub" id="onboard-sub">希望する都市を選んでください（複数可）</div>
   </div>
 
   <div class="onboard-body">
-    <!-- Step 1: エリア・期間 -->
+    <!-- Step 1: 自分の簡単な情報 -->
     <div class="onboard-step-panel active" id="onboard-panel-1">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-group">
+          <div class="form-label">写真</div>
+          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+            <span style="font-size:34px;">🧑</span>
+            <span style="font-size:14px;font-weight:700;color:var(--dark);">プロフィール写真を選択</span>
+            <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
+            <input type="file" accept="image/*" style="display:none;" />
+          </label>
+        </div>
+        <div class="form-group">
+          <div class="form-label">名前</div>
+          <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">生年月日</div>
+          <input class="form-input" type="date" value="2002-04-12" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">年齢</div>
+          <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">国籍</div>
+          <input class="form-input" type="text" placeholder="国籍を入力してください" value="日本" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">性別</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
+            <div class="form-chip" onclick="toggleChip(this)">男性</div>
+            <div class="form-chip" onclick="toggleChip(this)">選択しない</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: エリア・期間 -->
+    <div class="onboard-step-panel" id="onboard-panel-2">
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
           <div class="form-label">希望エリア（複数可）</div>
@@ -2317,17 +2389,14 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">滞在期間</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">数日</div>
-            <div class="form-chip" onclick="toggleChip(this)">1週間</div>
-            <div class="form-chip" onclick="toggleChip(this)">2週間</div>
-            <div class="form-chip" onclick="toggleChip(this)">3週間</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">1ヶ月</div>
-            <div class="form-chip" onclick="toggleChip(this)">2ヶ月</div>
-            <div class="form-chip" onclick="toggleChip(this)">3ヶ月</div>
-            <div class="form-chip" onclick="toggleChip(this)">6ヶ月</div>
-          </div>
+          <div class="form-label">滞在開始日</div>
+          <input class="form-input" id="guest-stay-start" type="date" value="2026-07-01" />
+          <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">滞在終了日</div>
+          <input class="form-input" id="guest-stay-end" type="date" value="2026-09-30" />
+          <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
         </div>
         <div class="form-group">
           <div class="form-label">月額予算（USD）</div>
@@ -2340,8 +2409,8 @@
       </div>
     </div>
 
-    <!-- Step 2: 生活スタイル -->
-    <div class="onboard-step-panel" id="onboard-panel-2">
+    <!-- Step 3: 生活スタイル -->
+    <div class="onboard-step-panel" id="onboard-panel-3">
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
           <div class="form-label">あなたの生活リズムは？</div>
@@ -2380,8 +2449,8 @@
       </div>
     </div>
 
-    <!-- Step 3: 趣味・NG -->
-    <div class="onboard-step-panel" id="onboard-panel-3">
+    <!-- Step 4: 趣味・NG -->
+    <div class="onboard-step-panel" id="onboard-panel-4">
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
           <div class="form-label">趣味・興味（複数可）</div>
@@ -2763,12 +2832,22 @@
         <div class="form-label">住所</div>
         <input class="form-input" type="text" placeholder="都道府県、市区町村、番地、郵便番号などを入力してください" />
       </div>
-      <div class="form-group">
-        <div class="form-label">1泊あたりの料金</div>
-        <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="金額を入力してください" />
-      </div>
-      <div class="form-group">
-        <div class="form-label">写真を登録</div>
+	      <div class="form-group">
+	        <div class="form-label">1泊あたりの料金</div>
+	        <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="金額を入力してください" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">受け入れ開始日</div>
+	        <input class="form-input" id="host-available-start" type="date" value="2026-07-01" />
+	        <div style="font-size:12px;color:var(--light);margin-top:6px;">何日から受け入れ可能かを選択してください</div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">受け入れ終了日</div>
+	        <input class="form-input" id="host-available-end" type="date" value="2026-12-31" />
+	        <div style="font-size:12px;color:var(--light);margin-top:6px;">何日まで受け入れ可能かを選択してください</div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">写真を登録</div>
         <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
           <span style="font-size:28px;">📷</span>
           <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span>
@@ -5460,29 +5539,33 @@
     showLoginError(t('google_preparing'));
   }
 
-  /* ===== ONBOARDING ===== */
-  let onboardStep = 1;
-  const onboardTotal = 3;
+	  /* ===== ONBOARDING ===== */
+	  let onboardStep = 1;
+	  const homestayOnboardTotal = 4;
+	  const sharehouseOnboardTotal = 3;
 
-  function renderOnboardStep() {
-    const type = window._serviceType || 'homestay';
-    const titles = type === 'sharehouse'
-      ? [t('sh_onboard_title_1'), t('onboard_title_lifestyle'), t('sh_onboard_title_3')]
-      : [t('hs_onboard_title_1'), t('onboard_title_lifestyle'), t('hs_onboard_title_3')];
-    const subs = type === 'sharehouse'
-      ? [t('sh_onboard_sub_1'), t('sh_onboard_sub_2'), t('onboard_sub_ai')]
-      : [t('hs_onboard_sub_1'), t('hs_onboard_sub_2'), t('onboard_sub_ai')];
+	  function renderOnboardStep() {
+	    const type = window._serviceType || 'homestay';
+	    const onboardTotal = type === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
+	    const profileTitle = currentLang === 'ja' ? '自分の簡単な情報' : 'Your Basic Information';
+	    const profileSub = currentLang === 'ja' ? 'ホストに見える基本プロフィールを入力してください' : 'Enter the basic profile hosts will see';
+	    const titles = type === 'sharehouse'
+	      ? [t('sh_onboard_title_1'), t('onboard_title_lifestyle'), t('sh_onboard_title_3')]
+	      : [profileTitle, t('hs_onboard_title_1'), t('onboard_title_lifestyle'), t('hs_onboard_title_3')];
+	    const subs = type === 'sharehouse'
+	      ? [t('sh_onboard_sub_1'), t('sh_onboard_sub_2'), t('onboard_sub_ai')]
+	      : [profileSub, t('hs_onboard_sub_1'), t('hs_onboard_sub_2'), t('onboard_sub_ai')];
 
     document.getElementById('onboard-step-label').textContent = `STEP ${onboardStep} / ${onboardTotal}`;
     document.getElementById('onboard-progress').style.width = (onboardStep / onboardTotal * 100) + '%';
     document.getElementById('onboard-title').textContent = titles[onboardStep - 1];
     document.getElementById('onboard-sub').textContent = subs[onboardStep - 1];
 
-    // ホームステイ用パネル（onboard-panel-1〜3）とシェアハウス用パネル（sh-onboard-panel-1〜3）を切り替え
-    [1,2,3].forEach(n => {
-      const hPanel = document.getElementById('onboard-panel-' + n);
-      const shPanel = document.getElementById('sh-onboard-panel-' + n);
-      if (type === 'sharehouse') {
+	    // ホームステイ用パネル（onboard-panel-1〜4）とシェアハウス用パネル（sh-onboard-panel-1〜3）を切り替え
+	    [1,2,3,4].forEach(n => {
+	      const hPanel = document.getElementById('onboard-panel-' + n);
+	      const shPanel = document.getElementById('sh-onboard-panel-' + n);
+	      if (type === 'sharehouse') {
         if (hPanel) { hPanel.classList.remove('active'); hPanel.style.display = 'none'; }
         if (shPanel) { shPanel.style.display = (n === onboardStep) ? 'block' : 'none'; if (n === onboardStep) shPanel.classList.add('active'); else shPanel.classList.remove('active'); }
       } else {
@@ -5495,8 +5578,9 @@
     document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? t('start_ai_matching') : t('next');
   }
 
-  function onboardNext() {
-    if (onboardStep < onboardTotal) {
+	  function onboardNext() {
+	    const onboardTotal = (window._serviceType || 'homestay') === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
+	    if (onboardStep < onboardTotal) {
       onboardStep++;
       renderOnboardStep();
     } else {
@@ -5505,7 +5589,7 @@
     }
   }
 
-  function onboardBack() {
+	  function onboardBack() {
     if (onboardStep > 1) {
       onboardStep--;
       renderOnboardStep();
@@ -6208,9 +6292,30 @@
     ,'条件に合うホストのおすすめを通知':'Notify me about hosts that match my preferences'
     ,'滞在前のリマインド':'Before-stay reminder'
     ,'滞在開始前の確認を通知':'Notify me before my stay begins'
-    ,'保存する':'Save'
-    ,'通知設定を保存しました':'Notification settings saved'
-    ,'✅ 希望エリア・期間・予算':'✅ Preferred area, stay period, and budget'
+	    ,'保存する':'Save'
+	    ,'通知設定を保存しました':'Notification settings saved'
+	    ,'👤 自分の簡単な情報':'👤 Your Basic Information'
+	    ,'写真':'Photo'
+	    ,'プロフィール写真を選択':'Choose a profile photo'
+	    ,'画像保存は行わないデモUIです':'Demo UI only. The image will not be saved.'
+	    ,'名前':'Name'
+	    ,'生年月日':'Date of Birth'
+	    ,'年齢':'Age'
+	    ,'年齢を入力してください':'Enter your age'
+	    ,'国籍':'Nationality'
+	    ,'国籍を入力してください':'Enter your nationality'
+	    ,'性別':'Gender'
+	    ,'選択しない':'Prefer not to say'
+	    ,'滞在開始日':'Stay Start Date'
+	    ,'滞在終了日':'Stay End Date'
+	    ,'カレンダーから選択してください':'Choose from the calendar'
+	    ,'受け入れ開始日':'Available Start Date'
+	    ,'受け入れ終了日':'Available End Date'
+	    ,'何日から受け入れ可能かを選択してください':'Choose the first date you can host'
+	    ,'何日まで受け入れ可能かを選択してください':'Choose the last date you can host'
+	    ,'自分の簡単な情報':'Your Basic Information'
+	    ,'ホストに見える基本プロフィールを入力してください':'Enter the basic profile hosts will see'
+	    ,'✅ 希望エリア・期間・予算':'✅ Preferred area, stay period, and budget'
     ,'🎨 趣味・NG':'🎨 Hobbies and no-go conditions'
     ,'はじめまして、Yukiです。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！':'Nice to meet you, I am Yuki. I would like to experience the local lifestyle and culture, so I am interested in a homestay. Thank you!'
     ,'よくある質問':'FAQ'
@@ -7182,7 +7287,7 @@
     'linear-gradient(135deg,#e0c3fc,#8ec5fc)',
   ];
 
-  function resRenderRoommateList() {
+	  function resRenderRoommateList() {
     const list = document.getElementById('res-roommate-list');
     if (!list) return;
     if (resRoommates.length === 0) {
@@ -7207,10 +7312,86 @@
         </div>
       </div>
     `).join('');
-  }
+	  }
 
-  /* ===== AIマッチング結果レンダリング ===== */
-  function renderAiResult() {
+	  const HOST_AVAILABILITY = {
+	    sarah: { start: '2026-07-01', end: '2026-12-31' },
+	    michael: { start: '2026-06-15', end: '2026-10-15' },
+	    emily: { start: '2026-09-01', end: '2026-12-31' },
+	    thompson: { start: '2026-08-01', end: '2026-09-15' },
+	    jennifer: { start: '2026-07-01', end: '2026-08-15' },
+	    robert: { start: '2026-10-01', end: '2027-03-31' }
+	  };
+
+	  function getGuestStayRange() {
+	    const startEl = document.getElementById('guest-stay-start');
+	    const endEl = document.getElementById('guest-stay-end');
+	    return {
+	      start: startEl?.value || '2026-07-01',
+	      end: endEl?.value || '2026-09-30'
+	    };
+	  }
+
+	  function syncGuestStayDatesFromProfile() {
+	    const profileStart = document.getElementById('profile-stay-start');
+	    const profileEnd = document.getElementById('profile-stay-end');
+	    const guestStart = document.getElementById('guest-stay-start');
+	    const guestEnd = document.getElementById('guest-stay-end');
+	    if (profileStart?.value && guestStart) guestStart.value = profileStart.value;
+	    if (profileEnd?.value && guestEnd) guestEnd.value = profileEnd.value;
+	  }
+
+	  function getHostAvailability(hostId) {
+	    const availability = { ...(HOST_AVAILABILITY[hostId] || HOST_AVAILABILITY.sarah) };
+	    const startEl = document.getElementById('host-available-start');
+	    const endEl = document.getElementById('host-available-end');
+	    if (hostId === 'sarah' && startEl?.value && endEl?.value) {
+	      availability.start = startEl.value;
+	      availability.end = endEl.value;
+	    }
+	    return availability;
+	  }
+
+	  function isDateRangeCovered(guestRange, hostRange) {
+	    return guestRange.start >= hostRange.start && guestRange.end <= hostRange.end;
+	  }
+
+	  function formatDateRange(range) {
+	    return range.start.replaceAll('-', '/') + ' - ' + range.end.replaceAll('-', '/');
+	  }
+
+	  function renderHomestayAiCard(hostId, matchInfo) {
+	    const h = HOSTS[hostId];
+	    const statusBg = matchInfo.available ? '#E8F7EF' : '#FFF3CD';
+	    const statusColor = matchInfo.available ? '#167A45' : '#856404';
+	    const statusText = matchInfo.available
+	      ? (currentLang === 'ja' ? '希望期間に対応可能' : 'Available for your preferred dates')
+	      : (currentLang === 'ja' ? '期間が一致しません' : 'Dates do not match');
+	    const availabilityLabel = currentLang === 'ja' ? '受け入れ可能期間' : 'Available dates';
+	    const opacity = matchInfo.available ? '1' : '.72';
+	    return `
+	      <div class="match-card" onclick="openDetail('${hostId}')" style="opacity:${opacity};">
+	        <div class="match-card-img">
+	          <img src="${h.photos[0]}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+	          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：${h.match}%</div>
+	          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
+	          <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+	          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:${h.match}%"></div></div>
+	        </div>
+	        <div class="match-card-body">
+	          <div class="match-card-row1"><div class="match-card-name">${h.name}</div><div class="match-card-rating">★ ${h.rating}</div></div>
+	          <div class="match-card-location">${h.city} · ${h.roomType} · ホスト歴${h.years}年</div>
+	          <div style="display:inline-flex;margin-top:10px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:800;padding:5px 10px;border-radius:10px;">${statusText}</div>
+	          <div style="font-size:11px;color:var(--light);margin-top:6px;">${availabilityLabel}: ${formatDateRange(matchInfo.hostRange)}</div>
+	          <div class="match-card-tags">${h.tags.slice(0, 4).map(tag => `<span class="ctag ${tag.cls === 'green' ? 'ok' : ''}">${localizeText(tag.text)}</span>`).join('')}</div>
+	          <div class="match-card-footer"><div class="match-card-price"><strong>$${h.price.toLocaleString()}</strong><span> /月〜</span></div><div class="match-card-meals">${localizeText(h.mealsTag)}</div></div>
+	        </div>
+	      </div>
+	    `;
+	  }
+
+	  /* ===== AIマッチング結果レンダリング ===== */
+	  function renderAiResult() {
     const type = window._serviceType || 'homestay';
     const titleEl = document.getElementById('ai-result-title');
     const subtitleEl = document.getElementById('ai-result-subtitle');
@@ -7345,104 +7526,21 @@
           </div>
         </div>
       `;
-    } else {
-      // ホームステイ：既存HTMLに戻す
-      if (titleEl) titleEl.textContent = 'AIマッチング結果';
-      if (subtitleEl) subtitleEl.textContent = 'あなたの条件に合うホスト · 6件';
-      listEl.innerHTML = `
-        <div class="match-card" onclick="openDetail('sarah')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：96%</div>
-            <div class="match-card-flag">🇺🇸 New York, NY</div>
-            <div class="match-card-save">🤍</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:96%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">Sarah Johnson</div><div class="match-card-rating">★ 4.98</div></div>
-            <div class="match-card-location">Manhattan · 個室 · ホスト歴3年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag">👩 女性限定</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$950</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('michael')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：93%</div>
-            <div class="match-card-flag">🇺🇸 Los Angeles, CA</div>
-            <div class="match-card-save">❤️</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:93%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">Michael & Lisa Chen</div><div class="match-card-rating">★ 4.92</div></div>
-            <div class="match-card-location">Santa Monica · 個室 · ホスト歴5年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 日本語OK</span><span class="ctag ok">✓ 3食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ ペット可</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$1,100</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 3食込み</div></div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('emily')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：91%</div>
-            <div class="match-card-flag">🇺🇸 Boston, MA</div>
-            <div class="match-card-save">🤍</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:91%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">Emily Williams</div><div class="match-card-rating">★ 5.00</div></div>
-            <div class="match-card-location">Cambridge · 個室 · ホスト歴2年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 留学生歓迎</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$880</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('thompson')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：88%</div>
-            <div class="match-card-flag">🇺🇸 San Francisco, CA</div>
-            <div class="match-card-save">❤️</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:88%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">The Thompson Family</div><div class="match-card-rating">★ 4.97</div></div>
-            <div class="match-card-location">Mission District · 個室 · ホスト歴4年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span><span class="ctag ok">✓ 来客OK</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$1,050</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('jennifer')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：85%</div>
-            <div class="match-card-flag">🇺🇸 Seattle, WA</div>
-            <div class="match-card-save">🤍</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:85%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">Jennifer Park</div><div class="match-card-rating">★ 4.89</div></div>
-            <div class="match-card-location">Capitol Hill · 個室 · ホスト歴1年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 夜型OK</span><span class="ctag ok">✓ 朝食付き</span><span class="ctag">🚭 禁煙</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$820</strong><span> /月〜</span></div><div class="match-card-meals">🍳 朝食込み</div></div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('robert')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1505693314120-0d443867891c?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：82%</div>
-            <div class="match-card-flag">🇺🇸 Chicago, IL</div>
-            <div class="match-card-save">🤍</div>
-            <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:82%"></div></div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">Robert & Mary Davis</div><div class="match-card-rating">★ 4.95</div></div>
-            <div class="match-card-location">Lincoln Park · 個室 · ホスト歴6年</div>
-            <div class="match-card-tags"><span class="ctag ok">✓ 夕食付き</span><span class="ctag ok">✓ ペット可</span><span class="ctag">🚭 禁煙</span></div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>$780</strong><span> /月〜</span></div><div class="match-card-meals">🍽️ 夕食込み</div></div>
-          </div>
-        </div>
-      `;
-    }
-  }
+	    } else {
+	      const guestRange = getGuestStayRange();
+	      const hostIds = ['sarah', 'michael', 'emily', 'thompson', 'jennifer', 'robert'];
+	      const results = hostIds.map(id => {
+	        const hostRange = getHostAvailability(id);
+	        return { id, hostRange, available: isDateRangeCovered(guestRange, hostRange) };
+	      }).sort((a, b) => Number(b.available) - Number(a.available) || HOSTS[b.id].match - HOSTS[a.id].match);
+	      const matchedCount = results.filter(r => r.available).length;
+	      if (titleEl) titleEl.textContent = 'AIマッチング結果';
+	      if (subtitleEl) subtitleEl.textContent = currentLang === 'ja'
+	        ? `希望期間 ${formatDateRange(guestRange)} · 対応可能 ${matchedCount}件 / 6件`
+	        : `Preferred dates ${formatDateRange(guestRange)} · ${matchedCount} of 6 available`;
+	      listEl.innerHTML = results.map(result => renderHomestayAiCard(result.id, result)).join('');
+	    }
+	  }
 
   /* ===== INIT ===== */
   document.querySelector('.chat-send').addEventListener('click', sendMessage);
