@@ -1125,9 +1125,20 @@
   }
   .cat-chip.active { border-color:var(--dark); background:var(--dark); color:white; }
 
-  /* ===== シェアハウス・ルームメイト ===== */
-  .sh-card { background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;cursor:pointer; }
-  .rm-card { background:white;border-radius:16px;border:1px solid var(--border);padding:16px; }
+	  /* ===== シェアハウス・ルームメイト ===== */
+	  #search-content-sharehouse {
+	    padding: 16px;
+	    box-sizing: border-box;
+	    flex-direction: column;
+	    gap: 16px;
+	  }
+	  #search-content-sharehouse .sh-card {
+	    width: 100%;
+	    flex: 0 0 auto;
+	    box-shadow: 0 1px 8px rgba(0,0,0,.07);
+	  }
+	  .sh-card { background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;cursor:pointer; }
+	  .rm-card { background:white;border-radius:16px;border:1px solid var(--border);padding:16px; }
 
   /* ===== ホスト専用ボトムナビ ===== */
   .host-bottom-nav {
@@ -2556,7 +2567,7 @@
 <!-- ==================== AIマッチング結果画面 ==================== -->
 <div class="screen" id="screen-ai-result">
   <div style="background:white;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;">
-    <button onclick="navigate(currentScreen,'search')" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;line-height:1;">←</button>
+    <button onclick="goBackFromAiResult()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;line-height:1;">←</button>
     <div style="flex:1;">
       <div style="font-size:17px;font-weight:800;" id="ai-result-title">AIマッチング結果</div>
       <div style="font-size:12px;color:var(--light);margin-top:1px;" id="ai-result-subtitle">あなたの条件に合うホスト · 6件</div>
@@ -4327,7 +4338,10 @@
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
     if (to === 'favorites') renderFavorites();
-    if (to === 'search') window.scrollTo(0, 0);
+	    if (to === 'search') {
+	      switchSearchCat(currentSearchCat);
+	      window.scrollTo(0, 0);
+	    }
     if (to === 'ai-result') renderAiResult();
     if (to === 'pending-hosts') renderGuestRequestList();
     if (to === 'host-applicants') syncHostFormalRequestCard();
@@ -5455,9 +5469,10 @@
   }
 
   /* ===== AI MATCHING ===== */
-  function startMatching() {
-    // reset
-    document.querySelectorAll('.matching-step-item').forEach(el => {
+	  function startMatching() {
+	    rememberAiResultBackTarget();
+	    // reset
+	    document.querySelectorAll('.matching-step-item').forEach(el => {
       el.classList.remove('show', 'done');
     });
     const steps = ['mstep-1','mstep-2','mstep-3','mstep-4'];
@@ -6558,12 +6573,13 @@
     if (currentScreen === 'application-sent') renderApplicationSent();
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
     if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
-    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
-    if (currentScreen === 'onboarding') renderOnboardStep();
-    if (currentScreen === 'interview') generateInterviewDates();
-    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
-    updateListingActionButtons();
-  }
+	    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
+	    if (currentScreen === 'onboarding') renderOnboardStep();
+	    if (currentScreen === 'interview') generateInterviewDates();
+	    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
+	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
+	    updateListingActionButtons();
+	  }
 
   function setLanguage(lang) {
     currentLang = lang === 'en' ? 'en' : 'ja';
@@ -6661,16 +6677,47 @@
   /* ===== 検索カテゴリ切り替え ===== */
   let currentSearchCat = 'homestay';
 
-  function switchSearchCat(cat) {
-    currentSearchCat = cat;
-    ['homestay','sharehouse'].forEach(k => {
-      const el = document.getElementById('chip-' + k);
-      if (el) el.classList.toggle('active', k === cat);
-    });
-    const homestayContent = document.getElementById('search-content-homestay');
-    const sharehouseContent = document.getElementById('search-content-sharehouse');
-    if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
-    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
+	  function switchSearchCat(cat) {
+	    currentSearchCat = cat;
+	    window._serviceType = cat;
+	    ['homestay','sharehouse'].forEach(k => {
+	      const el = document.getElementById('chip-' + k);
+	      if (el) el.classList.toggle('active', k === cat);
+	    });
+	    const homestayContent = document.getElementById('search-content-homestay');
+	    const sharehouseContent = document.getElementById('search-content-sharehouse');
+	    if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
+	    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
+	    updateSearchHeaderForCat(cat);
+	  }
+
+	  function updateSearchHeaderForCat(cat) {
+	    const main = document.getElementById('pill-main');
+	    const sub = document.getElementById('pill-sub');
+	    const typeLabel = document.getElementById('mypage-current-type');
+	    if (main) main.textContent = cat === 'sharehouse' ? t('svc_sharehouse') : t('homestay');
+	    if (sub) sub.textContent = cat === 'sharehouse'
+	      ? (currentLang === 'ja' ? 'エリア・家賃・ルームメイト条件を選ぶ' : 'Choose area, rent, and roommate preferences')
+	      : (currentLang === 'ja' ? '目的地・日付・条件を選ぶ' : 'Choose destination, dates, and preferences');
+	    if (typeLabel) typeLabel.textContent = cat === 'sharehouse' ? t('sharehouse') : t('homestay');
+	  }
+
+  let aiResultBackScreen = 'search';
+  let aiResultBackCat = 'homestay';
+
+  function rememberAiResultBackTarget() {
+    const serviceType = currentScreen === 'search'
+      ? currentSearchCat
+      : (window._serviceType || currentSearchCat || 'homestay');
+    aiResultBackScreen = 'search';
+    aiResultBackCat = serviceType === 'sharehouse' ? 'sharehouse' : 'homestay';
+  }
+
+  function goBackFromAiResult() {
+    navigate(currentScreen, aiResultBackScreen);
+    if (aiResultBackScreen === 'search') {
+      switchSearchCat(aiResultBackCat);
+    }
   }
 
   function openRoommateContact(shId) {
@@ -6680,6 +6727,7 @@
 
   /* ===== AIフロー起動 ===== */
   function startAiFlow() {
+    rememberAiResultBackTarget();
     navigate(currentScreen, 'onboarding');
     onboardStep = 1;
     renderOnboardStep();
