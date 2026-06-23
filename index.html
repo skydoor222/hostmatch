@@ -939,7 +939,7 @@
     /* ===== LOGIN SCREEN ===== */
     .login-screen {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 40px 28px; background: white; text-align: center;
+      min-height: 100vh; padding: 40px 28px; background: white; text-align: center; position: relative;
     }
     .login-logo { font-size: 52px; margin-bottom: 12px; }
     .login-brand { font-size: 28px; font-weight: 900; color: var(--dark); margin-bottom: 6px; }
@@ -1138,6 +1138,18 @@
     padding-bottom:env(safe-area-inset-bottom,0);
   }
   .lang-toggle-btn { background:none;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer; }
+  .lang-segment {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(255,255,255,.92); border: 1px solid var(--border);
+    border-radius: 999px; padding: 4px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  }
+  .lang-segment-btn {
+    border: none; background: transparent; border-radius: 999px; padding: 7px 12px;
+    font-size: 12px; font-weight: 800; color: var(--light); cursor: pointer;
+  }
+  .lang-segment-btn.active { background: var(--primary); color: white; }
+  .login-lang-wrap { position: absolute; top: 18px; right: 18px; z-index: 2; }
+  .mypage-lang-control { display: flex; align-items: center; gap: 8px; }
   #app-loading {
     position: fixed; inset: 0; background: white; z-index: 9999;
     display: flex; align-items: center; justify-content: center;
@@ -1177,8 +1189,8 @@
     <div id="ai-cta-banner" style="margin:16px 16px 0;background:linear-gradient(135deg,#FF5A5F,#FF8C00);border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="startAiFlow()">
       <div style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🤖</div>
       <div style="flex:1;">
-        <div style="font-size:15px;font-weight:800;color:white;">AIに相談して探す</div>
-        <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:3px;">条件を入力するだけで<br>ぴったりのホストを提案</div>
+        <div style="font-size:15px;font-weight:800;color:white;" data-i18n="ai_search">AIに相談して探す</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:3px;" data-i18n-html="ai_search_sub">条件を入力するだけで<br>ぴったりのホストを提案</div>
       </div>
       <div style="font-size:22px;color:rgba(255,255,255,.7);">›</div>
     </div>
@@ -1187,16 +1199,16 @@
     <div id="ai-result-banner" style="display:none;margin:16px 16px 0;background:#F0FFF8;border:1.5px solid #B2EFE4;border-radius:16px;padding:14px 16px;display:none;align-items:center;gap:12px;cursor:pointer;" onclick="navigate(currentScreen,'ai-result')">
       <div style="font-size:24px;">✅</div>
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:800;color:#00875A;">AIマッチング完了 · 6件</div>
-        <div style="font-size:12px;color:#00875A;margin-top:2px;">結果を見る →</div>
+        <div style="font-size:14px;font-weight:800;color:#00875A;" data-i18n="ai_match_done">AIマッチング完了 · 6件</div>
+        <div style="font-size:12px;color:#00875A;margin-top:2px;" data-i18n="view_results">結果を見る →</div>
       </div>
     </div>
 
     <!-- 新着物件 -->
     <div class="slider-section">
       <div class="slider-label">
-        <span>✨ 新着ホスト</span>
-        <a>すべて見る</a>
+        <span data-i18n="new_hosts">✨ 新着ホスト</span>
+        <a data-i18n="view_all">すべて見る</a>
       </div>
       <div class="card-slider">
         <div class="s-card" onclick="openDetail('emily')">
@@ -1676,19 +1688,19 @@
     <div class="divider"></div>
 
     <div class="detail-section">
-      <div class="detail-section-title">🌙 生活スタイル</div>
+      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
       <div class="ls-grid" id="detail-ls-grid"></div>
     </div>
 
     <div class="detail-section" style="padding-top:0;">
-      <div class="detail-section-title" style="font-size:13px; color:var(--light); font-weight:600;">💬 過去の留学生からの評価</div>
+      <div class="detail-section-title" style="font-size:13px; color:var(--light); font-weight:600;" data-i18n="student_reviews">💬 過去の留学生からの評価</div>
       <div class="ls-review-list" id="detail-ls-reviews"></div>
     </div>
 
     <div class="divider"></div>
 
     <div class="detail-section">
-      <div class="detail-section-title">📋 ハウスルール</div>
+      <div class="detail-section-title" data-i18n="house_rules">📋 ハウスルール</div>
       <div class="rule-list">
         <div class="rule-row"><span class="rule-ok">✓</span> 門限 22:30（相談可）</div>
         <div class="rule-row"><span class="rule-ok">✓</span> キッチン共有OK（〜21:00）</div>
@@ -1702,7 +1714,7 @@
     <div class="divider"></div>
 
     <div class="detail-section">
-      <div class="detail-section-title">🏠 部屋情報</div>
+      <div class="detail-section-title" data-i18n="room_info">🏠 部屋情報</div>
       <div class="info-grid">
         <div class="info-row"><span class="info-label">広さ</span><span class="info-val">10㎡（約6畳）</span></div>
         <div class="info-row"><span class="info-label">バス・トイレ</span><span class="info-val">共用（2人でシェア）</span></div>
@@ -1715,19 +1727,19 @@
     <div class="divider"></div>
 
     <div class="detail-section" style="padding-bottom:16px;">
-      <div class="detail-section-title">💰 料金内訳</div>
+      <div class="detail-section-title" data-i18n="price_breakdown">💰 料金内訳</div>
       <div class="price-box">
-        <div class="price-row"><span style="color:var(--light)">家賃</span><strong>$750 /月</strong></div>
-        <div class="price-row"><span style="color:var(--light)">朝食（平日）</span><strong>$100 /月</strong></div>
-        <div class="price-row"><span style="color:var(--light)">光熱費・Wi-Fi</span><strong>$100 /月</strong></div>
-        <div class="price-row total"><span>合計</span><span>$950 /月</span></div>
+        <div class="price-row"><span style="color:var(--light)" data-i18n="rent">家賃</span><strong>$750 /月</strong></div>
+        <div class="price-row"><span style="color:var(--light)" data-i18n="weekday_breakfast">朝食（平日）</span><strong>$100 /月</strong></div>
+        <div class="price-row"><span style="color:var(--light)" data-i18n="utilities_wifi">光熱費・Wi-Fi</span><strong>$100 /月</strong></div>
+        <div class="price-row total"><span data-i18n="total">合計</span><span>$950 /月</span></div>
       </div>
     </div>
 
     <div class="divider"></div>
 
     <div class="detail-section" style="padding-bottom:16px;">
-      <div class="detail-section-title">📍 ロケーション</div>
+      <div class="detail-section-title" data-i18n="location">📍 ロケーション</div>
       <div class="match-card-map" style="border-radius:14px; height:160px; border:1px solid var(--border);">
         <div class="match-map-pin" id="detail-map-pin">📍 Manhattan, New York</div>
       </div>
@@ -1737,7 +1749,7 @@
   </div>
 
   <div class="detail-cta">
-    <button class="btn-outline" onclick="openChat()">💬 メッセージ</button>
+    <button class="btn-outline" onclick="openChat()" data-i18n="message_button">💬 メッセージ</button>
     <button class="btn-primary" id="detail-action-btn" onclick="requestInterview()">📹 面談を申し込む</button>
   </div>
 </div>
@@ -1746,7 +1758,7 @@
 <div id="screen-messages" class="screen">
   <div class="screen-header">
     <div class="header-row">
-      <h1>メッセージ</h1>
+      <h1 data-i18n="nav_messages">メッセージ</h1>
     </div>
   </div>
   <div class="msg-list">
@@ -1809,11 +1821,11 @@
   <div class="chat-action-banner" id="chat-action-banner">
     <div class="chat-banner-info">
       <div class="chat-banner-name" id="chat-banner-name">Sarah Johnson</div>
-      <div class="chat-banner-sub">ホスト詳細・お申し込みはこちら</div>
+      <div class="chat-banner-sub" data-i18n="chat_detail_apply">ホスト詳細・お申し込みはこちら</div>
     </div>
     <div class="chat-banner-btns">
-      <button class="chat-banner-btn-detail" onclick="openChatDetail()">詳細を見る</button>
-      <button class="chat-banner-btn-apply" onclick="applyHost()">本申し込み →</button>
+      <button class="chat-banner-btn-detail" onclick="openChatDetail()" data-i18n="view_detail">詳細を見る</button>
+      <button class="chat-banner-btn-apply" onclick="applyHost()" data-i18n="submit_application_arrow">本申し込み →</button>
     </div>
   </div>
 
@@ -1864,7 +1876,7 @@
   </div>
 
   <div class="chat-input-bar">
-    <input class="chat-input" type="text" placeholder="メッセージを入力..." />
+    <input class="chat-input" type="text" placeholder="メッセージを入力..." data-i18n-placeholder="message_placeholder" />
     <button class="chat-send">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
@@ -1874,7 +1886,7 @@
 <!-- ==================== ④ お気に入り ==================== -->
 <div id="screen-favorites" class="screen">
   <div class="screen-header">
-    <div class="header-row"><h1>お気に入り</h1></div>
+    <div class="header-row"><h1 data-i18n="nav_saved">お気に入り</h1></div>
   </div>
   <div class="fav-list">
 
@@ -1933,28 +1945,28 @@
       </div>
     </div>
 
-    <div class="mypage-section-title">プロフィール</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-section-title" data-i18n="profile_section">プロフィール</div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'profile')"><span class="mypage-item-icon">👤</span><span class="mypage-item-label" data-i18n="profile_edit">プロフィール編集</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label" data-i18n="lifestyle_settings">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-section-title">申請・履歴</div>
-    <div class="mypage-item" onclick="openGuestRequests()"><span class="mypage-item-icon">📬</span><span class="mypage-item-label">申請中のリクエスト</span><span id="guest-request-badge" style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;">0件</span></div>
-    <div class="mypage-item" onclick="openStayHistory()"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" onclick="openReviewForm()"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-section-title" data-i18n="requests_history">申請・履歴</div>
+    <div class="mypage-item" onclick="openGuestRequests()"><span class="mypage-item-icon">📬</span><span class="mypage-item-label" data-i18n="pending_requests">申請中のリクエスト</span><span id="guest-request-badge" style="background:var(--primary);color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;display:none;">0件</span></div>
+    <div class="mypage-item" onclick="openStayHistory()"><span class="mypage-item-icon">🏠</span><span class="mypage-item-label" data-i18n="stay_history">過去の滞在履歴</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openReviewForm()"><span class="mypage-item-icon">⭐</span><span class="mypage-item-label" data-i18n="write_review">レビューを書く</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-section-title">設定</div>
-    <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label">通知設定</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label">言語・通貨</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-section-title" data-i18n="settings">設定</div>
+    <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="notifications">通知設定</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
+    <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-section-title">サポート</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
-    <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
-    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-section-title" data-i18n="support">サポート</div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
+    <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
+    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
-    <div class="mypage-section-title">サービス</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
-    <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label">ログアウト</span></div>
+    <div class="mypage-section-title" data-i18n="service">サービス</div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
   </div>
 </div>
 
@@ -1962,7 +1974,7 @@
 <div class="screen" id="screen-pending-hosts">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">申請中のリクエスト</div>
+    <div class="mypage-sub-title" data-i18n="pending_requests">申請中のリクエスト</div>
   </div>
   <div class="mypage-sub-body" id="guest-request-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
 </div>
@@ -1971,7 +1983,7 @@
 <div class="screen" id="screen-stay-history">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">過去の滞在履歴</div>
+    <div class="mypage-sub-title" data-i18n="stay_history">過去の滞在履歴</div>
   </div>
   <div class="mypage-sub-body" id="stay-history-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
 </div>
@@ -1980,22 +1992,22 @@
 <div class="screen" id="screen-write-review">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">レビューを書く</div>
+    <div class="mypage-sub-title" data-i18n="write_review">レビューを書く</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px;">滞在したホスト・物件</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;" data-i18n="review_target">滞在したホスト・物件</div>
       <div id="review-host-list" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">レビュータグ</div>
-      <div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:12px;">ホスト詳細のレビューで使われている項目から選択してください</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;" data-i18n="review_tags">レビュータグ</div>
+      <div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:12px;" data-i18n="review_tags_sub">ホスト詳細のレビューで使われている項目から選択してください</div>
       <div id="review-tag-list" class="form-chip-row"></div>
     </div>
 
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">星評価</div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;" data-i18n="star_rating">星評価</div>
       <div id="review-stars" style="display:flex;gap:8px;font-size:32px;line-height:1;">
         <button type="button" onclick="setReviewRating(1)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
         <button type="button" onclick="setReviewRating(2)" style="background:none;border:none;color:#D1D5DB;font-size:32px;cursor:pointer;padding:0;">★</button>
@@ -2006,12 +2018,12 @@
     </div>
 
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;">
-      <div style="font-size:14px;font-weight:800;margin-bottom:10px;">レビュー本文</div>
-      <textarea id="review-text" placeholder="滞在してよかった点や、これから滞在する人へのメッセージを書いてください" style="width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+      <div style="font-size:14px;font-weight:800;margin-bottom:10px;" data-i18n="review_body">レビュー本文</div>
+      <textarea id="review-text" placeholder="滞在してよかった点や、これから滞在する人へのメッセージを書いてください" data-i18n-placeholder="review_placeholder" style="width:100%;min-height:140px;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
     </div>
 
-    <button type="button" onclick="submitStayReview()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;">レビューを投稿する</button>
-    <div id="review-submit-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;">レビューを投稿しました</div>
+    <button type="button" onclick="submitStayReview()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;" data-i18n="submit_review">レビューを投稿する</button>
+    <div id="review-submit-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;" data-i18n="review_submitted">レビューを投稿しました</div>
   </div>
 </div>
 
@@ -2019,49 +2031,49 @@
 <div class="screen" id="screen-notification-settings">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">通知設定</div>
+    <div class="mypage-sub-title" data-i18n="notifications">通知設定</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
     <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title">メッセージが届いた時</div>
-          <div class="notification-setting-sub">ホストからの新着メッセージを通知</div>
+          <div class="notification-setting-title" data-i18n="notif_messages">メッセージが届いた時</div>
+          <div class="notification-setting-sub" data-i18n="notif_messages_sub">ホストからの新着メッセージを通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="メッセージが届いた時"></button>
       </div>
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title">リクエストが承諾された時</div>
-          <div class="notification-setting-sub">申請が承諾された時に通知</div>
+          <div class="notification-setting-title" data-i18n="notif_approved">リクエストが承諾された時</div>
+          <div class="notification-setting-sub" data-i18n="notif_approved_sub">申請が承諾された時に通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="リクエストが承諾された時"></button>
       </div>
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title">リクエストが否認された時</div>
-          <div class="notification-setting-sub">申請結果が否認だった時に通知</div>
+          <div class="notification-setting-title" data-i18n="notif_rejected">リクエストが否認された時</div>
+          <div class="notification-setting-sub" data-i18n="notif_rejected_sub">申請結果が否認だった時に通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="リクエストが否認された時"></button>
       </div>
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title">新しいおすすめホストが見つかった時</div>
-          <div class="notification-setting-sub">条件に合うホストのおすすめを通知</div>
+          <div class="notification-setting-title" data-i18n="notif_recommend">新しいおすすめホストが見つかった時</div>
+          <div class="notification-setting-sub" data-i18n="notif_recommend_sub">条件に合うホストのおすすめを通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="新しいおすすめホストが見つかった時"></button>
       </div>
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title">滞在前のリマインド</div>
-          <div class="notification-setting-sub">滞在開始前の確認を通知</div>
+          <div class="notification-setting-title" data-i18n="notif_reminder">滞在前のリマインド</div>
+          <div class="notification-setting-sub" data-i18n="notif_reminder_sub">滞在開始前の確認を通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="滞在前のリマインド"></button>
       </div>
     </div>
 
-    <button type="button" onclick="saveNotificationSettings()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;">保存する</button>
-    <div id="notification-save-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;">通知設定を保存しました</div>
+    <button type="button" onclick="saveNotificationSettings()" style="width:100%;background:var(--primary);color:white;border:none;border-radius:14px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;" data-i18n="save">保存する</button>
+    <div id="notification-save-message" style="display:none;background:#E8F7EF;color:#167A45;border:1px solid #BFE8D1;border-radius:14px;padding:13px 14px;font-size:14px;font-weight:700;text-align:center;" data-i18n="notifications_saved">通知設定を保存しました</div>
   </div>
 </div>
 
@@ -2069,7 +2081,7 @@
 <div class="screen" id="screen-profile">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">プロフィール編集</div>
+    <div class="mypage-sub-title" data-i18n="profile_edit">プロフィール編集</div>
   </div>
   <div class="mypage-sub-body">
     <div class="form-section">
@@ -2116,7 +2128,7 @@
 <div class="screen" id="screen-lifestyle">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">生活スタイル・希望条件</div>
+    <div class="mypage-sub-title" data-i18n="lifestyle_settings">生活スタイル・希望条件</div>
   </div>
   <div class="mypage-sub-body">
     <div class="form-section">
@@ -2199,36 +2211,36 @@
 <div class="screen" id="screen-support">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
-    <div class="mypage-sub-title">サポート</div>
+    <div class="mypage-sub-title" data-i18n="support">サポート</div>
   </div>
   <div class="mypage-sub-body" style="padding: 20px 16px 100px;">
-    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">よくある質問</div>
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;" data-i18n="faq">よくある質問</div>
     <div class="faq-list">
       <div class="faq-item">
-        <button type="button" class="faq-question" onclick="toggleFaq(this)">ホームステイの申し込み方法は？<span class="faq-arrow">›</span></button>
-        <div class="faq-answer">ホスト詳細の下部分にある「面談の申し込み」から面談を申し込み、面談後に正式な申し込み画面が表示されます。そこから申し込みできます。</div>
+        <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_apply_q">ホームステイの申し込み方法は？</span><span class="faq-arrow">›</span></button>
+        <div class="faq-answer" data-i18n="faq_apply_a">ホスト詳細の下部分にある「面談の申し込み」から面談を申し込み、面談後に正式な申し込み画面が表示されます。そこから申し込みできます。</div>
       </div>
       <div class="faq-item">
-        <button type="button" class="faq-question" onclick="toggleFaq(this)">面談はどうやって行いますか？<span class="faq-arrow">›</span></button>
-        <div class="faq-answer">ホスト詳細画面から申し込みできます。</div>
+        <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_interview_q">面談はどうやって行いますか？</span><span class="faq-arrow">›</span></button>
+        <div class="faq-answer" data-i18n="faq_interview_a">ホスト詳細画面から申し込みできます。</div>
       </div>
       <div class="faq-item">
-        <button type="button" class="faq-question" onclick="toggleFaq(this)">キャンセル・返金ポリシーは？<span class="faq-arrow">›</span></button>
-        <div class="faq-answer">キャンセル・返金ポリシーは現在準備中です。詳しくはお問い合わせフォームからご連絡ください。</div>
+        <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_cancel_q">キャンセル・返金ポリシーは？</span><span class="faq-arrow">›</span></button>
+        <div class="faq-answer" data-i18n="faq_cancel_a">キャンセル・返金ポリシーは現在準備中です。詳しくはお問い合わせフォームからご連絡ください。</div>
       </div>
       <div class="faq-item">
-        <button type="button" class="faq-question" onclick="toggleFaq(this)">トラブルが起きたときは？<span class="faq-arrow">›</span></button>
-        <div class="faq-answer">下のお問い合わせフォームからお問い合わせください。</div>
+        <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_trouble_q">トラブルが起きたときは？</span><span class="faq-arrow">›</span></button>
+        <div class="faq-answer" data-i18n="faq_trouble_a">下のお問い合わせフォームからお問い合わせください。</div>
       </div>
     </div>
 
-    <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;">お問い合わせ</div>
+    <div style="margin-top:20px;font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;" data-i18n="contact">お問い合わせ</div>
     <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"
        style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:18px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;margin-bottom:10px;text-decoration:none;color:inherit;">
       <div style="font-size:28px;">📝</div>
       <div style="flex:1;">
-        <div style="font-size:14px;font-weight:700;">お問い合わせフォーム</div>
-        <div style="font-size:12px;color:var(--light);margin-top:2px;">Google Formで受け付けています</div>
+        <div style="font-size:14px;font-weight:700;" data-i18n="contact_form">お問い合わせフォーム</div>
+        <div style="font-size:12px;color:var(--light);margin-top:2px;" data-i18n="contact_form_sub">Google Formで受け付けています</div>
       </div>
       <div style="font-size:18px;color:var(--light);">›</div>
     </a>
@@ -2237,29 +2249,35 @@
 
 <!-- ==================== ログイン画面 ==================== -->
 <div class="screen" id="screen-login">
-  <div class="login-screen">
+  <div class="login-screen" style="position:relative;">
+    <div class="login-lang-wrap">
+      <div class="lang-segment">
+        <button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button>
+        <button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button>
+      </div>
+    </div>
     <div class="login-logo">🏠</div>
     <div class="login-brand">HostMatch</div>
-    <div class="login-tagline">AIがあなたに合う人と<br>住まいを繋ぎます</div>
+    <div class="login-tagline" data-i18n-html="login_tagline">AIがあなたに合う人と<br>住まいを繋ぎます</div>
 
     <div class="login-form">
       <div class="form-group" id="login-name-group" style="text-align:left; display:none;">
-        <div class="form-label">お名前</div>
-        <input class="form-input" id="login-name" type="text" placeholder="山田 太郎" />
+        <div class="form-label" data-i18n="name_label">お名前</div>
+        <input class="form-input" id="login-name" type="text" placeholder="山田 太郎" data-i18n-placeholder="name_placeholder" />
       </div>
       <div class="form-group" style="text-align:left;">
-        <div class="form-label">メールアドレス</div>
+        <div class="form-label" data-i18n="email_label">メールアドレス</div>
         <input class="form-input" id="login-email" type="email" placeholder="example@email.com" />
       </div>
       <div class="form-group" style="text-align:left;">
-        <div class="form-label">パスワード</div>
-        <input class="form-input" id="login-password" type="password" placeholder="6文字以上" />
+        <div class="form-label" data-i18n="password_label">パスワード</div>
+        <input class="form-input" id="login-password" type="password" placeholder="6文字以上" data-i18n-placeholder="password_placeholder" />
       </div>
       <div id="login-error" style="color:#FF5A5F; font-size:13px; text-align:center; margin:-4px 0 8px; min-height:18px;"></div>
-      <button class="login-btn" id="login-submit-btn" onclick="doLogin()">ログイン</button>
-      <div class="login-or">または</div>
+      <button class="login-btn" id="login-submit-btn" onclick="doLogin()" data-i18n="login">ログイン</button>
+      <div class="login-or" data-i18n="or">または</div>
       <button class="login-social-btn" onclick="doGoogleLogin()">
-        <span>🔵</span> Googleでログイン
+        <span>🔵</span> <span data-i18n="google_login">Googleでログイン</span>
       </button>
     </div>
 
@@ -3097,29 +3115,29 @@
 <div class="screen" id="screen-interview">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,interviewBackScreen)">←</div>
-    <div class="mypage-sub-title">面談を申し込む</div>
+    <div class="mypage-sub-title" data-i18n="request_interview">面談を申し込む</div>
   </div>
   <div class="interview-body">
     <div class="interview-icon">📹</div>
-    <div class="interview-title">面談を申し込む</div>
-    <div class="interview-sub">ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。</div>
+    <div class="interview-title" data-i18n="request_interview">面談を申し込む</div>
+    <div class="interview-sub" data-i18n-html="interview_sub">ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。</div>
     <div class="interview-info">
       <div class="interview-info-row"><span id="interview-listing-label">ホスト</span><span id="interview-host-name">Sarah Johnson</span></div>
-      <div class="interview-info-row"><span>月額料金</span><span id="interview-price">$950</span></div>
-      <div class="interview-info-row"><span>面談方法</span><span>ビデオ通話（15分）</span></div>
-      <div class="interview-info-row"><span>費用</span><span style="color:#00875A">無料</span></div>
+      <div class="interview-info-row"><span data-i18n="monthly_price">月額料金</span><span id="interview-price">$950</span></div>
+      <div class="interview-info-row"><span data-i18n="interview_method">面談方法</span><span data-i18n="video_call_15">ビデオ通話（15分）</span></div>
+      <div class="interview-info-row"><span data-i18n="fee">費用</span><span style="color:#00875A" data-i18n="free">無料</span></div>
     </div>
     <div class="interview-date-section">
       <div class="form-group" style="margin-bottom:12px;">
-        <div class="form-label">日付を選択</div>
+        <div class="form-label" data-i18n="select_date">日付を選択</div>
         <input class="form-input" id="interview-date-input" type="date" onchange="setInterviewDateFromInput(this.value)" />
-        <div style="font-size:12px;color:var(--light);margin-top:6px;">希望日を選択してください</div>
+        <div style="font-size:12px;color:var(--light);margin-top:6px;" data-i18n="select_preferred_date">希望日を選択してください</div>
       </div>
-      <div class="interview-date-label">📅 希望日を選択</div>
+      <div class="interview-date-label" data-i18n="preferred_date">📅 希望日を選択</div>
       <div class="interview-date-grid" id="interview-date-grid"></div>
       <div class="interview-time-row">
         <select class="interview-time-select" id="interview-time">
-          <option value="">時間帯を選択...</option>
+          <option value="" data-i18n="select_time">時間帯を選択...</option>
           <option value="09:00">9:00 - 9:30 (JST)</option>
           <option value="10:00">10:00 - 10:30 (JST)</option>
           <option value="11:00">11:00 - 11:30 (JST)</option>
@@ -3133,8 +3151,8 @@
     </div>
   </div>
   <div class="interview-footer">
-    <button class="interview-btn-primary" onclick="confirmInterview()">面談を確定する</button>
-    <button class="interview-btn-cancel" onclick="navigate(currentScreen,interviewBackScreen)">キャンセル</button>
+    <button class="interview-btn-primary" onclick="confirmInterview()" data-i18n="confirm_interview">面談を確定する</button>
+    <button class="interview-btn-cancel" onclick="navigate(currentScreen,interviewBackScreen)" data-i18n="cancel">キャンセル</button>
   </div>
 </div>
 
@@ -3142,14 +3160,14 @@
 <div class="screen" id="screen-complete">
   <div class="complete-body">
     <div class="complete-check">✅</div>
-    <div class="complete-title">面談が確定しました！</div>
-    <div class="complete-sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。</div>
+    <div class="complete-title" data-i18n="interview_confirmed">面談が確定しました！</div>
+    <div class="complete-sub" data-i18n-html="interview_confirmed_sub">ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。</div>
     <div class="complete-card">
       <div class="complete-card-row"><span id="complete-listing-label">ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
-      <div class="complete-card-row"><span>月額料金</span><span id="complete-price">$950 /月</span></div>
+      <div class="complete-card-row"><span data-i18n="monthly_price">月額料金</span><span id="complete-price">$950 /月</span></div>
     </div>
-    <button class="paypay-btn" onclick="navigate(currentScreen,interviewBackScreen)" style="background:var(--primary);">詳細画面へ戻る</button>
-    <button class="complete-msg-btn" onclick="navigate(currentScreen,'messages')">💬 メッセージを確認する</button>
+    <button class="paypay-btn" onclick="navigate(currentScreen,interviewBackScreen)" style="background:var(--primary);" data-i18n="back_to_detail">詳細画面へ戻る</button>
+    <button class="complete-msg-btn" onclick="navigate(currentScreen,'messages')" data-i18n="check_messages">💬 メッセージを確認する</button>
   </div>
 </div>
 
@@ -3157,16 +3175,16 @@
 <div class="screen" id="screen-apply">
   <div class="complete-body">
     <div class="complete-check">🏠</div>
-    <div class="complete-title">正式に申し込みますか？</div>
-    <div class="complete-sub">入居希望のリクエストを送信します。<br>ホストが承諾するまで決済には進めません。</div>
+    <div class="complete-title" data-i18n="submit_application_q">正式に申し込みますか？</div>
+    <div class="complete-sub" data-i18n-html="submit_application_sub">入居希望のリクエストを送信します。<br>ホストが承諾するまで決済には進めません。</div>
     <div class="complete-card">
       <div class="complete-card-row"><span id="apply-listing-label">ホスト</span><span id="apply-host-name">Sarah Johnson</span></div>
-      <div class="complete-card-row"><span>月額料金</span><span id="apply-price">$950 /月</span></div>
+      <div class="complete-card-row"><span data-i18n="monthly_price">月額料金</span><span id="apply-price">$950 /月</span></div>
       <div class="complete-card-divider"></div>
-      <div class="complete-card-row"><span>ステータス</span><span style="color:#B26A00;font-weight:800;">承諾待ち</span></div>
+      <div class="complete-card-row"><span data-i18n="status">ステータス</span><span style="color:#B26A00;font-weight:800;" data-i18n="pending_approval">承諾待ち</span></div>
     </div>
-    <button class="paypay-btn" onclick="submitFormalApplication()" style="background:var(--primary);">申し込みリクエストを送信する</button>
-    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)">キャンセル</button>
+    <button class="paypay-btn" onclick="submitFormalApplication()" style="background:var(--primary);" data-i18n="send_application_request">申し込みリクエストを送信する</button>
+    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)" data-i18n="cancel">キャンセル</button>
   </div>
 </div>
 
@@ -3174,16 +3192,16 @@
 <div class="screen" id="screen-application-sent">
   <div class="complete-body">
     <div class="complete-check">📨</div>
-    <div class="complete-title">申し込みリクエストを送信しました</div>
-    <div class="complete-sub">ホスト側のリクエスト管理に申請が表示される想定です。<br>承諾されるまで決済へは進めません。</div>
+    <div class="complete-title" data-i18n="application_sent">申し込みリクエストを送信しました</div>
+    <div class="complete-sub" data-i18n-html="application_sent_sub">ホスト側のリクエスト管理に申請が表示される想定です。<br>承諾されるまで決済へは進めません。</div>
     <div class="complete-card">
       <div class="complete-card-row"><span id="application-sent-label">ホスト</span><span id="application-sent-name">Sarah Johnson</span></div>
-      <div class="complete-card-row"><span>月額料金</span><span id="application-sent-price">$950 /月</span></div>
+      <div class="complete-card-row"><span data-i18n="monthly_price">月額料金</span><span id="application-sent-price">$950 /月</span></div>
       <div class="complete-card-divider"></div>
-      <div class="complete-card-row"><span>ステータス</span><span id="application-sent-status" style="color:#B26A00;font-weight:800;">承諾待ち</span></div>
+      <div class="complete-card-row"><span data-i18n="status">ステータス</span><span id="application-sent-status" style="color:#B26A00;font-weight:800;">承諾待ち</span></div>
     </div>
-    <button class="paypay-btn" id="application-payment-btn" onclick="openPaymentScreen()" style="display:none;background:var(--primary);">💳 決済へ進む</button>
-    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)">詳細画面へ戻る</button>
+    <button class="paypay-btn" id="application-payment-btn" onclick="openPaymentScreen()" style="display:none;background:var(--primary);" data-i18n="proceed_payment">💳 決済へ進む</button>
+    <button class="complete-later" onclick="navigate(currentScreen,applicationBackScreen)" data-i18n="back_to_detail">詳細画面へ戻る</button>
   </div>
 </div>
 
@@ -3858,20 +3876,20 @@
 <nav class="bottom-nav" id="bottom-nav">
   <div class="bnav-item active" id="bnav-search" onclick="navigate(currentScreen,'search')">
     <div class="bnav-icon">🔍</div>
-    <div>探す</div>
+    <div data-i18n="nav_search">探す</div>
   </div>
   <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')">
     <div class="bnav-icon">💬</div>
-    <div>メッセージ</div>
+    <div data-i18n="nav_messages">メッセージ</div>
     <div class="bnav-badge">2</div>
   </div>
   <div class="bnav-item" id="bnav-favorites" onclick="navigate(currentScreen,'favorites')">
     <div class="bnav-icon">❤️</div>
-    <div>保存済み</div>
+    <div data-i18n="nav_saved">保存済み</div>
   </div>
   <div class="bnav-item" id="bnav-mypage" onclick="navigate(currentScreen,'mypage')">
     <div class="bnav-icon">👤</div>
-    <div>マイページ</div>
+    <div data-i18n="my_page">マイページ</div>
   </div>
 </nav>
 
@@ -3879,21 +3897,21 @@
 <nav class="host-bottom-nav" id="host-bottom-nav">
   <div class="bnav-item active" id="hbnav-dashboard" onclick="hostNavigate('host-dashboard')">
     <div class="bnav-icon">📊</div>
-    <div>ホーム</div>
+    <div data-i18n="nav_home">ホーム</div>
   </div>
   <div class="bnav-item" id="hbnav-applicants" onclick="hostNavigate('host-applicants')">
     <div class="bnav-icon">📋</div>
-    <div>応募者</div>
+    <div data-i18n="host_applicants">応募者</div>
     <div class="bnav-badge">3</div>
   </div>
   <div class="bnav-item" id="hbnav-host-messages" onclick="hostNavigate('host-messages')">
     <div class="bnav-icon">💬</div>
-    <div>メッセージ</div>
+    <div data-i18n="host_messages">メッセージ</div>
     <div class="bnav-badge">5</div>
   </div>
   <div class="bnav-item" id="hbnav-host-mypage" onclick="hostNavigate('host-profile')">
     <div class="bnav-icon">⚙️</div>
-    <div>設定</div>
+    <div data-i18n="settings">設定</div>
   </div>
 </nav>
 
@@ -3947,6 +3965,7 @@
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
       document.getElementById('screen-login').classList.add('active');
       window.currentScreen = 'login';
+      applyLang();
     }
   });
 </script>
@@ -4264,16 +4283,16 @@
   ];
 
   const REVIEW_TAGS = [
-    'フレンドリー',
-    '清潔',
-    '安心',
-    '返信が早い',
-    '親切',
-    'ホスピタリティ高い',
-    '会話が多い',
-    '朝食が充実',
-    '勉強に集中できる',
-    '静かな環境'
+    'review_tag_friendly',
+    'review_tag_clean',
+    'review_tag_safe',
+    'review_tag_fast_reply',
+    'review_tag_kind',
+    'review_tag_hospitality',
+    'review_tag_talkative',
+    'review_tag_breakfast',
+    'review_tag_study',
+    'review_tag_quiet'
   ];
 
   /* ===== STATE ===== */
@@ -4330,7 +4349,7 @@
     if (!STAY_HISTORY.length) {
       list.innerHTML = `
         <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:28px 18px;text-align:center;color:var(--light);font-size:14px;font-weight:700;">
-          過去の滞在履歴はありません
+          ${t('no_stay_history')}
         </div>
       `;
       return;
@@ -4345,12 +4364,12 @@
               <div style="font-size:15px;font-weight:800;color:var(--dark);">${stay.hostName}</div>
               <div style="font-size:12px;color:var(--light);margin-top:2px;">${stay.location}</div>
             </div>
-            <span style="background:#E8F7EF;color:#167A45;font-size:11px;font-weight:700;padding:4px 8px;border-radius:10px;white-space:nowrap;">${stay.status}</span>
+            <span style="background:#E8F7EF;color:#167A45;font-size:11px;font-weight:700;padding:4px 8px;border-radius:10px;white-space:nowrap;">${t('stay_complete')}</span>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;font-size:13px;color:var(--mid);">
-            <div><strong style="color:var(--dark);">滞在期間：</strong>${stay.period}</div>
-            <div><strong style="color:var(--dark);">部屋タイプ：</strong>${stay.roomType}</div>
-            <div><strong style="color:var(--dark);">料金：</strong>${stay.price}</div>
+            <div><strong style="color:var(--dark);">${t('stay_period')}</strong>${stay.period}</div>
+            <div><strong style="color:var(--dark);">${t('room_type')}</strong>${stay.roomType}</div>
+            <div><strong style="color:var(--dark);">${t('price_label')}</strong>${stay.price}</div>
           </div>
         </div>
       </div>
@@ -4375,7 +4394,7 @@
     if (!STAY_HISTORY.length) {
       list.innerHTML = `
         <div style="background:var(--bg);border-radius:12px;padding:16px;text-align:center;color:var(--light);font-size:13px;font-weight:700;">
-          レビューできる滞在履歴はありません
+          ${t('no_review_history')}
         </div>
       `;
       return;
@@ -4387,7 +4406,7 @@
         <div style="width:46px;height:46px;border-radius:14px;background:${stay.avatarBg};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${stay.avatar}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:15px;font-weight:800;color:var(--dark);">${stay.hostName}</div>
-          <div style="font-size:12px;color:var(--light);margin-top:2px;">${stay.type === 'sharehouse' ? 'シェアハウス' : 'ホームステイ'} · ${stay.location}</div>
+          <div style="font-size:12px;color:var(--light);margin-top:2px;">${stay.type === 'sharehouse' ? t('sharehouse') : t('homestay')} · ${stay.location}</div>
           <div style="font-size:12px;color:var(--mid);margin-top:6px;">${stay.period}</div>
         </div>
       </label>
@@ -4398,7 +4417,7 @@
     const list = document.getElementById('review-tag-list');
     if (!list) return;
     list.innerHTML = REVIEW_TAGS.map(tag =>
-      `<div class="form-chip" onclick="toggleReviewTag(this)">${tag}</div>`
+      `<div class="form-chip" onclick="toggleReviewTag(this)">${t(tag)}</div>`
     ).join('');
   }
 
@@ -4483,21 +4502,21 @@
     document.getElementById('detail-avatar').className = 'detail-avatar ' + h.avClass;
     document.getElementById('detail-avatar').textContent = h.avatar;
     document.getElementById('detail-name').textContent = h.name;
-    document.getElementById('detail-match-badge').textContent = '🤖 マッチ度：' + h.match + '%';
-    document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ホスト歴' + h.years + '年';
-    document.getElementById('detail-rating').innerHTML = '★ ' + h.rating + ' <span>(' + h.reviews + '件のレビュー)</span>';
+    document.getElementById('detail-match-badge').textContent = '🤖 ' + t('match_score') + h.match + '%';
+    document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ' + t('host_years').replace('{years}', h.years);
+    document.getElementById('detail-rating').innerHTML = '★ ' + h.rating + ' <span>(' + t('review_count').replace('{count}', h.reviews) + ')</span>';
 
     // Tags
     document.getElementById('detail-tags').innerHTML = h.tags.map(t =>
-      `<span class="dtag ${t.cls}">${t.text}</span>`
+      `<span class="dtag ${t.cls}">${localizeText(t.text)}</span>`
     ).join('');
 
     // Lifestyle
     document.getElementById('detail-ls-grid').innerHTML = `
-      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">起床</div><div class="ls-val">${h.lifestyle.wake}</div></div>
-      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">就寝</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
-      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">会話量</div><div class="ls-val">${h.lifestyle.talk}</div></div>
-      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">清潔度</div><div class="ls-val">${h.lifestyle.clean}</div></div>
+      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">${t('wake_time')}</div><div class="ls-val">${h.lifestyle.wake}</div></div>
+      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">${t('sleep_time')}</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
+      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${t('conversation')}</div><div class="ls-val">${localizeText(h.lifestyle.talk)}</div></div>
+      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">${t('cleanliness')}</div><div class="ls-val">${localizeText(h.lifestyle.clean)}</div></div>
     `;
 
     // Lifestyle reviews
@@ -4507,38 +4526,38 @@
           <div class="ls-review-avatar">${r.avatar}</div>
           <div class="ls-review-meta">
             <div class="ls-review-name">${r.name}</div>
-            <div class="ls-review-date">${r.date}に滞在</div>
+            <div class="ls-review-date">${currentLang === 'ja' ? r.date + 'に滞在' : 'Stayed in ' + localizeText(r.date)}</div>
           </div>
           <div class="ls-review-stars">${'★'.repeat(r.stars)}</div>
         </div>
         <div class="ls-review-chips">
-          ${(r.chips || []).map(c => `<span class="ls-review-chip">${c}</span>`).join('')}
-          ${(r.warn || []).map(c => `<span class="ls-review-chip warn">${c}</span>`).join('')}
+          ${(r.chips || []).map(c => `<span class="ls-review-chip">${localizeText(c)}</span>`).join('')}
+          ${(r.warn || []).map(c => `<span class="ls-review-chip warn">${localizeText(c)}</span>`).join('')}
         </div>
-        <div class="ls-review-text">${r.text}</div>
+        <div class="ls-review-text">${localizeText(r.text)}</div>
       </div>
     `).join('');
 
     // Rules
     document.querySelector('.rule-list').innerHTML = h.rules.map(r =>
-      `<div class="rule-row"><span class="${r.ok ? 'rule-ok' : 'rule-ng'}">${r.ok ? '✓' : '✗'}</span> ${r.text}</div>`
+      `<div class="rule-row"><span class="${r.ok ? 'rule-ok' : 'rule-ng'}">${r.ok ? '✓' : '✗'}</span> ${localizeText(r.text)}</div>`
     ).join('');
 
     // Room info
     document.querySelector('.info-grid').innerHTML = h.room.map(r =>
-      `<div class="info-row"><span class="info-label">${r.label}</span><span class="info-val">${r.val}</span></div>`
+      `<div class="info-row"><span class="info-label">${localizeText(r.label)}</span><span class="info-val">${localizeText(r.val)}</span></div>`
     ).join('');
 
     // Price
     const priceBox = document.querySelector('.price-box');
     priceBox.innerHTML = h.priceBreakdown.map(p =>
-      `<div class="price-row"><span style="color:var(--light)">${p.label}</span><strong>${p.val}</strong></div>`
+      `<div class="price-row"><span style="color:var(--light)">${localizeText(p.label)}</span><strong>${localizePriceText(p.val)}</strong></div>`
     ).join('') +
-      `<div class="price-row total"><span>合計</span><span>$${h.price.toLocaleString()} /月</span></div>`;
+      `<div class="price-row total"><span>${t('total')}</span><span>$${h.price.toLocaleString()} ${currentLang === 'ja' ? '/月' : '/mo'}</span></div>`;
 
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
-    document.querySelector('#screen-detail .match-card-map + div').textContent = h.mapNote;
+    document.querySelector('#screen-detail .match-card-map + div').textContent = localizeText(h.mapNote);
 
     // Update action button state
     updateDetailActionBtn();
@@ -4650,7 +4669,7 @@
 
     // Banner
     document.getElementById('chat-banner-name').textContent = h.name;
-    document.querySelector('.chat-banner-sub').textContent = 'ホスト詳細・お申し込みはこちら';
+    document.querySelector('.chat-banner-sub').textContent = t('chat_detail_apply');
     // 面談済みなら「本申し込み」ボタンを強調、未面談なら非表示
     const applyBtn = document.querySelector('.chat-banner-btn-apply');
     const chatListingKey = 'homestay:' + currentHost;
@@ -4658,7 +4677,7 @@
 
     // Messages
     const area = document.querySelector('.chat-messages');
-    area.innerHTML = '<div class="date-label">会話履歴</div>' +
+    area.innerHTML = '<div class="date-label">' + t('conversation_history') + '</div>' +
       h.chatMessages.map(m => `
         <div class="bubble-wrap ${m.from}">
           <div class="bubble ${m.from}">${m.text}</div>
@@ -4826,7 +4845,7 @@
     if (!listing) return;
     currentApplicationId = listing.type + ':' + listing.id;
     applicationBackScreen = listing.detailScreen;
-    document.getElementById('apply-listing-label').textContent = listing.label;
+    document.getElementById('apply-listing-label').textContent = listing.type === 'sharehouse' ? t('property') : t('homestay');
     document.getElementById('apply-host-name').textContent = listing.name;
     document.getElementById('apply-price').textContent = formatListingPrice(listing) + ' /月';
     navigate(currentScreen, 'apply');
@@ -4847,21 +4866,21 @@
     const listing = getCurrentListing();
     if (!listing) return;
     const status = formalApplications[currentApplicationId]?.status || 'pending';
-    document.getElementById('application-sent-label').textContent = listing.label;
+    document.getElementById('application-sent-label').textContent = listing.type === 'sharehouse' ? t('property') : t('homestay');
     document.getElementById('application-sent-name').textContent = listing.name;
     document.getElementById('application-sent-price').textContent = formatListingPrice(listing) + ' /月';
     const statusEl = document.getElementById('application-sent-status');
     const paymentBtn = document.getElementById('application-payment-btn');
     if (status === 'approved') {
-      statusEl.textContent = '承諾済み';
+      statusEl.textContent = t('approved');
       statusEl.style.color = '#167A45';
       paymentBtn.style.display = 'block';
     } else if (status === 'rejected') {
-      statusEl.textContent = '否認済み';
+      statusEl.textContent = t('rejected');
       statusEl.style.color = 'var(--primary)';
       paymentBtn.style.display = 'none';
     } else {
-      statusEl.textContent = '承諾待ち';
+      statusEl.textContent = t('pending_approval');
       statusEl.style.color = '#B26A00';
       paymentBtn.style.display = 'none';
     }
@@ -4877,18 +4896,18 @@
     const badge = document.getElementById('guest-request-badge');
     if (!badge) return;
     const count = Object.keys(formalApplications).length;
-    badge.textContent = count + '件';
+    badge.textContent = currentLang === 'ja' ? count + '件' : count;
     badge.style.display = count > 0 ? 'inline-block' : 'none';
   }
 
   function getApplicationStatusMeta(status) {
     if (status === 'approved') {
-      return { text: '承諾済み', bg: '#D4EDDA', color: '#155724', note: 'ホストが承諾しました。決済へ進めます。' };
+      return { text: t('approved'), bg: '#D4EDDA', color: '#155724', note: t('approved_note') };
     }
     if (status === 'rejected') {
-      return { text: '否認されました', bg: '#F8D7DA', color: '#842029', note: '今回は否認されました。決済へは進めません。' };
+      return { text: t('rejected_message'), bg: '#F8D7DA', color: '#842029', note: t('rejected_note') };
     }
-    return { text: 'リクエスト送信中', bg: '#FFF3CD', color: '#856404', note: 'ホストの承諾待ちです。承諾されるまで決済へは進めません。' };
+    return { text: t('request_sent'), bg: '#FFF3CD', color: '#856404', note: t('pending_note') };
   }
 
   function renderGuestRequestList() {
@@ -4900,7 +4919,7 @@
     if (!applications.length) {
       list.innerHTML = `
         <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:28px 18px;text-align:center;color:var(--light);font-size:14px;font-weight:700;">
-          申請中のリクエストはありません
+          ${t('no_pending_requests')}
         </div>
       `;
       return;
@@ -4909,13 +4928,13 @@
     list.innerHTML = applications.map(([key, app]) => {
       const listing = app.listing;
       const status = getApplicationStatusMeta(app.status);
-      const typeText = listing.type === 'sharehouse' ? 'シェアハウス' : 'ホームステイ';
+      const typeText = listing.type === 'sharehouse' ? t('sharehouse') : t('homestay');
       const detailAction = listing.type === 'sharehouse'
         ? `openSharehouseDetail('${listing.id}')`
         : `openDetail('${listing.id}','pending-hosts')`;
       const paymentButton = app.status === 'approved'
-        ? `<button onclick="event.stopPropagation();openPaymentForApplication('${key}')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">決済へ進む</button>`
-        : `<button disabled style="background:#F1F1F1;color:var(--light);border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;">決済不可</button>`;
+        ? `<button onclick="event.stopPropagation();openPaymentForApplication('${key}')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">${t('proceed_payment')}</button>`
+        : `<button disabled style="background:#F1F1F1;color:var(--light);border:none;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;">${t('payment_disabled')}</button>`;
       return `
         <div onclick="${detailAction}" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;">
           <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
@@ -4928,7 +4947,7 @@
           </div>
           <div style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:10px;">${status.note}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;">
-            <button onclick="event.stopPropagation();${detailAction}" style="background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">詳細を見る</button>
+            <button onclick="event.stopPropagation();${detailAction}" style="background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;">${t('view_detail')}</button>
             ${paymentButton}
           </div>
         </div>
@@ -4955,15 +4974,15 @@
     if (btn && currentListing?.type === 'homestay') {
       const key = currentListing.type + ':' + currentListing.id;
       if (formalApplications[key]?.status === 'approved') {
-        btn.textContent = '💳 決済へ進む';
+        btn.textContent = t('proceed_payment');
         btn.onclick = openPaymentScreen;
         btn.style.background = 'var(--primary)';
       } else if (interviewedListings.has(key)) {
-        btn.textContent = '🏠 正式に申し込む';
+        btn.textContent = '🏠 ' + t('submit_application');
         btn.onclick = applyHost;
         btn.style.background = '#FF8C00';
       } else {
-        btn.textContent = '📹 面談を申し込む';
+        btn.textContent = '📹 ' + t('request_interview');
         btn.onclick = requestInterview;
         btn.style.background = '';
       }
@@ -4973,15 +4992,15 @@
     if (shBtn && currentListing?.type === 'sharehouse') {
       const key = currentListing.type + ':' + currentListing.id;
       if (formalApplications[key]?.status === 'approved') {
-        shBtn.textContent = '💳 決済へ進む';
+        shBtn.textContent = t('proceed_payment');
         shBtn.onclick = openPaymentScreen;
         shBtn.style.background = 'var(--primary)';
       } else if (interviewedListings.has(key)) {
-        shBtn.textContent = '🏠 正式に申し込む';
+        shBtn.textContent = '🏠 ' + t('submit_application');
         shBtn.onclick = applyHost;
         shBtn.style.background = '#FF8C00';
       } else {
-        shBtn.textContent = '📹 面談を申し込む';
+        shBtn.textContent = '📹 ' + t('request_interview');
         shBtn.onclick = requestSharehouseInterview;
         shBtn.style.background = 'var(--primary)';
       }
@@ -5212,7 +5231,9 @@
   function generateInterviewDates() {
     const grid = document.getElementById('interview-date-grid');
     grid.innerHTML = '';
-    const days = ['日','月','火','水','木','金','土'];
+    const days = currentLang === 'ja'
+      ? ['日','月','火','水','木','金','土']
+      : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const today = new Date();
     const dateInput = document.getElementById('interview-date-input');
     if (dateInput) {
@@ -5230,7 +5251,7 @@
       const dateStr = d.toISOString().split('T')[0];
       grid.innerHTML += `
         <div class="interview-date-option" onclick="selectInterviewDate(this,'${dateStr}')" data-date="${dateStr}">
-          <div class="interview-date-day">${dayName}曜日</div>
+          <div class="interview-date-day">${currentLang === 'ja' ? dayName + '曜日' : dayName}</div>
           <div class="interview-date-date">${month}/${date}</div>
         </div>`;
     }
@@ -5255,7 +5276,7 @@
   /* ===== LOGIN ===== */
   let isSignupMode = false;
 
-  function setLoginMode(signup) {
+  function setLoginMode(signup, keepError = false) {
     isSignupMode = signup;
     const nameGroup = document.getElementById('login-name-group');
     const submitBtn = document.getElementById('login-submit-btn');
@@ -5264,16 +5285,16 @@
     if (!nameGroup || !submitBtn || !switchText || !switchLink) return;
     if (isSignupMode) {
       nameGroup.style.display = 'block';
-      submitBtn.textContent = '新規登録';
-      switchText.textContent = 'すでにアカウントをお持ちの方は';
-      switchLink.textContent = ' ログイン';
+      submitBtn.textContent = t('signup');
+      switchText.textContent = t('already_have_account');
+      switchLink.textContent = ' ' + t('login');
     } else {
       nameGroup.style.display = 'none';
-      submitBtn.textContent = 'ログイン';
-      switchText.textContent = 'アカウントをお持ちでない方は';
-      switchLink.textContent = ' 新規登録';
+      submitBtn.textContent = t('login');
+      switchText.textContent = t('no_account');
+      switchLink.textContent = ' ' + t('signup');
     }
-    document.getElementById('login-error').textContent = '';
+    if (!keepError) document.getElementById('login-error').textContent = '';
   }
 
   function toggleLoginMode(event) {
@@ -5323,13 +5344,13 @@
     document.getElementById('login-error').textContent = '';
 
     if (!email || !password) {
-      showLoginError('メールアドレスとパスワードを入力してください');
+      showLoginError(t('login_missing'));
       return;
     }
 
     const btn = document.getElementById('login-submit-btn');
     btn.disabled = true;
-    btn.textContent = '処理中...';
+    btn.textContent = t('processing');
 
     try {
       if (isSignupMode) {
@@ -5362,7 +5383,7 @@
       showLoginError(msg);
     } finally {
       btn.disabled = false;
-      btn.textContent = isSignupMode ? '新規登録' : 'ログイン';
+      btn.textContent = isSignupMode ? t('signup') : t('login');
     }
   }
 
@@ -5378,38 +5399,21 @@
   }
 
   async function doGoogleLogin() {
-    showLoginError('Googleログインは現在準備中です');
+    showLoginError(t('google_preparing'));
   }
 
   /* ===== ONBOARDING ===== */
   let onboardStep = 1;
   const onboardTotal = 3;
 
-  const onboardHomestayTitles = [
-    '渡航先を教えてください',
-    'あなたの生活スタイルは？',
-    '趣味・NGを教えてください'
-  ];
-  const onboardHomestayS = [
-    '希望エリア・期間・予算を選んでください',
-    'ホストとの相性を高めるための情報です',
-    'AIマッチングの精度が上がります'
-  ];
-  const onboardSharehouseTitles = [
-    '希望条件を教えてください',
-    'あなたの生活スタイルは？',
-    'どんなルームメイトを探していますか？'
-  ];
-  const onboardSharehouseSubs = [
-    '希望エリア・家賃・入居時期を選んでください',
-    '正直に入力するほど相性の良い人が見つかります',
-    'AIマッチングの精度が上がります'
-  ];
-
   function renderOnboardStep() {
     const type = window._serviceType || 'homestay';
-    const titles = type === 'sharehouse' ? onboardSharehouseTitles : onboardHomestayTitles;
-    const subs = type === 'sharehouse' ? onboardSharehouseSubs : onboardHomestayS;
+    const titles = type === 'sharehouse'
+      ? [t('sh_onboard_title_1'), t('onboard_title_lifestyle'), t('sh_onboard_title_3')]
+      : [t('hs_onboard_title_1'), t('onboard_title_lifestyle'), t('hs_onboard_title_3')];
+    const subs = type === 'sharehouse'
+      ? [t('sh_onboard_sub_1'), t('sh_onboard_sub_2'), t('onboard_sub_ai')]
+      : [t('hs_onboard_sub_1'), t('hs_onboard_sub_2'), t('onboard_sub_ai')];
 
     document.getElementById('onboard-step-label').textContent = `STEP ${onboardStep} / ${onboardTotal}`;
     document.getElementById('onboard-progress').style.width = (onboardStep / onboardTotal * 100) + '%';
@@ -5430,7 +5434,7 @@
     });
 
     document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
-    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? 'AIマッチングを開始 🤖' : '次へ →';
+    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? t('start_ai_matching') : t('next');
   }
 
   function onboardNext() {
@@ -5483,11 +5487,45 @@
   /* ===== 言語切り替え ===== */
   const i18n = {
     ja: {
+      brand:'HostMatch',
+      ja:'日本語', en:'English',
+      login_tagline:'AIがあなたに合う人と<br>住まいを繋ぎます',
+      login:'ログイン', signup:'新規登録', or:'または', google_login:'Googleでログイン',
+      name_label:'お名前', name_placeholder:'山田 太郎', email_label:'メールアドレス',
+      password_label:'パスワード', password_placeholder:'6文字以上',
+      no_account:'アカウントをお持ちでない方は', already_have_account:'すでにアカウントをお持ちの方は',
+      processing:'処理中...', login_missing:'メールアドレスとパスワードを入力してください',
+      google_preparing:'Googleログインは現在準備中です',
       brand:'HostMatch', service_select_sub:'あなたの目的を教えてください',
       svc_homestay_guest:'ホームステイ先を探す', svc_homestay_guest_sub:'ホストファミリーと一緒に暮らす',
       svc_sharehouse:'シェアハウスを探す', svc_sharehouse_sub:'物件を検索してルームメイトと暮らす',
       svc_roommate:'ルームメイトを探す', svc_roommate_sub:'一緒に住む人を見つける',
       svc_host:'ホスト・オーナーとして登録', svc_host_sub:'部屋を提供して収入を得る',
+      homestay:'ホームステイ', sharehouse:'シェアハウス', property:'物件',
+      nav_search:'探す', nav_messages:'メッセージ', nav_saved:'保存済み', my_page:'マイページ', nav_home:'ホーム',
+      ai_search:'AIに相談して探す', ai_search_sub:'条件を入力するだけで<br>ぴったりのホストを提案',
+      ai_match_done:'AIマッチング完了 · 6件', view_results:'結果を見る →', new_hosts:'✨ 新着ホスト', view_all:'すべて見る',
+      search_area:'エリアを入力...',
+      lifestyle:'🌙 生活スタイル', student_reviews:'💬 過去の留学生からの評価',
+      house_rules:'📋 ハウスルール', room_info:'🏠 部屋情報', price_breakdown:'💰 料金内訳',
+      rent:'家賃', weekday_breakfast:'朝食（平日）', utilities_wifi:'光熱費・Wi-Fi', total:'合計',
+      location:'📍 ロケーション', message_button:'💬 メッセージ',
+      chat_detail_apply:'ホスト詳細・お申し込みはこちら', submit_application_arrow:'本申し込み →',
+      message_placeholder:'メッセージを入力...',
+      match_score:'マッチ度：', host_years:'ホスト歴{years}年', review_count:'{count}件のレビュー',
+      wake_time:'起床', sleep_time:'就寝', conversation:'会話量', cleanliness:'清潔度',
+      conversation_history:'会話履歴',
+      hs_onboard_title_1:'渡航先を教えてください', onboard_title_lifestyle:'あなたの生活スタイルは？',
+      hs_onboard_title_3:'趣味・NGを教えてください', hs_onboard_sub_1:'希望エリア・期間・予算を選んでください',
+      hs_onboard_sub_2:'ホストとの相性を高めるための情報です',
+      sh_onboard_title_1:'希望条件を教えてください', sh_onboard_title_3:'どんなルームメイトを探していますか？',
+      sh_onboard_sub_1:'希望エリア・家賃・入居時期を選んでください',
+      sh_onboard_sub_2:'正直に入力するほど相性の良い人が見つかります',
+      onboard_sub_ai:'AIマッチングの精度が上がります', start_ai_matching:'AIマッチングを開始 🤖', next:'次へ →',
+      looking_for_place:'住む場所を探している', register_as_host:'ホストとして登録する',
+      host_income_desc:'ゲストを受け入れて収入を得る', looking_for_room:'入居先を探している',
+      choose_by_roommate_profile:'ルームメイトのプロフィールを見て選ぶ',
+      resident_recruiting:'入居中・ルームメイトを募集', resident_recruiting_desc:'自分のプロフィールを登録して募集する',
       host_dashboard:'ホストダッシュボード', host_revenue_month:'今月の収益',
       host_guests:'入居者数', host_occupancy:'稼働率', host_rating:'評価',
       host_applicants:'応募者管理', host_messages:'メッセージ', host_calendar:'カレンダー',
@@ -5503,17 +5541,102 @@
       host_room_price:'月額料金（円）', host_rules:'ハウスルール',
       rule_no_smoke:'禁煙', rule_pet:'ペット可', rule_curfew:'門限あり（22時）', rule_meal:'食事提供あり',
       save:'保存する',
-      payment_title:'お支払い方法', payment_amount:'お支払い金額', payment_deposit:'デポジット（1ヶ月分）',
+      payment_title:'お支払い方法', payment_amount:'お支払い金額', payment_deposit:'',
       payment_method_select:'お支払い方法を選択', pay_card:'クレジット / デビットカード',
       pay_paypay_sub:'PayPayアプリで支払う', pay_now:'支払いに進む',
       pay_secure:'🔒 SSL暗号化で安全に処理されます',
+      profile_section:'プロフィール', profile_edit:'プロフィール編集', lifestyle_settings:'生活スタイル・希望条件',
+      requests_history:'申請・履歴', pending_requests:'申請中のリクエスト', stay_history:'過去の滞在履歴',
+      write_review:'レビューを書く', settings:'設定', notifications:'通知設定', language:'言語',
+      privacy_security:'プライバシー・セキュリティ', support:'サポート', faq:'よくある質問（FAQ）',
+      contact_form:'フォームで問い合わせ', terms_privacy:'利用規約・プライバシーポリシー',
+      service:'サービス', change_service:'ホームステイ／シェアハウスを変更', logout:'ログアウト',
+      review_target:'滞在したホスト・物件', review_tags:'レビュータグ',
+      review_tags_sub:'ホスト詳細のレビューで使われている項目から選択してください',
+      star_rating:'星評価', review_body:'レビュー本文',
+      review_placeholder:'滞在してよかった点や、これから滞在する人へのメッセージを書いてください',
+      submit_review:'レビューを投稿する', review_submitted:'レビューを投稿しました',
+      no_review_history:'レビューできる滞在履歴はありません', no_stay_history:'過去の滞在履歴はありません',
+      review_tag_friendly:'フレンドリー', review_tag_clean:'清潔', review_tag_safe:'安心',
+      review_tag_fast_reply:'返信が早い', review_tag_kind:'親切', review_tag_hospitality:'ホスピタリティ高い',
+      review_tag_talkative:'会話が多い', review_tag_breakfast:'朝食が充実',
+      review_tag_study:'勉強に集中できる', review_tag_quiet:'静かな環境',
+      notif_messages:'メッセージが届いた時', notif_messages_sub:'ホストからの新着メッセージを通知',
+      notif_approved:'リクエストが承諾された時', notif_approved_sub:'申請が承諾された時に通知',
+      notif_rejected:'リクエストが否認された時', notif_rejected_sub:'申請結果が否認だった時に通知',
+      notif_recommend:'新しいおすすめホストが見つかった時', notif_recommend_sub:'条件に合うホストのおすすめを通知',
+      notif_reminder:'滞在前のリマインド', notif_reminder_sub:'滞在開始前の確認を通知',
+      notifications_saved:'通知設定を保存しました',
+      faq_apply_q:'ホームステイの申し込み方法は？',
+      faq_apply_a:'ホスト詳細の下部分にある「面談の申し込み」から面談を申し込み、面談後に正式な申し込み画面が表示されます。そこから申し込みできます。',
+      faq_interview_q:'面談はどうやって行いますか？', faq_interview_a:'ホスト詳細画面から申し込みできます。',
+      faq_cancel_q:'キャンセル・返金ポリシーは？',
+      faq_cancel_a:'キャンセル・返金ポリシーは現在準備中です。詳しくはお問い合わせフォームからご連絡ください。',
+      faq_trouble_q:'トラブルが起きたときは？', faq_trouble_a:'下のお問い合わせフォームからお問い合わせください。',
+      contact:'お問い合わせ', contact_form_sub:'Google Formで受け付けています',
+      request_interview:'面談を申し込む',
+      interview_sub:'ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。',
+      monthly_price:'月額料金', interview_method:'面談方法', video_call_15:'ビデオ通話（15分）', fee:'費用', free:'無料',
+      select_date:'日付を選択', select_preferred_date:'希望日を選択してください', preferred_date:'📅 希望日を選択',
+      select_time:'時間帯を選択...', confirm_interview:'面談を確定する', cancel:'キャンセル',
+      interview_confirmed:'面談が確定しました！',
+      interview_confirmed_sub:'ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。',
+      back_to_detail:'詳細画面へ戻る', check_messages:'💬 メッセージを確認する',
+      submit_application_q:'正式に申し込みますか？',
+      submit_application_sub:'入居希望のリクエストを送信します。<br>ホストが承諾するまで決済には進めません。',
+      status:'ステータス', pending_approval:'承諾待ち', send_application_request:'申し込みリクエストを送信する',
+      application_sent:'申し込みリクエストを送信しました',
+      application_sent_sub:'ホスト側のリクエスト管理に申請が表示される想定です。<br>承諾されるまで決済へは進めません。',
+      proceed_payment:'💳 決済へ進む', submit_application:'正式に申し込む',
+      request_sent:'リクエスト送信中', approved:'承諾済み', rejected:'否認済み', rejected_message:'否認されました',
+      no_pending_requests:'申請中のリクエストはありません', payment_disabled:'決済不可', view_detail:'詳細を見る',
+      approved_note:'ホストが承諾しました。決済へ進めます。',
+      rejected_note:'今回は否認されました。決済へは進めません。',
+      pending_note:'ホストの承諾待ちです。承諾されるまで決済へは進めません。',
+      payment_after_approval:'ホストが承諾した後に決済へ進めます',
+      request_approved_toast:'リクエストを承諾しました', request_rejected_toast:'リクエストを否認しました',
+      stay_period:'滞在期間：', room_type:'部屋タイプ：', price_label:'料金：', stay_complete:'滞在完了',
     },
     en: {
+      brand:'HostMatch',
+      ja:'Japanese', en:'English',
+      login_tagline:'AI connects you with<br>the right people and home',
+      login:'Log In', signup:'Sign Up', or:'or', google_login:'Log in with Google',
+      name_label:'Name', name_placeholder:'Taro Yamada', email_label:'Email Address',
+      password_label:'Password', password_placeholder:'At least 6 characters',
+      no_account:"Don't have an account?", already_have_account:'Already have an account?',
+      processing:'Processing...', login_missing:'Please enter your email address and password',
+      google_preparing:'Google login is currently being prepared',
       brand:'HostMatch', service_select_sub:'What would you like to do?',
       svc_homestay_guest:'Find a Homestay', svc_homestay_guest_sub:'Live with a host family',
       svc_sharehouse:'Find a Share House', svc_sharehouse_sub:'Search properties and live with roommates',
       svc_roommate:'Find a Roommate', svc_roommate_sub:'Find someone to live with',
       svc_host:'Register as Host / Owner', svc_host_sub:'Earn income by sharing your room',
+      homestay:'Homestay', sharehouse:'Share House', property:'Property',
+      nav_search:'Search', nav_messages:'Messages', nav_saved:'Saved', my_page:'My Page', nav_home:'Home',
+      ai_search:'Ask AI to Search', ai_search_sub:'Enter your preferences and<br>AI will suggest matching hosts',
+      ai_match_done:'AI Matching Complete · 6 results', view_results:'View results →', new_hosts:'✨ New Hosts', view_all:'View All',
+      search_area:'Enter an area...',
+      lifestyle:'🌙 Lifestyle', student_reviews:'💬 Reviews from Previous Students',
+      house_rules:'📋 House Rules', room_info:'🏠 Room Information', price_breakdown:'💰 Price Breakdown',
+      rent:'Rent', weekday_breakfast:'Breakfast (weekdays)', utilities_wifi:'Utilities / Wi-Fi', total:'Total',
+      location:'📍 Location', message_button:'💬 Message',
+      chat_detail_apply:'Host details and application are here', submit_application_arrow:'Apply →',
+      message_placeholder:'Type a message...',
+      match_score:'Match: ', host_years:'Host for {years} years', review_count:'{count} reviews',
+      wake_time:'Wake', sleep_time:'Sleep', conversation:'Conversation', cleanliness:'Cleanliness',
+      conversation_history:'Conversation History',
+      hs_onboard_title_1:'Tell us your destination', onboard_title_lifestyle:'What is your lifestyle?',
+      hs_onboard_title_3:'Tell us your hobbies and no-go conditions', hs_onboard_sub_1:'Choose your preferred area, stay period, and budget',
+      hs_onboard_sub_2:'This helps us match you with compatible hosts',
+      sh_onboard_title_1:'Tell us your preferences', sh_onboard_title_3:'What kind of roommate are you looking for?',
+      sh_onboard_sub_1:'Choose your preferred area, rent, and move-in timing',
+      sh_onboard_sub_2:'Honest answers help you find better matches',
+      onboard_sub_ai:'This improves AI matching accuracy', start_ai_matching:'Start AI Matching 🤖', next:'Next →',
+      looking_for_place:'Looking for a place to stay', register_as_host:'Register as a Host',
+      host_income_desc:'Welcome guests and earn income', looking_for_room:'Looking for a room',
+      choose_by_roommate_profile:'Choose by viewing roommate profiles',
+      resident_recruiting:'Resident / Recruiting Roommates', resident_recruiting_desc:'Register your profile and recruit roommates',
       host_dashboard:'Host Dashboard', host_revenue_month:'This month\'s revenue',
       host_guests:'Guests', host_occupancy:'Occupancy', host_rating:'Rating',
       host_applicants:'Applicants', host_messages:'Messages', host_calendar:'Calendar',
@@ -5529,33 +5652,928 @@
       host_room_price:'Monthly Rent (JPY)', host_rules:'House Rules',
       rule_no_smoke:'No Smoking', rule_pet:'Pets OK', rule_curfew:'Curfew at 10PM', rule_meal:'Meals included',
       save:'Save',
-      payment_title:'Payment Method', payment_amount:'Amount', payment_deposit:'Deposit (1 month)',
+      payment_title:'Payment Method', payment_amount:'Amount', payment_deposit:'',
       payment_method_select:'Select payment method', pay_card:'Credit / Debit Card',
       pay_paypay_sub:'Pay with PayPay app', pay_now:'Proceed to Payment',
       pay_secure:'🔒 Secured with SSL encryption',
+      profile_section:'Profile', profile_edit:'Edit Profile', lifestyle_settings:'Lifestyle Settings',
+      requests_history:'Applications / History', pending_requests:'Pending Requests', stay_history:'Stay History',
+      write_review:'Write a Review', settings:'Settings', notifications:'Notifications', language:'Language',
+      privacy_security:'Privacy & Security', support:'Support', faq:'FAQ',
+      contact_form:'Contact Form', terms_privacy:'Terms & Privacy Policy',
+      service:'Service', change_service:'Change Homestay / Share House', logout:'Log Out',
+      review_target:'Host / Property Stayed At', review_tags:'Review Tags',
+      review_tags_sub:'Choose from the same tags shown in host detail reviews',
+      star_rating:'Star Rating', review_body:'Review',
+      review_placeholder:'Write what you liked about your stay and tips for future guests',
+      submit_review:'Submit Review', review_submitted:'Review submitted',
+      no_review_history:'There are no stays available for review', no_stay_history:'No stay history yet',
+      review_tag_friendly:'Friendly', review_tag_clean:'Clean', review_tag_safe:'Safe',
+      review_tag_fast_reply:'Fast Reply', review_tag_kind:'Kind', review_tag_hospitality:'Great Hospitality',
+      review_tag_talkative:'Good Conversation', review_tag_breakfast:'Great Breakfast',
+      review_tag_study:'Good for Studying', review_tag_quiet:'Quiet Environment',
+      notif_messages:'When a message arrives', notif_messages_sub:'Notify me about new messages from hosts',
+      notif_approved:'When a request is approved', notif_approved_sub:'Notify me when an application is approved',
+      notif_rejected:'When a request is declined', notif_rejected_sub:'Notify me when an application is declined',
+      notif_recommend:'When a new recommended host is found', notif_recommend_sub:'Notify me about hosts that match my preferences',
+      notif_reminder:'Before-stay reminder', notif_reminder_sub:'Notify me before my stay begins',
+      notifications_saved:'Notification settings saved',
+      faq_apply_q:'How do I apply for a homestay?',
+      faq_apply_a:'Request an interview from the lower part of the host detail page. After the interview, the formal application screen will appear, and you can apply there.',
+      faq_interview_q:'How do interviews work?', faq_interview_a:'You can request one from the host detail page.',
+      faq_cancel_q:'What is the cancellation / refund policy?',
+      faq_cancel_a:'The cancellation and refund policy is currently being prepared. Please contact us through the inquiry form for details.',
+      faq_trouble_q:'What should I do if there is a problem?', faq_trouble_a:'Please contact us through the inquiry form below.',
+      contact:'Contact', contact_form_sub:'Accepted through Google Forms',
+      request_interview:'Request an Interview',
+      interview_sub:'You will have a video interview with the host.<br>Use it to see if you are a good fit.',
+      monthly_price:'Monthly Price', interview_method:'Interview Method', video_call_15:'Video call (15 min)', fee:'Fee', free:'Free',
+      select_date:'Select Date', select_preferred_date:'Please choose your preferred date', preferred_date:'📅 Select Preferred Date',
+      select_time:'Select a time...', confirm_interview:'Confirm Interview', cancel:'Cancel',
+      interview_confirmed:'Interview Confirmed!',
+      interview_confirmed_sub:'Please wait for the host to message you about scheduling.<br>After the interview, press “Submit Application” on the detail page if you want to apply.',
+      back_to_detail:'Back to Detail', check_messages:'💬 Check Messages',
+      submit_application_q:'Submit your application?',
+      submit_application_sub:'Send a move-in request.<br>You cannot proceed to payment until the host approves it.',
+      status:'Status', pending_approval:'Pending Approval', send_application_request:'Send Application Request',
+      application_sent:'Application request sent',
+      application_sent_sub:'This demo assumes the request appears in the host request management screen.<br>You cannot proceed to payment until it is approved.',
+      proceed_payment:'💳 Proceed to Payment', submit_application:'Submit Application',
+      request_sent:'Request Sent', approved:'Approved', rejected:'Declined', rejected_message:'Declined',
+      no_pending_requests:'No pending requests', payment_disabled:'Payment unavailable', view_detail:'View Details',
+      approved_note:'The host approved your request. You can proceed to payment.',
+      rejected_note:'This request was declined. You cannot proceed to payment.',
+      pending_note:'Waiting for host approval. You cannot proceed to payment until approved.',
+      payment_after_approval:'You can proceed to payment after the host approves',
+      request_approved_toast:'Request approved', request_rejected_toast:'Request declined',
+      stay_period:'Stay Period: ', room_type:'Room Type: ', price_label:'Price: ', stay_complete:'Stay Complete',
     }
   };
-  let currentLang = 'ja';
+  const autoTextTranslations = {
+    '検索を開始':'Start Search',
+    '目的地・日付・条件を選ぶ':'Choose destination, dates, and preferences',
+    '🔥 人気のホスト':'🔥 Popular Hosts',
+    'すべて見る':'View All',
+    '個室':'Private Room',
+    '相部屋':'Shared Room',
+    'ホスト歴':'Host for ',
+    '日本語OK':'Japanese OK',
+    '3食付き':'3 meals included',
+    '朝食付き':'Breakfast included',
+    '夕食付き':'Dinner included',
+    '3食込み':'3 meals included',
+    '朝食込み':'Breakfast included',
+    '夕食込み':'Dinner included',
+    '禁煙':'No Smoking',
+    '来客OK':'Guests OK',
+    'ペット可':'Pets OK',
+    '女性限定':'Women Only',
+    '留学生歓迎':'Students Welcome',
+    '夜型OK':'Night Owl OK',
+    '「ルームメイト募集中」の物件は':'Properties marked “Looking for Roommates”',
+    '入居者に直接連絡できます':'let you contact current residents directly',
+    '👥 ルームメイト募集中':'👥 Looking for Roommates',
+    '満室':'Full',
+    '新宿区':'Shinjuku',
+    '渋谷区':'Shibuya',
+    '目黒区':'Meguro',
+    '港区':'Minato',
+    '世田谷区':'Setagaya',
+    '中野区':'Nakano',
+    '大阪':'Osaka',
+    'その他':'Other',
+    '残り1室':'1 room left',
+    '残り2室':'2 rooms left',
+    '6名満室':'6 residents, full',
+    '初期費用なし':'No initial fees',
+    '家具付き':'Furnished',
+    '駅徒歩3分':'3 min from station',
+    'Wi-Fi完備':'Wi-Fi included',
+    '女性専用フロア':'Women-only floor',
+    '庭付き':'Garden',
+    '現在の入居者':'Current Residents',
+    '3名入居中 · あと1名募集':'3 residents · looking for 1 more',
+    '1名入居中 · あと2名募集':'1 resident · looking for 2 more',
+    '連絡する':'Contact',
+    '📍 アメリカ全土 · 124件':'📍 Across the U.S. · 124 results',
+    '☰ リスト表示に戻る':'☰ Back to List',
+    '条件を指定する':'Set Search Conditions',
+    '📍 目的地':'📍 Destination',
+    '都市・州・エリアを入力':'Enter city, state, or area',
+    'アメリカ東海岸の中心都市':'Major city on the U.S. East Coast',
+    '映画と温暖な気候の街':'Movies and warm weather',
+    'Harvard・MIT周辺、留学生多数':'Near Harvard / MIT, many international students',
+    'ミシガン湖沿いの大都市':'Large city by Lake Michigan',
+    '自然豊か・テック系多い':'Nature-rich and tech-friendly',
+    'シリコンバレーの玄関口':'Gateway to Silicon Valley',
+    '📅 入居・退去日':'📅 Move-in / Move-out Dates',
+    '入居日':'Move-in Date',
+    '退去日':'Move-out Date',
+    '日付を追加':'Add Date',
+    '日':'Sun',
+    '月':'Mon',
+    '火':'Tue',
+    '水':'Wed',
+    '木':'Thu',
+    '金':'Fri',
+    '土':'Sat',
+    '日曜日':'Sunday',
+    '月曜日':'Monday',
+    '火曜日':'Tuesday',
+    '水曜日':'Wednesday',
+    '木曜日':'Thursday',
+    '金曜日':'Friday',
+    '土曜日':'Saturday',
+    '💰 月額予算（USD）':'💰 Monthly Budget (USD)',
+    '最低金額':'Minimum',
+    '最高金額':'Maximum',
+    '📋 ルール・条件':'📋 Rules / Preferences',
+    '🍽️ 食事付き':'🍽️ Meals Included',
+    '朝食・夕食のいずれか含む':'Includes breakfast or dinner',
+    '🌍 日本語対応':'🌍 Japanese Support',
+    'ホストが日本語を話せる':'Host can speak Japanese',
+    '👩 女性ホスト限定':'👩 Female Hosts Only',
+    '女性または女性家族が対応':'Hosted by women or a female family member',
+    '🚭 禁煙ホーム':'🚭 Non-smoking Home',
+    '家全体が禁煙':'Entire home is non-smoking',
+    '🐾 ペット可':'🐾 Pets OK',
+    'ペット同伴・ペットがいるホスト':'Guests may bring pets or host has pets',
+    '🌙 夜型OK':'🌙 Night Owl OK',
+    '門限なし・深夜帰宅歓迎':'No curfew, late returns welcome',
+    '👥 来客OK':'👥 Visitors OK',
+    '友人・知人の訪問が可能':'Friends and acquaintances may visit',
+    'すべてクリア':'Clear All',
+    '検索':'Search',
+    'マッチ度：':'Match: ',
+    '件のレビュー':' reviews',
+    '喫煙NG':'No Smoking',
+    '来客宿泊NG':'No Overnight Guests',
+    '門限 22:30（相談可）':'Curfew 22:30 (negotiable)',
+    'キッチン共有OK（〜21:00）':'Shared kitchen OK (until 21:00)',
+    '来客宿泊不可':'No overnight guests',
+    '掃除当番：週1（共有部分）':'Cleaning duty: once a week (shared areas)',
+    '楽器演奏不可':'No musical instruments',
+    '朝食あり（平日のみ）':'Breakfast included (weekdays)',
+    '広さ':'Size',
+    'バス・トイレ':'Bath / Toilet',
+    '共用（2人でシェア）':'Shared (with 2 people)',
+    '日当たり':'Sunlight',
+    '東向き・午前良好':'East-facing, good morning light',
+    '光回線・無制限':'Fiber internet, unlimited',
+    '最寄り':'Nearest Station',
+    '72nd St 徒歩5分':'72nd St, 5 min walk',
+    '最寄り駅：72nd St 徒歩5分 · Central Park まで徒歩10分':'Nearest station: 72nd St, 5 min walk · 10 min walk to Central Park',
+    '昨日':'Yesterday',
+    '月曜':'Monday',
+    '今日':'Today',
+    'こんにちは！部屋についていくつか質問してもいいですか？':'Hello! May I ask a few questions about the room?',
+    '部屋の広さと、バスルームを何人でシェアするか教えてください。':'Could you tell me the room size and how many people share the bathroom?',
+    'ありがとうございます！朝食は毎日ありますか？':'Thank you! Is breakfast available every day?',
+    'お気に入りはまだありません':'No saved hosts yet',
+    'メンバー登録日：':'Member since: ',
+    '希望エリア（複数可）':'Preferred Area (multiple selections allowed)',
+    '滞在期間':'Stay Period',
+    '数日':'A few days',
+    '1週間':'1 week',
+    '2週間':'2 weeks',
+    '3週間':'3 weeks',
+    '1ヶ月':'1 month',
+    '2ヶ月':'2 months',
+    '3ヶ月':'3 months',
+    '6ヶ月':'6 months',
+    '月額予算（USD）':'Monthly Budget (USD)',
+    '下限':'Minimum',
+    '上限':'Maximum',
+    'あなたの生活リズムは？':'What is your daily rhythm?',
+    '🌅 朝型（〜7時起床）':'🌅 Morning person (wake before 7)',
+    '☀️ 普通（7〜9時）':'☀️ Standard (7-9)',
+    '🌙 夜型（9時以降）':'🌙 Night owl (after 9)',
+    'ホストとの会話は？':'How much would you like to talk with the host?',
+    'あまり話さない':'Not much',
+    '適度に話したい':'A moderate amount',
+    'たくさん話したい':'A lot',
+    'ホストの家族構成':'Host Family Type',
+    'こだわらない':'No preference',
+    '女性のみ':'Women only',
+    'カップル':'Couple',
+    'ファミリー':'Family',
+    '食事':'Meals',
+    '不要':'Not needed',
+    '朝食のみ':'Breakfast only',
+    '朝夕食':'Breakfast and dinner',
+    '3食':'3 meals',
+    '趣味・興味（複数可）':'Hobbies / Interests (multiple selections allowed)',
+    '🎵 音楽':'🎵 Music',
+    '🎬 映画':'🎬 Movies',
+    '📚 読書':'📚 Reading',
+    '🍳 料理':'🍳 Cooking',
+    '🏃 スポーツ':'🏃 Sports',
+    '🎮 ゲーム':'🎮 Games',
+    '🌿 アウトドア':'🌿 Outdoors',
+    '🎨 アート':'🎨 Art',
+    '🐾 動物好き':'🐾 Animal lover',
+    '絶対NGな条件':'No-go Conditions',
+    '🚬 喫煙':'🚬 Smoking',
+    '🐾 ペット':'🐾 Pets',
+    '🔒 門限あり':'🔒 Curfew',
+    '🚫 来客NG':'🚫 No Visitors',
+    'ひとこと（ホストへの自己紹介）':'Short Introduction to Host',
+    '例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！':'Example: I am a university student from Japan. I like cooking and would love to enjoy meals with my host!',
+    '月額家賃':'Monthly Rent',
+    '〜5万円':'Up to ¥50,000',
+    '5〜7万円':'¥50,000-¥70,000',
+    '7〜10万円':'¥70,000-¥100,000',
+    '10万円〜':'¥100,000+',
+    '入居希望時期':'Preferred Move-in Timing',
+    'すぐ':'Immediately',
+    '1ヶ月以内':'Within 1 month',
+    '3ヶ月以内':'Within 3 months',
+    '未定':'Undecided',
+    '起床時間':'Wake-up Time',
+    '6時前':'Before 6',
+    '6〜8時':'6-8',
+    '8〜10時':'8-10',
+    '10時以降':'After 10',
+    '就寝時間':'Bedtime',
+    '22時前':'Before 22:00',
+    '22〜24時':'22:00-24:00',
+    '0〜2時':'0:00-2:00',
+    '2時以降':'After 2:00',
+    '在宅時間':'Time at Home',
+    'ほぼ在宅':'Mostly at home',
+    '夜だけ':'Evenings only',
+    '週末のみ':'Weekends only',
+    'ほぼ外出':'Mostly out',
+    '清潔感':'Cleanliness',
+    'かなり気にする':'Very careful',
+    '普通':'Standard',
+    'あまり気にしない':'Not too concerned',
+    '喫煙':'Smoking',
+    '🚭 吸わない':'🚭 Do not smoke',
+    '外なら吸う':'Smoke outside',
+    '室内でも吸う':'Smoke indoors',
+    '騒音・音楽':'Noise / Music',
+    '静かにしたい':'Prefer quiet',
+    'にぎやかでもOK':'Lively is OK',
+    '来客':'Visitors',
+    '事前相談':'Ask in advance',
+    '自由':'Flexible',
+    '交流スタイル':'Social Style',
+    '一人で過ごしたい':'Prefer time alone',
+    'たまに交流':'Occasional interaction',
+    '積極的に交流':'Active interaction',
+    'どんな人と住みたいか（一言）':'Who would you like to live with?',
+    '例：在宅ワーカーで静かに過ごせる方がいいです。料理が好きな方だと嬉しいです。':'Example: I prefer someone who works from home and keeps things quiet. I would be happy with someone who likes cooking.',
+    '戻る':'Back',
+    '← 戻る':'← Back',
+    '次へ →':'Next →',
+    'AIがマッチング中...':'AI is matching...',
+    'あなたの希望条件をもとに':'Based on your preferences',
+    '最適なホストを探しています':'we are finding the best hosts',
+    '希望条件を分析中...':'Analyzing preferences...',
+    'ホストデータと照合中...':'Comparing host data...',
+    'マッチ度スコアを計算中...':'Calculating match scores...',
+    'マッチング完了！':'Matching complete!',
+    'AIマッチング結果':'AI Matching Results',
+    'あなたの条件に合うホスト · 6件':'Hosts matching your preferences · 6 results',
+    'あなたのライフスタイルに合うシェアハウス · 3件':'Share houses matching your lifestyle · 3 results',
+    '🔄 再診断':'🔄 Retake',
+    '家賃':'Rent',
+    '部屋タイプ':'Room Type',
+    '入居可能':'Available From',
+    '即入居':'Available now',
+    '即入居可':'Available now',
+    '入居メンバー':'Residents',
+    '2名':'2 people',
+    '本人確認済み':'Verified',
+    '24歳 · 日本 · 女性 · 会社員':'24 · Japan · Female · Employee',
+    '生活スタイル':'Lifestyle',
+    '起床':'Wake',
+    '就寝':'Sleep',
+    '在宅':'At Home',
+    '7:00頃':'Around 7:00',
+    '23:00頃':'Around 23:00',
+    '夜のみ':'Evenings only',
+    'プロフィールを教えてください':'Tell us your profile',
+    '入居希望者があなたの情報を見て判断します':'Applicants will review your information',
+    'お名前（ニックネームOK）':'Name (nickname OK)',
+    '年齢':'Age',
+    '10代':'Teens',
+    '20代':'20s',
+    '30代':'30s',
+    '40代以上':'40s+',
+    '国籍':'Nationality',
+    '🇯🇵 日本':'🇯🇵 Japan',
+    '🇰🇷 韓国':'🇰🇷 Korea',
+    '🇨🇳 中国':'🇨🇳 China',
+    '🌏 その他アジア':'🌏 Other Asia',
+    '🌍 その他':'🌍 Other',
+    '性別':'Gender',
+    '女性':'Female',
+    '男性':'Male',
+    '回答しない':'Prefer not to say',
+    '職業':'Occupation',
+    '会社員':'Employee',
+    'フリーランス':'Freelance',
+    '学生':'Student',
+    '留学生':'International Student',
+    '自己紹介':'Bio',
+    '趣味や生活スタイルについて一言（入居希望者が最初に読む文章です）':'Write about your hobbies or lifestyle (this is the first text applicants read)',
+    'ルームメイトとの交流':'Interaction with Roommates',
+    'ルームメイトを追加する':'Add Roommate',
+    'ルームメイト情報を入力':'Enter Roommate Information',
+    '名前（ニックネームOK）':'Name (nickname OK)',
+    'このルームメイトを追加 ✓':'Add this roommate ✓',
+    'エリア':'Area',
+    '月額家賃（管理費込み目安）':'Monthly Rent (including fees)',
+    '現在の空き室数':'Current Vacancies',
+    '1室':'1 room',
+    '2室':'2 rooms',
+    '3室以上':'3+ rooms',
+    '入居可能時期':'Available Move-in Timing',
+    '住所':'Address',
+    '都道府県、市区町村、番地、郵便番号などを入力してください':'Enter prefecture, city, street address, postal code, etc.',
+    '1泊あたりの料金':'Price per Night',
+    '金額を入力してください':'Enter amount',
+    '写真登録':'Add Photos',
+    '写真登録 / 写真変更':'Add / Change Photos',
+    '部屋や外観の写真をアップロード':'Upload room or exterior photos',
+    '画像を選択':'Choose Images',
+    '食事なし':'No meals',
+    '朝・夕食':'Breakfast and dinner',
+    '受け入れ可能人数':'Number of Guests Accepted',
+    '1名':'1 person',
+    '3名以上':'3+ people',
+    '登録完了 ✓':'Complete Registration ✓',
+    '保存しました ✓':'Saved ✓',
+    '日付を選択してください':'Please select a date',
+    '時間帯を選択してください':'Please select a time',
+    '面談日時':'Interview Date / Time',
+    '応募者詳細はこちら':'Applicant details are here',
+    '詳細を見る':'View Details',
+    '正式申し込みリクエストはありません':'No formal application requests',
+    '正式申し込みリクエスト':'Formal Application Request',
+    '面談後の正式な入居申し込みです。承諾するとゲスト側に「決済へ進む」ボタンが表示される想定です。':'This is a formal move-in application after the interview. Approving it will show “Proceed to Payment” on the guest side.',
+    'リクエストを承諾':'Approve Request',
+    'リクエストを否認':'Decline Request',
+    'ゲストモードに切り替える':'Switch to Guest Mode',
+    'ログアウト':'Log Out',
+    '振込完了':'Paid Out',
+    '2024年1月〜現在':'Jan 2024 - Present',
+    'まだルームメイトが追加されていません':'No roommates added yet',
+    '未設定':'Not set',
+    '時間未設定':'Time not set',
+    '喫煙未設定':'Smoking not set',
+    '交流未設定':'Interaction not set',
+    '起床 ':'Wake ',
+    '就寝 ':'Sleep ',
+    '全員非喫煙':'All non-smoking',
+    '在宅ワーク多め':'Often work from home',
+    '夜型':'Night owl',
+    '朝型〜普通':'Morning to standard',
+    'クリエイター系':'Creative type',
+    '非喫煙':'Non-smoking',
+    '静かな環境':'Quiet environment',
+    '夜帰宅':'Returns late',
+    '空き1室':'1 room available',
+    '空き2室':'2 rooms available',
+    'あなたの部屋':'Your room',
+    '募集中':'Recruiting',
+    'ボストン':'Boston',
+    'ニューヨーク':'New York',
+    'シカゴ':'Chicago',
+    'バンクーバー':'Vancouver',
+    'トロント':'Toronto',
+    'アメリカ':'United States',
+    '韓国':'Korea',
+    '日本':'Japan',
+    '中村 さくら':'Sakura Nakamura',
+    '中村さくら':'Sakura Nakamura',
+    '田中あおい':'Aoi Tanaka',
+    '田中 あおい':'Aoi Tanaka',
+    '佐藤けんじ':'Kenji Sato',
+    '山田みか':'Mika Yamada',
+    '高橋りょう':'Ryo Takahashi',
+    '伊藤まさき':'Masaki Ito',
+    '看護師':'Nurse',
+    'エンジニア':'Engineer',
+    'デザイナー':'Designer',
+    '営業':'Sales',
+    '料理、映画、アウトドア':'Cooking, movies, outdoors',
+    '読書、音楽、カフェ巡り':'Reading, music, cafe hopping',
+    '料理、語学、アート':'Cooking, languages, art',
+    '朝型・適度に交流したい':'Morning person · moderate interaction',
+    '普通・一人時間も大切':'Standard rhythm · values alone time',
+    '夜型・たくさん話したい':'Night owl · likes talking a lot',
+    '入居中':'Currently staying',
+    '日本語も英語も話せます。料理が好きで、ホストファミリーのお手伝いも積極的にしたいです。初めての海外生活なので、生活ルールを大切にしながら楽しく過ごしたいです。':'I speak both Japanese and English. I like cooking and would be happy to help my host family. This is my first time living abroad, so I want to respect house rules and enjoy the stay.',
+    '韓国からワーキングホリデーで滞在予定です。日本語N2を取得しており、静かな環境で現地の生活に慣れていきたいです。':'I plan to stay on a working holiday from Korea. I have JLPT N2 and would like to settle into local life in a quiet environment.',
+    '入居日について確認したいのですが、2025年2月上旬から滞在可能でしょうか？':'I would like to confirm the move-in date. Would staying from early February 2025 be possible?',
+    'お問い合わせありがとうございます。2月上旬から受け入れ可能です。':'Thank you for reaching out. We can host you from early February.',
+    'ありがとうございます。生活ルールも詳しく知りたいです。':'Thank you. I would also like to learn more about the house rules.',
+    'ありがとうございます！よろしくお願いします。':'Thank you! I look forward to it.',
+    'こちらこそよろしくお願いします。希望滞在期間を確認させてください。':'Likewise. Please let me confirm your desired stay period.',
+    '年齢未回答':'Age not provided',
+    '未回答':'Not answered',
+    'ルームメイト':'Roommate',
+    'ホスト情報を教えてください':'Tell us about yourself as a host',
+    '部屋・ルールを設定してください':'Set room and house rules',
+    'あなたのプロフィールがゲストへの第一印象になります':'Your profile is the guest’s first impression',
+    '詳しく設定するほどマッチング精度が上がります':'Detailed settings improve match accuracy',
+    'ルームメイトを追加':'Add Roommate',
+    '物件情報を入力してください':'Enter Property Information',
+    '正直に入力するほど相性の良い人が集まります':'Honest answers attract more compatible people',
+    'AIマッチングの精度が上がります（任意）':'This improves AI matching accuracy (optional)',
+    'あなたの家の基本情報です（任意項目）':'Basic information about your home (optional)',
+    '入居中のメンバー（1名）':'Current residents (1)',
+    '入居中のメンバー（2名）':'Current residents (2)',
+    '入居中のメンバー（3名）':'Current residents (3)',
+    'あなたの条件に合うホスト · 6件':'Hosts matching your preferences · 6 results',
+    '面談を申し込む':'Request an Interview',
+    '正式に申し込む':'Submit Application',
+    '決済へ進む':'Proceed to Payment',
+    '承認済み':'Approved'
+    ,'AIに相談して探す':'Ask AI to Search'
+    ,'条件を入力するだけで':'Just enter your preferences'
+    ,'ぴったりのホストを提案':'and we will suggest hosts that fit you'
+    ,'AIマッチング完了 · 6件':'AI Matching Complete · 6 results'
+    ,'結果を見る →':'View Results →'
+    ,'✨ 新着ホスト':'✨ New Hosts'
+    ,'渋谷クロスハウス':'Shibuya Cross House'
+    ,'目黒ガーデンハウス':'Meguro Garden House'
+    ,'💬 過去の留学生からの評価':'💬 Reviews from Previous International Students'
+    ,'📋 ハウスルール':'📋 House Rules'
+    ,'🏠 部屋情報':'🏠 Room Information'
+    ,'10㎡（約6畳）':'10 m² (about 6 tatami mats)'
+    ,'💰 料金内訳':'💰 Price Breakdown'
+    ,'朝食（平日）':'Breakfast (weekdays)'
+    ,'光熱費・Wi-Fi':'Utilities / Wi-Fi'
+    ,'合計':'Total'
+    ,'📍 ロケーション':'📍 Location'
+    ,'💬 メッセージ':'💬 Message'
+    ,'メッセージ':'Messages'
+    ,'ホスト詳細・お申し込みはこちら':'Host details and application are here'
+    ,'本申し込み →':'Apply →'
+    ,'お気に入り':'Saved'
+    ,'プロフィール':'Profile'
+    ,'プロフィール編集':'Edit Profile'
+    ,'生活スタイル・希望条件':'Lifestyle and Preferences'
+    ,'申請・履歴':'Applications / History'
+    ,'申請中のリクエスト':'Pending Requests'
+    ,'過去の滞在履歴':'Stay History'
+    ,'レビューを書く':'Write a Review'
+    ,'設定':'Settings'
+    ,'通知設定':'Notifications'
+    ,'言語':'Language'
+    ,'日本語':'Japanese'
+    ,'プライバシー・セキュリティ':'Privacy & Security'
+    ,'サポート':'Support'
+    ,'よくある質問（FAQ）':'FAQ'
+    ,'フォームで問い合わせ':'Contact Form'
+    ,'利用規約・プライバシーポリシー':'Terms & Privacy Policy'
+    ,'サービス':'Service'
+    ,'ホームステイ／シェアハウスを変更':'Change Homestay / Share House'
+    ,'ホームステイ':'Homestay'
+    ,'滞在したホスト・物件':'Host / Property Stayed At'
+    ,'レビュータグ':'Review Tags'
+    ,'ホスト詳細のレビューで使われている項目から選択してください':'Choose from the same tags shown in host detail reviews'
+    ,'星評価':'Star Rating'
+    ,'レビュー本文':'Review'
+    ,'レビューを投稿する':'Submit Review'
+    ,'レビューを投稿しました':'Review submitted'
+    ,'メッセージが届いた時':'When a message arrives'
+    ,'ホストからの新着メッセージを通知':'Notify me about new messages from hosts'
+    ,'リクエストが承諾された時':'When a request is approved'
+    ,'申請が承諾された時に通知':'Notify me when an application is approved'
+    ,'リクエストが否認された時':'When a request is declined'
+    ,'申請結果が否認だった時に通知':'Notify me when an application is declined'
+    ,'新しいおすすめホストが見つかった時':'When a new recommended host is found'
+    ,'条件に合うホストのおすすめを通知':'Notify me about hosts that match my preferences'
+    ,'滞在前のリマインド':'Before-stay reminder'
+    ,'滞在開始前の確認を通知':'Notify me before my stay begins'
+    ,'保存する':'Save'
+    ,'通知設定を保存しました':'Notification settings saved'
+    ,'✅ 希望エリア・期間・予算':'✅ Preferred area, stay period, and budget'
+    ,'🎨 趣味・NG':'🎨 Hobbies and no-go conditions'
+    ,'はじめまして、Yukiです。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！':'Nice to meet you, I am Yuki. I would like to experience the local lifestyle and culture, so I am interested in a homestay. Thank you!'
+    ,'よくある質問':'FAQ'
+    ,'ホームステイの申し込み方法は？':'How do I apply for a homestay?'
+    ,'ホスト詳細の下部分にある「面談の申し込み」から面談を申し込み、面談後に正式な申し込み画面が表示されます。そこから申し込みできます。':'Request an interview from the lower part of the host detail page. After the interview, the formal application screen will appear, and you can apply there.'
+    ,'面談はどうやって行いますか？':'How do interviews work?'
+    ,'ホスト詳細画面から申し込みできます。':'You can request one from the host detail page.'
+    ,'キャンセル・返金ポリシーは？':'What is the cancellation / refund policy?'
+    ,'キャンセル・返金ポリシーは現在準備中です。詳しくはお問い合わせフォームからご連絡ください。':'The cancellation and refund policy is currently being prepared. Please contact us through the inquiry form for details.'
+    ,'トラブルが起きたときは？':'What should I do if there is a problem?'
+    ,'下のお問い合わせフォームからお問い合わせください。':'Please contact us through the inquiry form below.'
+    ,'お問い合わせ':'Contact'
+    ,'お問い合わせフォーム':'Contact Form'
+    ,'Google Formで受け付けています':'Accepted through Google Forms'
+    ,'AIがあなたに合う人と':'AI connects you with'
+    ,'住まいを繋ぎます':'the right people and home'
+    ,'お名前':'Name'
+    ,'メールアドレス':'Email Address'
+    ,'パスワード':'Password'
+    ,'ログイン':'Log In'
+    ,'または':'or'
+    ,'Googleでログイン':'Log in with Google'
+    ,'アカウントをお持ちでない方は':'Don’t have an account?'
+    ,'新規登録':'Sign Up'
+    ,'渡航先を教えてください':'Tell us your destination'
+    ,'希望する都市を選んでください（複数可）':'Choose your preferred cities (multiple selections allowed)'
+    ,'「週末は静かに過ごしたいです。料理が好きで、キッチンをよく使います。」':'“I like to spend weekends quietly. I enjoy cooking and often use the kitchen.”'
+    ,'🏠 ルール・価値観':'🏠 Rules and Values'
+    ,'✓ 静かに過ごしたい':'✓ Prefers a quiet lifestyle'
+    ,'✓ 掃除当番OK':'✓ Willing to share cleaning duties'
+    ,'佐藤 けんじ':'Kenji Sato'
+    ,'「在宅ワーク多めです。基本は夜型ですが静かに過ごすのが好きです。ペット（猫）がいます。」':'“I often work from home. I am usually a night owl, but I like to keep things quiet. I have a pet cat.”'
+    ,'9:00頃':'Around 9:00'
+    ,'1:00頃':'Around 1:00'
+    ,'✓ ペット可（猫）':'✓ Pets OK (cat)'
+    ,'✓ 在宅ワーク環境あり':'✓ Work-from-home setup available'
+    ,'ホスト名（家族名でもOK）':'Host name (family name OK)'
+    ,'家族構成':'Household'
+    ,'一人暮らし':'Living alone'
+    ,'夫婦':'Couple'
+    ,'夫婦＋子供':'Couple with children'
+    ,'対応言語':'Supported Languages'
+    ,'🇯🇵 日本語':'🇯🇵 Japanese'
+    ,'🇬🇧 英語':'🇬🇧 English'
+    ,'🇰🇷 韓国語':'🇰🇷 Korean'
+    ,'🇨🇳 中国語':'🇨🇳 Chinese'
+    ,'ホスト自己紹介':'Host Bio'
+    ,'写真を登録':'Add Photos'
+    ,'ハウスルール':'House Rules'
+    ,'門限あり（22時）':'Curfew (10 PM)'
+    ,'🤝 一緒に住んでいるルームメイトがいれば追加してください。':'🤝 Add any roommates who currently live with you.'
+    ,'入居希望者がメンバー全員のプロフィールを見て判断します。いない場合はスキップOKです。':'Applicants will review every resident’s profile before deciding. If you do not have roommates, you can skip this step.'
+    ,'📌 あなたが住んでいる物件の基本情報を入力してください。入居希望者の参考になります。':'📌 Enter basic information about the property you live in. This will help applicants understand the home.'
+    ,'ホストとビデオ通話で面談を行います。':'You will have a video interview with the host.'
+    ,'お互いの雰囲気を確認しましょう。':'Use it to see if you are a good fit for each other.'
+    ,'ホスト':'Host'
+    ,'月額料金':'Monthly Price'
+    ,'面談方法':'Interview Method'
+    ,'ビデオ通話（15分）':'Video call (15 min)'
+    ,'費用':'Fee'
+    ,'無料':'Free'
+    ,'日付を選択':'Select Date'
+    ,'希望日を選択してください':'Please choose your preferred date'
+    ,'📅 希望日を選択':'📅 Select Preferred Date'
+    ,'時間帯を選択...':'Select a time...'
+    ,'面談を確定する':'Confirm Interview'
+    ,'キャンセル':'Cancel'
+    ,'面談が確定しました！':'Interview Confirmed!'
+    ,'ホストからの日程調整メッセージをお待ちください。':'Please wait for the host to message you about scheduling.'
+    ,'面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。':'After the interview, press “Submit Application” on the host detail page if you want to apply formally.'
+    ,'詳細画面へ戻る':'Back to Detail'
+    ,'💬 メッセージを確認する':'💬 Check Messages'
+    ,'正式に申し込みますか？':'Submit your application?'
+    ,'入居希望のリクエストを送信します。':'Send a move-in request.'
+    ,'ホストが承諾するまで決済には進めません。':'You cannot proceed to payment until the host approves it.'
+    ,'ステータス':'Status'
+    ,'承諾待ち':'Pending Approval'
+    ,'申し込みリクエストを送信する':'Send Application Request'
+    ,'申し込みリクエストを送信しました':'Application request sent'
+    ,'ホスト側のリクエスト管理に申請が表示される想定です。':'This demo assumes the request appears in the host’s request management screen.'
+    ,'承諾されるまで決済へは進めません。':'You cannot proceed to payment until it is approved.'
+    ,'どんな暮らしを探していますか？':'What kind of living arrangement are you looking for?'
+    ,'ホストファミリーと一緒に暮らす':'Live with a host family'
+    ,'シェアハウス':'Share House'
+    ,'ライフスタイルが合う人と住む':'Live with people whose lifestyle fits yours'
+    ,'あなたの立場を教えてください':'Tell us your role'
+    ,'あなたの目的を教えてください':'Tell us your goal'
+    ,'ホームステイ先を探す':'Find a Homestay'
+    ,'シェアハウスを探す':'Find a Share House'
+    ,'物件を検索してルームメイトと暮らす':'Search for properties and live with roommates'
+    ,'ルームメイトを探す':'Find a Roommate'
+    ,'一緒に住む人を見つける':'Find someone to live with'
+    ,'ホスト・オーナーとして登録':'Register as Host / Owner'
+    ,'部屋を提供して収入を得る':'Earn income by sharing your room'
+    ,'おすすめシェアハウス':'Recommended Share Houses'
+    ,'ルームメイト候補':'Roommate Candidates'
+    ,'マッチ度 94%':'Match 94%'
+    ,'24歳 · 会社員 · 新宿希望':'24 years old · Employee · Prefers Shinjuku'
+    ,'「清潔感を大切にしています。週末は静かに過ごしたいです。」':'“I care about cleanliness and like to spend weekends quietly.”'
+    ,'✓ 早起き':'✓ Early riser'
+    ,'🐱 猫アレルギー':'🐱 Cat allergy'
+    ,'マッチ度 89%':'Match 89%'
+    ,'27歳 · エンジニア · 渋谷〜恵比寿希望':'27 years old · Engineer · Prefers Shibuya to Ebisu'
+    ,'「リモートワーク中心。静かな環境が好きです。費用は折半希望。」':'“I mainly work remotely and prefer a quiet environment. I would like to split costs.”'
+    ,'鈴木 みさき':'Misaki Suzuki'
+    ,'マッチ度 85%':'Match 85%'
+    ,'22歳 · 大学院生 · 目黒・品川希望':'22 years old · Graduate student · Prefers Meguro or Shinagawa'
+    ,'「勉強中心の生活。自炊が好きです。共有キッチンが広い部屋希望。」':'“My lifestyle centers on studying. I like cooking and prefer a place with a spacious shared kitchen.”'
+    ,'ホストダッシュボード':'Host Dashboard'
+    ,'今月の収益':'This month’s revenue'
+    ,'入居者数':'Guests'
+    ,'稼働率':'Occupancy'
+    ,'評価':'Rating'
+    ,'応募者管理':'Applicants'
+    ,'3件の新着':'3 new'
+    ,'5件未読':'5 unread'
+    ,'カレンダー':'Calendar'
+    ,'空室管理':'Availability'
+    ,'収益管理':'Revenue'
+    ,'27歳 · 日本 · 男性 · エンジニア':'27 years old · Japan · Male · Engineer'
+    ,'振込履歴':'Payout History'
+    ,'山田 花子':'Hanako Yamada'
+    ,'入居中 〜 2025年3月末':'Currently staying until the end of March 2025'
+    ,'佐藤 太郎':'Taro Sato'
+    ,'入居中 〜 2025年6月末':'Currently staying until the end of June 2025'
+    ,'ホストプロフィールを編集':'Edit Host Profile'
+    ,'写真・ルール・空き状況を更新':'Update photos, rules, and availability'
+    ,'審査中':'Under Review'
+    ,'23歳 · 留学生 · 入居希望：2025年2月':'23 years old · International student · Desired move-in: February 2025'
+    ,'「日本語も英語も話せます。料理が好きでお手伝いもできます！」':'“I speak both Japanese and English. I like cooking and can help around the house!”'
+    ,'承認する':'Approve'
+    ,'お断りする':'Decline'
+    ,'26歳 · ワーホリ · 入居希望：2025年3月':'26 years old · Working holiday · Desired move-in: March 2025'
+    ,'「韓国から来ます。日本語N2取得済みです。」':'“I am coming from Korea and have passed JLPT N2.”'
+    ,'21歳 · 留学生 · 入居済み':'21 years old · International student · Moved in'
+    ,'応募者詳細':'Applicant Details'
+    ,'希望条件':'Preferences'
+    ,'生活リズム':'Daily Rhythm'
+    ,'趣味':'Hobbies'
+    ,'希望滞在期間':'Desired Stay Period'
+    ,'希望エリア':'Preferred Area'
+    ,'入居日について確認したいのですが...':'I would like to confirm the move-in date...'
+    ,'凡例':'Legend'
+    ,'空室':'Vacant'
+    ,'予約済み':'Reserved'
+    ,'累計収益':'Total Revenue'
+    ,'Stripe振込設定':'Stripe Payout Setup'
+    ,'銀行口座を登録して自動振込を受け取る':'Register your bank account to receive automatic payouts'
+    ,'Stripeで口座を登録する':'Set up bank account with Stripe'
+    ,'ホスト名':'Host Name'
+    ,'家族みんなで温かくお迎えします。日本の文化や料理を一緒に楽しみましょう！':'Our whole family will warmly welcome you. Let’s enjoy Japanese culture and home cooking together!'
+    ,'食事提供あり':'Meals included'
+    ,'お支払い方法':'Payment Method'
+    ,'お支払い金額':'Payment Amount'
+    ,'お支払い方法を選択':'Select Payment Method'
+    ,'クレジット / デビットカード':'Credit / Debit Card'
+    ,'PayPayアプリで支払う':'Pay with the PayPay app'
+    ,'支払いに進む':'Proceed to Payment'
+    ,'🔒 SSL暗号化で安全に処理されます':'🔒 Securely processed with SSL encryption'
+    ,'探す':'Search'
+    ,'保存済み':'Saved'
+    ,'マイページ':'My Page'
+    ,'ホーム':'Home'
+    ,'山田 太郎':'Taro Yamada'
+    ,'6文字以上':'At least 6 characters'
+    ,'山田ファミリー':'Yamada Family'
+    ,'家族の雰囲気や、ゲストへのメッセージを書いてください':'Write about your family’s atmosphere and a message for guests'
+    ,'エリアを入力...':'Enter an area...'
+    ,'エリア・条件を入力...':'Enter an area or conditions...'
+    ,'Sarahは本当に几帳面でお部屋も共有スペースも常にきれい。朝早いので夜更かしには向かないかも。':'Sarah is very organized, and both the room and shared spaces are always clean. She wakes up early, so it may not be ideal for night owls.'
+    ,'平日の朝食が毎日美味しくて感動。会話も多く、英語の練習になりました！':'The weekday breakfasts were delicious every day. We talked a lot, which was great English practice!'
+    ,'門限なし':'No curfew'
+    ,'キッチン共有OK':'Shared kitchen OK'
+    ,'来客OK（事前連絡）':'Guests OK with advance notice'
+    ,'3食提供（家庭料理）':'3 home-cooked meals included'
+    ,'喫煙不可':'No smoking'
+    ,'ペット（犬1匹）います':'Has one dog'
+    ,'お食事付きが魅力的で応募しました！':'I applied because the included meals are very appealing!'
+    ,'ペットがいるとのことですが、犬種は何ですか？':'I saw that you have a pet. What breed is your dog?'
+    ,'Lisaの料理が毎回本当に美味しかった。Sunnyもすぐ懐いてくれて癒し。朝は早めなので合わせた方がいい。':'Lisa’s cooking was truly delicious every time. Sunny warmed up to me quickly and was very comforting. Mornings start early, so it is best to adjust to that rhythm.'
+    ,'夫婦ともにとても明るくて英語を積極的に話す環境。6:30起床なので夜型の人は少し辛いかも。':'Both hosts are cheerful, and the home is a great environment for actively speaking English. They wake up at 6:30, so it may be a little hard for night owls.'
+    ,'キッチン自由利用':'Free use of kitchen'
+    ,'朝食あり（毎日）':'Breakfast included every day'
+    ,'ペット不可':'No pets'
+    ,'留学生歓迎とのことで、嬉しいです！':'I’m happy to see that international students are welcome!'
+    ,'Emilyも院生なので生活リズムが近くてとても快適。夜型だけど静かに過ごすので問題なし。':'Emily is also a graduate student, so our daily rhythms were similar and very comfortable. She is a night owl, but she stays quiet, so it was not a problem.'
+    ,'ハーバード周辺という立地最高。朝食を一緒にとりながら英語で話す習慣がついた。':'The location near Harvard was excellent. Having breakfast together helped me build a habit of speaking English.'
+    ,'門限 23:00':'Curfew at 23:00'
+    ,'来客OK（22時まで）':'Guests OK until 22:00'
+    ,'子供（10歳・7歳）がいます':'Has children aged 10 and 7'
+    ,'お子さんがいらっしゃるんですね！楽しそうです。':'You have children! That sounds fun.'
+    ,'子供たちが毎日話しかけてくれて自然と英語力アップ。早寝早起きの家庭なので生活リズムが整った。':'The children talked to me every day, which naturally improved my English. The family sleeps and wakes early, so my daily rhythm became healthier.'
+    ,'家族みんなで夕食の話題が毎日盛り上がる。10時には消灯なので夜遊びしたい人には向かないかも。':'Dinner conversations with the whole family were lively every day. Lights are out around 10, so it may not suit people who want to go out late.'
+    ,'夜間の音は配慮を':'Please be mindful of noise at night'
+    ,'夜型OKなのが嬉しいです！普段は何時頃まで起きてますか？':'I’m glad night owls are OK! Around what time do you usually stay up?'
+    ,'Jenniferは自分のペースを大事にしてくれる人。深夜に帰っても気にしない。一人の時間が欲しい人にぴったり。':'Jennifer respects your own pace. She does not mind if you come home late, so it is perfect for people who want time alone.'
+    ,'干渉が少ない分、孤独に感じることもあったが、週末は話してくれた。清潔感は普通くらい。':'There was little interference, so I sometimes felt lonely, but she talked with me on weekends. Cleanliness was about average.'
+    ,'門限 22:00（相談可）':'Curfew at 22:00 (negotiable)'
+    ,'夕食あり（平日）':'Dinner included on weekdays'
+    ,'猫（2匹）がいます':'Has two cats'
+    ,'夕食付きが嬉しいです！どんなお料理が多いですか？':'I’m happy dinner is included! What kind of meals do you usually cook?'
+    ,'Maryの料理は本当に絶品。猫2匹が部屋に来てくれて癒された。朝6時に動き始めるので早起きは必要。':'Mary’s cooking was absolutely wonderful. The two cats often came into my room and were very comforting. The home starts moving around 6 AM, so waking up early is necessary.'
+    ,'ホスト歴6年の安心感がある。困ったことを相談すると丁寧に対応してくれた。シカゴの冬は寒いが家の中は暖かい。':'Their six years of hosting experience made me feel secure. Whenever I had a problem, they responded carefully. Chicago winters are cold, but the house was warm.'
+    ,'入居について相談したいです。よろしくお願いします。':'I would like to discuss moving in. Thank you.'
+    ,'ご連絡ありがとうございます。希望時期を教えてください。':'Thank you for contacting us. Please let us know your preferred timing.'
+    ,'あなたの生活スタイルは？':'What is your lifestyle?'
+    ,'否認されました':'Declined'
+    ,'ありがとうございます！よろしくお願いします':'Thank you! I look forward to it.'
+    ,'応募者':'Applicants'
+    ,'メッセージを入力...':'Type a message...'
+    ,'滞在してよかった点や、これから滞在する人へのメッセージを書いてください':'Write what you liked about your stay and tips for future guests.'
+    ,'普通〜多め':'Moderately Talkative'
+    ,'多め':'Talkative'
+    ,'少なめ':'Quiet'
+    ,'きれい好き':'Clean and Organized'
+    ,'早起き型':'Early Riser'
+    ,'とても清潔':'Very Clean'
+    ,'よく話す':'Talkative'
+    ,'ホスピタリティ高い':'Great Hospitality'
+    ,'朝食が充実':'Great Breakfast'
+    ,'3食が最高':'Excellent Meal Plan'
+    ,'犬が可愛い':'Lovely Dog'
+    ,'会話が多い':'Lots of Conversation'
+    ,'清潔':'Clean'
+    ,'早起き必須':'Early Schedule'
+    ,'勉強に集中できる':'Good for Studying'
+    ,'朝食が毎日ある':'Daily Breakfast'
+    ,'女性限定で安心':'Women-only and Reassuring'
+    ,'家族の雰囲気が温かい':'Warm Family Atmosphere'
+    ,'子供が可愛い':'Lovely Children'
+    ,'朝食豪華':'Great Breakfast'
+    ,'賑やか':'Lively'
+    ,'夜は早め':'Early Nights'
+    ,'夜型に最適':'Great for Night Owls'
+    ,'干渉少ない':'Independent'
+    ,'マイペースOK':'Respects Your Pace'
+    ,'会話は少なめ':'Less Conversation'
+    ,'夕食が本格的':'Great Homemade Dinners'
+    ,'猫が癒し':'Cats Are Comforting'
+    ,'ホスト歴長い':'Experienced Host'
+	    ,'安定感抜群':'Very Reliable'
+	    ,'専用バスルーム':'Private Bathroom'
+	    ,'10㎡（約6畳）':'10 m² (about 6 tatami mats)'
+	    ,'14㎡（約8畳）':'14 m² (about 8 tatami mats)'
+	    ,'13㎡（約8畳）':'13 m² (about 8 tatami mats)'
+	    ,'12㎡（約7畳）':'12 m² (about 7 tatami mats)'
+	    ,'11㎡（約6.5畳）':'11 m² (about 6.5 tatami mats)'
+	    ,'専用（部屋付き）':'Private (attached to the room)'
+	    ,'共用（家族とシェア）':'Shared with the family'
+	    ,'共用（2人でシェア）':'Shared with 2 people'
+	    ,'日当たり':'Natural Light'
+	    ,'最寄り':'Nearest Station'
+	    ,'東向き・午前良好':'East-facing, good morning light'
+	    ,'南向き・良好':'South-facing, good light'
+	    ,'西向き・午後良好':'West-facing, good afternoon light'
+	    ,'北向き・穏やか':'North-facing, soft light'
+	    ,'光回線・無制限':'Fiber internet, unlimited'
+	    ,'72nd St 徒歩5分':'72nd St, 5 min walk'
+	    ,'26th St/Bergamot 徒歩8分':'26th St/Bergamot, 8 min walk'
+	    ,'Harvard Square 徒歩10分':'Harvard Square, 10 min walk'
+	    ,'24th St Mission BART 徒歩5分':'24th St Mission BART, 5 min walk'
+	    ,'Capitol Hill Station 徒歩7分':'Capitol Hill Station, 7 min walk'
+	    ,'Fullerton Station 徒歩6分':'Fullerton Station, 6 min walk'
+	    ,'食事（3食）':'Meal Plan (3 meals)'
+	    ,'朝食（平日）':'Breakfast (weekdays)'
+	    ,'朝食（毎日）':'Breakfast (daily)'
+	    ,'夕食（平日）':'Dinner (weekdays)'
+	    ,'光熱費・Wi-Fi':'Utilities & Wi-Fi'
+    ,'最寄り駅：26th St/Bergamot 徒歩8分 · ビーチまで徒歩15分':'Nearest station: 26th St/Bergamot, 8 min walk · 15 min walk to the beach'
+    ,'最寄り駅：Harvard Square 徒歩10分 · MIT まで自転車10分':'Nearest station: Harvard Square, 10 min walk · 10 min by bike to MIT'
+    ,'最寄り駅：24th St Mission BART 徒歩5分 · Dolores Park 徒歩3分':'Nearest station: 24th St Mission BART, 5 min walk · 3 min walk to Dolores Park'
+    ,'最寄り駅：Capitol Hill Station 徒歩7分 · Volunteer Park 徒歩5分':'Nearest station: Capitol Hill Station, 7 min walk · 5 min walk to Volunteer Park'
+    ,'最寄り駅：Fullerton Station 徒歩6分 · Lincoln Park Zoo 徒歩10分':'Nearest station: Fullerton Station, 6 min walk · 10 min walk to Lincoln Park Zoo'
+  };
+  let currentLang = localStorage.getItem('hostmatch_lang') || 'ja';
+  let autoTranslating = false;
+  let autoTranslateTimer = null;
+
+  function t(key) {
+    return i18n[currentLang]?.[key] || i18n.ja[key] || key;
+  }
+
+  function shouldSkipAutoTranslate(node) {
+    const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
+    if (!el) return true;
+    if (el.closest('script,style,svg,[data-i18n],[data-i18n-html],[data-lang-option]')) return true;
+    return false;
+  }
+
+  function translateFreeText(original) {
+    if (!original || !/[ぁ-んァ-ン一-龥]/.test(original)) return original;
+    const leading = original.match(/^\s*/)?.[0] || '';
+    const trailing = original.match(/\s*$/)?.[0] || '';
+    const trimmed = original.trim();
+    if (autoTextTranslations[trimmed]) return leading + autoTextTranslations[trimmed] + trailing;
+
+    let translated = original;
+    const unsafePartialKeys = new Set(['日','月','火','水','木','金','土','日本','韓国','アメリカ','普通','検索','戻る','設定','評価','ホスト','プロフィール','メッセージ','起床','就寝','在宅','食事','喫煙']);
+    Object.keys(autoTextTranslations)
+      .filter(key => key.length > 1 && !unsafePartialKeys.has(key))
+      .sort((a, b) => b.length - a.length)
+      .forEach(key => {
+        translated = translated.split(key).join(autoTextTranslations[key]);
+      });
+
+    translated = translated
+      .replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, '$1/$2/$3')
+      .replace(/(\d{4})年(\d{1,2})月/g, '$1/$2')
+      .replace(/(\d{4})年(\d{1,2})月上旬/g, 'early $1/$2')
+      .replace(/(\d{4})年(\d{1,2})月から/g, 'from $1/$2 for ')
+      .replace(/(\d+)歳/g, '$1 years old')
+      .replace(/(\d+)名/g, '$1 people')
+      .replace(/(\d+)室/g, '$1 rooms')
+      .replace(/(\d+)件/g, '$1 results')
+      .replace(/(\d+)年/g, '$1 years')
+      .replace(/(\d+)ヶ月/g, '$1 months')
+      .replace(/\/月〜/g, '/mo+')
+      .replace(/\/月/g, '/mo')
+      .replace(/〜/g, '-');
+    return translated;
+  }
+
+  function localizeText(text) {
+    return currentLang === 'ja' ? text : translateFreeText(text);
+  }
+
+  function localizePriceText(text) {
+    return localizeText(text).replace(/\/月/g, '/mo');
+  }
+
+  function applyAutoTextTranslations() {
+    if (autoTranslating || !document.body) return;
+    autoTranslating = true;
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        if (shouldSkipAutoTranslate(node)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const textNodes = [];
+    while (walker.nextNode()) textNodes.push(walker.currentNode);
+
+    textNodes.forEach(node => {
+      if (!node.__hostmatchOriginalText) node.__hostmatchOriginalText = node.nodeValue;
+      const nextValue = currentLang === 'ja'
+        ? node.__hostmatchOriginalText
+        : translateFreeText(node.__hostmatchOriginalText);
+      if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
+    });
+
+    document.querySelectorAll('[placeholder]').forEach(el => {
+      if (shouldSkipAutoTranslate(el)) return;
+      if (!el.dataset.hostmatchOriginalPlaceholder) el.dataset.hostmatchOriginalPlaceholder = el.getAttribute('placeholder') || '';
+      const nextPlaceholder = currentLang === 'ja'
+        ? el.dataset.hostmatchOriginalPlaceholder
+        : translateFreeText(el.dataset.hostmatchOriginalPlaceholder);
+      if (el.getAttribute('placeholder') !== nextPlaceholder) el.setAttribute('placeholder', nextPlaceholder);
+    });
+    autoTranslating = false;
+  }
+
+  function scheduleAutoTextTranslations() {
+    if (autoTranslating) return;
+    clearTimeout(autoTranslateTimer);
+    autoTranslateTimer = setTimeout(applyAutoTextTranslations, 0);
+  }
 
   function applyLang() {
+    document.documentElement.lang = currentLang;
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if (i18n[currentLang][key]) el.textContent = i18n[currentLang][key];
+      if (i18n[currentLang][key]) el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      if (i18n[currentLang][key]) el.innerHTML = t(key);
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      if (i18n[currentLang][key]) el.placeholder = i18n[currentLang][key];
+      if (i18n[currentLang][key]) el.placeholder = t(key);
+    });
+    document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.langOption === currentLang);
+      if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
+      if (btn.dataset.langOption === 'en') btn.textContent = 'English';
     });
     // 言語ボタン表示更新
     ['lang-btn','lang-btn-sh','lang-btn-rm','lang-btn-hd'].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) btn.textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
     });
+    applyAutoTextTranslations();
+  }
+
+  function refreshLocalizedDynamicUi() {
+    setLoginMode(isSignupMode, true);
+    renderReviewTags();
+    if (currentScreen === 'write-review') renderReviewHosts();
+    if (currentScreen === 'stay-history') renderStayHistory();
+    if (currentScreen === 'pending-hosts') renderGuestRequestList();
+    if (currentScreen === 'application-sent') renderApplicationSent();
+    if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
+    if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
+    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
+    if (currentScreen === 'onboarding') renderOnboardStep();
+    if (currentScreen === 'interview') generateInterviewDates();
+    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
+    updateListingActionButtons();
+  }
+
+  function setLanguage(lang) {
+    currentLang = lang === 'en' ? 'en' : 'ja';
+    localStorage.setItem('hostmatch_lang', currentLang);
+    applyLang();
+    refreshLocalizedDynamicUi();
   }
 
   function toggleLang() {
-    currentLang = currentLang === 'ja' ? 'en' : 'ja';
-    applyLang();
+    setLanguage(currentLang === 'ja' ? 'en' : 'ja');
   }
 
   /* ===== サービス種別選択 ===== */
@@ -5567,42 +6585,42 @@
 
     if (type === 'homestay') {
       if (emoji) emoji.textContent = '🏡';
-      if (brand) brand.textContent = 'ホームステイ';
+      if (brand) brand.textContent = t('homestay');
       if (container) container.innerHTML = `
         <div class="role-card guest" onclick="chooseRole('guest')">
           <div class="role-card-icon">🧳</div>
           <div class="role-card-text">
-            <div class="role-card-title">住む場所を探している</div>
-            <div class="role-card-desc">ホームステイ先を探す</div>
+            <div class="role-card-title">${t('looking_for_place')}</div>
+            <div class="role-card-desc">${t('svc_homestay_guest')}</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
         <div class="role-card host" onclick="chooseRole('host')">
           <div class="role-card-icon">🏠</div>
           <div class="role-card-text">
-            <div class="role-card-title">ホストとして登録する</div>
-            <div class="role-card-desc">ゲストを受け入れて収入を得る</div>
+            <div class="role-card-title">${t('register_as_host')}</div>
+            <div class="role-card-desc">${t('host_income_desc')}</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
       `;
     } else {
       if (emoji) emoji.textContent = '🏢';
-      if (brand) brand.textContent = 'シェアハウス';
+      if (brand) brand.textContent = t('sharehouse');
       if (container) container.innerHTML = `
         <div class="role-card guest" onclick="chooseRole('guest')">
           <div class="role-card-icon">🔍</div>
           <div class="role-card-text">
-            <div class="role-card-title">入居先を探している</div>
-            <div class="role-card-desc">ルームメイトのプロフィールを見て選ぶ</div>
+            <div class="role-card-title">${t('looking_for_room')}</div>
+            <div class="role-card-desc">${t('choose_by_roommate_profile')}</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
         <div class="role-card host" onclick="chooseRole('resident')">
           <div class="role-card-icon">🤝</div>
           <div class="role-card-text">
-            <div class="role-card-title">入居中・ルームメイトを募集</div>
-            <div class="role-card-desc">自分のプロフィールを登録して募集する</div>
+            <div class="role-card-title">${t('resident_recruiting')}</div>
+            <div class="role-card-desc">${t('resident_recruiting_desc')}</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
@@ -5610,7 +6628,7 @@
     }
     // マイページ種別ラベル更新
     const typeLabel = document.getElementById('mypage-current-type');
-    if (typeLabel) typeLabel.textContent = type === 'homestay' ? 'ホームステイ' : 'シェアハウス';
+    if (typeLabel) typeLabel.textContent = type === 'homestay' ? t('homestay') : t('sharehouse');
     navigate('type-select', 'role-select');
   }
 
@@ -5817,17 +6835,17 @@
     const actions = document.getElementById('formal-request-actions');
     const status = app?.status || 'pending';
     if (status === 'approved') {
-      statusEl.textContent = '承諾済み';
+      statusEl.textContent = t('approved');
       statusEl.style.background = '#D4EDDA';
       statusEl.style.color = '#155724';
       actions.style.display = 'none';
     } else if (status === 'rejected') {
-      statusEl.textContent = '否認済み';
+      statusEl.textContent = t('rejected');
       statusEl.style.background = '#F8D7DA';
       statusEl.style.color = '#842029';
       actions.style.display = 'none';
     } else {
-      statusEl.textContent = '承諾待ち';
+      statusEl.textContent = t('pending_approval');
       statusEl.style.background = '#FFF3CD';
       statusEl.style.color = '#856404';
       actions.style.display = 'flex';
@@ -5844,7 +6862,7 @@
     renderApplicationSent();
     renderGuestRequestList();
     updateListingActionButtons();
-    showToast('リクエストを承諾しました');
+    showToast(t('request_approved_toast'));
   }
 
   function rejectFormalRequest() {
@@ -5857,7 +6875,7 @@
     renderApplicationSent();
     renderGuestRequestList();
     updateListingActionButtons();
-    showToast('リクエストを否認しました');
+    showToast(t('request_rejected_toast'));
   }
 
   /* ===== Stripe / PayPay 決済 ===== */
@@ -5867,7 +6885,7 @@
     const listing = getCurrentListing();
     const key = listing ? listing.type + ':' + listing.id : currentApplicationId;
     if (!key || formalApplications[key]?.status !== 'approved') {
-      showToast('ホストが承諾した後に決済へ進めます');
+      showToast(t('payment_after_approval'));
       return;
     }
     const price = listing ? formatListingPrice(listing) : '$950';
@@ -6338,6 +7356,15 @@
     if (e.key === 'Enter') sendMessage();
   });
   document.getElementById('detail-save').addEventListener('click', toggleDetailFav);
+  new MutationObserver(scheduleAutoTextTranslations).observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ['placeholder']
+  });
+  applyLang();
+  setLoginMode(isSignupMode, true);
   updateFavIcons();
   // 初期画面はonAuthStateChangedで制御（Firebase認証確定後に表示）
 </script>
