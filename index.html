@@ -2741,6 +2741,16 @@
 	      <div class="detail-section-title">💰 料金</div>
 	      <div class="price-box" id="sharehouse-price-box"></div>
 	    </div>
+
+	    <div class="divider"></div>
+
+	    <div class="detail-section" style="padding-bottom:16px;">
+	      <div class="detail-section-title">📍 ロケーション</div>
+	      <div class="match-card-map" style="border-radius:14px;height:160px;border:1px solid var(--border);">
+	        <div class="match-map-pin" id="sharehouse-map-pin">📍 新宿区</div>
+	      </div>
+	      <div id="sharehouse-map-note" style="font-size:12px;color:var(--light);margin-top:8px;">最寄り駅：Central Station 徒歩8分</div>
+	    </div>
   </div>
 
   <!-- CTA -->
@@ -4762,6 +4772,8 @@
 	      nationality: '日本',
 	      gender: '女性',
 	      area: '新宿区 · 駅徒歩5分',
+	      mapPin: '新宿区',
+	      mapNote: '最寄り駅：Central Station 徒歩8分',
 	      available: { start: '2026-07-01', end: '2026-12-31' },
 	      rent: '¥65,000 /月',
 	      roomType: '個室 · 家具付き · Wi-Fi完備',
@@ -4784,6 +4796,8 @@
 	      nationality: '日本',
 	      gender: '女性',
 	      area: '渋谷区 · 駅徒歩3分',
+	      mapPin: '渋谷区',
+	      mapNote: '最寄り駅：Boston South Station 徒歩10分',
 	      available: { start: '2026-08-01', end: '2027-01-31' },
 	      rent: '¥72,000 /月',
 	      roomType: '個室 · 女性専用フロア · Wi-Fi完備',
@@ -4806,6 +4820,8 @@
 	      nationality: '日本',
 	      gender: '男性',
 	      area: '目黒区 · 庭付き',
+	      mapPin: '目黒区',
+	      mapNote: '最寄り駅：Maple Station 徒歩7分',
 	      available: { start: '2026-07-15', end: '2026-11-30' },
 	      rent: '¥58,000 /月',
 	      roomType: '個室 · 庭付き · ペット相談可',
@@ -4930,6 +4946,10 @@
 		      if (priceBox) {
 		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額')}</span><span>${localizeText(match.rent)}</span></div>`;
 		      }
+		      const mapPin = document.getElementById('sharehouse-map-pin');
+		      if (mapPin) mapPin.textContent = `📍 ${localizeText(match.mapPin || match.area)}`;
+		      const mapNote = document.getElementById('sharehouse-map-note');
+		      if (mapNote) mapNote.textContent = localizeText(match.mapNote || '最寄り駅：Central Station 徒歩8分');
 	      return;
 	    }
 
@@ -6497,6 +6517,12 @@
     '年齢・性別・国籍':'Age / Gender / Nationality',
     '駅徒歩5分':'5 min walk from station',
     '駅徒歩3分':'3 min walk from station',
+    '最寄り駅：Central Station 徒歩8分':'8 min walk from Central Station',
+    '最寄り駅：Boston South Station 徒歩10分':'10 min walk from Boston South Station',
+    '最寄り駅：Maple Station 徒歩7分':'7 min walk from Maple Station',
+    'Central Station 徒歩8分':'8 min walk from Central Station',
+    'Boston South Station 徒歩10分':'10 min walk from Boston South Station',
+    'Maple Station 徒歩7分':'7 min walk from Maple Station',
     '庭付き':'With garden',
     '家具付き':'Furnished',
     'Wi-Fi完備':'Wi-Fi included',
