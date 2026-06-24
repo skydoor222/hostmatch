@@ -1220,7 +1220,7 @@
     <div class="slider-section">
       <div class="slider-label">
         <span data-i18n="new_hosts">✨ 新着ホスト</span>
-        <a data-i18n="view_all">すべて見る</a>
+        <a onclick="openHomestayHostList('new')" data-i18n="view_all">すべて見る</a>
       </div>
       <div class="card-slider">
         <div class="s-card" onclick="openDetail('emily')">
@@ -1258,7 +1258,7 @@
     <div class="slider-section">
       <div class="slider-label">
         <span>🔥 人気のホスト</span>
-        <a>すべて見る</a>
+        <a onclick="openHomestayHostList('popular')">すべて見る</a>
       </div>
       <div class="match-list" style="padding:0 16px 16px;">
         <div class="match-card" onclick="openDetail('michael')">
@@ -2757,6 +2757,20 @@
   <div class="detail-cta">
     <button class="btn-outline" onclick="openSharehouseChat()">💬 メッセージ</button>
     <button class="btn-primary" id="sharehouse-action-btn" onclick="requestSharehouseInterview()">📹 面談を申し込む</button>
+  </div>
+</div>
+
+<!-- ==================== ホームステイ ホスト一覧 ==================== -->
+<div class="screen" id="screen-homestay-host-list">
+  <div style="background:white;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;">
+    <button onclick="backToHomestaySearch()" style="background:none;border:none;font-size:22px;cursor:pointer;padding:0;line-height:1;">←</button>
+    <div style="flex:1;">
+      <div style="font-size:17px;font-weight:800;" id="homestay-host-list-title">新着ホスト一覧</div>
+      <div style="font-size:12px;color:var(--light);margin-top:1px;" id="homestay-host-list-subtitle">ホームステイホスト全件</div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:30px;">
+    <div class="match-list" style="padding:16px;" id="homestay-host-list-cards"></div>
   </div>
 </div>
 
@@ -4480,6 +4494,7 @@
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
+  let homestayHostListType = 'new';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
   const interviewedListings = new Set();
@@ -4503,7 +4518,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','apply','application-sent','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','apply','application-sent','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','payment','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -4514,6 +4529,7 @@
 	      window.scrollTo(0, 0);
 	    }
     if (to === 'ai-result') renderAiResult();
+    if (to === 'homestay-host-list') renderHomestayHostList();
     if (to === 'pending-hosts') renderGuestRequestList();
     if (to === 'host-applicants') syncHostFormalRequestCard();
     if (to === 'host-onboarding' || to === 'host-profile' || to === 'detail') renderHostFamilyEditors();
@@ -4529,6 +4545,69 @@
     const card = document.getElementById('sharehouse-manager-profile-card');
     if (!card) return;
     card.style.display = window._serviceType === 'sharehouse' ? 'flex' : 'none';
+  }
+
+  const HOMESTAY_NEW_HOST_IDS = ['emily', 'jennifer', 'robert', 'sarah', 'michael', 'thompson'];
+  const HOMESTAY_POPULAR_HOST_IDS = ['sarah', 'thompson', 'robert', 'michael', 'emily', 'jennifer'];
+
+  function openHomestayHostList(type) {
+    homestayHostListType = type === 'popular' ? 'popular' : 'new';
+    syncGuestServiceContext('homestay');
+    renderHomestayHostList();
+    navigate(currentScreen, 'homestay-host-list');
+  }
+
+  function backToHomestaySearch() {
+    syncGuestServiceContext('homestay');
+    navigate(currentScreen, 'search');
+    switchSearchCat('homestay');
+  }
+
+  function renderHomestayListCard(hostId) {
+    const h = HOSTS[hostId];
+    if (!h) return '';
+    const image = h.photos?.[0] || '';
+    return `
+      <div class="match-card" onclick="openDetail('${hostId}','homestay-host-list')">
+        <div class="match-card-img">
+          <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge"><span class="match-badge-icon">🤖</span> ${t('match_score')}${h.match}%</div>
+          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
+          <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:${h.match}%"></div></div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1">
+            <div class="match-card-name">${h.name}</div>
+            <div class="match-card-rating">★ ${h.rating}</div>
+          </div>
+          <div class="match-card-location">${h.city} · ${localizeText(h.roomType)} · ${t('host_years').replace('{years}', h.years)}</div>
+          <div class="match-card-tags">
+            ${h.tags.slice(0, 4).map(tag => `<span class="ctag ${tag.cls === 'green' ? 'ok' : tag.cls === 'red' ? 'ng' : ''}">${localizeText(tag.text)}</span>`).join('')}
+          </div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>$${h.price.toLocaleString()}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div>
+            <div class="match-card-meals">${localizeText(h.mealsTag)}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHomestayHostList() {
+    const title = document.getElementById('homestay-host-list-title');
+    const subtitle = document.getElementById('homestay-host-list-subtitle');
+    const list = document.getElementById('homestay-host-list-cards');
+    if (!list) return;
+    const isPopular = homestayHostListType === 'popular';
+    const ids = isPopular ? HOMESTAY_POPULAR_HOST_IDS : HOMESTAY_NEW_HOST_IDS;
+    if (title) title.textContent = isPopular
+      ? (currentLang === 'ja' ? '人気ホスト一覧' : 'Popular Hosts')
+      : (currentLang === 'ja' ? '新着ホスト一覧' : 'New Hosts');
+    if (subtitle) subtitle.textContent = currentLang === 'ja'
+      ? `ホームステイホスト全件 · ${ids.length}件`
+      : `All homestay hosts · ${ids.length} results`;
+    list.innerHTML = ids.map(renderHomestayListCard).join('');
   }
 
   function openStayHistory() {
@@ -7429,6 +7508,7 @@
     renderReviewTags();
     if (currentScreen === 'write-review') renderReviewHosts();
     if (currentScreen === 'stay-history') renderStayHistory();
+    if (currentScreen === 'homestay-host-list') renderHomestayHostList();
     if (currentScreen === 'pending-hosts') renderGuestRequestList();
     if (currentScreen === 'application-sent') renderApplicationSent();
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
