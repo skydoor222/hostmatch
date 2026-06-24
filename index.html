@@ -534,6 +534,7 @@
 
     /* ===== ② 詳細画面 ===== */
     #screen-detail { background: white; }
+    #screen-sharehouse-detail { background: white; }
 
     /* photo slider */
     .detail-photo-slider { position: relative; height: 280px; overflow: hidden; }
@@ -1678,17 +1679,6 @@
       </div>
     </div>
 
-    <div style="padding:12px 16px 0;">
-      <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;align-items:center;gap:14px;">
-        <div class="detail-avatar av1" id="detail-profile-photo" style="width:64px;height:64px;font-size:32px;">👩</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-weight:800;color:var(--light);margin-bottom:4px;">プロフィール写真</div>
-          <div id="detail-profile-name" style="font-size:16px;font-weight:900;color:var(--dark);">Sarah Johnson</div>
-          <div id="detail-profile-meta" style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;">43歳 · アメリカ · 女性</div>
-        </div>
-      </div>
-    </div>
-
     <div class="detail-section">
       <div class="dtag-row" id="detail-tags">
         <span class="dtag green">✓ 日本語OK</span>
@@ -1699,12 +1689,22 @@
       </div>
     </div>
 
+    <div class="detail-section" style="padding-top:12px;">
+      <div class="detail-section-title">🤖 AIマッチング相手の詳細情報</div>
+      <div id="detail-guest-preferences" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
     <div class="divider"></div>
 
-	    <div class="detail-section">
-	      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
-	      <div class="ls-grid" id="detail-ls-grid"></div>
-	    </div>
+		    <div class="detail-section">
+		      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
+		      <div class="ls-grid" id="detail-ls-grid"></div>
+		    </div>
+
+		    <div class="detail-section" style="padding-top:0;">
+		      <div class="detail-section-title">💎 価値観</div>
+		      <div class="ls-grid" id="detail-values-grid"></div>
+		    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
 	      <div class="detail-section-title">👨‍👩‍👧 ホストファミリー / 同居メンバー</div>
@@ -1746,13 +1746,10 @@
     <div class="divider"></div>
 
     <div class="detail-section" style="padding-bottom:16px;">
-      <div class="detail-section-title" data-i18n="price_breakdown">💰 料金内訳</div>
-      <div class="price-box">
-        <div class="price-row"><span style="color:var(--light)" data-i18n="rent">家賃</span><strong>$750 /月</strong></div>
-        <div class="price-row"><span style="color:var(--light)" data-i18n="weekday_breakfast">朝食（平日）</span><strong>$100 /月</strong></div>
-        <div class="price-row"><span style="color:var(--light)" data-i18n="utilities_wifi">光熱費・Wi-Fi</span><strong>$100 /月</strong></div>
-        <div class="price-row total"><span data-i18n="total">合計</span><span>$950 /月</span></div>
-      </div>
+	      <div class="detail-section-title" data-i18n="price_simple">💰 料金</div>
+	      <div class="price-box">
+	        <div class="price-row total"><span>月額</span><span>$950 /月</span></div>
+	      </div>
     </div>
 
     <div class="divider"></div>
@@ -2581,11 +2578,25 @@
       </div>
     </div>
 
-    <!-- シェアハウス用 Step 3: 求めるルームメイト像 -->
-    <div class="onboard-step-panel" id="sh-onboard-panel-3" style="display:none;">
-      <div class="form-section" style="padding-top:0;">
-        <div class="form-group">
-          <div class="form-label">騒音・音楽</div>
+	    <!-- シェアハウス用 Step 3: 求めるルームメイト像 -->
+	    <div class="onboard-step-panel" id="sh-onboard-panel-3" style="display:none;">
+	      <div class="form-section" style="padding-top:0;">
+	        <div class="form-group">
+	          <div class="form-label">趣味・興味（複数可）</div>
+	          <div class="form-chip-row">
+	            <div class="form-chip" onclick="toggleMultiChip(this)">🎵 音楽</div>
+	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🎬 映画</div>
+	            <div class="form-chip" onclick="toggleMultiChip(this)">📚 読書</div>
+	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🍳 料理</div>
+	            <div class="form-chip" onclick="toggleMultiChip(this)">🏃 スポーツ</div>
+	            <div class="form-chip" onclick="toggleMultiChip(this)">🎮 ゲーム</div>
+	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🌿 アウトドア</div>
+	            <div class="form-chip" onclick="toggleMultiChip(this)">🎨 アート</div>
+	            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 動物好き</div>
+	          </div>
+	        </div>
+	        <div class="form-group">
+	          <div class="form-label">騒音・音楽</div>
           <div class="form-chip-row">
             <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
             <div class="form-chip" onclick="toggleChip(this)">普通</div>
@@ -2672,127 +2683,70 @@
     <div class="detail-save" style="position:absolute;top:16px;right:14px;z-index:10;">🤍</div>
   </div>
 
-  <div style="flex:1;overflow-y:auto;padding:16px;padding-bottom:100px;">
-    <!-- 物件基本情報 -->
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;margin-bottom:16px;">
-      <div style="font-size:18px;font-weight:900;margin-bottom:4px;">Tokyo House Shinjuku</div>
-      <div style="font-size:13px;color:var(--light);margin-bottom:12px;">📍 新宿区 · 個室 · 残り1室</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
-          <div style="font-size:10px;color:var(--light);font-weight:700;">家賃</div>
-          <div style="font-size:14px;font-weight:800;margin-top:2px;color:var(--primary);">¥65,000</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
-          <div style="font-size:10px;color:var(--light);font-weight:700;">部屋タイプ</div>
-          <div style="font-size:14px;font-weight:800;margin-top:2px;">個室</div>
-        </div>
-        <div style="background:var(--bg);border-radius:10px;padding:10px;text-align:center;">
-          <div style="font-size:10px;color:var(--light);font-weight:700;">入居可能</div>
-          <div style="font-size:14px;font-weight:800;margin-top:2px;">即入居</div>
-        </div>
-      </div>
-    </div>
+  <div class="detail-scroll">
+	    <div class="detail-host-row">
+	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">👩</div>
+	      <div>
+	        <div class="detail-host-name" id="sharehouse-match-name">田中 あおい</div>
+	        <div class="detail-match-badge" id="sharehouse-match-badge">🤖 マッチ度：94%</div>
+	        <div class="detail-host-meta" id="sharehouse-match-meta">📍 新宿区 · 駅徒歩5分</div>
+	        <div class="detail-rating" id="sharehouse-match-rating">★ 4.8 <span>(24件のレビュー)</span></div>
+	      </div>
+	    </div>
 
-    <!-- 入居メンバーセクションタイトル -->
-    <div style="font-size:16px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
-      <span>👥</span> 入居メンバー <span style="font-size:13px;color:var(--light);font-weight:400;">2名</span>
-    </div>
+	    <div class="detail-section" style="padding-top:12px;">
+	      <div class="detail-section-title">🤖 AIマッチング相手の詳細情報</div>
+	      <div id="sharehouse-guest-preferences" style="display:flex;flex-direction:column;gap:10px;"></div>
+	    </div>
 
-    <!-- メンバーカード1: 田中あおい -->
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;">
-      <div style="padding:16px;display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--border);">
-        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">👩</div>
-        <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div style="font-size:16px;font-weight:800;">田中 あおい</div>
-            <div style="background:#E8F4FD;color:#1A73E8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ 本人確認済み</div>
-          </div>
-          <div style="font-size:13px;color:var(--light);margin-top:3px;">24歳 · 日本 · 女性 · 会社員</div>
-          <div style="font-size:13px;color:var(--mid);margin-top:6px;line-height:1.5;">「週末は静かに過ごしたいです。料理が好きで、キッチンをよく使います。」</div>
-        </div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">⏰ 生活スタイル</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">起床</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">7:00頃</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">就寝</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">23:00頃</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">在宅</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">夜のみ</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">清潔感</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">かなり気にする</div>
-          </div>
-        </div>
-      </div>
-      <div style="padding:14px 16px;">
-        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">🏠 ルール・価値観</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="ctag ok">✓ 非喫煙</span>
-          <span class="ctag ok">✓ 静かに過ごしたい</span>
-          <span class="ctag">来客：事前相談</span>
-          <span class="ctag ok">✓ 掃除当番OK</span>
-        </div>
-      </div>
-    </div>
+	    <div class="divider"></div>
 
-    <!-- メンバーカード2: 佐藤けんじ -->
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;">
-      <div style="padding:16px;display:flex;gap:14px;align-items:flex-start;border-bottom:1px solid var(--border);">
-        <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;">👨</div>
-        <div style="flex:1;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div style="font-size:16px;font-weight:800;">佐藤 けんじ</div>
-            <div style="background:#E8F4FD;color:#1A73E8;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;">✓ 本人確認済み</div>
-          </div>
-          <div style="font-size:13px;color:var(--light);margin-top:3px;">27歳 · 日本 · 男性 · エンジニア</div>
-          <div style="font-size:13px;color:var(--mid);margin-top:6px;line-height:1.5;">「在宅ワーク多めです。基本は夜型ですが静かに過ごすのが好きです。ペット（猫）がいます。」</div>
-        </div>
-      </div>
-      <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
-        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">⏰ 生活スタイル</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">起床</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">9:00頃</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">就寝</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">1:00頃</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">在宅</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">ほぼ在宅</div>
-          </div>
-          <div style="background:var(--bg);border-radius:10px;padding:10px 12px;">
-            <div style="font-size:10px;color:var(--light);font-weight:700;">清潔感</div>
-            <div style="font-size:13px;font-weight:700;margin-top:2px;">普通</div>
-          </div>
-        </div>
-      </div>
-      <div style="padding:14px 16px;">
-        <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;">🏠 ルール・価値観</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="ctag ok">✓ 非喫煙</span>
-          <span class="ctag ok">✓ ペット可（猫）</span>
-          <span class="ctag">来客：自由</span>
-          <span class="ctag ok">✓ 在宅ワーク環境あり</span>
-        </div>
-      </div>
-    </div>
+	    <div class="detail-section">
+	      <div class="detail-section-title">🌙 生活スタイル</div>
+	      <div class="ls-grid" id="sharehouse-ls-grid"></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">💎 価値観</div>
+	      <div class="ls-grid" id="sharehouse-values-grid"></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">👥 ホストファミリー / 同居メンバー</div>
+	      <div id="sharehouse-roommates" style="display:flex;flex-direction:column;gap:10px;"></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title" style="font-size:13px;color:var(--light);font-weight:600;">💬 レビュー</div>
+	      <div class="ls-review-list" id="sharehouse-reviews"></div>
+	    </div>
+
+	    <div class="divider"></div>
+
+	    <div class="detail-section">
+	      <div class="detail-section-title">📋 ハウスルール</div>
+	      <div class="rule-list" id="sharehouse-rules"></div>
+	    </div>
+
+	    <div class="divider"></div>
+
+	    <div class="detail-section">
+	      <div class="detail-section-title">🏠 部屋情報</div>
+	      <div class="info-grid" id="sharehouse-room-info"></div>
+	    </div>
+
+	    <div class="divider"></div>
+
+	    <div class="detail-section" style="padding-bottom:16px;">
+	      <div class="detail-section-title">💰 料金</div>
+	      <div class="price-box" id="sharehouse-price-box"></div>
+	    </div>
   </div>
 
   <!-- CTA -->
   <div class="detail-cta">
-    <button class="btn-outline" onclick="openSharehouseChat()" style="flex:1;padding:14px;border:2px solid var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;cursor:pointer;">💬 メッセージ</button>
-    <button class="btn-primary" id="sharehouse-action-btn" onclick="requestSharehouseInterview()" style="flex:2;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:700;cursor:pointer;">📹 面談を申し込む</button>
+    <button class="btn-outline" onclick="openSharehouseChat()">💬 メッセージ</button>
+    <button class="btn-primary" id="sharehouse-action-btn" onclick="requestSharehouseInterview()">📹 面談を申し込む</button>
   </div>
 </div>
 
@@ -3801,6 +3755,10 @@
         <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">趣味</span><strong id="applicant-detail-hobbies" style="text-align:right;"></strong></div>
         <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望滞在期間</span><strong id="applicant-detail-stay" style="text-align:right;"></strong></div>
         <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望エリア</span><strong id="applicant-detail-area" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望金額</span><strong id="applicant-detail-budget" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">NG条件</span><strong id="applicant-detail-ng" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">一言</span><strong id="applicant-detail-note" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">価値観</span><strong id="applicant-detail-values" style="text-align:right;"></strong></div>
       </div>
     </div>
 
@@ -4686,12 +4644,314 @@
     if (message) message.style.display = 'block';
   }
 
-  function toggleFaq(button) {
-    const item = button.closest('.faq-item');
-    if (item) item.classList.toggle('open');
-  }
+	  function toggleFaq(button) {
+	    const item = button.closest('.faq-item');
+	    if (item) item.classList.toggle('open');
+	  }
 
-  /* ===== DETAIL SCREEN ===== */
+	  function escapeHtml(value) {
+	    return String(value ?? '').replace(/[&<>"']/g, ch => ({
+	      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+	    }[ch]));
+	  }
+
+	  function selectedChipTexts(scopeSelector) {
+	    const scope = document.querySelector(scopeSelector);
+	    if (!scope) return [];
+	    return Array.from(scope.querySelectorAll('.form-chip.selected'))
+	      .map(el => el.textContent.trim())
+	      .filter(Boolean);
+	  }
+
+	  function inputValue(selector, fallback = '') {
+	    const el = document.querySelector(selector);
+	    return el?.value || fallback;
+	  }
+
+	  function scopedInputValues(scopeSelector, inputSelector) {
+	    const scope = document.querySelector(scopeSelector);
+	    if (!scope) return [];
+	    return Array.from(scope.querySelectorAll(inputSelector)).map(el => el.value || el.placeholder || '').filter(Boolean);
+	  }
+
+	  function formatBudget(values, fallback) {
+	    const min = values[0] || '';
+	    const max = values[1] || '';
+	    if (min || max) return `${min || '0'}〜${max || '未設定'}`;
+	    return fallback;
+	  }
+
+	  function preferenceCard(title, rows) {
+	    return `
+	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div style="font-size:13px;font-weight:900;color:var(--dark);margin-bottom:10px;">${escapeHtml(localizeText(title))}</div>
+	        <div style="display:flex;flex-direction:column;gap:8px;">
+	          ${rows.map(row => `
+	            <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:1.5;">
+	              <span style="color:var(--light);font-weight:700;flex-shrink:0;">${escapeHtml(localizeText(row.label))}</span>
+	              <strong style="text-align:right;color:var(--dark);">${escapeHtml(localizeText(row.value || '未設定'))}</strong>
+	            </div>
+	          `).join('')}
+	        </div>
+	      </div>
+	    `;
+	  }
+
+	  const availabilityCalendarState = {};
+
+	  function availabilityCalendar(range, key = 'detail') {
+	    if (!availabilityCalendarState[key]) availabilityCalendarState[key] = { offset: 0, range };
+	    availabilityCalendarState[key].range = range;
+	    return `<div id="availability-calendar-${key}">${availabilityCalendarContent(key)}</div>`;
+	  }
+
+	  function shiftAvailabilityMonth(key, dir) {
+	    const state = availabilityCalendarState[key];
+	    if (!state) return;
+	    state.offset += dir;
+	    const target = document.getElementById('availability-calendar-' + key);
+	    if (target) target.innerHTML = availabilityCalendarContent(key);
+	  }
+
+	  function availabilityCalendarContent(key) {
+	    const range = availabilityCalendarState[key].range;
+	    const start = new Date(range.start + 'T00:00:00');
+	    const end = new Date(range.end + 'T00:00:00');
+	    const viewDate = new Date(start.getFullYear(), start.getMonth() + (availabilityCalendarState[key].offset || 0), 1);
+	    const year = viewDate.getFullYear();
+	    const month = viewDate.getMonth();
+	    const firstDay = new Date(year, month, 1).getDay();
+	    const daysInMonth = new Date(year, month + 1, 0).getDate();
+	    const monthLabel = currentLang === 'ja'
+	      ? `${year}年 ${month + 1}月`
+	      : new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(start);
+	    const weekdays = currentLang === 'ja'
+	      ? ['日','月','火','水','木','金','土']
+	      : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+	    const blanks = Array.from({ length: firstDay }, () => '<div></div>').join('');
+	    const days = Array.from({ length: daysInMonth }, (_, i) => {
+	      const day = i + 1;
+	      const current = new Date(year, month, day);
+	      const available = current >= start && current <= end;
+	      return `<div style="height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:${available ? '#E8F7EF' : 'white'};color:${available ? '#167A45' : 'var(--light)'};border:1px solid ${available ? '#BFE8D1' : 'var(--border)'};">${day}</div>`;
+	    }).join('');
+	    return `
+	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;">
+	          <div style="font-size:13px;font-weight:900;color:var(--dark);">${localizeText('受け入れ可能日')}</div>
+	          <div style="font-size:12px;color:var(--mid);font-weight:800;">${escapeHtml(range.start.replaceAll('-', '/'))} - ${escapeHtml(range.end.replaceAll('-', '/'))}</div>
+	        </div>
+	        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+	          <button type="button" onclick="shiftAvailabilityMonth('${key}', -1)" aria-label="前の月" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;font-weight:900;cursor:pointer;">‹</button>
+	          <div style="font-size:13px;font-weight:900;text-align:center;">${escapeHtml(monthLabel)}</div>
+	          <button type="button" onclick="shiftAvailabilityMonth('${key}', 1)" aria-label="次の月" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;font-weight:900;cursor:pointer;">›</button>
+	        </div>
+	        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:4px;">
+	          ${weekdays.map(w => `<div style="font-size:10px;color:var(--light);font-weight:800;">${w}</div>`).join('')}
+	        </div>
+	        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${blanks}${days}</div>
+	        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--mid);font-weight:700;"><span style="width:12px;height:12px;border-radius:4px;background:#E8F7EF;border:1px solid #BFE8D1;"></span>${localizeText('受け入れ可能')}</div>
+	      </div>
+	    `;
+	  }
+
+	  const sharehouseMatchProfiles = {
+	    sh1: {
+	      name: '田中 あおい',
+	      match: 94,
+	      nationality: '日本',
+	      gender: '女性',
+	      area: '新宿区 · 駅徒歩5分',
+	      available: { start: '2026-07-01', end: '2026-12-31' },
+	      rent: '¥65,000 /月',
+	      roomType: '個室 · 家具付き · Wi-Fi完備',
+	      lifestyleCards: { wake: '7:00頃', sleep: '23:00頃', talk: '普通〜多め', clean: 'きれい好き' },
+	      lifestyle: '7:00頃起床 · 23:00頃就寝 · 夜のみ在宅 · かなりきれい好き',
+	      values: '清潔さ、生活リズムの尊重、適度な交流',
+	      review: '★4.8 · 住人同士の距離感がちょうどよい',
+	      hobbies: '料理、映画、カフェ巡り',
+	      ng: '室内喫煙、深夜の騒音、共有部の放置',
+	      note: '週末は静かに過ごしたいです。料理が好きで、キッチンをよく使います。',
+	      rules: '室内禁煙 · 共有部は使用後に片付け · 来客は事前相談 · 掃除当番あり',
+	      conditions: '静かに暮らせる方 · 掃除当番OK · 来客は事前相談',
+	      roommates: [
+	        { name: '佐藤 けんじ', age: '27歳', gender: '男性', nationality: '日本', hobbies: '読書、音楽、カフェ巡り', lifestyle: '在宅ワーク多め · 夜型 · 静かに過ごす', note: '基本は一人時間を大切にしつつ、週末に軽く話せる距離感が好きです。' }
+	      ]
+	    },
+	    sh2: {
+	      name: '鈴木 みさき',
+	      match: 91,
+	      nationality: '日本',
+	      gender: '女性',
+	      area: '渋谷区 · 駅徒歩3分',
+	      available: { start: '2026-08-01', end: '2027-01-31' },
+	      rent: '¥72,000 /月',
+	      roomType: '個室 · 女性専用フロア · Wi-Fi完備',
+	      lifestyleCards: { wake: '6:30頃', sleep: '22:30頃', talk: '普通', clean: 'かなりきれい好き' },
+	      lifestyle: '朝型 · 共有部は静かに利用 · 週末のみ在宅多め',
+	      values: '安心感、清潔さ、生活音への配慮',
+	      review: '★4.7 · 駅近で住人が親切',
+	      hobbies: '読書、料理、アート',
+	      ng: '喫煙、無断来客、共有部の長時間占有',
+	      note: '落ち着いた生活ができる方を探しています。',
+	      rules: '室内禁煙 · 無断来客なし · 共有部は静かに利用 · 掃除ルールを守る',
+	      conditions: '女性歓迎 · 静かな生活 · 掃除ルールを守れる方',
+	      roommates: [
+	        { name: '山本 りな', age: '25歳', gender: '女性', nationality: '日本', hobbies: 'ヨガ、映画', lifestyle: '朝型 · 清潔重視', note: 'お互いの時間を尊重できる関係が理想です。' }
+	      ]
+	    },
+	    sh3: {
+	      name: '佐藤 けんじ',
+	      match: 89,
+	      nationality: '日本',
+	      gender: '男性',
+	      area: '目黒区 · 庭付き',
+	      available: { start: '2026-07-15', end: '2026-11-30' },
+	      rent: '¥58,000 /月',
+	      roomType: '個室 · 庭付き · ペット相談可',
+	      lifestyleCards: { wake: '9:00頃', sleep: '1:00頃', talk: '少なめ', clean: '普通' },
+	      lifestyle: '夜型 · 在宅ワーク多め · 共有部は静かに利用',
+	      values: '自立、静かな環境、ペットへの理解',
+	      review: '★4.6 · 庭と共有キッチンが使いやすい',
+	      hobbies: '音楽、読書、ゲーム',
+	      ng: '大音量、室内喫煙',
+	      note: '静かな環境で、それぞれのペースを大切に暮らしたいです。',
+	      rules: '室内禁煙 · 大音量なし · ペットへの配慮 · 共有部は使用後に片付け',
+	      conditions: '自立した生活 · ペット理解あり · 夜型OK',
+	      roommates: [
+	        { name: '田中 あおい', age: '24歳', gender: '女性', nationality: '日本', hobbies: '料理、映画', lifestyle: '夜のみ在宅 · きれい好き', note: 'キッチンをきれいに使える方だと嬉しいです。' }
+	      ]
+	    }
+	  };
+
+	  const hostDetailExtras = {
+	    sarah: { hobbies: '料理、ガーデニング、映画', ng: '喫煙、深夜の大きな音、無断の来客宿泊', note: '家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。', values: '清潔さ、思いやり、適度な会話' },
+	    michael: { hobbies: '料理、犬の散歩、ビーチ', ng: '室内喫煙、無断外泊', note: '食事を一緒に楽しみながら、英語でたくさん会話できます。', values: '家族との交流、食事、オープンな会話' },
+	    emily: { hobbies: '読書、美術館、クラシック音楽', ng: '大きな音、夜遅い来客', note: '落ち着いた環境で学業に集中したい方に向いています。', values: '静けさ、自立、学び' },
+	    thompson: { hobbies: 'スポーツ観戦、BBQ、旅行', ng: '喫煙、共有部の散らかし', note: '明るく交流の多い家庭です。週末は一緒に出かけることもあります。', values: '交流、家族時間、ルールを守ること' },
+	    jennifer: { hobbies: 'ヨガ、料理、散歩', ng: '喫煙、ペットアレルギーへの配慮なし', note: '女性ゲストが安心して過ごせる環境づくりを大切にしています。', values: '安心感、清潔さ、穏やかな生活' },
+	    robert: { hobbies: '音楽、歴史、料理', ng: '楽器の深夜演奏、無断来客', note: '地域の文化や生活をゆっくり体験したい方を歓迎します。', values: '文化交流、尊重、落ち着いた暮らし' }
+	  };
+
+	  function renderGuestPreferenceSummary(type) {
+	    const isSharehouse = type === 'sharehouse';
+	    const container = document.getElementById(isSharehouse ? 'sharehouse-guest-preferences' : 'detail-guest-preferences');
+	    if (!container) return;
+
+	    if (isSharehouse) {
+	      const listing = currentListing || SHAREHOUSE_LISTINGS.sh1;
+	      const match = sharehouseMatchProfiles[listing.id] || sharehouseMatchProfiles.sh1;
+	      const shName = document.getElementById('sharehouse-match-name');
+	      const shMeta = document.getElementById('sharehouse-match-meta');
+	      const shBadge = document.getElementById('sharehouse-match-badge');
+	      const shRating = document.getElementById('sharehouse-match-rating');
+	      const shAvatar = document.getElementById('sharehouse-match-avatar');
+	      const reviewScore = (match.review.match(/★\d(?:\.\d)?/) || ['★4.8'])[0];
+	      if (shName) shName.textContent = match.name;
+	      if (shAvatar) shAvatar.textContent = match.gender === '男性' ? '👨' : '👩';
+	      if (shBadge) shBadge.textContent = `🤖 ${localizeText('マッチ度')}：${match.match}%`;
+	      if (shMeta) shMeta.textContent = `📍 ${localizeText(match.area)}`;
+	      if (shRating) shRating.innerHTML = `${reviewScore} <span>(${currentLang === 'ja' ? '24件のレビュー' : '24 reviews'})</span>`;
+		      availabilityCalendarState.sharehouse = { offset: 0, range: match.available };
+		      container.innerHTML = availabilityCalendar(match.available, 'sharehouse');
+		      const lifestyle = match.lifestyleCards || {};
+		      const lsGrid = document.getElementById('sharehouse-ls-grid');
+		      if (lsGrid) {
+		        lsGrid.innerHTML = [
+		          { icon: '⏰', label: '起床', value: lifestyle.wake || '未設定' },
+		          { icon: '🌙', label: '就寝', value: lifestyle.sleep || '未設定' },
+		          { icon: '💬', label: '会話量', value: lifestyle.talk || '未設定' },
+		          { icon: '🧹', label: '清潔度', value: lifestyle.clean || '未設定' }
+		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
+		      }
+		      const valuesGrid = document.getElementById('sharehouse-values-grid');
+		      if (valuesGrid) {
+		        valuesGrid.innerHTML = [
+		          { icon: '🎨', label: '趣味', value: match.hobbies },
+		          { icon: '🚫', label: 'NG条件', value: match.ng },
+		          { icon: '💎', label: '価値観', value: match.values },
+		          { icon: '💬', label: '一言', value: match.note }
+		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
+		      }
+		      const roommateBox = document.getElementById('sharehouse-roommates');
+		      if (roommateBox) {
+		        const members = [{ name: match.name, age: '24歳', gender: match.gender, nationality: match.nationality, icon: match.gender === '男性' ? '👨' : '👩' }, ...match.roommates.map(r => ({ ...r, icon: r.gender === '男性' ? '👨' : '👩' }))];
+		        roommateBox.innerHTML = members.map(member => `
+		          <div style="background:var(--bg);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
+		            <div style="width:44px;height:44px;border-radius:50%;background:white;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${member.icon}</div>
+		            <div style="min-width:0;">
+		              <div style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText(member.name)}</div>
+		              <div style="font-size:12px;color:var(--light);margin-top:2px;">${localizeText(member.age)} · ${localizeText(member.nationality)} · ${localizeText(member.gender)}</div>
+		            </div>
+		          </div>
+		        `).join('');
+		      }
+		      const reviewBox = document.getElementById('sharehouse-reviews');
+		      if (reviewBox) {
+		        const reviewText = match.review.replace(/^★\d(?:\.\d)?\s*·\s*/, '');
+		        reviewBox.innerHTML = `
+		          <div class="ls-review-item">
+		            <div class="ls-review-header">
+		              <div class="ls-review-avatar">👤</div>
+		              <div class="ls-review-meta">
+		                <div class="ls-review-name">${currentLang === 'ja' ? '入居者レビュー' : 'Resident Review'}</div>
+		                <div class="ls-review-date">${currentLang === 'ja' ? '2026年春に滞在' : 'Stayed in Spring 2026'}</div>
+		              </div>
+		              <div class="ls-review-stars">${reviewScore}</div>
+		            </div>
+		            <div class="ls-review-chips">
+		              <span class="ls-review-chip">${localizeText('清潔')}</span>
+		              <span class="ls-review-chip">${localizeText('安心')}</span>
+		              <span class="ls-review-chip">${localizeText('親切')}</span>
+		            </div>
+		            <div class="ls-review-text">${localizeText(reviewText)}</div>
+		          </div>
+		        `;
+		      }
+		      const ruleBox = document.getElementById('sharehouse-rules');
+		      if (ruleBox) {
+		        const okRules = match.rules.split(' · ').filter(Boolean);
+		        const ngRules = match.ng.split('、').filter(Boolean);
+		        ruleBox.innerHTML = [
+		          ...okRules.map(text => ({ ok: true, text })),
+		          ...ngRules.map(text => ({ ok: false, text }))
+		        ].map(rule => `<div class="rule-row"><span class="${rule.ok ? 'rule-ok' : 'rule-ng'}">${rule.ok ? '✓' : '✗'}</span> ${localizeText(rule.text)}</div>`).join('');
+		      }
+		      const roomInfo = document.getElementById('sharehouse-room-info');
+		      if (roomInfo) {
+		        roomInfo.innerHTML = [
+		          { label: '住所/エリア', value: match.area },
+		          { label: '部屋タイプ', value: match.roomType },
+		          { label: '希望/募集条件', value: match.conditions },
+		          { label: 'Wi-Fi', value: match.roomType.includes('Wi-Fi') ? '光回線・無制限' : '共用Wi-Fiあり' }
+		        ].map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
+		      }
+		      const priceBox = document.getElementById('sharehouse-price-box');
+		      if (priceBox) {
+		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額')}</span><span>${localizeText(match.rent)}</span></div>`;
+		      }
+	      return;
+	    }
+
+	    const h = HOSTS[currentHost] || HOSTS.sarah;
+	    const profile = hostProfileInfo[currentHost] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
+	    const extra = hostDetailExtras[currentHost] || hostDetailExtras.sarah;
+	    const availability = getHostAvailability(currentHost || 'sarah');
+
+	    container.innerHTML = [
+	      preferenceCard('プロフィール', [
+	        { label: 'ホスト名', value: h.name },
+	        { label: '年齢', value: profile.age },
+	        { label: '国籍', value: profile.nationality },
+	        { label: '性別', value: profile.gender },
+	        { label: '家族構成', value: h.gender === 'couple' ? '夫婦' : h.gender === 'female' ? '女性ホスト' : '男性ホスト' },
+	        { label: '家族/同居人情報', value: hostFamilyMembers.map(m => `${m.age} · ${m.gender} · ${m.nationality}`).join(' / ') || '同居メンバー未登録' }
+	      ]),
+	      (availabilityCalendarState.homestay = { offset: 0, range: availability }, availabilityCalendar(availability, 'homestay'))
+	    ].join('');
+	  }
+
+	  /* ===== DETAIL SCREEN ===== */
   function openDetail(hostId, backScreen = 'search') {
     // mapから来た場合、screen-mapを非アクティブにする（navigate内で処理）
     const h = HOSTS[hostId];
@@ -4732,25 +4992,27 @@
     document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ' + t('host_years').replace('{years}', h.years);
     document.getElementById('detail-rating').innerHTML = '★ ' + h.rating + ' <span>(' + t('review_count').replace('{count}', h.reviews) + ')</span>';
     const profile = hostProfileInfo[hostId] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
-    const detailProfilePhoto = document.getElementById('detail-profile-photo');
-    detailProfilePhoto.className = 'detail-avatar ' + h.avClass;
-    detailProfilePhoto.textContent = h.avatar;
-    document.getElementById('detail-profile-name').textContent = h.name;
-    document.getElementById('detail-profile-meta').textContent = [profile.age, profile.nationality, profile.gender].map(localizeText).join(' · ');
-
     // Tags
     document.getElementById('detail-tags').innerHTML = h.tags.map(t =>
       `<span class="dtag ${t.cls}">${localizeText(t.text)}</span>`
     ).join('');
+    renderGuestPreferenceSummary('homestay');
+    const detailExtra = hostDetailExtras[hostId] || hostDetailExtras.sarah;
 
     // Lifestyle
-	    document.getElementById('detail-ls-grid').innerHTML = `
-	      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">${t('wake_time')}</div><div class="ls-val">${h.lifestyle.wake}</div></div>
-	      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">${t('sleep_time')}</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
-	      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${t('conversation')}</div><div class="ls-val">${localizeText(h.lifestyle.talk)}</div></div>
-	      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">${t('cleanliness')}</div><div class="ls-val">${localizeText(h.lifestyle.clean)}</div></div>
-	    `;
-	    renderHostFamilyList('detail-host-family', false);
+		    document.getElementById('detail-ls-grid').innerHTML = `
+		      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">${t('wake_time')}</div><div class="ls-val">${h.lifestyle.wake}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">${t('sleep_time')}</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${t('conversation')}</div><div class="ls-val">${localizeText(h.lifestyle.talk)}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">${t('cleanliness')}</div><div class="ls-val">${localizeText(h.lifestyle.clean)}</div></div>
+		    `;
+		    document.getElementById('detail-values-grid').innerHTML = `
+		      <div class="ls-cell"><div class="ls-icon">🎨</div><div class="ls-label">${localizeText('趣味')}</div><div class="ls-val">${localizeText(detailExtra.hobbies)}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🚫</div><div class="ls-label">${localizeText('NG条件')}</div><div class="ls-val">${localizeText(detailExtra.ng)}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">💎</div><div class="ls-label">${localizeText('価値観')}</div><div class="ls-val">${localizeText(detailExtra.values)}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${localizeText('一言')}</div><div class="ls-val">${localizeText(detailExtra.note)}</div></div>
+		    `;
+		    renderHostFamilyList('detail-host-family', false);
 
 	    // Lifestyle reviews
     document.getElementById('detail-ls-reviews').innerHTML = h.lifestyleReviews.map(r => `
@@ -4783,10 +5045,7 @@
 
     // Price
     const priceBox = document.querySelector('.price-box');
-    priceBox.innerHTML = h.priceBreakdown.map(p =>
-      `<div class="price-row"><span style="color:var(--light)">${localizeText(p.label)}</span><strong>${localizePriceText(p.val)}</strong></div>`
-    ).join('') +
-      `<div class="price-row total"><span>${t('total')}</span><span>$${h.price.toLocaleString()} ${currentLang === 'ja' ? '/月' : '/mo'}</span></div>`;
+	    priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額')}</span><span>$${h.price.toLocaleString()} ${currentLang === 'ja' ? '/月' : '/mo'}</span></div>`;
 
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
@@ -5865,7 +6124,7 @@
       ai_match_done:'AIマッチング完了 · 6件', view_results:'結果を見る →', new_hosts:'✨ 新着ホスト', view_all:'すべて見る',
       search_area:'エリアを入力...',
       lifestyle:'🌙 生活スタイル', student_reviews:'💬 過去の留学生からの評価',
-      house_rules:'📋 ハウスルール', room_info:'🏠 部屋情報', price_breakdown:'💰 料金内訳',
+      house_rules:'📋 ハウスルール', room_info:'🏠 部屋情報', price_breakdown:'💰 料金内訳', price_simple:'💰 料金',
       rent:'家賃', weekday_breakfast:'朝食（平日）', utilities_wifi:'光熱費・Wi-Fi', total:'合計',
       location:'📍 ロケーション', message_button:'💬 メッセージ',
       chat_detail_apply:'ホスト詳細・お申し込みはこちら', submit_application_arrow:'本申し込み →',
@@ -5977,7 +6236,7 @@
       ai_match_done:'AI Matching Complete · 6 results', view_results:'View results →', new_hosts:'✨ New Hosts', view_all:'View All',
       search_area:'Enter an area...',
       lifestyle:'🌙 Lifestyle', student_reviews:'💬 Reviews from Previous Students',
-      house_rules:'📋 House Rules', room_info:'🏠 Room Information', price_breakdown:'💰 Price Breakdown',
+      house_rules:'📋 House Rules', room_info:'🏠 Room Information', price_breakdown:'💰 Price Breakdown', price_simple:'💰 Price',
       rent:'Rent', weekday_breakfast:'Breakfast (weekdays)', utilities_wifi:'Utilities / Wi-Fi', total:'Total',
       location:'📍 Location', message_button:'💬 Message',
       chat_detail_apply:'Host details and application are here', submit_application_arrow:'Apply →',
@@ -6200,6 +6459,101 @@
     '3ヶ月':'3 months',
     '6ヶ月':'6 months',
     '月額予算（USD）':'Monthly Budget (USD)',
+    '月額':'Monthly',
+    'AIマッチングに使ったあなたの条件':'Your AI Matching Preferences',
+    'AIマッチング相手の詳細情報':'AI Match Details',
+    '受け入れ可能日':'Available Dates',
+    '受け入れ可能':'Available',
+    'マッチ度':'Match',
+    'プロフィール':'Profile',
+    '希望条件':'Preferences',
+    '希望金額':'Preferred Budget',
+    '希望期間':'Preferred Stay Period',
+    '価値観':'Values',
+    '一言':'Short Message',
+    'ホスト名':'Host Name',
+    '家族/同居人情報':'Family / Household Members',
+    '住所/エリア':'Address / Area',
+    '受け入れ可能期間':'Available Dates',
+    '料金':'Price',
+    '部屋情報':'Room Information',
+    '物件名':'Property Name',
+    '管理者':'Manager',
+    '住人の趣味':'Residents’ Hobbies',
+    'レビュー':'Reviews',
+    '料金/部屋情報':'Price / Room Information',
+    '同居人情報':'Housemate Information',
+    '🌙 生活スタイル':'🌙 Lifestyle',
+    '💎 価値観':'💎 Values',
+    '💬 レビュー':'💬 Reviews',
+    '📋 ハウスルール':'📋 House Rules',
+    '🏠 部屋情報':'🏠 Room Information',
+    '💰 料金':'💰 Price',
+    '💰 料金/部屋情報':'💰 Price / Room Information',
+    '👥 同居人情報':'👥 Housemate Information',
+    'ルール':'Rules',
+    '希望/募集条件':'Preferences / Requirements',
+    '募集条件':'Requirements',
+    '年齢・性別・国籍':'Age / Gender / Nationality',
+    '駅徒歩5分':'5 min walk from station',
+    '駅徒歩3分':'3 min walk from station',
+    '庭付き':'With garden',
+    '家具付き':'Furnished',
+    'Wi-Fi完備':'Wi-Fi included',
+    '女性専用フロア':'Women-only floor',
+    'ペット相談可':'Pets negotiable',
+    '¥65,000 /月':'¥65,000 /month',
+    '¥72,000 /月':'¥72,000 /month',
+    '¥58,000 /月':'¥58,000 /month',
+    '7:00頃起床 · 23:00頃就寝 · 夜のみ在宅 · かなりきれい好き':'Wakes around 7:00 · sleeps around 23:00 · home in the evenings · very clean and organized',
+    '朝型 · 共有部は静かに利用 · 週末のみ在宅多め':'Morning person · uses shared spaces quietly · mostly home on weekends',
+    '夜型 · 在宅ワーク多め · 共有部は静かに利用':'Night owl · often works from home · uses shared spaces quietly',
+    '住人同士の距離感がちょうどよい':'The distance between residents feels just right',
+    '駅近で住人が親切':'Close to the station, with kind residents',
+    '庭と共有キッチンが使いやすい':'The garden and shared kitchen are easy to use',
+    '清潔さ、生活リズムの尊重、適度な交流':'Cleanliness, respect for daily rhythms, and moderate interaction',
+    '安心感、清潔さ、生活音への配慮':'Comfort, cleanliness, and consideration around daily noise',
+    '自立、静かな環境、ペットへの理解':'Independence, a quiet environment, and understanding of pets',
+    '室内喫煙、深夜の騒音、共有部の放置':'Indoor smoking, late-night noise, leaving shared spaces messy',
+    '喫煙、無断来客、共有部の長時間占有':'Smoking, unapproved visitors, occupying shared spaces for long periods',
+    '大音量、室内喫煙':'Loud noise, indoor smoking',
+    '週末は静かに過ごしたいです。料理が好きで、キッチンをよく使います。':'I like spending quiet weekends at home. I enjoy cooking and often use the kitchen.',
+    '落ち着いた生活ができる方を探しています。':'I am looking for someone who can live calmly and comfortably.',
+    '静かな環境で、それぞれのペースを大切に暮らしたいです。':'I would like to live in a quiet environment where everyone can keep their own pace.',
+    '室内禁煙':'No indoor smoking',
+    '共有部は使用後に片付け':'Clean up shared spaces after use',
+    '来客は事前相談':'Discuss visitors in advance',
+    '掃除当番あり':'Cleaning rotation included',
+    '無断来客なし':'No unapproved visitors',
+    '共有部は静かに利用':'Use shared spaces quietly',
+    '掃除ルールを守る':'Follow the cleaning rules',
+    '大音量なし':'No loud noise',
+    'ペットへの配慮':'Be considerate of pets',
+    '静かに暮らせる方':'Someone who can live quietly',
+    '掃除当番OK':'Comfortable with cleaning duties',
+    '女性歓迎':'Women welcome',
+    '静かな生活':'Quiet lifestyle',
+    '掃除ルールを守れる方':'Someone who follows cleaning rules',
+    '自立した生活':'Independent lifestyle',
+    'ペット理解あり':'Understands pets',
+    '夜型OK':'Night owls OK',
+    '読書、料理、アート':'Reading, cooking, art',
+    '音楽、読書、ゲーム':'Music, reading, games',
+    '読書、音楽、カフェ巡り':'Reading, music, cafe hopping',
+    '基本は一人時間を大切にしつつ、週末に軽く話せる距離感が好きです。':'I usually value time alone, but I like being able to chat casually on weekends.',
+    'ヨガ、映画':'Yoga, movies',
+    '朝型 · 清潔重視':'Morning person · cleanliness focused',
+    'お互いの時間を尊重できる関係が理想です。':'An ideal relationship is one where we respect each other’s time.',
+    '料理、映画':'Cooking, movies',
+    '夜のみ在宅 · きれい好き':'Mostly home in the evening · clean and organized',
+    'キッチンをきれいに使える方だと嬉しいです。':'I would be happy with someone who keeps the kitchen clean.',
+    '名前':'Name',
+    '物件名':'Property Name',
+    '家族構成':'Family Structure',
+    '未設定':'Not set',
+    '料理、映画、カフェ巡り':'Cooking, movies, cafe hopping',
+    '在宅ワーカーで静かに過ごせる方がいいです。料理が好きな方だと嬉しいです。':'I would prefer someone who works from home and keeps things quiet. I would be happy with someone who likes cooking.',
+    '生活リズムと会話量を重視':'Values daily rhythm and conversation style',
     '下限':'Minimum',
     '上限':'Maximum',
     'あなたの生活リズムは？':'What is your daily rhythm?',
@@ -6306,12 +6660,24 @@
     '本人確認済み':'Verified',
     '24歳 · 日本 · 女性 · 会社員':'24 · Japan · Female · Employee',
     '24歳 · 日本 · 女性':'24 · Japan · Female',
+    '24歳':'24',
+    '25歳':'25',
+    '27歳':'27',
     '生活スタイル':'Lifestyle',
     '起床':'Wake',
     '就寝':'Sleep',
+    '会話量':'Conversation',
+    '清潔度':'Cleanliness',
     '在宅':'At Home',
     '7:00頃':'Around 7:00',
     '23:00頃':'Around 23:00',
+    '6:30頃':'Around 6:30',
+    '22:30頃':'Around 22:30',
+    '9:00頃':'Around 9:00',
+    '1:00頃':'Around 1:00',
+    '普通〜多め':'Moderate to high',
+    '少なめ':'Low',
+    'きれい好き':'Clean and organized',
     '夜のみ':'Evenings only',
     'プロフィールを教えてください':'Tell us your profile',
     '入居希望者があなたの情報を見て判断します':'Applicants will review your information',
@@ -6393,6 +6759,9 @@
     'クリエイター系':'Creative type',
     '非喫煙':'Non-smoking',
     '静かな環境':'Quiet environment',
+    '清潔':'Clean',
+    '安心':'Safe',
+    '親切':'Kind',
     '夜帰宅':'Returns late',
     '空き1室':'1 room available',
     '空き2室':'2 rooms available',
@@ -6411,6 +6780,9 @@
     '田中あおい':'Aoi Tanaka',
     '田中 あおい':'Aoi Tanaka',
     '佐藤けんじ':'Kenji Sato',
+    '佐藤 けんじ':'Kenji Sato',
+    '鈴木 みさき':'Misaki Suzuki',
+    '山本 りな':'Rina Yamamoto',
     '山田みか':'Mika Yamada',
     '高橋りょう':'Ryo Takahashi',
     '伊藤まさき':'Masaki Ito',
@@ -6463,6 +6835,15 @@
     ,'💬 過去の留学生からの評価':'💬 Reviews from Previous International Students'
     ,'📋 ハウスルール':'📋 House Rules'
     ,'🏠 部屋情報':'🏠 Room Information'
+    ,'住所/エリア':'Address / Area'
+    ,'共用Wi-Fiあり':'Shared Wi-Fi available'
+    ,'光回線・無制限':'Fiber internet / unlimited'
+    ,'室内喫煙':'Indoor smoking'
+    ,'深夜の騒音':'Late-night noise'
+    ,'共有部の放置':'Leaving shared spaces messy'
+    ,'無断来客':'Unapproved visitors'
+    ,'共有部の長時間占有':'Occupying shared spaces for long periods'
+    ,'大音量':'Loud noise'
     ,'10㎡（約6畳）':'10 m² (about 6 tatami mats)'
     ,'💰 料金内訳':'💰 Price Breakdown'
     ,'朝食（平日）':'Breakfast (weekdays)'
@@ -7230,14 +7611,19 @@
     sakura: {
       avatar: '👩',
       avatarBg: 'linear-gradient(135deg,#a8edea,#fed6e3)',
-      name: '中村 さくら',
-      age: '23歳',
-      nationality: '日本',
-      bio: '日本語も英語も話せます。料理が好きで、ホストファミリーのお手伝いも積極的にしたいです。初めての海外生活なので、生活ルールを大切にしながら楽しく過ごしたいです。',
-      lifestyle: '朝型・適度に交流したい',
-      hobbies: '料理、映画、アウトドア',
-      stay: '2025年2月から3ヶ月',
-      area: 'ボストン、ニューヨーク',
+	      name: '中村 さくら',
+	      age: '23歳',
+	      nationality: '日本',
+	      gender: '女性',
+	      bio: '日本語も英語も話せます。料理が好きで、ホストファミリーのお手伝いも積極的にしたいです。初めての海外生活なので、生活ルールを大切にしながら楽しく過ごしたいです。',
+	      lifestyle: '朝型・適度に交流したい',
+	      hobbies: '料理、映画、アウトドア',
+	      stay: '2025年2月から3ヶ月',
+	      area: 'ボストン、ニューヨーク',
+	      budget: '$700〜$1,000 /月',
+	      ng: '喫煙、深夜の騒音',
+	      note: '生活ルールを大切にしながら、ホストファミリーと楽しく交流したいです。',
+	      values: '清潔さ、家族との交流、安心感',
       chatMessages: [
         { from: 'them', text: '入居日について確認したいのですが、2025年2月上旬から滞在可能でしょうか？', time: '14:32' },
         { from: 'me', text: 'お問い合わせありがとうございます。2月上旬から受け入れ可能です。', time: '14:45' },
@@ -7247,14 +7633,19 @@
     minjun: {
       avatar: '👨',
       avatarBg: 'linear-gradient(135deg,#fddb92,#d1fdff)',
-      name: '김 민준',
-      age: '26歳',
-      nationality: '韓国',
-      bio: '韓国からワーキングホリデーで滞在予定です。日本語N2を取得しており、静かな環境で現地の生活に慣れていきたいです。',
-      lifestyle: '普通・一人時間も大切',
-      hobbies: '読書、音楽、カフェ巡り',
-      stay: '2025年3月から6ヶ月',
-      area: 'シカゴ、トロント',
+	      name: '김 민준',
+	      age: '26歳',
+	      nationality: '韓国',
+	      gender: '男性',
+	      bio: '韓国からワーキングホリデーで滞在予定です。日本語N2を取得しており、静かな環境で現地の生活に慣れていきたいです。',
+	      lifestyle: '普通・一人時間も大切',
+	      hobbies: '読書、音楽、カフェ巡り',
+	      stay: '2025年3月から6ヶ月',
+	      area: 'シカゴ、トロント',
+	      budget: '$600〜$900 /月',
+	      ng: '喫煙、共有部の散らかり',
+	      note: '静かな環境で生活に慣れながら、必要な時に交流できると嬉しいです。',
+	      values: '静かな環境、自立、ルールの尊重',
       chatMessages: [
         { from: 'them', text: 'ありがとうございます！よろしくお願いします。', time: '昨日' },
         { from: 'me', text: 'こちらこそよろしくお願いします。希望滞在期間を確認させてください。', time: '昨日' }
@@ -7263,14 +7654,19 @@
     emma: {
       avatar: '👩',
       avatarBg: 'linear-gradient(135deg,#667eea,#764ba2)',
-      name: 'Smith Emma',
-      age: '21歳',
-      nationality: 'アメリカ',
-      bio: 'I am studying Japanese and love cooking. I enjoy sharing meals and learning about different cultures, and I always keep shared spaces clean.',
-      lifestyle: '夜型・たくさん話したい',
-      hobbies: '料理、語学、アート',
-      stay: '入居中',
-      area: 'ニューヨーク'
+	      name: 'Smith Emma',
+	      age: '21歳',
+	      nationality: 'アメリカ',
+	      gender: '女性',
+	      bio: 'I am studying Japanese and love cooking. I enjoy sharing meals and learning about different cultures, and I always keep shared spaces clean.',
+	      lifestyle: '夜型・たくさん話したい',
+	      hobbies: '料理、語学、アート',
+	      stay: '入居中',
+	      area: 'ニューヨーク',
+	      budget: '$800〜$1,100 /月',
+	      ng: '室内喫煙',
+	      note: '文化交流を楽しみながら、共有スペースをきれいに使いたいです。',
+	      values: '文化交流、会話、清潔さ'
     }
   };
 
@@ -7284,12 +7680,16 @@
     avatar.textContent = applicant.avatar;
     avatar.style.background = applicant.avatarBg;
     document.getElementById('applicant-detail-name').textContent = applicant.name;
-    document.getElementById('applicant-detail-meta').textContent = applicant.age + ' · ' + applicant.nationality;
+    document.getElementById('applicant-detail-meta').textContent = [applicant.age, applicant.nationality, applicant.gender].filter(Boolean).join(' · ');
     document.getElementById('applicant-detail-bio').textContent = applicant.bio;
     document.getElementById('applicant-detail-lifestyle').textContent = applicant.lifestyle;
     document.getElementById('applicant-detail-hobbies').textContent = applicant.hobbies;
     document.getElementById('applicant-detail-stay').textContent = applicant.stay;
     document.getElementById('applicant-detail-area').textContent = applicant.area;
+    document.getElementById('applicant-detail-budget').textContent = applicant.budget || '$600〜$1,000 /月';
+    document.getElementById('applicant-detail-ng').textContent = applicant.ng || '未設定';
+    document.getElementById('applicant-detail-note').textContent = applicant.note || applicant.bio;
+    document.getElementById('applicant-detail-values').textContent = applicant.values || '安心して暮らせる環境';
     navigate(currentScreen, 'host-applicant-detail');
   }
 
@@ -7440,10 +7840,11 @@
     shPhotoIndex = 0;
     const track = document.getElementById('sh-photo-track');
     if (track) track.style.transform = 'translateX(0)';
-    const counter = document.getElementById('sh-photo-counter');
-    if (counter) counter.textContent = '1 / 3';
-    updateListingActionButtons();
-  }
+	    const counter = document.getElementById('sh-photo-counter');
+	    if (counter) counter.textContent = '1 / 3';
+	    renderGuestPreferenceSummary('sharehouse');
+	    updateListingActionButtons();
+	  }
 
   let shPhotoIndex = 0;
   function shPhotoNav(dir) {
