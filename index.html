@@ -2736,6 +2736,11 @@
 	      <div class="info-grid" id="sharehouse-room-info"></div>
 	    </div>
 
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">🖼️ 部屋写真</div>
+	      <div id="sharehouse-room-photos" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;"></div>
+	    </div>
+
 	    <div class="divider"></div>
 
 	    <div class="detail-section" style="padding-bottom:16px;">
@@ -2994,6 +2999,15 @@
 	          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
 	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
 	          <input type="file" accept="image/*" style="display:none;" />
+	        </label>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">部屋写真</div>
+	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	          <span style="font-size:28px;">🖼️</span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋写真をアップロード</span>
+	          <span style="font-size:12px;color:var(--light);">部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ</span>
+	          <input type="file" accept="image/*" multiple style="display:none;" />
 	        </label>
 	      </div>
 	      <div class="form-group">
@@ -4175,6 +4189,15 @@
             <select class="form-input" id="share-profile-furnished"><option>家具付き</option><option>家具なし</option></select>
           </div>
           <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">部屋写真 / Room Photos</div>
+            <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+              <span style="font-size:28px;">🖼️</span>
+              <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋写真をアップロード</span>
+              <span style="font-size:12px;color:var(--light);">部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ</span>
+              <input type="file" accept="image/*" multiple style="display:none;" />
+            </label>
+          </div>
+          <div>
             <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">House Rules</div>
             <select class="form-input" id="share-profile-rule-curfew"><option>門限あり</option><option selected>門限なし</option></select>
             <input class="form-input" id="share-profile-rule-curfew-time" type="text" value="23:00" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
@@ -5281,6 +5304,23 @@
 		          { label: 'Wi-Fi', value: match.roomType.includes('Wi-Fi') ? '光回線・無制限' : '共用Wi-Fiあり' }
 		        ];
 		        roomInfo.innerHTML = rows.map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
+		      }
+		      const roomPhotos = document.getElementById('sharehouse-room-photos');
+		      if (roomPhotos) {
+		        const photos = match.roomPhotos || [
+		          { label: '部屋全体', src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80' },
+		          { label: 'ベッド周り', src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80' },
+		          { label: '収納', src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' },
+		          { label: '共有スペース', src: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80' },
+		          { label: 'キッチン', src: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80' },
+		          { label: 'バス/トイレ', src: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80' }
+		        ];
+		        roomPhotos.innerHTML = photos.map(photo => `
+		          <div style="min-width:132px;background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+		            <img src="${photo.src}" alt="${localizeText(photo.label)}" style="width:132px;height:94px;object-fit:cover;display:block;" loading="lazy" />
+		            <div style="font-size:12px;font-weight:800;color:var(--dark);padding:8px 10px;">${localizeText(photo.label)}</div>
+		          </div>
+		        `).join('');
 		      }
 		      const priceBox = document.getElementById('sharehouse-price-box');
 		      if (priceBox) {
@@ -7493,6 +7533,15 @@
     '写真登録':'Add Photos',
     '写真登録 / 写真変更':'Add / Change Photos',
     '部屋や外観の写真をアップロード':'Upload room or exterior photos',
+    '部屋写真':'Room Photos',
+    '部屋写真をアップロード':'Upload room photos',
+    '部屋全体':'Entire room',
+    'ベッド周り':'Bed area',
+    '収納':'Storage',
+    '共有スペース':'Shared space',
+    'キッチン':'Kitchen',
+    'バス/トイレ':'Bath / Toilet',
+    '部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ':'Entire room, bed area, storage, shared space, kitchen, bath / toilet',
     '画像を選択':'Choose Images',
     '食事なし':'No meals',
     '朝・夕食':'Breakfast and dinner',
