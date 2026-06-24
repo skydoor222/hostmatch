@@ -4063,7 +4063,7 @@
 	        <input class="form-input" id="host-profile-values" type="text" value="清潔さ、思いやり、適度な会話" placeholder="価値観" style="margin-bottom:10px;" />
 	        <textarea class="form-textarea" id="host-profile-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
 	      </div>
-	      <div>
+	      <div class="homestay-profile-only">
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">同居メンバー / 家族情報</div>
 	        <div id="host-profile-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
 	        <button type="button" onclick="showHostFamilyForm('profile')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 同居人/家族を追加</button>
@@ -4078,15 +4078,15 @@
 	          <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('profile')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('profile')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
 	        </div>
 	      </div>
-	      <div>
+	      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">住所</div>
         <input class="form-input" id="host-profile-address" type="text" value="Manhattan, New York" placeholder="都道府県、市区町村、番地、郵便番号などを入力してください" />
       </div>
-      <div>
+      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">1泊あたりの料金</div>
         <input class="form-input" id="host-profile-nightly-price" type="number" min="0" inputmode="numeric" value="45" placeholder="金額を入力してください" />
       </div>
-      <div>
+      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">Room Information</div>
         <input class="form-input" id="host-profile-room-size" type="text" value="10㎡（約6畳）" placeholder="部屋サイズ" style="margin-bottom:10px;" />
         <input class="form-input" id="host-profile-bath" type="text" value="共用（2人でシェア）" placeholder="バス/トイレ" style="margin-bottom:10px;" />
@@ -4095,7 +4095,7 @@
         <input class="form-input" id="host-profile-station" type="text" value="72nd St" placeholder="最寄駅" style="margin-bottom:10px;" />
         <input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="徒歩分数" />
       </div>
-      <div>
+      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">写真登録 / 写真変更</div>
         <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
           <span style="font-size:28px;">📷</span>
@@ -4104,7 +4104,7 @@
           <input type="file" accept="image/*" multiple style="display:none;" />
         </label>
       </div>
-      <div>
+      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ペットの有無</div>
         <select class="form-input" id="host-profile-has-pets" onchange="toggleHostPetFields('profile')">
           <option>いる</option>
@@ -4115,7 +4115,7 @@
           <input class="form-input" id="host-profile-pet-type" type="text" value="犬" placeholder="犬、猫、鳥、うさぎ、その他" />
         </div>
       </div>
-      <div>
+      <div class="homestay-profile-only">
         <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;" data-i18n="host_rules">ハウスルール</div>
         <select class="form-input" id="host-profile-rule-curfew"><option>門限あり</option><option>門限なし</option></select>
         <input class="form-input" id="host-profile-rule-curfew-time" type="text" value="22:30" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
@@ -4131,7 +4131,7 @@
         <input class="form-input" id="host-profile-rule-cleaning" type="text" value="週1回・共有部分" placeholder="共有スペース掃除" style="margin-top:10px;" />
         <textarea class="form-textarea" id="host-profile-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
       </div>
-      <div style="border-top:1px solid var(--border);padding-top:16px;">
+      <div class="sharehouse-profile-section" style="border-top:1px solid var(--border);padding-top:16px;display:none;">
         <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">シェアハウス情報</div>
         <div style="display:flex;flex-direction:column;gap:14px;">
           <div>
@@ -4192,7 +4192,7 @@
           </div>
         </div>
       </div>
-      <button onclick="saveHostProfileEdits('profile'); saveSharehouseSettings('profile')" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
+      <button onclick="saveHostProfileScreen()" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
     </div>
     <!-- アカウント操作 -->
     <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
@@ -4731,6 +4731,7 @@
       renderHostFamilyEditors();
       toggleHostPetFields(to === 'host-profile' ? 'profile' : 'ob');
     }
+    if (to === 'host-profile') updateHostProfileMode();
     if (to === 'host-calendar') renderHostCalendar();
     if (to === 'host-dashboard') updateSharehouseManagerProfileCard();
     // ホスト用ナビのアクティブ同期
@@ -4743,6 +4744,20 @@
     const card = document.getElementById('sharehouse-manager-profile-card');
     if (!card) return;
     card.style.display = window._serviceType === 'sharehouse' ? 'flex' : 'none';
+  }
+
+  function isSharehouseHostEditing() {
+    return currentRole === 'resident' || window._serviceType === 'sharehouse';
+  }
+
+  function updateHostProfileMode() {
+    const isSharehouse = isSharehouseHostEditing();
+    document.querySelectorAll('#screen-host-profile .homestay-profile-only').forEach(el => {
+      el.style.display = isSharehouse ? 'none' : '';
+    });
+    document.querySelectorAll('#screen-host-profile .sharehouse-profile-section').forEach(el => {
+      el.style.display = isSharehouse ? 'block' : 'none';
+    });
   }
 
   const HOMESTAY_NEW_HOST_IDS = ['emily', 'jennifer', 'robert', 'sarah', 'michael', 'thompson'];
@@ -6462,6 +6477,14 @@
 	      { label: '徒歩分数', value: `${walkMin}分` }
 	    ];
 	    showToast('保存しました ✓');
+	  }
+
+	  function saveHostProfileScreen() {
+	    if (isSharehouseHostEditing()) {
+	      saveSharehouseSettings('profile');
+	      return;
+	    }
+	    saveHostProfileEdits('profile');
 	  }
 
   /* ===== INTERVIEW DATE PICKER ===== */
