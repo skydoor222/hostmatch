@@ -2713,7 +2713,7 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">👥 ホストファミリー / 同居メンバー</div>
+	      <div class="detail-section-title" id="sharehouse-members-title">👥 入居者メンバー</div>
 	      <div id="sharehouse-roommates" style="display:flex;flex-direction:column;gap:10px;"></div>
 	    </div>
 
@@ -5070,13 +5070,56 @@
 		      }
 		      const roommateBox = document.getElementById('sharehouse-roommates');
 		      if (roommateBox) {
-		        const members = [{ name: match.name, age: '24歳', gender: match.gender, nationality: match.nationality, icon: match.gender === '男性' ? '👨' : '👩' }, ...match.roommates.map(r => ({ ...r, icon: r.gender === '男性' ? '👨' : '👩' }))];
+		        const title = document.getElementById('sharehouse-members-title');
+		        if (title) title.textContent = `👥 ${localizeText('入居者メンバー')}`;
+		        const fallbackMembers = [
+		          {
+		            name: match.name,
+		            age: '20代',
+		            gender: match.gender,
+		            job: '会社員',
+		            wake: '6〜8時',
+		            sleep: '22〜24時',
+		            home: '夜だけ',
+		            clean: match.lifestyleCards?.clean || '普通',
+		            smoke: '吸わない',
+		            noise: '静かにしたい',
+		            social: 'たまに交流'
+		          },
+		          ...match.roommates.map(r => ({
+		            name: r.name,
+		            age: r.age || '20代',
+		            gender: r.gender || '回答しない',
+		            job: r.job || '会社員',
+		            wake: r.wake || '6〜8時',
+		            sleep: r.sleep || '22〜24時',
+		            home: r.home || '夜だけ',
+		            clean: r.clean || '普通',
+		            smoke: r.smoke || '吸わない',
+		            noise: r.noise || '静かにしたい',
+		            social: r.social || 'たまに交流'
+		          }))
+		        ];
+		        const members = resRoommates.length ? resRoommates : fallbackMembers;
 		        roommateBox.innerHTML = members.map(member => `
-		          <div style="background:var(--bg);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;">
-		            <div style="width:44px;height:44px;border-radius:50%;background:white;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${member.icon}</div>
-		            <div style="min-width:0;">
-		              <div style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText(member.name)}</div>
-		              <div style="font-size:12px;color:var(--light);margin-top:2px;">${localizeText(member.age)} · ${localizeText(member.nationality)} · ${localizeText(member.gender)}</div>
+		          <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
+		            <div style="width:44px;height:44px;border-radius:50%;background:white;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑'}</div>
+		            <div style="min-width:0;flex:1;">
+		              <div style="font-size:14px;font-weight:900;color:var(--dark);">${localizeText(member.name)}</div>
+		              <div style="font-size:12px;color:var(--light);margin-top:3px;line-height:1.5;">
+		                ${localizeText('年齢')} ${localizeText(member.age)} · ${localizeText('性別')} ${localizeText(member.gender)} · ${localizeText('職業')} ${localizeText(member.job)}
+		              </div>
+		              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;">
+		                ${[
+		                  ['起床時間', member.wake],
+		                  ['就寝時間', member.sleep],
+		                  ['在宅時間', member.home],
+		                  ['清潔感', member.clean],
+		                  ['喫煙', member.smoke],
+		                  ['騒音・音楽', member.noise],
+		                  ['ルームメイトとの交流', member.social]
+		                ].map(([label, value]) => `<div style="background:white;border-radius:10px;padding:8px;"><div style="font-size:10px;color:var(--light);font-weight:800;">${localizeText(label)}</div><div style="font-size:12px;font-weight:800;color:var(--dark);margin-top:2px;">${localizeText(value)}</div></div>`).join('')}
+		              </div>
 		            </div>
 		          </div>
 		        `).join('');
@@ -7057,39 +7100,43 @@
     '1ヶ月以内':'Within 1 month',
     '3ヶ月以内':'Within 3 months',
     '未定':'Undecided',
-    '起床時間':'Wake-up Time',
-    '6時前':'Before 6',
-    '6〜8時':'6-8',
-    '8〜10時':'8-10',
-    '10時以降':'After 10',
+    'NG条件':'NG Conditions',
+    '入居者メンバー':'Resident Members',
+    '👥 入居者メンバー':'👥 Resident Members',
+    '起床時間':'Wake-up time',
+    '6時前':'Before 6 AM',
+    '6〜8時':'6–8 AM',
+    '8〜10時':'8–10 AM',
+    '10時以降':'After 10 AM',
     '就寝時間':'Bedtime',
-    '22時前':'Before 22:00',
-    '22〜24時':'22:00-24:00',
-    '0〜2時':'0:00-2:00',
-    '2時以降':'After 2:00',
-    '在宅時間':'Time at Home',
+    '22時前':'Before 10 PM',
+    '22〜24時':'10 PM–12 AM',
+    '0〜2時':'12–2 AM',
+    '2時以降':'After 2 AM',
+    '在宅時間':'Time at home',
     'ほぼ在宅':'Mostly at home',
     '夜だけ':'Evenings only',
     '週末のみ':'Weekends only',
     'ほぼ外出':'Mostly out',
     '清潔感':'Cleanliness',
-    'かなり気にする':'Very careful',
-    '普通':'Standard',
-    'あまり気にしない':'Not too concerned',
+    'かなり気にする':'Very particular',
+    '普通':'Average',
+    'あまり気にしない':'Not very particular',
     '喫煙':'Smoking',
-    '🚭 吸わない':'🚭 Do not smoke',
-    '外なら吸う':'Smoke outside',
-    '室内でも吸う':'Smoke indoors',
+    '🚭 吸わない':'🚭 Does not smoke',
+    '吸わない':'Does not smoke',
+    '外なら吸う':'Smokes outside only',
+    '室内でも吸う':'Smokes indoors',
     '騒音・音楽':'Noise / Music',
-    '静かにしたい':'Prefer quiet',
-    'にぎやかでもOK':'Lively is OK',
+    '静かにしたい':'Prefers quiet',
+    'にぎやかでもOK':'Okay with lively atmosphere',
     '来客':'Visitors',
     '事前相談':'Ask in advance',
     '自由':'Flexible',
     '交流スタイル':'Social Style',
-    '一人で過ごしたい':'Prefer time alone',
+    '一人で過ごしたい':'Prefers time alone',
     'たまに交流':'Occasional interaction',
-    '積極的に交流':'Active interaction',
+    '積極的に交流':'Enjoys active interaction',
     'どんな人と住みたいか（一言）':'Who would you like to live with?',
     '例：在宅ワーカーで静かに過ごせる方がいいです。料理が好きな方だと嬉しいです。':'Example: I prefer someone who works from home and keeps things quiet. I would be happy with someone who likes cooking.',
     '戻る':'Back',
@@ -7155,13 +7202,16 @@
     '男性':'Male',
     '回答しない':'Prefer not to say',
     '職業':'Occupation',
-    '会社員':'Employee',
-    'フリーランス':'Freelance',
+    '会社員':'Company employee',
+    'フリーランス':'Freelancer',
     '学生':'Student',
     '留学生':'International Student',
     '自己紹介':'Bio',
     '趣味や生活スタイルについて一言（入居希望者が最初に読む文章です）':'Write about your hobbies or lifestyle (this is the first text applicants read)',
     'ルームメイトとの交流':'Interaction with Roommates',
+    '未回答':'Not answered',
+    '未設定':'Not set',
+    '年齢未回答':'Age not answered',
     'ルームメイトを追加する':'Add Roommate',
     'ルームメイト情報を入力':'Enter Roommate Information',
     '名前（ニックネームOK）':'Name (nickname OK)',
