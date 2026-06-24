@@ -1778,7 +1778,7 @@
       <h1 data-i18n="nav_messages">メッセージ</h1>
     </div>
   </div>
-  <div class="msg-list">
+  <div class="msg-list" id="guest-message-list">
     <div class="msg-item unread" onclick="openChat('sarah')">
       <div class="msg-avatar av1">👩</div>
       <div class="msg-content">
@@ -3339,7 +3339,7 @@
       <div class="complete-card-row"><span data-i18n="monthly_price">月額料金</span><span id="complete-price">$950 /月</span></div>
     </div>
     <button class="paypay-btn" onclick="navigate(currentScreen,interviewBackScreen)" style="background:var(--primary);" data-i18n="back_to_detail">詳細画面へ戻る</button>
-    <button class="complete-msg-btn" onclick="navigate(currentScreen,'messages')" data-i18n="check_messages">💬 メッセージを確認する</button>
+    <button class="complete-msg-btn" onclick="goToGuestMessagesFromComplete()" data-i18n="check_messages">💬 メッセージを確認する</button>
   </div>
 </div>
 
@@ -4591,6 +4591,7 @@
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
+  let guestMessageService = 'homestay';
   let homestayHostListType = 'new';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
@@ -4626,6 +4627,7 @@
 	      window.scrollTo(0, 0);
 	    }
     if (to === 'ai-result') renderAiResult();
+    if (to === 'messages') renderGuestMessages();
     if (to === 'homestay-host-list') renderHomestayHostList();
     if (to === 'pending-hosts') renderGuestRequestList();
     if (to === 'host-applicants') syncHostFormalRequestCard();
@@ -5405,6 +5407,62 @@
 	    const serviceType = type === 'sharehouse' ? 'sharehouse' : 'homestay';
 	    currentSearchCat = serviceType;
 	    window._serviceType = serviceType;
+	    guestMessageService = serviceType;
+	  }
+
+	  function setGuestMessageService(type) {
+	    guestMessageService = type === 'sharehouse' ? 'sharehouse' : 'homestay';
+	    syncGuestServiceContext(guestMessageService);
+	  }
+
+	  function renderGuestMessages() {
+	    const list = document.getElementById('guest-message-list');
+	    if (!list) return;
+	    if (guestMessageService === 'sharehouse') {
+	      const rows = Object.values(SHAREHOUSE_LISTINGS);
+	      list.innerHTML = rows.map((listing, index) => {
+	        const profile = sharehouseMatchProfiles[listing.id] || sharehouseMatchProfiles.sh1;
+	        const preview = currentLang === 'ja'
+	          ? '面談の日程についてメッセージがあります。'
+	          : 'There is a message about your interview schedule.';
+	        const time = index === 0 ? '14:32' : index === 1 ? localizeText('昨日') : '4/5';
+	        return `
+	          <div class="msg-item${index === 0 ? ' unread' : ''}" onclick="openSharehouseChat('${listing.id}')">
+	            <div class="msg-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">🏢</div>
+	            <div class="msg-content">
+	              <div class="msg-row1">
+	                <div class="msg-name">${localizeText(profile.name || listing.name)}</div>
+	                <div class="msg-time">${time}</div>
+	              </div>
+	              <div class="msg-preview${index === 0 ? ' unread' : ''}">${preview}</div>
+	            </div>
+	            ${index === 0 ? '<div class="msg-unread-dot"></div>' : ''}
+	          </div>
+	        `;
+	      }).join('');
+	      return;
+	    }
+
+	    list.innerHTML = `
+	      <div class="msg-item unread" onclick="openChat('sarah')">
+	        <div class="msg-avatar av1">👩</div>
+	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Sarah Johnson</div><div class="msg-time">14:32</div></div><div class="msg-preview unread">Hi! Thank you for your interest. I'd love to tell you more about the room 😊</div></div>
+	        <div class="msg-unread-dot"></div>
+	      </div>
+	      <div class="msg-item unread" onclick="openChat('michael')">
+	        <div class="msg-avatar av2">👨</div>
+	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Michael & Lisa Chen</div><div class="msg-time">${localizeText('昨日')}</div></div><div class="msg-preview unread">Sure, let's schedule a video call for this weekend!</div></div>
+	        <div class="msg-unread-dot"></div>
+	      </div>
+	      <div class="msg-item" onclick="openChat('emily')">
+	        <div class="msg-avatar av3">👩</div>
+	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Emily Williams</div><div class="msg-time">${localizeText('月曜')}</div></div><div class="msg-preview">The room is available from May 1st. Let me know!</div></div>
+	      </div>
+	      <div class="msg-item" onclick="openChat('robert')">
+	        <div class="msg-avatar av4">👨</div>
+	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Robert & Mary Davis</div><div class="msg-time">4/5</div></div><div class="msg-preview">We usually have dinner together on weekdays 🍽️</div></div>
+	      </div>
+	    `;
 	  }
 
 	  function openChat(hostId) {
@@ -5416,7 +5474,7 @@
     currentChatApplicant = null;
     chatBackScreen = 'messages';
     chatDetailMode = 'host';
-    syncGuestServiceContext('homestay');
+    setGuestMessageService('homestay');
 
     // Header
     const header = document.querySelector('.chat-header');
@@ -5449,8 +5507,9 @@
 
 	  function goBackFromChat() {
 	    if (chatDetailMode === 'sharehouse') {
-	      chatBackScreen = 'sharehouse-detail';
-	      navigate(currentScreen, 'sharehouse-detail');
+	      chatBackScreen = 'messages';
+	      setGuestMessageService('sharehouse');
+	      navigate(currentScreen, 'messages');
 	      return;
 	    }
 	    if (chatDetailMode === 'applicant') {
@@ -5460,20 +5519,22 @@
 	    }
 	    chatDetailMode = 'host';
 	    chatBackScreen = 'messages';
-	    syncGuestServiceContext('homestay');
+	    setGuestMessageService('homestay');
 	    navigate(currentScreen, 'messages');
 	  }
 
-	  function openSharehouseChat() {
-	    const listing = currentListing?.type === 'sharehouse'
+	  function openSharehouseChat(listingId) {
+	    const listing = listingId && SHAREHOUSE_LISTINGS[listingId]
+	      ? SHAREHOUSE_LISTINGS[listingId]
+	      : currentListing?.type === 'sharehouse'
 	      ? currentListing
 	      : SHAREHOUSE_LISTINGS.sh1;
 	    currentListing = listing;
 	    currentApplicationId = listing.type + ':' + listing.id;
 	    currentChatApplicant = null;
-	    chatBackScreen = 'sharehouse-detail';
+	    chatBackScreen = 'messages';
 	    chatDetailMode = 'sharehouse';
-	    syncGuestServiceContext('sharehouse');
+	    setGuestMessageService('sharehouse');
 
 	    const header = document.querySelector('.chat-header');
 	    const avatar = header.querySelector('.chat-avatar');
@@ -5670,6 +5731,12 @@
     card.appendChild(row);
     updateListingActionButtons();
     navigate(currentScreen, 'complete');
+  }
+
+  function goToGuestMessagesFromComplete() {
+    const listing = getCurrentListing();
+    setGuestMessageService(listing?.type === 'sharehouse' ? 'sharehouse' : 'homestay');
+    navigate(currentScreen, 'messages');
   }
 
   function applyHost() {
