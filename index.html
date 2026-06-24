@@ -3231,32 +3231,67 @@
       </div>
       <div class="form-group">
         <div class="form-label">エリア</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">新宿区</div>
-          <div class="form-chip" onclick="toggleChip(this)">渋谷区</div>
-          <div class="form-chip" onclick="toggleChip(this)">目黒区</div>
-          <div class="form-chip" onclick="toggleChip(this)">港区</div>
-          <div class="form-chip" onclick="toggleChip(this)">世田谷区</div>
-          <div class="form-chip" onclick="toggleChip(this)">中野区</div>
-          <div class="form-chip" onclick="toggleChip(this)">大阪</div>
-          <div class="form-chip" onclick="toggleChip(this)">その他</div>
+        <div class="form-chip-row" id="res-area">
+          <div class="form-chip selected" onclick="toggleChip(this)">ボストン</div>
+          <div class="form-chip" onclick="toggleChip(this)">ニューヨーク</div>
+          <div class="form-chip" onclick="toggleChip(this)">シカゴ</div>
+          <div class="form-chip" onclick="toggleChip(this)">バンクーバー</div>
+          <div class="form-chip" onclick="toggleChip(this)">トロント</div>
         </div>
       </div>
       <div class="form-group">
-        <div class="form-label">月額家賃（管理費込み目安）</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">〜5万円</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">5〜7万円</div>
-          <div class="form-chip" onclick="toggleChip(this)">7〜10万円</div>
-          <div class="form-chip" onclick="toggleChip(this)">10万円〜</div>
-        </div>
+        <div class="form-label">住所</div>
+        <input class="form-input" id="res-address" type="text" value="Boston, MA 02115" placeholder="住所" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">最寄駅</div>
+        <input class="form-input" id="res-station" type="text" value="Central Station" placeholder="最寄駅" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">徒歩分数</div>
+        <input class="form-input" id="res-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="徒歩分数" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">月額料金</div>
+        <input class="form-input" id="res-monthly-rent" type="number" min="0" inputmode="numeric" value="65000" placeholder="$950 / month" />
+      </div>
+      <div class="form-group">
+        <div class="form-label">受け入れ可能時期</div>
+        <input class="form-input" id="res-available-start" type="date" value="2026-07-01" />
+        <input class="form-input" id="res-available-end" type="date" value="2026-12-31" style="margin-top:10px;" />
       </div>
       <div class="form-group">
         <div class="form-label">部屋タイプ</div>
-        <div class="form-chip-row">
+        <div class="form-chip-row" id="res-room-type">
           <div class="form-chip selected" onclick="toggleChip(this)">個室</div>
           <div class="form-chip" onclick="toggleChip(this)">相部屋</div>
         </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Room Information</div>
+        <input class="form-input" id="res-room-size" type="text" value="10㎡（約6畳）" placeholder="部屋サイズ" style="margin-bottom:10px;" />
+        <input class="form-input" id="res-bath" type="text" value="共用（2人でシェア）" placeholder="バス/トイレ" style="margin-bottom:10px;" />
+        <input class="form-input" id="res-sunlight" type="text" value="南向き・良好" placeholder="日当たり" style="margin-bottom:10px;" />
+        <input class="form-input" id="res-wifi" type="text" value="光回線・無制限" placeholder="Wi-Fi" style="margin-bottom:10px;" />
+        <select class="form-input" id="res-furnished"><option>家具付き</option><option>家具なし</option></select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">House Rules</div>
+        <div class="form-label">門限</div>
+        <select class="form-input" id="res-rule-curfew"><option>門限あり</option><option selected>門限なし</option></select>
+        <input class="form-input" id="res-rule-curfew-time" type="text" value="23:00" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
+        <div class="form-label" style="margin-top:12px;">キッチン利用</div>
+        <select class="form-input" id="res-rule-kitchen"><option selected>OK</option><option>制限あり</option><option>NG</option></select>
+        <input class="form-input" id="res-rule-kitchen-time" type="text" value="〜22:00" placeholder="利用可能時間" style="margin-top:8px;" />
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+          <select class="form-input" id="res-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select>
+          <select class="form-input" id="res-rule-overnight"><option>宿泊 OK</option><option selected>宿泊 事前連絡必須</option><option>宿泊 NG</option></select>
+          <select class="form-input" id="res-rule-smoking"><option>喫煙 OK</option><option selected>喫煙 屋外のみ</option><option>喫煙 NG</option></select>
+          <select class="form-input" id="res-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select>
+          <select class="form-input" id="res-rule-instrument"><option>楽器演奏 OK</option><option selected>楽器演奏 時間制限あり</option><option>楽器演奏 NG</option></select>
+        </div>
+        <input class="form-input" id="res-rule-cleaning" type="text" value="週1回・当番制" placeholder="共有スペース掃除" style="margin-top:10px;" />
+        <textarea class="form-textarea" id="res-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
       </div>
       <div class="form-group">
         <div class="form-label">現在の空き室数</div>
@@ -4096,7 +4131,68 @@
         <input class="form-input" id="host-profile-rule-cleaning" type="text" value="週1回・共有部分" placeholder="共有スペース掃除" style="margin-top:10px;" />
         <textarea class="form-textarea" id="host-profile-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
       </div>
-      <button onclick="saveHostProfileEdits('profile')" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
+      <div style="border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">シェアハウス情報</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">エリア</div>
+            <div class="form-chip-row" id="share-profile-area">
+              <div class="form-chip selected" onclick="toggleChip(this)">ボストン</div>
+              <div class="form-chip" onclick="toggleChip(this)">ニューヨーク</div>
+              <div class="form-chip" onclick="toggleChip(this)">シカゴ</div>
+              <div class="form-chip" onclick="toggleChip(this)">バンクーバー</div>
+              <div class="form-chip" onclick="toggleChip(this)">トロント</div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">住所</div>
+            <input class="form-input" id="share-profile-address" type="text" value="Boston, MA 02115" placeholder="住所" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">最寄駅</div>
+            <input class="form-input" id="share-profile-station" type="text" value="Central Station" placeholder="最寄駅" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">徒歩分数</div>
+            <input class="form-input" id="share-profile-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="徒歩分数" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">月額料金</div>
+            <input class="form-input" id="share-profile-monthly-rent" type="number" min="0" inputmode="numeric" value="65000" placeholder="$950 / month" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">受け入れ可能時期</div>
+            <input class="form-input" id="share-profile-available-start" type="date" value="2026-07-01" />
+            <input class="form-input" id="share-profile-available-end" type="date" value="2026-12-31" style="margin-top:10px;" />
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">Room Information</div>
+            <input class="form-input" id="share-profile-room-size" type="text" value="10㎡（約6畳）" placeholder="部屋サイズ" style="margin-bottom:10px;" />
+            <input class="form-input" id="share-profile-bath" type="text" value="共用（2人でシェア）" placeholder="バス/トイレ" style="margin-bottom:10px;" />
+            <input class="form-input" id="share-profile-sunlight" type="text" value="南向き・良好" placeholder="日当たり" style="margin-bottom:10px;" />
+            <input class="form-input" id="share-profile-wifi" type="text" value="光回線・無制限" placeholder="Wi-Fi" style="margin-bottom:10px;" />
+            <input class="form-input" id="share-profile-room-type" type="text" value="個室" placeholder="部屋タイプ" style="margin-bottom:10px;" />
+            <select class="form-input" id="share-profile-furnished"><option>家具付き</option><option>家具なし</option></select>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">House Rules</div>
+            <select class="form-input" id="share-profile-rule-curfew"><option>門限あり</option><option selected>門限なし</option></select>
+            <input class="form-input" id="share-profile-rule-curfew-time" type="text" value="23:00" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
+            <select class="form-input" id="share-profile-rule-kitchen" style="margin-top:10px;"><option selected>OK</option><option>制限あり</option><option>NG</option></select>
+            <input class="form-input" id="share-profile-rule-kitchen-time" type="text" value="〜22:00" placeholder="キッチン利用可能時間" style="margin-top:8px;" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+              <select class="form-input" id="share-profile-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select>
+              <select class="form-input" id="share-profile-rule-overnight"><option>宿泊 OK</option><option selected>宿泊 事前連絡必須</option><option>宿泊 NG</option></select>
+              <select class="form-input" id="share-profile-rule-smoking"><option>喫煙 OK</option><option selected>喫煙 屋外のみ</option><option>喫煙 NG</option></select>
+              <select class="form-input" id="share-profile-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select>
+              <select class="form-input" id="share-profile-rule-instrument"><option>楽器演奏 OK</option><option selected>楽器演奏 時間制限あり</option><option>楽器演奏 NG</option></select>
+            </div>
+            <input class="form-input" id="share-profile-rule-cleaning" type="text" value="週1回・当番制" placeholder="共有スペース掃除" style="margin-top:10px;" />
+            <textarea class="form-textarea" id="share-profile-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
+          </div>
+        </div>
+      </div>
+      <button onclick="saveHostProfileEdits('profile'); saveSharehouseSettings('profile')" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
     </div>
     <!-- アカウント操作 -->
     <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
@@ -5150,25 +5246,30 @@
 		      }
 		      const ruleBox = document.getElementById('sharehouse-rules');
 		      if (ruleBox) {
+		        if (Array.isArray(match.rules)) {
+		          ruleBox.innerHTML = match.rules.map(rule => renderRuleRow(rule)).join('');
+		        } else {
 		        const okRules = match.rules.split(' · ').filter(Boolean);
 		        const ngRules = match.ng.split('、').filter(Boolean);
 		        ruleBox.innerHTML = [
 		          ...okRules.map(text => ({ ok: true, text })),
 		          ...ngRules.map(text => ({ ok: false, text }))
 		        ].map(rule => renderRuleRow(rule)).join('');
+		        }
 		      }
 		      const roomInfo = document.getElementById('sharehouse-room-info');
 		      if (roomInfo) {
-		        roomInfo.innerHTML = [
+		        const rows = match.roomInfo || [
 		          { label: '住所/エリア', value: match.area },
 		          { label: '部屋タイプ', value: match.roomType },
 		          { label: '希望/募集条件', value: match.conditions },
 		          { label: 'Wi-Fi', value: match.roomType.includes('Wi-Fi') ? '光回線・無制限' : '共用Wi-Fiあり' }
-		        ].map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
+		        ];
+		        roomInfo.innerHTML = rows.map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
 		      }
 		      const priceBox = document.getElementById('sharehouse-price-box');
 		      if (priceBox) {
-		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額')}</span><span>${localizeText(match.rent)}</span></div>`;
+		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金')}</span><span>${localizeText(match.rent)}</span></div>`;
 		      }
 		      const mapPin = document.getElementById('sharehouse-map-pin');
 		      if (mapPin) mapPin.textContent = `📍 ${localizeText(match.mapPin || match.area)}`;
@@ -6320,6 +6421,49 @@
 	    showToast('保存しました ✓');
 	  }
 
+	  function saveSharehouseSettings(scope = 'res') {
+	    const prefix = scope === 'profile' ? 'share-profile' : 'res';
+	    const listing = SHAREHOUSE_LISTINGS.sh1;
+	    const match = sharehouseMatchProfiles.sh1;
+	    if (!listing || !match) return;
+
+	    const rent = Number(formValue(prefix + '-monthly-rent', listing.price));
+	    const area = selectedChipText(prefix + '-area', match.mapPin || 'ボストン');
+	    const address = formValue(prefix + '-address', '新宿区 1-2-3');
+	    const station = formValue(prefix + '-station', 'Central Station');
+	    const walkMin = formValue(prefix + '-walk-min', '8');
+	    const start = formValue(prefix + '-available-start', match.available?.start || '2026-07-01');
+	    const end = formValue(prefix + '-available-end', match.available?.end || '2026-12-31');
+	    const roomType = scope === 'profile'
+	      ? formValue(prefix + '-room-type', '個室')
+	      : selectedChipText('res-room-type', '個室');
+	    const furnished = formValue(prefix + '-furnished', '家具付き');
+
+	    if (Number.isFinite(rent) && rent > 0) {
+	      listing.price = rent;
+	      match.rent = `¥${rent.toLocaleString()} /月`;
+	    }
+	    match.available = { start, end };
+	    match.area = `${area} · ${station} 徒歩${walkMin}分`;
+	    match.mapPin = area;
+	    match.mapNote = `最寄り駅：${station} 徒歩${walkMin}分`;
+	    match.roomType = `${roomType} · ${furnished} · Wi-Fi完備`;
+	    match.rules = buildHostRulesFromFields(prefix);
+	    match.roomInfo = [
+	      { label: '住所', value: address },
+	      { label: '住所/エリア', value: area },
+	      { label: '部屋タイプ', value: roomType },
+	      { label: '家具付きかどうか', value: furnished },
+	      { label: '部屋サイズ', value: formValue(prefix + '-room-size', '10㎡（約6畳）') },
+	      { label: 'バス・トイレ', value: formValue(prefix + '-bath', '共用（2人でシェア）') },
+	      { label: '日当たり', value: formValue(prefix + '-sunlight', '南向き・良好') },
+	      { label: 'Wi-Fi', value: formValue(prefix + '-wifi', '光回線・無制限') },
+	      { label: '最寄駅', value: station },
+	      { label: '徒歩分数', value: `${walkMin}分` }
+	    ];
+	    showToast('保存しました ✓');
+	  }
+
   /* ===== INTERVIEW DATE PICKER ===== */
   let selectedInterviewDate = null;
 
@@ -7158,6 +7302,35 @@
     'ひとこと（ホストへの自己紹介）':'Short Introduction to Host',
     '例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！':'Example: I am a university student from Japan. I like cooking and would love to enjoy meals with my host!',
     '月額家賃':'Monthly Rent',
+    '月額料金':'Monthly Rent',
+    '受け入れ可能時期':'Available Dates',
+    '受け入れ開始日':'Available Start Date',
+    '受け入れ終了日':'Available End Date',
+    'カレンダーから選択':'Select from calendar',
+    'ハウスルール':'House Rules',
+    '部屋情報':'Room Information',
+    '部屋サイズ':'Room Size',
+    'バス/トイレ':'Bath / Toilet',
+    'バス・トイレ':'Bath / Toilet',
+    '日当たり':'Sunlight',
+    '最寄駅':'Nearest Station',
+    '徒歩分数':'Walking Time',
+    '家具付きかどうか':'Furnished',
+    '家具なし':'Unfurnished',
+    '利用可能時間':'Available Time',
+    '共有スペース掃除':'Shared Space Cleaning',
+    'その他ルール':'Other Rules',
+    '門限あり':'Curfew',
+    '門限なし':'No Curfew',
+    '制限あり':'Limited',
+    '来客 事前連絡必須':'Visitors Require Advance Notice',
+    '宿泊 事前連絡必須':'Overnight Guests Require Advance Notice',
+    '喫煙 屋外のみ':'Smoking Outdoors Only',
+    '飲酒 節度を守る':'Alcohol in Moderation',
+    '楽器演奏 時間制限あり':'Musical Instruments with Time Limits',
+    '週1回・当番制':'Once a week / rotating duty',
+    '南向き・良好':'South-facing, good sunlight',
+    '共用Wi-Fiあり':'Shared Wi-Fi available',
     '〜5万円':'Up to ¥50,000',
     '5〜7万円':'¥50,000-¥70,000',
     '7〜10万円':'¥70,000-¥100,000',
@@ -7581,7 +7754,7 @@
     ,'ホストとビデオ通話で面談を行います。':'You will have a video interview with the host.'
     ,'お互いの雰囲気を確認しましょう。':'Use it to see if you are a good fit for each other.'
     ,'ホスト':'Host'
-    ,'月額料金':'Monthly Price'
+    ,'月額料金':'Monthly Rent'
     ,'面談方法':'Interview Method'
     ,'ビデオ通話（15分）':'Video call (15 min)'
     ,'費用':'Fee'
@@ -8503,6 +8676,7 @@
         resRenderRoommateList();
       }
     } else {
+      saveSharehouseSettings('res');
       navigate('resident-onboarding', 'host-dashboard');
     }
   }
