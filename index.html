@@ -1826,7 +1826,7 @@
 <!-- ==================== チャット画面 ==================== -->
 <div id="screen-chat" class="screen">
   <div class="chat-header">
-    <div class="chat-back" onclick="navigate(currentScreen, chatBackScreen)">←</div>
+    <div class="chat-back" onclick="goBackFromChat()">←</div>
     <div class="chat-avatar av1">👩</div>
     <div>
       <div class="chat-title">Sarah Johnson</div>
@@ -4986,6 +4986,7 @@
       detailScreen: 'detail',
       label: 'ホスト'
     };
+    syncGuestServiceContext('homestay');
     detailBackScreen = backScreen;
 
     // Photos
@@ -5164,13 +5165,36 @@
   }
 
   /* ===== CHAT ===== */
+	  function makeHomestayListing(hostId) {
+	    const h = HOSTS[hostId || currentHost];
+	    if (!h) return null;
+	    return {
+	      type: 'homestay',
+	      id: hostId || currentHost,
+	      name: h.name,
+	      price: h.price,
+	      pricePrefix: '$',
+	      detailScreen: 'detail',
+	      label: 'ホスト'
+	    };
+	  }
+
+	  function syncGuestServiceContext(type) {
+	    const serviceType = type === 'sharehouse' ? 'sharehouse' : 'homestay';
+	    currentSearchCat = serviceType;
+	    window._serviceType = serviceType;
+	  }
+
 	  function openChat(hostId) {
 	    const h = HOSTS[hostId || currentHost];
 	    if (!h) return;
     currentHost = hostId || currentHost;
+    currentListing = makeHomestayListing(currentHost);
+    currentApplicationId = currentListing.type + ':' + currentListing.id;
     currentChatApplicant = null;
     chatBackScreen = 'messages';
     chatDetailMode = 'host';
+    syncGuestServiceContext('homestay');
 
     // Header
     const header = document.querySelector('.chat-header');
@@ -5201,6 +5225,23 @@
 	    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
 	  }
 
+	  function goBackFromChat() {
+	    if (chatDetailMode === 'sharehouse') {
+	      chatBackScreen = 'sharehouse-detail';
+	      navigate(currentScreen, 'sharehouse-detail');
+	      return;
+	    }
+	    if (chatDetailMode === 'applicant') {
+	      chatBackScreen = 'host-messages';
+	      navigate(currentScreen, 'host-messages');
+	      return;
+	    }
+	    chatDetailMode = 'host';
+	    chatBackScreen = 'messages';
+	    syncGuestServiceContext('homestay');
+	    navigate(currentScreen, 'messages');
+	  }
+
 	  function openSharehouseChat() {
 	    const listing = currentListing?.type === 'sharehouse'
 	      ? currentListing
@@ -5210,6 +5251,7 @@
 	    currentChatApplicant = null;
 	    chatBackScreen = 'sharehouse-detail';
 	    chatDetailMode = 'sharehouse';
+	    syncGuestServiceContext('sharehouse');
 
 	    const header = document.querySelector('.chat-header');
 	    const avatar = header.querySelector('.chat-avatar');
@@ -5344,10 +5386,13 @@
   }
 
   function getCurrentListing() {
+    if (currentScreen === 'chat' && chatDetailMode === 'host' && currentHost && HOSTS[currentHost]) {
+      currentListing = makeHomestayListing(currentHost);
+      return currentListing;
+    }
     if (currentListing) return currentListing;
     if (currentHost && HOSTS[currentHost]) {
-      const h = HOSTS[currentHost];
-      currentListing = { type: 'homestay', id: currentHost, name: h.name, price: h.price, pricePrefix: '$', detailScreen: 'detail', label: 'ホスト' };
+      currentListing = makeHomestayListing(currentHost);
     }
     return currentListing;
   }
@@ -5365,6 +5410,7 @@
 
   function requestInterviewForListing(listing) {
     currentListing = listing;
+    syncGuestServiceContext(listing.type);
     currentApplicationId = listing.type + ':' + listing.id;
     interviewBackScreen = listing.detailScreen;
     document.getElementById('interview-listing-label').textContent = listing.label;
@@ -5407,6 +5453,7 @@
   function applyHost() {
     const listing = getCurrentListing();
     if (!listing) return;
+    syncGuestServiceContext(listing.type);
     currentApplicationId = listing.type + ':' + listing.id;
     applicationBackScreen = listing.detailScreen;
     document.getElementById('apply-listing-label').textContent = listing.type === 'sharehouse' ? t('property') : t('homestay');
@@ -5418,6 +5465,7 @@
   function submitFormalApplication() {
     const listing = getCurrentListing();
     if (!listing) return;
+    syncGuestServiceContext(listing.type);
     currentApplicationId = listing.type + ':' + listing.id;
     formalApplications[currentApplicationId] = { status: 'pending', listing };
     renderApplicationSent();
@@ -7871,6 +7919,7 @@
 
   function openSharehouseDetail(id) {
     currentListing = SHAREHOUSE_LISTINGS[id] || SHAREHOUSE_LISTINGS.sh1;
+    syncGuestServiceContext('sharehouse');
     currentApplicationId = currentListing.type + ':' + currentListing.id;
     applicationBackScreen = currentListing.detailScreen;
     interviewBackScreen = currentListing.detailScreen;
