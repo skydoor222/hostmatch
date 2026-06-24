@@ -2736,11 +2736,6 @@
 	      <div class="info-grid" id="sharehouse-room-info"></div>
 	    </div>
 
-	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">🖼️ 部屋写真</div>
-	      <div id="sharehouse-room-photos" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;"></div>
-	    </div>
-
 	    <div class="divider"></div>
 
 	    <div class="detail-section" style="padding-bottom:16px;">
@@ -5164,6 +5159,30 @@
 	    robert: { hobbies: '音楽、歴史、料理', ng: '楽器の深夜演奏、無断来客', note: '地域の文化や生活をゆっくり体験したい方を歓迎します。', values: '文化交流、尊重、落ち着いた暮らし' }
 	  };
 
+	  function getSharehouseRoomPhotos(match) {
+	    return match?.roomPhotos || [
+	      { label: '部屋全体', src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80' },
+	      { label: 'ベッド周り', src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80' },
+	      { label: '収納', src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' },
+	      { label: '共有スペース', src: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80' },
+	      { label: 'キッチン', src: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80' },
+	      { label: 'バス/トイレ', src: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80' }
+	    ];
+	  }
+
+	  function renderSharehouseRoomPhotoSlider(match) {
+	    const photos = getSharehouseRoomPhotos(match);
+	    const track = document.getElementById('sh-photo-track');
+	    if (!track) return;
+	    track.innerHTML = photos.map(photo =>
+	      `<img class="photo-slide" src="${photo.src}" alt="${localizeText(photo.label)}" style="width:100%;height:240px;object-fit:cover;flex-shrink:0;" loading="lazy" />`
+	    ).join('');
+	    shPhotoIndex = 0;
+	    track.style.transform = 'translateX(0)';
+	    const counter = document.getElementById('sh-photo-counter');
+	    if (counter) counter.textContent = `1 / ${photos.length}`;
+	  }
+
 	  function renderGuestPreferenceSummary(type) {
 	    const isSharehouse = type === 'sharehouse';
 	    const container = document.getElementById(isSharehouse ? 'sharehouse-guest-preferences' : 'detail-guest-preferences');
@@ -5172,6 +5191,7 @@
 	    if (isSharehouse) {
 	      const listing = currentListing || SHAREHOUSE_LISTINGS.sh1;
 	      const match = sharehouseMatchProfiles[listing.id] || sharehouseMatchProfiles.sh1;
+	      renderSharehouseRoomPhotoSlider(match);
 	      const shName = document.getElementById('sharehouse-match-name');
 	      const shMeta = document.getElementById('sharehouse-match-meta');
 	      const shBadge = document.getElementById('sharehouse-match-badge');
@@ -5304,23 +5324,6 @@
 		          { label: 'Wi-Fi', value: match.roomType.includes('Wi-Fi') ? '光回線・無制限' : '共用Wi-Fiあり' }
 		        ];
 		        roomInfo.innerHTML = rows.map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
-		      }
-		      const roomPhotos = document.getElementById('sharehouse-room-photos');
-		      if (roomPhotos) {
-		        const photos = match.roomPhotos || [
-		          { label: '部屋全体', src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80' },
-		          { label: 'ベッド周り', src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80' },
-		          { label: '収納', src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' },
-		          { label: '共有スペース', src: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80' },
-		          { label: 'キッチン', src: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&q=80' },
-		          { label: 'バス/トイレ', src: 'https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&q=80' }
-		        ];
-		        roomPhotos.innerHTML = photos.map(photo => `
-		          <div style="min-width:132px;background:var(--bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
-		            <img src="${photo.src}" alt="${localizeText(photo.label)}" style="width:132px;height:94px;object-fit:cover;display:block;" loading="lazy" />
-		            <div style="font-size:12px;font-weight:800;color:var(--dark);padding:8px 10px;">${localizeText(photo.label)}</div>
-		          </div>
-		        `).join('');
 		      }
 		      const priceBox = document.getElementById('sharehouse-price-box');
 		      if (priceBox) {
@@ -8669,11 +8672,6 @@
     applicationBackScreen = currentListing.detailScreen;
     interviewBackScreen = currentListing.detailScreen;
     navigate(currentScreen, 'sharehouse-detail');
-    shPhotoIndex = 0;
-    const track = document.getElementById('sh-photo-track');
-    if (track) track.style.transform = 'translateX(0)';
-	    const counter = document.getElementById('sh-photo-counter');
-	    if (counter) counter.textContent = '1 / 3';
 	    renderGuestPreferenceSummary('sharehouse');
 	    updateListingActionButtons();
 	  }
