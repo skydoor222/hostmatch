@@ -1200,7 +1200,7 @@
 
     <!-- AIバナー：まだ診断してない人向け -->
     <div id="ai-cta-banner" style="margin:16px 16px 0;background:linear-gradient(135deg,#FF5A5F,#FF8C00);border-radius:18px;padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="startAiFlow()">
-      <div style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🤖</div>
+      <div style="width:48px;height:48px;background:rgba(255,255,255,.2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;"></div>
       <div style="flex:1;">
         <div style="font-size:15px;font-weight:800;color:white;" data-i18n="ai_search">AIに相談して探す</div>
         <div style="font-size:12px;color:rgba(255,255,255,.85);margin-top:3px;" data-i18n-html="ai_search_sub">条件を入力するだけで<br>ぴったりのホストを提案</div>
@@ -1674,7 +1674,7 @@
       <div class="detail-avatar av1" id="detail-avatar">👩</div>
       <div>
         <div class="detail-host-name" id="detail-name">Sarah Johnson</div>
-        <div class="detail-match-badge" id="detail-match-badge">🤖 マッチ度：96%</div>
+        <div class="detail-match-badge" id="detail-match-badge"> マッチ度：96%</div>
         <div class="detail-host-meta" id="detail-meta">🇺🇸 Manhattan, New York · ホスト歴3年</div>
         <div class="detail-rating" id="detail-rating">★ 4.98 <span>(87件のレビュー)</span></div>
       </div>
@@ -1691,7 +1691,7 @@
     </div>
 
     <div class="detail-section" style="padding-top:12px;">
-      <div class="detail-section-title">🤖 AIマッチング相手の詳細情報</div>
+      <div class="detail-section-title"> AIマッチング相手の詳細情報</div>
       <div id="detail-guest-preferences" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
@@ -2678,7 +2678,7 @@
 <!-- ==================== AIマッチング中画面 ==================== -->
 <div class="screen" id="screen-matching">
   <div class="matching-screen">
-    <div class="matching-anim">🤖</div>
+    <div class="matching-anim"></div>
     <div class="matching-title">AIがマッチング中...</div>
     <div class="matching-sub">あなたの希望条件をもとに<br>最適なホストを探しています</div>
     <div class="matching-steps">
@@ -2729,14 +2729,14 @@
 	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">👩</div>
 	      <div>
 	        <div class="detail-host-name" id="sharehouse-match-name">田中 あおい</div>
-	        <div class="detail-match-badge" id="sharehouse-match-badge">🤖 マッチ度：94%</div>
+	        <div class="detail-match-badge" id="sharehouse-match-badge"> マッチ度：94%</div>
 	        <div class="detail-host-meta" id="sharehouse-match-meta">📍 新宿区 · 駅徒歩5分</div>
 	        <div class="detail-rating" id="sharehouse-match-rating">★ 4.8 <span>(24件のレビュー)</span></div>
 	      </div>
 	    </div>
 
 	    <div class="detail-section" style="padding-top:12px;">
-	      <div class="detail-section-title">🤖 AIマッチング相手の詳細情報</div>
+	      <div class="detail-section-title"> AIマッチング相手の詳細情報</div>
 	      <div id="sharehouse-guest-preferences" style="display:flex;flex-direction:column;gap:10px;"></div>
 	    </div>
 
@@ -4842,7 +4842,7 @@
       <div class="match-card" onclick="openDetail('${hostId}','homestay-host-list')">
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-          <div class="match-badge"><span class="match-badge-icon">🤖</span> ${t('match_score')}${h.match}%</div>
+          <div class="match-badge"><span class="match-badge-icon"></span> ${t('match_score')}${h.match}%</div>
           <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
           <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
           <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:${h.match}%"></div></div>
@@ -5240,7 +5240,7 @@
 	      const reviewScore = (match.review.match(/★\d(?:\.\d)?/) || ['★4.8'])[0];
 	      if (shName) shName.textContent = match.name;
 	      if (shAvatar) shAvatar.textContent = match.gender === '男性' ? '👨' : '👩';
-	      if (shBadge) shBadge.textContent = `🤖 ${localizeText('マッチ度')}：${match.match}%`;
+	      if (shBadge) shBadge.textContent = ` ${localizeText('マッチ度')}：${match.match}%`;
 	      if (shMeta) shMeta.textContent = `📍 ${localizeText(match.area)}`;
 	      if (shRating) shRating.innerHTML = `${reviewScore} <span>(${currentLang === 'ja' ? '24件のレビュー' : '24 reviews'})</span>`;
 		      availabilityCalendarState.sharehouse = { offset: 0, range: match.available };
@@ -5432,7 +5432,7 @@
     document.getElementById('detail-avatar').className = 'detail-avatar ' + h.avClass;
     document.getElementById('detail-avatar').textContent = h.avatar;
     document.getElementById('detail-name').textContent = h.name;
-    document.getElementById('detail-match-badge').textContent = '🤖 ' + t('match_score') + h.match + '%';
+    document.getElementById('detail-match-badge').textContent = ' ' + t('match_score') + h.match + '%';
     document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ' + t('host_years').replace('{years}', h.years);
     document.getElementById('detail-rating').innerHTML = '★ ' + h.rating + ' <span>(' + t('review_count').replace('{count}', h.reviews) + ')</span>';
     const profile = hostProfileInfo[hostId] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
@@ -6872,7 +6872,7 @@
       sh_onboard_title_1:'希望条件を教えてください', sh_onboard_title_3:'どんなルームメイトを探していますか？',
       sh_onboard_sub_1:'希望エリア・家賃・入居時期を選んでください',
       sh_onboard_sub_2:'正直に入力するほど相性の良い人が見つかります',
-      onboard_sub_ai:'AIマッチングの精度が上がります', start_ai_matching:'AIマッチングを開始 🤖', next:'次へ →',
+      onboard_sub_ai:'AIマッチングの精度が上がります', start_ai_matching:'AIマッチングを開始 ', next:'次へ →',
       looking_for_place:'住む場所を探している', register_as_host:'ホストとして登録する',
       host_income_desc:'ゲストを受け入れて収入を得る', looking_for_room:'入居先を探している',
       choose_by_roommate_profile:'ルームメイトのプロフィールを見て選ぶ',
@@ -6984,7 +6984,7 @@
       sh_onboard_title_1:'Tell us your preferences', sh_onboard_title_3:'What kind of roommate are you looking for?',
       sh_onboard_sub_1:'Choose your preferred area, rent, and move-in timing',
       sh_onboard_sub_2:'Honest answers help you find better matches',
-      onboard_sub_ai:'This improves AI matching accuracy', start_ai_matching:'Start AI Matching 🤖', next:'Next →',
+      onboard_sub_ai:'This improves AI matching accuracy', start_ai_matching:'Start AI Matching ', next:'Next →',
       looking_for_place:'Looking for a place to stay', register_as_host:'Register as a Host',
       host_income_desc:'Welcome guests and earn income', looking_for_room:'Looking for a room',
       choose_by_roommate_profile:'Choose by viewing roommate profiles',
@@ -8957,7 +8957,7 @@
 	      <div class="match-card" onclick="openDetail('${hostId}')" style="opacity:${opacity};">
 	        <div class="match-card-img">
 	          <img src="${h.photos[0]}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-	          <div class="match-badge"><span class="match-badge-icon">🤖</span> マッチ度：${h.match}%</div>
+	          <div class="match-badge"><span class="match-badge-icon"></span> マッチ度：${h.match}%</div>
 	          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
 	          <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
 	          <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:${h.match}%"></div></div>
@@ -8990,7 +8990,7 @@
         <div class="match-card" onclick="openSharehouseDetail('sh1')">
           <div class="match-card-img">
             <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
-            <div class="match-badge"><span>🤖</span> マッチ度：94%</div>
+            <div class="match-badge"><span></span> マッチ度：94%</div>
             <div class="match-card-flag">📍 新宿区 · ¥65,000/月</div>
             <div class="match-card-save">🤍</div>
             <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:94%"></div></div>
@@ -9033,7 +9033,7 @@
         <div class="match-card" onclick="openSharehouseDetail('sh2')">
           <div class="match-card-img">
             <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
-            <div class="match-badge"><span>🤖</span> マッチ度：91%</div>
+            <div class="match-badge"><span></span> マッチ度：91%</div>
             <div class="match-card-flag">📍 渋谷区 · ¥72,000/月</div>
             <div class="match-card-save">🤍</div>
             <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:91%"></div></div>
@@ -9081,7 +9081,7 @@
         <div class="match-card" onclick="openSharehouseDetail('sh3')">
           <div class="match-card-img">
             <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:100%;object-fit:cover;display:block;" />
-            <div class="match-badge"><span>🤖</span> マッチ度：89%</div>
+            <div class="match-badge"><span></span> マッチ度：89%</div>
             <div class="match-card-flag">📍 目黒区 · ¥58,000/月</div>
             <div class="match-card-save">🤍</div>
             <div class="match-badge-bar"><div class="match-badge-bar-fill" style="width:89%"></div></div>
