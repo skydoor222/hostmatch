@@ -3059,6 +3059,77 @@
 	        <textarea class="form-textarea" id="host-ob-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
 	      </div>
 	      <div class="form-group">
+	        <div class="form-label">ゲストとどのくらい会話したいですか？</div>
+	        <div class="form-chip-row" id="host-ob-guest-talk">
+	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
+	          <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
+	          <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
+	          <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
+	        </div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">ゲストに提供できる食事</div>
+	        <div class="form-chip-row" id="host-ob-meal-plan">
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">なし</div>
+	          <div class="form-chip selected" onclick="toggleMealChip(this,'host-ob')">朝食のみ</div>
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">朝夕食</div>
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">3食</div>
+	        </div>
+	      </div>
+	      <div id="host-ob-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
+	        <div class="form-group" id="host-ob-breakfast-field">
+	          <div class="form-label">朝食の内容</div>
+	          <input class="form-input" id="host-ob-breakfast-details" type="text" value="トースト、卵料理、フルーツ" placeholder="トースト、卵料理、フルーツ" />
+	        </div>
+	        <div class="form-group" id="host-ob-lunch-field" style="display:none;">
+	          <div class="form-label">昼食の内容</div>
+	          <input class="form-input" id="host-ob-lunch-details" type="text" placeholder="サンドイッチ、サラダ、スープ" />
+	        </div>
+	        <div class="form-group" id="host-ob-dinner-field" style="display:none;">
+	          <div class="form-label">夕食の内容</div>
+	          <input class="form-input" id="host-ob-dinner-details" type="text" value="和食中心、パスタ、カレー" placeholder="和食中心、パスタ、カレー" />
+	        </div>
+	        <div class="form-group">
+	          <div class="form-label">理想の食事スタイルは？</div>
+	          <div class="form-chip-row" id="host-ob-dining-style">
+	            <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
+	            <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
+	            <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">対応できる食事制限はありますか？</div>
+	        <div class="form-chip-row" id="host-ob-diet-support">
+	          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
+	          <div class="form-chip" onclick="toggleHostAllergySupport(this,'host-ob')">アレルギー対応可</div>
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">特になし</div>
+	        </div>
+	      </div>
+	      <div class="form-group" id="host-ob-allergy-field" style="display:none;">
+	        <div class="form-label">対応できるアレルギー内容</div>
+	        <input class="form-input" id="host-ob-allergy-supported" type="text" placeholder="ナッツ、卵、小麦、乳製品など" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">ゲストとの交流頻度は？</div>
+	        <div class="form-chip-row" id="host-ob-guest-frequency">
+	          <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加してほしい</div>
+	          <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
+	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
+	        </div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">受け入れできない条件</div>
+	        <div class="form-chip-row" id="host-ob-unacceptable">
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">喫煙NG</div>
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">深夜の騒音NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">無断の来客NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">門限を守れない人NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">共有スペースを汚す人NG</div>
+	        </div>
+	      </div>
+	      <div class="form-group">
 	        <div class="form-label">同居メンバー / 家族情報</div>
 	        <div id="host-ob-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
 	        <button type="button" onclick="showHostFamilyForm('ob')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 同居人/家族を追加</button>
@@ -3111,15 +3182,6 @@
           <span style="font-size:12px;color:var(--light);">画像を選択</span>
           <input type="file" accept="image/*" multiple style="display:none;" />
         </label>
-      </div>
-      <div class="form-group">
-        <div class="form-label">食事</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">食事なし</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
-          <div class="form-chip" onclick="toggleChip(this)">朝・夕食</div>
-          <div class="form-chip" onclick="toggleChip(this)">3食付き</div>
-        </div>
       </div>
       <div class="form-group">
         <div class="form-label">ペットの有無</div>
@@ -4101,6 +4163,20 @@
       </div>
     </div>
 
+    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;">ホストファミリーとの相性条件</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">ホストファミリーとの会話希望</span><strong id="applicant-detail-host-talk" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">希望する食事</span><strong id="applicant-detail-meal-plan" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">理想の食事スタイル</span><strong id="applicant-detail-dining-style" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">食事制限</span><strong id="applicant-detail-diet" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">アレルギー内容</span><strong id="applicant-detail-allergy" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">ホストファミリーとの交流頻度</span><strong id="applicant-detail-family-frequency" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">絶対NGな条件</span><strong id="applicant-detail-absolute-ng" style="text-align:right;"></strong></div>
+      </div>
+      <div style="margin-top:12px;background:#FFF8E6;border:1px solid #FFE1A6;border-radius:12px;padding:10px;font-size:12px;line-height:1.6;color:#856404;">AIマッチングでは、会話希望・食事制限・交流頻度・NG条件の相性を参照する想定です。</div>
+    </div>
+
     <button onclick="navigate(currentScreen,'host-messages')" style="background:var(--primary);color:white;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;">💬 メッセージ</button>
   </div>
 </div>
@@ -4315,6 +4391,77 @@
 	        <input class="form-input" id="host-profile-ng" type="text" value="喫煙、深夜の大きな音、無断の来客宿泊" placeholder="NG条件" style="margin-bottom:10px;" />
 	        <input class="form-input" id="host-profile-values" type="text" value="清潔さ、思いやり、適度な会話" placeholder="価値観" style="margin-bottom:10px;" />
 	        <textarea class="form-textarea" id="host-profile-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストとどのくらい会話したいですか？</div>
+	        <div class="form-chip-row" id="host-profile-guest-talk">
+	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
+	          <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
+	          <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
+	          <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストに提供できる食事</div>
+	        <div class="form-chip-row" id="host-profile-meal-plan">
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">なし</div>
+	          <div class="form-chip selected" onclick="toggleMealChip(this,'host-profile')">朝食のみ</div>
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">朝夕食</div>
+	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">3食</div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only" id="host-profile-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
+	        <div id="host-profile-breakfast-field">
+	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">朝食の内容</div>
+	          <input class="form-input" id="host-profile-breakfast-details" type="text" value="トースト、卵料理、フルーツ" placeholder="トースト、卵料理、フルーツ" />
+	        </div>
+	        <div id="host-profile-lunch-field" style="display:none;">
+	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">昼食の内容</div>
+	          <input class="form-input" id="host-profile-lunch-details" type="text" placeholder="サンドイッチ、サラダ、スープ" />
+	        </div>
+	        <div id="host-profile-dinner-field" style="display:none;">
+	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">夕食の内容</div>
+	          <input class="form-input" id="host-profile-dinner-details" type="text" value="和食中心、パスタ、カレー" placeholder="和食中心、パスタ、カレー" />
+	        </div>
+	        <div>
+	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">理想の食事スタイルは？</div>
+	          <div class="form-chip-row" id="host-profile-dining-style">
+	            <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
+	            <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
+	            <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">対応できる食事制限はありますか？</div>
+	        <div class="form-chip-row" id="host-profile-diet-support">
+	          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
+	          <div class="form-chip" onclick="toggleHostAllergySupport(this,'host-profile')">アレルギー対応可</div>
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">特になし</div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only" id="host-profile-allergy-field" style="display:none;">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">対応できるアレルギー内容</div>
+	        <input class="form-input" id="host-profile-allergy-supported" type="text" placeholder="ナッツ、卵、小麦、乳製品など" />
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストとの交流頻度は？</div>
+	        <div class="form-chip-row" id="host-profile-guest-frequency">
+	          <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加してほしい</div>
+	          <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
+	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">受け入れできない条件</div>
+	        <div class="form-chip-row" id="host-profile-unacceptable">
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">喫煙NG</div>
+	          <div class="form-chip selected" onclick="toggleMultiChip(this)">深夜の騒音NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">無断の来客NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">門限を守れない人NG</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">共有スペースを汚す人NG</div>
+	        </div>
 	      </div>
 	      <div class="homestay-profile-only">
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">同居メンバー / 家族情報</div>
@@ -4963,6 +5110,20 @@
     jennifer: { age: '40歳', nationality: 'アメリカ', gender: '女性', religion: '回答しない', englishLevel: 'ネイティブレベル' },
     robert: { age: '55歳', nationality: 'アメリカ', gender: '男性', religion: 'キリスト教', englishLevel: 'ネイティブレベル' }
   };
+  const hostCompatibilityConditions = {
+    sarah: {
+      guestTalk: '適度に話したい',
+      mealPlan: '朝食のみ',
+      breakfastDetails: 'トースト、卵料理、フルーツ',
+      lunchDetails: '',
+      dinnerDetails: '',
+      diningStyle: '一緒に食べたい',
+      dietSupport: ['ベジタリアン', 'ハラール'],
+      allergySupported: 'ナッツ以外',
+      guestFrequency: '休日だけ',
+      unacceptable: ['喫煙NG', '深夜の騒音NG']
+    }
+  };
 
   /* ===== NAVIGATION ===== */
   function navigate(from, to) {
@@ -5599,6 +5760,13 @@
 	    const profile = hostProfileInfo[currentHost] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
 	    const extra = hostDetailExtras[currentHost] || hostDetailExtras.sarah;
 	    const availability = getHostAvailability(currentHost || 'sarah');
+	    const mealInfo = hostCompatibilityConditions[currentHost] || hostCompatibilityConditions.sarah || {};
+	    const mealRows = [
+	      { label: '食事提供', value: mealInfo.mealPlan || '朝食のみ' },
+	      ...(!['なし', '不要'].includes(mealInfo.mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
+	      ...(mealInfo.mealPlan === '3食' && mealInfo.lunchDetails ? [{ label: '昼食の内容', value: mealInfo.lunchDetails }] : []),
+	      ...(['朝夕食', '3食'].includes(mealInfo.mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : [])
+	    ];
 
 	    container.innerHTML = [
 	      preferenceCard('プロフィール', [
@@ -5609,7 +5777,8 @@
 	        { label: '宗教', value: profile.religion || '回答しない' },
 	        { label: '英語レベル', value: profile.englishLevel || '回答しない' },
 	        { label: '家族構成', value: h.gender === 'couple' ? '夫婦' : h.gender === 'female' ? '女性ホスト' : '男性ホスト' },
-	        { label: '家族/同居人情報', value: hostFamilyMembers.map(m => `${m.age} · ${localizeText(m.gender)} · ${localizeText(m.nationality)}`).join(' / ') || '同居メンバー未登録' }
+	        { label: '家族/同居人情報', value: hostFamilyMembers.map(m => `${m.age} · ${localizeText(m.gender)} · ${localizeText(m.nationality)}`).join(' / ') || '同居メンバー未登録' },
+	        ...mealRows
 	      ]),
 	      (availabilityCalendarState.homestay = { offset: 0, range: availability }, availabilityCalendar(availability, 'homestay'))
 	    ].join('');
@@ -6543,14 +6712,32 @@
 
   function toggleMealChip(el, scope) {
     toggleChip(el);
+    updateMealDetailFields(scope);
+  }
+
+  function updateMealDetailFields(scope) {
+    const selected = selectedChipText(scope + '-meal-plan', '');
     const followups = document.getElementById(scope + '-meal-followups');
-    if (followups) followups.style.display = el.textContent.trim() === '不要' ? 'none' : 'flex';
+    const hasMeals = !['なし', '不要'].includes(selected);
+    if (followups) followups.style.display = hasMeals ? 'flex' : 'none';
+    const breakfast = document.getElementById(scope + '-breakfast-field');
+    const lunch = document.getElementById(scope + '-lunch-field');
+    const dinner = document.getElementById(scope + '-dinner-field');
+    if (breakfast) breakfast.style.display = hasMeals ? 'block' : 'none';
+    if (lunch) lunch.style.display = selected === '3食' ? 'block' : 'none';
+    if (dinner) dinner.style.display = ['朝夕食', '3食'].includes(selected) ? 'block' : 'none';
   }
 
   function toggleDietChip(el, scope) {
     toggleChip(el);
     const allergyField = document.getElementById(scope + '-allergy-field');
     if (allergyField) allergyField.style.display = el.textContent.trim() === 'アレルギー' ? 'block' : 'none';
+  }
+
+  function toggleHostAllergySupport(el, scope) {
+    toggleMultiChip(el);
+    const allergyField = document.getElementById(scope + '-allergy-field');
+    if (allergyField) allergyField.style.display = el.classList.contains('selected') ? 'block' : 'none';
   }
 
   // Multi-select chip (toggle independently)
@@ -6705,6 +6892,16 @@
 	    const gender = selectedChipText(prefix + '-gender', '女性');
 	    const religion = selectedChipText(prefix + '-religion', '回答しない');
 	    const englishLevel = selectedChipText(prefix + '-english-level', '日常会話');
+	    const guestTalk = selectedChipText(prefix + '-guest-talk', '適度に話したい');
+	    const mealPlan = selectedChipText(prefix + '-meal-plan', '朝食のみ');
+	    const breakfastDetails = formValue(prefix + '-breakfast-details', '');
+	    const lunchDetails = formValue(prefix + '-lunch-details', '');
+	    const dinnerDetails = formValue(prefix + '-dinner-details', '');
+	    const diningStyle = selectedChipText(prefix + '-dining-style', '一緒に食べたい');
+	    const dietSupport = selectedChipTexts('#' + prefix + '-diet-support');
+	    const allergySupported = formValue(prefix + '-allergy-supported', '');
+	    const guestFrequency = selectedChipText(prefix + '-guest-frequency', '休日だけ');
+	    const unacceptable = selectedChipTexts('#' + prefix + '-unacceptable');
 	    const address = formValue(prefix + '-address', 'Manhattan, New York');
 	    const station = formValue(prefix + '-station', '72nd St');
 	    const walkMin = formValue(prefix + '-walk-min', '5');
@@ -6746,6 +6943,18 @@
 	      ng: formValue(prefix + '-ng', hostDetailExtras.sarah.ng),
 	      values: formValue(prefix + '-values', hostDetailExtras.sarah.values),
 	      note: formValue(prefix + '-note', hostDetailExtras.sarah.note)
+	    };
+	    hostCompatibilityConditions.sarah = {
+	      guestTalk,
+	      mealPlan,
+	      breakfastDetails,
+	      lunchDetails,
+	      dinnerDetails,
+	      diningStyle,
+	      dietSupport,
+	      allergySupported,
+	      guestFrequency,
+	      unacceptable
 	    };
 	    if (scope === 'ob') {
 	      const start = formValue('host-available-start');
@@ -7545,6 +7754,30 @@
     '必要最低限':'Minimal interaction',
     '毎日話したい':'I’d like to talk every day',
     '家族のように過ごしたい':'I’d like to spend time like a family member',
+    'ゲストとどのくらい会話したいですか？':'How much would you like to interact with the guest?',
+    'ゲストと食事をどのように取りたいですか？':'How would you like to share meals with the guest?',
+    'ゲストに提供できる食事':'Meals You Can Provide',
+    '食事提供':'Meals You Can Provide',
+    '朝食の内容':'Breakfast Details',
+    '昼食の内容':'Lunch Details',
+    '夕食の内容':'Dinner Details',
+    'トースト、卵料理、フルーツ':'Toast, egg dishes, fruit',
+    'シリアル、ヨーグルト、コーヒー':'Cereal, yogurt, coffee',
+    'サンドイッチ、サラダ、スープ':'Sandwiches, salad, soup',
+    '和食中心、パスタ、カレー':'Japanese-style meals, pasta, curry',
+    '対応できる食事制限はありますか？':'Dietary restrictions you can accommodate',
+    '対応できる食事制限':'Dietary restrictions you can accommodate',
+    'アレルギー対応可':'Can accommodate allergies',
+    '特になし':'None',
+    '対応できるアレルギー内容':'Allergies you can accommodate',
+    'ナッツ、卵、小麦、乳製品など':'Nuts, eggs, wheat, dairy, etc.',
+    'ゲストとの交流頻度は？':'How often would you like to spend time with the guest?',
+    '家族旅行も参加してほしい':'I’d like the guest to join family outings or trips',
+    '受け入れできない条件':'Conditions you cannot accept',
+    '門限を守れない人NG':'Cannot accept guests who do not follow curfew',
+    '共有スペースを汚す人NG':'Cannot accept guests who leave shared spaces dirty',
+    '無断の来客NG':'No unapproved visitors',
+    '深夜の騒音NG':'No late-night noise',
     'ホストファミリーとの交流頻度は？':'How often would you like to spend time with your host family?',
     '家族旅行も参加したい':'I’d like to join family outings or trips',
     '休日だけ':'Weekends only',
@@ -7559,6 +7792,17 @@
     'アレルギー':'Allergy',
     'アレルギー内容':'Please specify your allergy',
     '卵、小麦、ナッツ、乳製品など':'Eggs, wheat, nuts, dairy, etc.',
+    'ホストファミリーとの相性条件':'Host Family Compatibility',
+    'ホストファミリーとの会話希望':'Desired Host Family Interaction',
+    '希望する食事':'Preferred Meal Plan',
+    '食事制限':'Dietary Restrictions',
+    'ホストファミリーとの交流頻度':'Host Family Interaction Frequency',
+    '絶対NGな条件':'No-go Conditions',
+    'AIマッチングでは、会話希望・食事制限・交流頻度・NG条件の相性を参照する想定です。':'AI matching is expected to consider compatibility around conversation preferences, dietary restrictions, interaction frequency, and no-go conditions.',
+    '朝夕食':'Breakfast and dinner',
+    'ナッツ':'Nuts',
+    '喫煙NG、深夜の騒音NG':'No smoking, no late-night noise',
+    '喫煙NG、共有スペースを汚す人NG':'No smoking, no leaving shared spaces dirty',
     '喫煙NG':'No smoking',
     'ペットNG':'No pets',
     '門限NG':'No curfew',
@@ -8774,6 +9018,13 @@
 	      budget: '$700〜$1,000 /月',
 	      religion: '無宗教',
 	      englishLevel: '日常会話',
+	      hostTalk: '家族のように過ごしたい',
+	      mealPlan: '朝夕食',
+	      diningStyle: '一緒に食べたい',
+	      diet: 'アレルギー',
+	      allergy: 'ナッツ',
+	      familyFrequency: '休日だけ',
+	      absoluteNg: '喫煙NG、深夜の騒音NG',
 	      ng: '喫煙、深夜の騒音',
 	      note: '生活ルールを大切にしながら、ホストファミリーと楽しく交流したいです。',
 	      values: '清潔さ、家族との交流、安心感',
@@ -8798,6 +9049,13 @@
 	      budget: '$600〜$900 /月',
 	      religion: '回答しない',
 	      englishLevel: 'ビジネスレベル',
+	      hostTalk: '必要最低限',
+	      mealPlan: '朝食のみ',
+	      diningStyle: 'たまに一緒',
+	      diet: 'ハラール',
+	      allergy: 'なし',
+	      familyFrequency: '必要最低限',
+	      absoluteNg: '喫煙NG、共有スペースを汚す人NG',
 	      ng: '喫煙、共有部の散らかり',
 	      note: '静かな環境で生活に慣れながら、必要な時に交流できると嬉しいです。',
 	      values: '静かな環境、自立、ルールの尊重',
@@ -8847,6 +9105,13 @@
     document.getElementById('applicant-detail-ng').textContent = applicant.ng || '未設定';
     document.getElementById('applicant-detail-note').textContent = applicant.note || applicant.bio;
     document.getElementById('applicant-detail-values').textContent = applicant.values || '安心して暮らせる環境';
+    document.getElementById('applicant-detail-host-talk').textContent = localizeText(applicant.hostTalk || '適度に話したい');
+    document.getElementById('applicant-detail-meal-plan').textContent = localizeText(applicant.mealPlan || '朝食のみ');
+    document.getElementById('applicant-detail-dining-style').textContent = localizeText(applicant.diningStyle || '一緒に食べたい');
+    document.getElementById('applicant-detail-diet').textContent = localizeText(applicant.diet || 'なし');
+    document.getElementById('applicant-detail-allergy').textContent = localizeText(applicant.allergy || 'なし');
+    document.getElementById('applicant-detail-family-frequency').textContent = localizeText(applicant.familyFrequency || '休日だけ');
+    document.getElementById('applicant-detail-absolute-ng').textContent = localizeText(applicant.absoluteNg || applicant.ng || '未設定');
     navigate(currentScreen, 'host-applicant-detail');
   }
 
