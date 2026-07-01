@@ -2215,11 +2215,20 @@
         </div>
       </div>
       <div class="form-group">
-        <div class="form-label">ホストとの会話は？</div>
+        <div class="form-label">あなたはどのくらいホストファミリーと会話したいですか？</div>
         <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">あまり話さない</div>
+          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
           <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
-          <div class="form-chip" onclick="toggleChip(this)">たくさん話したい</div>
+          <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
+          <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">ホストファミリーとの交流頻度は？</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加したい</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
+          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
         </div>
       </div>
       <div class="form-group">
@@ -2234,10 +2243,33 @@
       <div class="form-group">
         <div class="form-label">食事</div>
         <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">不要</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
-          <div class="form-chip" onclick="toggleChip(this)">朝夕食</div>
-          <div class="form-chip" onclick="toggleChip(this)">3食</div>
+          <div class="form-chip" onclick="toggleMealChip(this,'lifestyle')">不要</div>
+          <div class="form-chip selected" onclick="toggleMealChip(this,'lifestyle')">朝食のみ</div>
+          <div class="form-chip" onclick="toggleMealChip(this,'lifestyle')">朝夕食</div>
+          <div class="form-chip" onclick="toggleMealChip(this,'lifestyle')">3食</div>
+        </div>
+      </div>
+      <div id="lifestyle-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group">
+          <div class="form-label">理想の食事スタイルは？</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
+            <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
+            <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">食事制限はありますか？</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleDietChip(this,'lifestyle')">なし</div>
+            <div class="form-chip" onclick="toggleDietChip(this,'lifestyle')">ベジタリアン</div>
+            <div class="form-chip" onclick="toggleDietChip(this,'lifestyle')">ハラール</div>
+            <div class="form-chip" onclick="toggleDietChip(this,'lifestyle')">アレルギー</div>
+          </div>
+        </div>
+        <div class="form-group" id="lifestyle-allergy-field" style="display:none;">
+          <div class="form-label">アレルギー内容</div>
+          <input class="form-input" type="text" placeholder="卵、小麦、ナッツ、乳製品など" />
         </div>
       </div>
     </div>
@@ -2261,9 +2293,9 @@
       <div class="form-group">
         <div class="form-label">絶対NGな条件</div>
         <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペット</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
+          <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙NG</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペットNG</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限NG</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
         </div>
       </div>
@@ -2481,11 +2513,20 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">ホストとの会話は？</div>
+          <div class="form-label">あなたはどのくらいホストファミリーと会話したいですか？</div>
           <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">あまり話さない</div>
+            <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
             <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
-            <div class="form-chip" onclick="toggleChip(this)">たくさん話したい</div>
+            <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
+            <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">ホストファミリーとの交流頻度は？</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加したい</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
+            <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
           </div>
         </div>
         <div class="form-group">
@@ -2500,10 +2541,33 @@
         <div class="form-group">
           <div class="form-label">食事</div>
           <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">不要</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div>
-            <div class="form-chip" onclick="toggleChip(this)">朝夕食</div>
-            <div class="form-chip" onclick="toggleChip(this)">3食</div>
+            <div class="form-chip" onclick="toggleMealChip(this,'onboard')">不要</div>
+            <div class="form-chip selected" onclick="toggleMealChip(this,'onboard')">朝食のみ</div>
+            <div class="form-chip" onclick="toggleMealChip(this,'onboard')">朝夕食</div>
+            <div class="form-chip" onclick="toggleMealChip(this,'onboard')">3食</div>
+          </div>
+        </div>
+        <div id="onboard-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
+          <div class="form-group">
+            <div class="form-label">理想の食事スタイルは？</div>
+            <div class="form-chip-row">
+              <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
+              <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
+              <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label">食事制限はありますか？</div>
+            <div class="form-chip-row">
+              <div class="form-chip selected" onclick="toggleDietChip(this,'onboard')">なし</div>
+              <div class="form-chip" onclick="toggleDietChip(this,'onboard')">ベジタリアン</div>
+              <div class="form-chip" onclick="toggleDietChip(this,'onboard')">ハラール</div>
+              <div class="form-chip" onclick="toggleDietChip(this,'onboard')">アレルギー</div>
+            </div>
+          </div>
+          <div class="form-group" id="onboard-allergy-field" style="display:none;">
+            <div class="form-label">アレルギー内容</div>
+            <input class="form-input" type="text" placeholder="卵、小麦、ナッツ、乳製品など" />
           </div>
         </div>
       </div>
@@ -2527,11 +2591,11 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">絶対NGな条件</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙</div>
-            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペット</div>
-            <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限あり</div>
+        <div class="form-label">絶対NGな条件</div>
+        <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleMultiChip(this)">🚬 喫煙NG</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 ペットNG</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限NG</div>
             <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
           </div>
         </div>
@@ -6477,6 +6541,18 @@
     el.classList.add('selected');
   }
 
+  function toggleMealChip(el, scope) {
+    toggleChip(el);
+    const followups = document.getElementById(scope + '-meal-followups');
+    if (followups) followups.style.display = el.textContent.trim() === '不要' ? 'none' : 'flex';
+  }
+
+  function toggleDietChip(el, scope) {
+    toggleChip(el);
+    const allergyField = document.getElementById(scope + '-allergy-field');
+    if (allergyField) allergyField.style.display = el.textContent.trim() === 'アレルギー' ? 'block' : 'none';
+  }
+
   // Multi-select chip (toggle independently)
 	  function toggleMultiChip(el) {
 	    el.classList.toggle('selected');
@@ -7465,6 +7541,32 @@
     '室内喫煙、深夜の騒音、共有部の放置':'Indoor smoking, late-night noise, leaving shared spaces messy',
     '喫煙、無断来客、共有部の長時間占有':'Smoking, unapproved visitors, occupying shared spaces for long periods',
     '大音量、室内喫煙':'Loud noise, indoor smoking',
+    'あなたはどのくらいホストファミリーと会話したいですか？':'How much would you like to interact with your host family?',
+    '必要最低限':'Minimal interaction',
+    '毎日話したい':'I’d like to talk every day',
+    '家族のように過ごしたい':'I’d like to spend time like a family member',
+    'ホストファミリーとの交流頻度は？':'How often would you like to spend time with your host family?',
+    '家族旅行も参加したい':'I’d like to join family outings or trips',
+    '休日だけ':'Weekends only',
+    '理想の食事スタイルは？':'Preferred dining style',
+    '一緒に食べたい':'I’d like to eat together',
+    'たまに一緒':'Sometimes together',
+    '別々でOK':'Eating separately is fine',
+    '食事制限はありますか？':'Dietary restrictions',
+    'なし':'None',
+    'ベジタリアン':'Vegetarian',
+    'ハラール':'Halal',
+    'アレルギー':'Allergy',
+    'アレルギー内容':'Please specify your allergy',
+    '卵、小麦、ナッツ、乳製品など':'Eggs, wheat, nuts, dairy, etc.',
+    '喫煙NG':'No smoking',
+    'ペットNG':'No pets',
+    '門限NG':'No curfew',
+    '来客NG':'No visitors',
+    '🚬 喫煙NG':'🚬 No smoking',
+    '🐾 ペットNG':'🐾 No pets',
+    '🔒 門限NG':'🔒 No curfew',
+    '🚫 来客NG':'🚫 No visitors',
     '料理、ガーデニング、映画':'Cooking, Gardening, Movies',
     '料理、犬の散歩、ビーチ':'Cooking, Walking the Dog, Beach Outings',
     '読書、美術館、クラシック音楽':'Reading, Museums, Classical Music',
@@ -7539,7 +7641,7 @@
     '🌙 夜型（9時以降）':'🌙 Night owl (after 9)',
     'ホストとの会話は？':'How much would you like to talk with the host?',
     'あまり話さない':'Not much',
-    '適度に話したい':'A moderate amount',
+    '適度に話したい':'Occasional conversations',
     'たくさん話したい':'A lot',
     'ホストの家族構成':'Host Family Type',
     'こだわらない':'No preference',
