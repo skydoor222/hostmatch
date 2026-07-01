@@ -2304,6 +2304,43 @@
         <textarea class="form-textarea" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！">はじめまして、Yukiです。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！</textarea>
       </div>
     </div>
+    <div class="form-section sharehouse-guest-lifestyle-only" style="display:none;">
+      <div class="form-section-title">🏠 シェアハウス生活スタイル</div>
+      <div class="form-group">
+        <div class="form-label">騒音・音楽</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
+          <div class="form-chip" onclick="toggleChip(this)">適度な生活音ならOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">音楽も電話も問題ない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">料理頻度</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">毎日</div>
+          <div class="form-chip" onclick="toggleChip(this)">週2、3回</div>
+          <div class="form-chip" onclick="toggleChip(this)">キッチンはほぼ使わない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">お酒</div>
+        <div class="form-chip-row">
+          <div class="form-chip" onclick="toggleChip(this)">よく飲む</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">たまに飲む</div>
+          <div class="form-chip" onclick="toggleChip(this)">飲まない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">MBTI（任意）</div>
+        <div class="form-chip-row">
+          <div class="form-chip selected" onclick="toggleChip(this)">選択しない</div>
+          <div class="form-chip" onclick="toggleChip(this)">INTJ</div><div class="form-chip" onclick="toggleChip(this)">INTP</div><div class="form-chip" onclick="toggleChip(this)">ENTJ</div><div class="form-chip" onclick="toggleChip(this)">ENTP</div>
+          <div class="form-chip" onclick="toggleChip(this)">INFJ</div><div class="form-chip" onclick="toggleChip(this)">INFP</div><div class="form-chip" onclick="toggleChip(this)">ENFJ</div><div class="form-chip" onclick="toggleChip(this)">ENFP</div>
+          <div class="form-chip" onclick="toggleChip(this)">ISTJ</div><div class="form-chip" onclick="toggleChip(this)">ISFJ</div><div class="form-chip" onclick="toggleChip(this)">ESTJ</div><div class="form-chip" onclick="toggleChip(this)">ESFJ</div>
+          <div class="form-chip" onclick="toggleChip(this)">ISTP</div><div class="form-chip" onclick="toggleChip(this)">ISFP</div><div class="form-chip" onclick="toggleChip(this)">ESTP</div><div class="form-chip" onclick="toggleChip(this)">ESFP</div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="form-save-bar">
     <button class="form-save-btn" onclick="saveSubScreen('lifestyle')">保存する</button>
@@ -2749,6 +2786,32 @@
             <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
           </div>
         </div>
+        <div class="form-group">
+          <div class="form-label">お酒</div>
+          <div class="form-chip-row">
+            <div class="form-chip" onclick="toggleChip(this)">よく飲む</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">たまに飲む</div>
+            <div class="form-chip" onclick="toggleChip(this)">飲まない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">料理頻度</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">毎日</div>
+            <div class="form-chip" onclick="toggleChip(this)">週2、3回</div>
+            <div class="form-chip" onclick="toggleChip(this)">キッチンはほぼ使わない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">MBTI（任意）</div>
+          <div class="form-chip-row">
+            <div class="form-chip selected" onclick="toggleChip(this)">選択しない</div>
+            <div class="form-chip" onclick="toggleChip(this)">INTJ</div><div class="form-chip" onclick="toggleChip(this)">INTP</div><div class="form-chip" onclick="toggleChip(this)">ENTJ</div><div class="form-chip" onclick="toggleChip(this)">ENTP</div>
+            <div class="form-chip" onclick="toggleChip(this)">INFJ</div><div class="form-chip" onclick="toggleChip(this)">INFP</div><div class="form-chip" onclick="toggleChip(this)">ENFJ</div><div class="form-chip" onclick="toggleChip(this)">ENFP</div>
+            <div class="form-chip" onclick="toggleChip(this)">ISTJ</div><div class="form-chip" onclick="toggleChip(this)">ISFJ</div><div class="form-chip" onclick="toggleChip(this)">ESTJ</div><div class="form-chip" onclick="toggleChip(this)">ESFJ</div>
+            <div class="form-chip" onclick="toggleChip(this)">ISTP</div><div class="form-chip" onclick="toggleChip(this)">ISFP</div><div class="form-chip" onclick="toggleChip(this)">ESTP</div><div class="form-chip" onclick="toggleChip(this)">ESFP</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2773,8 +2836,8 @@
 	          <div class="form-label">騒音・音楽</div>
           <div class="form-chip-row">
             <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
-            <div class="form-chip" onclick="toggleChip(this)">普通</div>
-            <div class="form-chip" onclick="toggleChip(this)">にぎやかでもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">適度な生活音ならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">音楽も電話も問題ない</div>
           </div>
         </div>
         <div class="form-group">
@@ -4163,6 +4226,17 @@
       </div>
     </div>
 
+    <div id="applicant-sharehouse-lifestyle-card" style="display:none;background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;">シェアハウス生活スタイル</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">騒音・音楽</span><strong id="applicant-detail-sh-noise" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">料理頻度</span><strong id="applicant-detail-sh-cooking" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">喫煙</span><strong id="applicant-detail-sh-smoking" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">お酒</span><strong id="applicant-detail-sh-alcohol" style="text-align:right;"></strong></div>
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">MBTI</span><strong id="applicant-detail-sh-mbti" style="text-align:right;"></strong></div>
+      </div>
+    </div>
+
     <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
       <div style="font-size:14px;font-weight:800;margin-bottom:12px;">ホストファミリーとの相性条件</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
@@ -5155,6 +5229,7 @@
       toggleHostPetFields(to === 'host-profile' ? 'profile' : 'ob');
     }
     if (to === 'host-profile') updateHostProfileMode();
+    if (to === 'lifestyle') updateGuestLifestyleMode();
     if (to === 'host-calendar') renderHostCalendar();
     if (to === 'host-dashboard') updateSharehouseManagerProfileCard();
     // ホスト用ナビのアクティブ同期
@@ -5179,6 +5254,13 @@
       el.style.display = isSharehouse ? 'none' : '';
     });
     document.querySelectorAll('#screen-host-profile .sharehouse-profile-section').forEach(el => {
+      el.style.display = isSharehouse ? 'block' : 'none';
+    });
+  }
+
+  function updateGuestLifestyleMode() {
+    const isSharehouse = window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse';
+    document.querySelectorAll('#screen-lifestyle .sharehouse-guest-lifestyle-only').forEach(el => {
       el.style.display = isSharehouse ? 'block' : 'none';
     });
   }
@@ -7981,8 +8063,22 @@
     '外なら吸う':'Smokes outside only',
     '室内でも吸う':'Smokes indoors',
     '騒音・音楽':'Noise / Music',
-    '静かにしたい':'Prefers quiet',
+    '静かにしたい':'I prefer a quiet environment',
+    '適度な生活音ならOK':'Normal daily sounds are OK',
+    '音楽も電話も問題ない':'Music and phone calls are fine',
     'にぎやかでもOK':'Okay with lively atmosphere',
+    '料理頻度':'Cooking frequency',
+    '毎日':'Every day',
+    '週2、3回':'2–3 times a week',
+    'キッチンはほぼ使わない':'I rarely use the kitchen',
+    'お酒':'Alcohol',
+    'よく飲む':'Often',
+    'たまに飲む':'Occasionally',
+    '飲まない':'I don’t drink',
+    'MBTI（任意）':'MBTI (optional)',
+    'MBTI':'MBTI',
+    '選択しない':'Prefer not to say',
+    'シェアハウス生活スタイル':'Share House Lifestyle',
     '来客':'Visitors',
     '事前相談':'Ask in advance',
     '自由':'Flexible',
@@ -9025,6 +9121,11 @@
 	      allergy: 'ナッツ',
 	      familyFrequency: '休日だけ',
 	      absoluteNg: '喫煙NG、深夜の騒音NG',
+	      shareNoise: '静かにしたい',
+	      cookingFrequency: '毎日',
+	      smoking: '🚭 吸わない',
+	      alcohol: 'たまに飲む',
+	      mbti: 'INFP',
 	      ng: '喫煙、深夜の騒音',
 	      note: '生活ルールを大切にしながら、ホストファミリーと楽しく交流したいです。',
 	      values: '清潔さ、家族との交流、安心感',
@@ -9056,6 +9157,11 @@
 	      allergy: 'なし',
 	      familyFrequency: '必要最低限',
 	      absoluteNg: '喫煙NG、共有スペースを汚す人NG',
+	      shareNoise: '適度な生活音ならOK',
+	      cookingFrequency: '週2、3回',
+	      smoking: '🚭 吸わない',
+	      alcohol: '飲まない',
+	      mbti: '選択しない',
 	      ng: '喫煙、共有部の散らかり',
 	      note: '静かな環境で生活に慣れながら、必要な時に交流できると嬉しいです。',
 	      values: '静かな環境、自立、ルールの尊重',
@@ -9077,6 +9183,11 @@
 	      stay: '入居中',
 	      area: 'ニューヨーク',
 	      budget: '$800〜$1,100 /月',
+	      shareNoise: '音楽も電話も問題ない',
+	      cookingFrequency: 'キッチンはほぼ使わない',
+	      smoking: '🚭 吸わない',
+	      alcohol: 'よく飲む',
+	      mbti: 'ENFP',
 	      ng: '室内喫煙',
 	      note: '文化交流を楽しみながら、共有スペースをきれいに使いたいです。',
 	      values: '文化交流、会話、清潔さ'
@@ -9102,6 +9213,16 @@
     document.getElementById('applicant-detail-budget').textContent = applicant.budget || '$600〜$1,000 /月';
     document.getElementById('applicant-detail-religion').textContent = applicant.religion || '回答しない';
     document.getElementById('applicant-detail-english-level').textContent = applicant.englishLevel || '回答しない';
+    const shCard = document.getElementById('applicant-sharehouse-lifestyle-card');
+    const showSharehouseCard = isSharehouseHostEditing();
+    if (shCard) shCard.style.display = showSharehouseCard ? 'block' : 'none';
+    if (showSharehouseCard) {
+      document.getElementById('applicant-detail-sh-noise').textContent = localizeText(applicant.shareNoise || '静かにしたい');
+      document.getElementById('applicant-detail-sh-cooking').textContent = localizeText(applicant.cookingFrequency || '未設定');
+      document.getElementById('applicant-detail-sh-smoking').textContent = localizeText(applicant.smoking || '喫煙未設定');
+      document.getElementById('applicant-detail-sh-alcohol').textContent = localizeText(applicant.alcohol || '未設定');
+      document.getElementById('applicant-detail-sh-mbti').textContent = localizeText(applicant.mbti || '選択しない');
+    }
     document.getElementById('applicant-detail-ng').textContent = applicant.ng || '未設定';
     document.getElementById('applicant-detail-note').textContent = applicant.note || applicant.bio;
     document.getElementById('applicant-detail-values').textContent = applicant.values || '安心して暮らせる環境';
