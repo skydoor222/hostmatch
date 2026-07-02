@@ -880,17 +880,6 @@
 
     /* interview date picker */
     .interview-date-section { margin-top: 16px; }
-    .interview-date-label { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
-    .interview-date-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
-    }
-    .interview-date-option {
-      padding: 10px 8px; border: 1.5px solid var(--border); border-radius: 12px;
-      text-align: center; cursor: pointer; background: white; transition: all .15s;
-    }
-    .interview-date-option.selected { border-color: var(--primary); background: #FFF0F0; }
-    .interview-date-day { font-size: 12px; font-weight: 700; color: var(--dark); }
-    .interview-date-date { font-size: 11px; color: var(--light); margin-top: 2px; }
     .interview-time-row { margin-top: 10px; }
     .interview-time-select {
       width: 100%; border: 1.5px solid var(--border); border-radius: 12px;
@@ -3719,8 +3708,6 @@
         <input class="form-input" id="interview-date-input" type="date" onchange="setInterviewDateFromInput(this.value)" />
         <div style="font-size:12px;color:var(--light);margin-top:6px;" data-i18n="select_preferred_date">希望日を選択してください</div>
       </div>
-      <div class="interview-date-label" data-i18n="preferred_date">📅 希望日を選択</div>
-      <div class="interview-date-grid" id="interview-date-grid"></div>
       <div class="interview-time-row">
         <select class="interview-time-select" id="interview-time">
           <option value="" data-i18n="select_time">時間帯を選択...</option>
@@ -7200,11 +7187,6 @@
   let selectedInterviewDate = null;
 
   function generateInterviewDates() {
-    const grid = document.getElementById('interview-date-grid');
-    grid.innerHTML = '';
-    const days = currentLang === 'ja'
-      ? ['日','月','火','水','木','金','土']
-      : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     const today = new Date();
     const dateInput = document.getElementById('interview-date-input');
     if (dateInput) {
@@ -7212,36 +7194,11 @@
       minDate.setDate(today.getDate() + 1);
       dateInput.min = minDate.toISOString().split('T')[0];
     }
-    // Show next 6 available days (skip today, start from tomorrow)
-    for (let i = 1; i <= 6; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      const dayName = days[d.getDay()];
-      const month = d.getMonth() + 1;
-      const date = d.getDate();
-      const dateStr = d.toISOString().split('T')[0];
-      grid.innerHTML += `
-        <div class="interview-date-option" onclick="selectInterviewDate(this,'${dateStr}')" data-date="${dateStr}">
-          <div class="interview-date-day">${currentLang === 'ja' ? dayName + '曜日' : dayName}</div>
-          <div class="interview-date-date">${month}/${date}</div>
-        </div>`;
-    }
     selectedInterviewDate = null;
   }
 
   function setInterviewDateFromInput(dateStr) {
     selectedInterviewDate = dateStr;
-    document.querySelectorAll('.interview-date-option').forEach(o => {
-      o.classList.toggle('selected', o.dataset.date === dateStr);
-    });
-  }
-
-  function selectInterviewDate(el, dateStr) {
-    document.querySelectorAll('.interview-date-option').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    selectedInterviewDate = dateStr;
-    const dateInput = document.getElementById('interview-date-input');
-    if (dateInput) dateInput.value = dateStr;
   }
 
   /* ===== LOGIN ===== */
@@ -7555,7 +7512,7 @@
       request_interview:'面談を申し込む',
       interview_sub:'ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。',
       monthly_price:'月額料金', interview_method:'面談方法', video_call_15:'ビデオ通話（15分）', fee:'費用', free:'無料',
-      select_date:'日付を選択', select_preferred_date:'希望日を選択してください', preferred_date:'📅 希望日を選択',
+      select_date:'日付を選択', select_preferred_date:'希望日を選択してください',
       select_time:'時間帯を選択...', confirm_interview:'面談を確定する', cancel:'キャンセル',
       interview_confirmed:'面談が確定しました！',
       interview_confirmed_sub:'ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。',
@@ -7667,7 +7624,7 @@
       request_interview:'Request an Interview',
       interview_sub:'You will have a video interview with the host.<br>Use it to see if you are a good fit.',
       monthly_price:'Monthly Price', interview_method:'Interview Method', video_call_15:'Video call (15 min)', fee:'Fee', free:'Free',
-      select_date:'Select Date', select_preferred_date:'Please choose your preferred date', preferred_date:'📅 Select Preferred Date',
+      select_date:'Select Date', select_preferred_date:'Please choose your preferred date',
       select_time:'Select a time...', confirm_interview:'Confirm Interview', cancel:'Cancel',
       interview_confirmed:'Interview Confirmed!',
       interview_confirmed_sub:'Please wait for the host to message you about scheduling.<br>After the interview, press “Submit Application” on the detail page if you want to apply.',
