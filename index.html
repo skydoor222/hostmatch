@@ -4219,22 +4219,19 @@
   <div class="onboard-body">
     <!-- STEP1 -->
 	    <div class="onboard-step-panel active" id="host-ob-panel-1">
+	      <div class="form-section-title">👥 ホスト・家族について</div>
 	      <div class="form-group">
-	        <div class="form-label">ホスト名（家族名でもOK）</div>
+	        <div class="form-label">プロフィール写真</div>
+	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	          <span style="font-size:34px;">👤</span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
+	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
+	          <input type="file" accept="image/*" style="display:none;" />
+	        </label>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">ホスト名</div>
 	        <input class="form-input" id="host-ob-name" type="text" placeholder="山田ファミリー" value="Sarah" />
-	      </div>
-		      <div class="form-group">
-		        <div class="form-label">プロフィール写真</div>
-		        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-		          <span style="font-size:34px;">👤</span>
-		          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
-		          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-		          <input type="file" accept="image/*" style="display:none;" />
-		        </label>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">生年月日</div>
-	        <input class="form-input" type="date" value="1982-06-10" />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">年齢</div>
@@ -4242,7 +4239,37 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">国籍</div>
-	        <input class="form-input" id="host-ob-nationality" type="text" placeholder="国籍を入力してください" value="アメリカ" />
+	        <input class="form-input" id="host-ob-nationality" type="text" placeholder="国籍を入力してください" value="カナダ" />
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">話せる言語</div>
+	        <div class="form-chip-row" id="host-ob-spoken-languages">
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">英語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">日本語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">中国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">韓国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">スペイン語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">フランス語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">イタリア語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">ドイツ語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-spoken-language-other-wrap')">その他</div>
+	        </div>
+	        <div id="host-ob-spoken-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-spoken-language-other" type="text" placeholder="その他の言語" /></div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">家で使用する言語</div>
+	        <div class="form-chip-row" id="host-ob-home-languages">
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">英語</div>
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">日本語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">中国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">韓国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">スペイン語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">フランス語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">イタリア語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">ドイツ語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-home-language-other-wrap')">その他</div>
+	        </div>
+	        <div id="host-ob-home-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-home-language-other" type="text" placeholder="その他の言語" /></div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">性別</div>
@@ -4255,226 +4282,128 @@
 	      <div class="form-group">
 	        <div class="form-label">宗教</div>
 	        <div class="form-chip-row" id="host-ob-religion">
-	          <div class="form-chip" onclick="toggleChip(this)">仏教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">キリスト教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">イスラム教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">ヒンドゥー教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">ユダヤ教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">無宗教</div>
-	          <div class="form-chip" onclick="toggleChip(this)">その他</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">回答しない</div>
+	          <div class="form-chip" onclick="toggleChip(this)">仏教</div><div class="form-chip" onclick="toggleChip(this)">キリスト教</div><div class="form-chip" onclick="toggleChip(this)">イスラム教</div><div class="form-chip" onclick="toggleChip(this)">ヒンドゥー教</div><div class="form-chip" onclick="toggleChip(this)">ユダヤ教</div><div class="form-chip" onclick="toggleChip(this)">無宗教</div><div class="form-chip" onclick="toggleChip(this)">その他</div><div class="form-chip selected" onclick="toggleChip(this)">回答しない</div>
 	        </div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">英語レベル</div>
 	        <div class="form-chip-row" id="host-ob-english-level">
-	          <div class="form-chip" onclick="toggleChip(this)">初心者</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">日常会話</div>
-	          <div class="form-chip" onclick="toggleChip(this)">ビジネスレベル</div>
-	          <div class="form-chip" onclick="toggleChip(this)">ネイティブレベル</div>
-	          <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
-	        </div>
-	      </div>
-      <div class="form-group">
-        <div class="form-label">家族構成</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleChip(this)">一人暮らし</div>
-          <div class="form-chip selected" onclick="toggleChip(this)">夫婦</div>
-          <div class="form-chip" onclick="toggleChip(this)">夫婦＋子供</div>
-          <div class="form-chip" onclick="toggleChip(this)">その他</div>
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">対応言語</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">🇯🇵 日本語</div>
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">🇬🇧 英語</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🇰🇷 韓国語</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🇨🇳 中国語</div>
-        </div>
-      </div>
-	      <div class="form-group">
-	        <div class="form-label">ホスト自己紹介</div>
-	        <textarea class="form-textarea" placeholder="家族の雰囲気や、ゲストへのメッセージを書いてください"></textarea>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">Lifestyle</div>
-	        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-	          <input class="form-input" id="host-ob-wake" type="text" value="7:00 AM" placeholder="起床時間" />
-	          <input class="form-input" id="host-ob-sleep" type="text" value="11:00 PM" placeholder="就寝時間" />
-	          <input class="form-input" id="host-ob-talk" type="text" value="普通〜多め" placeholder="会話量" />
-	          <input class="form-input" id="host-ob-clean" type="text" value="きれい好き" placeholder="清潔度" />
+	          <div class="form-chip" onclick="toggleChip(this)">初心者</div><div class="form-chip selected" onclick="toggleChip(this)">日常会話</div><div class="form-chip" onclick="toggleChip(this)">ビジネスレベル</div><div class="form-chip" onclick="toggleChip(this)">ネイティブレベル</div><div class="form-chip" onclick="toggleChip(this)">回答しない</div>
 	        </div>
 	      </div>
 	      <div class="form-group">
-	        <div class="form-label">Values</div>
-	        <input class="form-input" id="host-ob-hobbies" type="text" value="料理、ガーデニング、映画" placeholder="趣味" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-ng" type="text" value="喫煙、深夜の大きな音、無断の来客宿泊" placeholder="NG条件" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-values" type="text" value="清潔さ、思いやり、適度な会話" placeholder="価値観" style="margin-bottom:10px;" />
-	        <textarea class="form-textarea" id="host-ob-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">ゲストとどのくらい会話したいですか？</div>
-	        <div class="form-chip-row" id="host-ob-guest-talk">
-	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
-	          <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
-	          <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
+	        <div class="form-label">現在一緒に住んでいる家族</div>
+	        <div class="form-chip-row" id="host-ob-household-type">
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">一人暮らし（女性）</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">一人暮らし（男性）</div>
+	          <div class="form-chip selected" onclick="toggleHostHouseholdFields(this,'ob')">カップル</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">子供あり</div>
 	        </div>
 	      </div>
-	      <div class="form-group">
-	        <div class="form-label">ゲストに提供できる食事</div>
-	        <div class="form-chip-row" id="host-ob-meal-plan">
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">なし</div>
-	          <div class="form-chip selected" onclick="toggleMealChip(this,'host-ob')">朝食のみ</div>
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">朝夕食</div>
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-ob')">3食</div>
-	        </div>
-	      </div>
-	      <div id="host-ob-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
-	        <div class="form-group" id="host-ob-breakfast-field">
-	          <div class="form-label">朝食の内容</div>
-	          <input class="form-input" id="host-ob-breakfast-details" type="text" value="トースト、卵料理、フルーツ" placeholder="トースト、卵料理、フルーツ" />
-	        </div>
-	        <div class="form-group" id="host-ob-lunch-field" style="display:none;">
-	          <div class="form-label">昼食の内容</div>
-	          <input class="form-input" id="host-ob-lunch-details" type="text" placeholder="サンドイッチ、サラダ、スープ" />
-	        </div>
-	        <div class="form-group" id="host-ob-dinner-field" style="display:none;">
-	          <div class="form-label">夕食の内容</div>
-	          <input class="form-input" id="host-ob-dinner-details" type="text" value="和食中心、パスタ、カレー" placeholder="和食中心、パスタ、カレー" />
+	      <div id="host-ob-partner-fields" style="display:block;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div class="form-group"><div class="form-label">パートナー情報</div><input class="form-input" id="host-ob-partner-age" type="number" min="0" inputmode="numeric" value="45" placeholder="年齢を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-ob-partner-gender"><div class="form-chip" onclick="toggleChip(this)">女性</div><div class="form-chip selected" onclick="toggleChip(this)">男性</div><div class="form-chip" onclick="toggleChip(this)">選択しない</div></div></div>
+	        <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-ob-partner-nationality" type="text" value="カナダ" placeholder="国籍を入力してください" /></div>
+	        <div class="form-group">
+	          <div class="form-label">起床時間</div>
+	          <div class="form-chip-row" id="host-ob-partner-wake"><div class="form-chip" onclick="toggleChip(this)">6時以前</div><div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div><div class="form-chip" onclick="toggleChip(this)">8〜9時</div><div class="form-chip" onclick="toggleChip(this)">9時以降</div></div>
 	        </div>
 	        <div class="form-group">
-	          <div class="form-label">理想の食事スタイルは？</div>
-	          <div class="form-chip-row" id="host-ob-dining-style">
-	            <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
-	            <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
-	            <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+	          <div class="form-label">就寝時間</div>
+	          <div class="form-chip-row" id="host-ob-partner-sleep"><div class="form-chip" onclick="toggleChip(this)">21〜22時</div><div class="form-chip selected" onclick="toggleChip(this)">22〜23時</div><div class="form-chip" onclick="toggleChip(this)">23時以降</div></div>
+	        </div>
+	        <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-ob-partner-hobbies" type="text" value="料理、映画" placeholder="趣味を入力してください" /></div>
+	      </div>
+	      <div id="host-ob-children-fields" style="display:none;">
+	        <div class="form-group">
+	          <div class="form-label">子供の情報</div>
+	          <div id="host-ob-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	          <button type="button" onclick="showHostFamilyForm('ob')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 家族を追加</button>
+	          <div id="host-ob-family-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	            <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="host-ob-member-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-ob-member-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
+	            <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-ob-member-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-ob-member-wake"><div class="form-chip" onclick="hostMemberChip(this)">6時以前</div><div class="form-chip selected" onclick="hostMemberChip(this)">6〜8時</div><div class="form-chip" onclick="hostMemberChip(this)">8〜9時</div><div class="form-chip" onclick="hostMemberChip(this)">9時以降</div></div></div>
+	            <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-ob-member-sleep"><div class="form-chip" onclick="hostMemberChip(this)">21〜22時</div><div class="form-chip selected" onclick="hostMemberChip(this)">22〜23時</div><div class="form-chip" onclick="hostMemberChip(this)">23時以降</div></div></div>
+	            <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-ob-member-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	            <input id="host-ob-member-name" type="hidden" value="子供" />
+	            <textarea id="host-ob-member-note" style="display:none;"></textarea>
+	            <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('ob')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('ob')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
 	          </div>
 	        </div>
 	      </div>
 	      <div class="form-group">
-	        <div class="form-label">対応できる食事制限はありますか？</div>
-	        <div class="form-chip-row" id="host-ob-diet-support">
-	          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
-	          <div class="form-chip" onclick="toggleHostAllergySupport(this,'host-ob')">アレルギー対応可</div>
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">特になし</div>
+	        <div class="form-label">同居している留学生の有無</div>
+	        <div class="form-chip-row" id="host-ob-student-presence">
+	          <div class="form-chip" onclick="toggleHostStudentFields(this,'ob')">いる</div>
+	          <div class="form-chip selected" onclick="toggleHostStudentFields(this,'ob')">いない</div>
 	        </div>
 	      </div>
-	      <div class="form-group" id="host-ob-allergy-field" style="display:none;">
-	        <div class="form-label">対応できるアレルギー内容</div>
-	        <input class="form-input" id="host-ob-allergy-supported" type="text" placeholder="ナッツ、卵、小麦、乳製品など" />
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">ゲストとの交流頻度は？</div>
-	        <div class="form-chip-row" id="host-ob-guest-frequency">
-	          <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加してほしい</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
-	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
-	        </div>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">受け入れできない条件</div>
-	        <div class="form-chip-row" id="host-ob-unacceptable">
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">喫煙NG</div>
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">深夜の騒音NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">無断の来客NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">門限を守れない人NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">共有スペースを汚す人NG</div>
+	      <div id="host-ob-student-fields" style="display:none;">
+	        <div class="form-group">
+	          <div class="form-label">同居している留学生</div>
+	          <div id="host-ob-student-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	          <button type="button" onclick="showHostStudentForm('ob')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 留学生を追加</button>
+	          <div id="host-ob-student-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	            <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="host-ob-student-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-ob-student-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
+	            <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-ob-student-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-ob-student-wake"><div class="form-chip" onclick="hostMemberChip(this)">6時以前</div><div class="form-chip selected" onclick="hostMemberChip(this)">6〜8時</div><div class="form-chip" onclick="hostMemberChip(this)">8〜9時</div><div class="form-chip" onclick="hostMemberChip(this)">9時以降</div></div></div>
+	            <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-ob-student-sleep"><div class="form-chip" onclick="hostMemberChip(this)">21〜22時</div><div class="form-chip selected" onclick="hostMemberChip(this)">22〜23時</div><div class="form-chip" onclick="hostMemberChip(this)">23時以降</div></div></div>
+	            <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-ob-student-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">滞在期間</div><input class="form-input" id="host-ob-student-stay" type="text" placeholder="3ヶ月" /></div>
+	            <div style="display:flex;gap:8px;"><button type="button" onclick="addHostStudent('ob')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostStudentForm('ob')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
+	          </div>
 	        </div>
 	      </div>
 	      <div class="form-group">
-	        <div class="form-label">同居メンバー / 家族情報</div>
-	        <div id="host-ob-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
-	        <button type="button" onclick="showHostFamilyForm('ob')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 同居人/家族を追加</button>
-	        <div id="host-ob-family-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
-	          <div class="form-group"><div class="form-label">名前</div><input class="form-input" id="host-ob-member-name" type="text" placeholder="名前を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">他の人の年齢</div><input class="form-input" id="host-ob-member-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">他の人の性別</div><div class="form-chip-row" id="host-ob-member-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
-	          <div class="form-group"><div class="form-label">他の人の国籍</div><input class="form-input" id="host-ob-member-nationality" type="text" placeholder="国籍を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-ob-member-hobbies" type="text" placeholder="趣味を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">生活スタイル</div><input class="form-input" id="host-ob-member-lifestyle" type="text" placeholder="生活スタイルを入力してください" /></div>
-	          <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="host-ob-member-note" placeholder="一言を入力してください"></textarea></div>
-	          <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('ob')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('ob')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
+	        <div class="form-label">喫煙者かどうか</div>
+	        <div class="form-chip-row" id="host-ob-smoking-status">
+	          <div class="form-chip selected" onclick="toggleChip(this)">吸わない</div>
+	          <div class="form-chip" onclick="toggleChip(this)">屋外で吸う</div>
+	          <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
 	        </div>
 	      </div>
+	      <div class="form-section-title">🌙 ホストの生活スタイル</div>
+	      <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-ob-wake"><div class="form-chip" onclick="toggleChip(this)">6時以前</div><div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div><div class="form-chip" onclick="toggleChip(this)">8〜9時</div><div class="form-chip" onclick="toggleChip(this)">9時以降</div></div></div>
+	      <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-ob-sleep"><div class="form-chip" onclick="toggleChip(this)">21〜22時</div><div class="form-chip selected" onclick="toggleChip(this)">22〜23時</div><div class="form-chip" onclick="toggleChip(this)">23時以降</div></div></div>
+	      <div class="form-group"><div class="form-label">ゲストとどのくらい会話したいですか？</div><div class="form-chip-row" id="host-ob-guest-talk"><div class="form-chip" onclick="toggleChip(this)">必要最低限</div><div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div><div class="form-chip" onclick="toggleChip(this)">毎日話したい</div><div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div></div></div>
+	      <div class="form-group"><div class="form-label">ゲストとどのくらい一緒に過ごしたいですか？</div><div class="form-chip-row" id="host-ob-guest-frequency"><div class="form-chip" onclick="toggleChip(this)">基本それぞれで過ごす</div><div class="form-chip selected" onclick="toggleChip(this)">食事の時など時々</div><div class="form-chip" onclick="toggleChip(this)">休日に一緒に出かける</div><div class="form-chip" onclick="toggleChip(this)">家族の一員のように交流する</div></div></div>
+	      <div class="form-group"><div class="form-label">趣味</div><div class="form-chip-row" id="host-ob-hobbies"><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🎵 音楽</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🎬 映画</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">📚 読書</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🍳 料理</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🏃 スポーツ</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🌿 アウトドア</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">その他</div></div><div id="host-ob-hobby-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-hobby-other" type="text" placeholder="その他の趣味" /></div></div>
+	      <input type="hidden" id="host-ob-ng" value="喫煙、深夜の大きな音、無断の来客宿泊" />
+	      <input type="hidden" id="host-ob-values" value="清潔さ、思いやり、適度な会話" />
+	      <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="host-ob-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea></div>
 	    </div>
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
-      <div class="form-group">
-        <div class="form-label">住所</div>
-        <input class="form-input" id="host-ob-address" type="text" value="Manhattan, New York" placeholder="都道府県、市区町村、番地、郵便番号などを入力してください" />
-      </div>
-	      <div class="form-group">
-	        <div class="form-label">1泊あたりの料金</div>
-	        <input class="form-input" id="host-ob-nightly-price" type="number" min="0" inputmode="numeric" value="45" placeholder="金額を入力してください" />
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">Room Information</div>
-	        <input class="form-input" id="host-ob-room-size" type="text" value="10㎡（約6畳）" placeholder="部屋サイズ" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-bath" type="text" value="共用（2人でシェア）" placeholder="バス/トイレ" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-sunlight" type="text" value="東向き・午前良好" placeholder="日当たり" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-wifi" type="text" value="光回線・無制限" placeholder="Wi-Fi" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-station" type="text" value="72nd St" placeholder="最寄駅" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="徒歩分数" />
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">受け入れ開始日</div>
-	        <input class="form-input" id="host-available-start" type="date" value="2026-07-01" />
-	        <div style="font-size:12px;color:var(--light);margin-top:6px;">何日から受け入れ可能かを選択してください</div>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">受け入れ終了日</div>
-	        <input class="form-input" id="host-available-end" type="date" value="2026-12-31" />
-	        <div style="font-size:12px;color:var(--light);margin-top:6px;">何日まで受け入れ可能かを選択してください</div>
-	      </div>
-	      <div class="form-group">
-	        <div class="form-label">写真を登録</div>
-        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-          <span style="font-size:28px;">📷</span>
-          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span>
-          <span style="font-size:12px;color:var(--light);">画像を選択</span>
-          <input type="file" accept="image/*" multiple style="display:none;" />
-        </label>
-      </div>
-      <div class="form-group">
-        <div class="form-label">ペットの有無</div>
-        <select class="form-input" id="host-ob-has-pets" onchange="toggleHostPetFields('ob')">
-          <option>いる</option>
-          <option>いない</option>
-        </select>
-        <div id="host-ob-pet-type-wrap" style="margin-top:10px;">
-          <div class="form-label">動物の種類</div>
-          <input class="form-input" id="host-ob-pet-type" type="text" value="犬" placeholder="犬、猫、鳥、うさぎ、その他" />
-        </div>
-      </div>
-      <div class="form-group">
-        <div class="form-label">ハウスルール</div>
-        <div class="form-label">門限</div>
-        <select class="form-input" id="host-ob-rule-curfew"><option>門限あり</option><option>門限なし</option></select>
-        <input class="form-input" id="host-ob-rule-curfew-time" type="text" value="22:30" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
-        <div class="form-label" style="margin-top:12px;">キッチン利用</div>
-        <select class="form-input" id="host-ob-rule-kitchen"><option>OK</option><option selected>制限あり</option><option>NG</option></select>
-        <input class="form-input" id="host-ob-rule-kitchen-time" type="text" value="〜21:00" placeholder="利用可能時間" style="margin-top:8px;" />
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
-          <select class="form-input" id="host-ob-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select>
-          <select class="form-input" id="host-ob-rule-overnight"><option>宿泊 OK</option><option>宿泊 事前連絡必須</option><option selected>宿泊 NG</option></select>
-          <select class="form-input" id="host-ob-rule-smoking"><option>喫煙 OK</option><option>喫煙 屋外のみ</option><option selected>喫煙 NG</option></select>
-          <select class="form-input" id="host-ob-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select>
-          <select class="form-input" id="host-ob-rule-instrument"><option>楽器演奏 OK</option><option>楽器演奏 時間制限あり</option><option selected>楽器演奏 NG</option></select>
-        </div>
-        <input class="form-input" id="host-ob-rule-cleaning" type="text" value="週1回・共有部分" placeholder="共有スペース掃除" style="margin-top:10px;" />
-        <textarea class="form-textarea" id="host-ob-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
-      </div>
-      <div class="form-group">
-        <div class="form-label">受け入れ可能人数</div>
-        <div class="form-chip-row">
-          <div class="form-chip selected" onclick="toggleChip(this)">1名</div>
-          <div class="form-chip" onclick="toggleChip(this)">2名</div>
-          <div class="form-chip" onclick="toggleChip(this)">3名以上</div>
-        </div>
-      </div>
+      <div class="form-section-title">🏠 家・滞在情報</div>
+      <div class="form-group"><div class="form-label">エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div></div>
+      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
+      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
+      <div class="form-group"><div class="form-label">住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
+      <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-available-start" type="date" value="2026-07-01" /></div>
+      <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-available-end" type="date" value="2026-12-31" /></div>
+      <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-min-stay" type="number" min="1" inputmode="numeric" value="1" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
+      <div class="form-group"><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-max-stay" type="number" min="1" inputmode="numeric" value="12" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
+      <div class="form-group"><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-ob-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
+      <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-ob-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /></div>
+      <input type="hidden" id="host-ob-nightly-price" value="50" />
+      <div class="form-section-title">🖼️ 部屋情報</div>
+      <div class="form-group"><div class="form-label">部屋の写真</div><label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span><span style="font-size:12px;color:var(--light);">複数枚選択できます</span><input type="file" accept="image/*" multiple style="display:none;" /></label></div>
+      <div class="form-group"><div class="form-label">部屋タイプ</div><div class="form-chip-row" id="host-ob-room-type"><div class="form-chip selected" onclick="toggleChip(this)">個室</div><div class="form-chip" onclick="toggleChip(this)">相部屋</div></div></div>
+      <div class="form-group"><div class="form-label">家具</div><div class="form-chip-row" id="host-ob-furniture"><div class="form-chip selected" onclick="toggleChip(this)">家具付き</div><div class="form-chip" onclick="toggleChip(this)">家具なし</div></div></div>
+      <div class="form-group"><div class="form-label">部屋の階</div><div class="form-chip-row" id="host-ob-room-floor"><div class="form-chip" onclick="toggleChip(this)">ベースメント</div><div class="form-chip selected" onclick="toggleChip(this)">1階</div><div class="form-chip" onclick="toggleChip(this)">2階</div><div class="form-chip" onclick="toggleChip(this)">3階以上</div></div></div>
+      <div class="form-group"><div class="form-label">バスルーム</div><div class="form-chip-row" id="host-ob-bathroom"><div class="form-chip" onclick="toggleChip(this)">専用</div><div class="form-chip selected" onclick="toggleChip(this)">家族と共有</div><div class="form-chip" onclick="toggleChip(this)">他の留学生と共有</div></div></div>
+      <div class="form-group"><div class="form-label">設備</div><div class="form-chip-row" id="host-ob-amenities"><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">Wi-Fi</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">洗濯機</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">乾燥機</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">キッチン</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">冷蔵庫</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">エアコン</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-amenity-other-wrap')">その他</div></div><div id="host-ob-amenity-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-amenity-other" type="text" placeholder="その他の設備" /></div></div>
+      <input type="hidden" id="host-ob-room-size" value="10㎡（約6畳）" /><input type="hidden" id="host-ob-bath" value="家族と共有" /><input type="hidden" id="host-ob-sunlight" value="良好" /><input type="hidden" id="host-ob-wifi" value="Wi-Fiあり" />
+      <div class="form-section-title">📋 ハウスルール</div>
+      <div class="form-group"><div class="form-label">門限</div><select class="form-input" id="host-ob-rule-curfew" onchange="updateHostConditionalFields('host-ob')"><option>門限なし</option><option selected>門限あり</option></select><input class="form-input" id="host-ob-rule-curfew-time" type="text" value="22:30" placeholder="22:00" style="margin-top:8px;" /></div>
+      <div class="form-group"><div class="form-label">キッチン利用</div><select class="form-input" id="host-ob-rule-kitchen" onchange="updateHostConditionalFields('host-ob')"><option>OK</option><option selected>制限あり</option><option>NG</option></select><input class="form-input" id="host-ob-rule-kitchen-time" type="text" value="〜21:00" placeholder="利用可能時間" style="margin-top:8px;" /></div>
+      <div class="form-group"><div class="form-label">シャワーの利用時間</div><select class="form-input" id="host-ob-rule-shower"><option>制限なし</option><option>5分以内</option><option selected>5〜10分</option><option>10〜15分</option></select></div>
+      <div class="form-group"><div class="form-label">共有スペース掃除</div><select class="form-input" id="host-ob-rule-cleaning"><option>毎日</option><option selected>週1回</option><option>月1回</option><option>掃除はしなくて良い</option></select></div>
+      <div class="form-group"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><select class="form-input" id="host-ob-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select><select class="form-input" id="host-ob-rule-overnight"><option>宿泊 OK</option><option>宿泊 事前連絡必須</option><option selected>宿泊 NG</option></select><select class="form-input" id="host-ob-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select><select class="form-input" id="host-ob-rule-instrument"><option>楽器演奏 OK</option><option>楽器演奏 時間制限あり</option><option selected>楽器演奏 NG</option></select></div><textarea class="form-textarea" id="host-ob-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea></div>
+      <div class="form-group"><div class="form-label">ペットの有無</div><select class="form-input" id="host-ob-has-pets" onchange="toggleHostPetFields('ob')"><option>いる</option><option selected>いない</option></select><div id="host-ob-pet-type-wrap" style="display:none;margin-top:10px;"><div class="form-label">動物の種類</div><input class="form-input" id="host-ob-pet-type" type="text" placeholder="犬、猫、鳥、うさぎ、その他" /></div></div>
+      <input type="hidden" id="host-ob-rule-smoking" value="喫煙 NG" />
     </div>
   </div>
   <div class="onboard-footer">
@@ -5579,16 +5508,42 @@
 		        </label>
 	      </div>
 	      <div>
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">生年月日</div>
-	        <input type="date" value="1982-06-10" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
-	      </div>
-	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">年齢</div>
 	        <input id="host-profile-age" type="number" min="0" inputmode="numeric" value="43" placeholder="年齢を入力してください" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">国籍</div>
 	        <input id="host-profile-nationality" type="text" value="アメリカ" placeholder="国籍を入力してください" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">話せる言語</div>
+	        <div class="form-chip-row" id="host-profile-spoken-languages">
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">英語</div>
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">日本語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">中国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">韓国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">スペイン語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">フランス語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">イタリア語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">ドイツ語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-spoken-language-other-wrap')">その他</div>
+	        </div>
+	        <div id="host-profile-spoken-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-profile-spoken-language-other" type="text" placeholder="その他の言語" /></div>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">家で使用する言語</div>
+	        <div class="form-chip-row" id="host-profile-home-languages">
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">英語</div>
+	          <div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">日本語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">中国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">韓国語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">スペイン語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">フランス語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">イタリア語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">ドイツ語</div>
+	          <div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-home-language-other-wrap')">その他</div>
+	        </div>
+	        <div id="host-profile-home-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-profile-home-language-other" type="text" placeholder="その他の言語" /></div>
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">性別</div>
@@ -5621,165 +5576,148 @@
 	          <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
 	        </div>
 	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">現在一緒に住んでいる家族</div>
+	        <div class="form-chip-row" id="host-profile-household-type">
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">一人暮らし（女性）</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">一人暮らし（男性）</div>
+	          <div class="form-chip selected" onclick="toggleHostHouseholdFields(this,'profile')">カップル</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">子供あり</div>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only" id="host-profile-partner-fields" style="margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div class="form-group"><div class="form-label">パートナー情報</div><input class="form-input" id="host-profile-partner-age" type="number" min="0" inputmode="numeric" value="45" placeholder="年齢を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-profile-partner-gender"><div class="form-chip" onclick="toggleChip(this)">女性</div><div class="form-chip selected" onclick="toggleChip(this)">男性</div><div class="form-chip" onclick="toggleChip(this)">選択しない</div></div></div>
+	        <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-profile-partner-nationality" type="text" value="カナダ" placeholder="国籍を入力してください" /></div>
+	        <div class="form-group">
+	        <div class="form-label">起床時間</div>
+	        <div class="form-chip-row" id="host-profile-partner-wake"><div class="form-chip" onclick="toggleChip(this)">6時以前</div><div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div><div class="form-chip" onclick="toggleChip(this)">8〜9時</div><div class="form-chip" onclick="toggleChip(this)">9時以降</div></div>
+	        </div>
+	        <div class="form-group">
+	        <div class="form-label">就寝時間</div>
+	        <div class="form-chip-row" id="host-profile-partner-sleep"><div class="form-chip" onclick="toggleChip(this)">21〜22時</div><div class="form-chip selected" onclick="toggleChip(this)">22〜23時</div><div class="form-chip" onclick="toggleChip(this)">23時以降</div></div>
+	        </div>
+	        <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-profile-partner-hobbies" type="text" value="料理、映画" placeholder="趣味を入力してください" /></div>
+	      </div>
+	      <div class="homestay-profile-only" id="host-profile-children-fields" style="display:none;">
+	        <div id="host-profile-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	        <button type="button" onclick="showHostFamilyForm('profile')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 家族を追加</button>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">同居している留学生の有無</div>
+	        <div class="form-chip-row" id="host-profile-student-presence"><div class="form-chip" onclick="toggleHostStudentFields(this,'profile')">いる</div><div class="form-chip selected" onclick="toggleHostStudentFields(this,'profile')">いない</div></div>
+	      </div>
+	      <div class="homestay-profile-only" id="host-profile-student-fields" style="display:none;">
+	        <div id="host-profile-student-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	        <button type="button" onclick="showHostStudentForm('profile')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 留学生を追加</button>
+	      </div>
+	      <div class="homestay-profile-only">
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">喫煙者かどうか</div>
+	        <div class="form-chip-row" id="host-profile-smoking-status"><div class="form-chip selected" onclick="toggleChip(this)">吸わない</div><div class="form-chip" onclick="toggleChip(this)">屋外で吸う</div><div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div></div>
+	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;" data-i18n="host_bio">自己紹介</div>
 	        <textarea style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;resize:none;height:100px;" data-i18n-placeholder="host_bio_placeholder">家族みんなで温かくお迎えします。日本の文化や料理を一緒に楽しみましょう！</textarea>
 	      </div>
-	      <div>
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">Lifestyle</div>
-	        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-	          <input class="form-input" id="host-profile-wake" type="text" value="7:00 AM" placeholder="起床時間" />
-	          <input class="form-input" id="host-profile-sleep" type="text" value="11:00 PM" placeholder="就寝時間" />
-	          <input class="form-input" id="host-profile-talk" type="text" value="普通〜多め" placeholder="会話量" />
-	          <input class="form-input" id="host-profile-clean" type="text" value="きれい好き" placeholder="清潔度" />
-	        </div>
+	      <div class="homestay-profile-only" id="host-profile-family-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div class="form-group"><div class="form-label">名前</div><input class="form-input" id="host-profile-member-name" type="text" placeholder="名前を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="host-profile-member-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-profile-member-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
+	        <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-profile-member-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-profile-member-wake"><div class="form-chip" onclick="hostMemberChip(this)">6時以前</div><div class="form-chip selected" onclick="hostMemberChip(this)">6〜8時</div><div class="form-chip" onclick="hostMemberChip(this)">8〜9時</div><div class="form-chip" onclick="hostMemberChip(this)">9時以降</div></div></div>
+	        <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-profile-member-sleep"><div class="form-chip" onclick="hostMemberChip(this)">21〜22時</div><div class="form-chip selected" onclick="hostMemberChip(this)">22〜23時</div><div class="form-chip" onclick="hostMemberChip(this)">23時以降</div></div></div>
+	        <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-profile-member-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	        <input type="hidden" id="host-profile-member-note" value="" />
+	        <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('profile')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('profile')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
 	      </div>
-	      <div>
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">Values</div>
-	        <input class="form-input" id="host-profile-hobbies" type="text" value="料理、ガーデニング、映画" placeholder="趣味" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-profile-ng" type="text" value="喫煙、深夜の大きな音、無断の来客宿泊" placeholder="NG条件" style="margin-bottom:10px;" />
-	        <input class="form-input" id="host-profile-values" type="text" value="清潔さ、思いやり、適度な会話" placeholder="価値観" style="margin-bottom:10px;" />
-	        <textarea class="form-textarea" id="host-profile-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
-	      </div>
-	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストとどのくらい会話したいですか？</div>
-	        <div class="form-chip-row" id="host-profile-guest-talk">
-	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
-	          <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
-	          <div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div>
-	        </div>
+	      <div class="homestay-profile-only" id="host-profile-student-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="host-profile-student-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">性別</div><div class="form-chip-row" id="host-profile-student-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
+	        <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="host-profile-student-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-profile-student-wake"><div class="form-chip" onclick="hostMemberChip(this)">6時以前</div><div class="form-chip selected" onclick="hostMemberChip(this)">6〜8時</div><div class="form-chip" onclick="hostMemberChip(this)">8〜9時</div><div class="form-chip" onclick="hostMemberChip(this)">9時以降</div></div></div>
+	        <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-profile-student-sleep"><div class="form-chip" onclick="hostMemberChip(this)">21〜22時</div><div class="form-chip selected" onclick="hostMemberChip(this)">22〜23時</div><div class="form-chip" onclick="hostMemberChip(this)">23時以降</div></div></div>
+	        <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-profile-student-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">滞在期間</div><input class="form-input" id="host-profile-student-stay" type="text" placeholder="例：3ヶ月" /></div>
+	        <div style="display:flex;gap:8px;"><button type="button" onclick="addHostStudent('profile')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostStudentForm('profile')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
 	      </div>
 	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストに提供できる食事</div>
-	        <div class="form-chip-row" id="host-profile-meal-plan">
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">なし</div>
-	          <div class="form-chip selected" onclick="toggleMealChip(this,'host-profile')">朝食のみ</div>
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">朝夕食</div>
-	          <div class="form-chip" onclick="toggleMealChip(this,'host-profile')">3食</div>
-	        </div>
-	      </div>
-	      <div class="homestay-profile-only" id="host-profile-meal-followups" style="display:flex;flex-direction:column;gap:14px;">
-	        <div id="host-profile-breakfast-field">
-	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">朝食の内容</div>
-	          <input class="form-input" id="host-profile-breakfast-details" type="text" value="トースト、卵料理、フルーツ" placeholder="トースト、卵料理、フルーツ" />
-	        </div>
-	        <div id="host-profile-lunch-field" style="display:none;">
-	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">昼食の内容</div>
-	          <input class="form-input" id="host-profile-lunch-details" type="text" placeholder="サンドイッチ、サラダ、スープ" />
-	        </div>
-	        <div id="host-profile-dinner-field" style="display:none;">
-	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">夕食の内容</div>
-	          <input class="form-input" id="host-profile-dinner-details" type="text" value="和食中心、パスタ、カレー" placeholder="和食中心、パスタ、カレー" />
-	        </div>
-	        <div>
-	          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">理想の食事スタイルは？</div>
-	          <div class="form-chip-row" id="host-profile-dining-style">
-	            <div class="form-chip selected" onclick="toggleChip(this)">一緒に食べたい</div>
-	            <div class="form-chip" onclick="toggleChip(this)">たまに一緒</div>
-	            <div class="form-chip" onclick="toggleChip(this)">別々でOK</div>
+	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">ホストの生活スタイル</div>
+	        <div style="display:flex;flex-direction:column;gap:14px;">
+	          <div>
+	            <div class="form-label">起床時間</div>
+	            <div class="form-chip-row" id="host-profile-wake"><div class="form-chip" onclick="toggleChip(this)">6時以前</div><div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div><div class="form-chip" onclick="toggleChip(this)">8〜9時</div><div class="form-chip" onclick="toggleChip(this)">9時以降</div></div>
 	          </div>
+	          <div>
+	            <div class="form-label">就寝時間</div>
+	            <div class="form-chip-row" id="host-profile-sleep"><div class="form-chip" onclick="toggleChip(this)">21〜22時</div><div class="form-chip selected" onclick="toggleChip(this)">22〜23時</div><div class="form-chip" onclick="toggleChip(this)">23時以降</div></div>
+	          </div>
+	          <div>
+	            <div class="form-label">ゲストとどのくらい会話したいですか？</div>
+	            <div class="form-chip-row" id="host-profile-guest-talk"><div class="form-chip" onclick="toggleChip(this)">必要最低限</div><div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div><div class="form-chip" onclick="toggleChip(this)">毎日話したい</div><div class="form-chip" onclick="toggleChip(this)">家族のように過ごしたい</div></div>
+	          </div>
+	          <div>
+	            <div class="form-label">ゲストとどのくらい一緒に過ごしたいですか？</div>
+	            <div class="form-chip-row" id="host-profile-guest-frequency"><div class="form-chip" onclick="toggleChip(this)">基本それぞれで過ごす</div><div class="form-chip selected" onclick="toggleChip(this)">食事の時など時々</div><div class="form-chip" onclick="toggleChip(this)">休日に一緒に出かける</div><div class="form-chip" onclick="toggleChip(this)">家族の一員のように交流する</div></div>
+	          </div>
+	          <div>
+	            <div class="form-label">趣味</div>
+	            <div class="form-chip-row" id="host-profile-hobbies"><div class="form-chip selected" onclick="toggleGuestHobbyChip(this,'host-profile')">料理</div><div class="form-chip selected" onclick="toggleGuestHobbyChip(this,'host-profile')">映画</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">音楽</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">スポーツ</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">旅行</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">読書</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">ガーデニング</div><div class="form-chip" onclick="toggleGuestHobbyChip(this,'host-profile')">その他</div></div>
+	            <div id="host-profile-other-hobby-field" style="display:none;margin-top:10px;"><input class="form-input" id="host-profile-hobby-other" type="text" placeholder="その他の趣味" /></div>
+	          </div>
+	          <input type="hidden" id="host-profile-ng" value="喫煙、深夜の大きな音、無断の来客宿泊" />
+	          <input type="hidden" id="host-profile-values" value="清潔さ、思いやり、適度な会話" />
+	          <textarea class="form-textarea" id="host-profile-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
+	        </div>
+	      </div>
+	      <div class="homestay-profile-only" style="border-top:1px solid var(--border);padding-top:16px;">
+	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">家・滞在情報</div>
+	        <div style="display:flex;flex-direction:column;gap:14px;">
+	          <div><div class="form-label">エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div></div>
+	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
+	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
+	          <div><div class="form-label">住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /></div>
+	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-profile-available-start" type="date" value="2026-07-01" /></div><div><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-profile-available-end" type="date" value="2026-12-31" /></div></div>
+	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
+	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
+	          <div><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-profile-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /><input type="hidden" id="host-profile-nightly-price" value="50" /></div>
 	        </div>
 	      </div>
 	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">対応できる食事制限はありますか？</div>
-	        <div class="form-chip-row" id="host-profile-diet-support">
-	          <div class="form-chip" onclick="toggleMultiChip(this)">ベジタリアン</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">ハラール</div>
-	          <div class="form-chip" onclick="toggleHostAllergySupport(this,'host-profile')">アレルギー対応可</div>
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">特になし</div>
-	        </div>
-	      </div>
-	      <div class="homestay-profile-only" id="host-profile-allergy-field" style="display:none;">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">対応できるアレルギー内容</div>
-	        <input class="form-input" id="host-profile-allergy-supported" type="text" placeholder="ナッツ、卵、小麦、乳製品など" />
-	      </div>
-	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ゲストとの交流頻度は？</div>
-	        <div class="form-chip-row" id="host-profile-guest-frequency">
-	          <div class="form-chip" onclick="toggleChip(this)">家族旅行も参加してほしい</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">休日だけ</div>
-	          <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
+	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">部屋情報</div>
+	        <div style="display:flex;flex-direction:column;gap:14px;">
+	          <div>
+	            <div class="form-label">部屋の写真</div>
+	            <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋の写真をアップロード</span><span style="font-size:12px;color:var(--light);">複数枚選択できます</span><input type="file" accept="image/*" multiple style="display:none;" /></label>
+	          </div>
+	          <div><div class="form-label">部屋タイプ</div><div class="form-chip-row" id="host-profile-room-type"><div class="form-chip selected" onclick="toggleChip(this)">個室</div><div class="form-chip" onclick="toggleChip(this)">相部屋</div></div></div>
+	          <div><div class="form-label">家具</div><div class="form-chip-row" id="host-profile-furniture"><div class="form-chip selected" onclick="toggleChip(this)">家具付き</div><div class="form-chip" onclick="toggleChip(this)">家具なし</div></div></div>
+	          <div><div class="form-label">部屋の階</div><div class="form-chip-row" id="host-profile-room-floor"><div class="form-chip" onclick="toggleChip(this)">ベースメント</div><div class="form-chip selected" onclick="toggleChip(this)">1階</div><div class="form-chip" onclick="toggleChip(this)">2階</div><div class="form-chip" onclick="toggleChip(this)">3階以上</div></div></div>
+	          <div><div class="form-label">バスルーム</div><div class="form-chip-row" id="host-profile-bathroom"><div class="form-chip" onclick="toggleChip(this)">専用</div><div class="form-chip selected" onclick="toggleChip(this)">家族と共有</div><div class="form-chip" onclick="toggleChip(this)">他の留学生と共有</div></div></div>
+	          <div><div class="form-label">設備</div><div class="form-chip-row" id="host-profile-amenities"><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">Wi-Fi</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">洗濯機</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">乾燥機</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">キッチン</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">冷蔵庫</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">エアコン</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-profile-amenity-other-wrap')">その他</div></div><div id="host-profile-amenity-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-profile-amenity-other" type="text" placeholder="その他の設備" /></div></div>
 	        </div>
 	      </div>
 	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">受け入れできない条件</div>
-	        <div class="form-chip-row" id="host-profile-unacceptable">
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">喫煙NG</div>
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">深夜の騒音NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">無断の来客NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">門限を守れない人NG</div>
-	          <div class="form-chip" onclick="toggleMultiChip(this)">共有スペースを汚す人NG</div>
+	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;" data-i18n="host_rules">ハウスルール</div>
+	        <select class="form-input" id="host-profile-rule-curfew" onchange="updateHostConditionalFields('host-profile')"><option>門限なし</option><option selected>門限あり</option></select>
+	        <input class="form-input" id="host-profile-rule-curfew-time" type="text" value="22:30" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
+	        <select class="form-input" id="host-profile-rule-kitchen" style="margin-top:10px;" onchange="updateHostConditionalFields('host-profile')"><option>OK</option><option selected>制限あり</option><option>NG</option></select>
+	        <input class="form-input" id="host-profile-rule-kitchen-time" type="text" value="〜21:00" placeholder="キッチン利用可能時間" style="margin-top:8px;" />
+	        <select class="form-input" id="host-profile-rule-shower" style="margin-top:10px;"><option selected>制限なし</option><option>5分以内</option><option>5〜10分</option><option>10〜15分</option></select>
+	        <select class="form-input" id="host-profile-rule-cleaning" style="margin-top:10px;"><option>毎日</option><option selected>週1回</option><option>月1回</option><option>掃除はしなくて良い</option></select>
+	        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+	          <select class="form-input" id="host-profile-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select>
+	          <select class="form-input" id="host-profile-rule-overnight"><option>宿泊 OK</option><option>宿泊 事前連絡必須</option><option selected>宿泊 NG</option></select>
+	          <select class="form-input" id="host-profile-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select>
+	          <select class="form-input" id="host-profile-rule-instrument"><option>楽器演奏 OK</option><option>楽器演奏 時間制限あり</option><option selected>楽器演奏 NG</option></select>
+	        </div>
+	        <input type="hidden" id="host-profile-rule-smoking" value="喫煙 NG" />
+	        <textarea class="form-textarea" id="host-profile-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
+	        <div style="margin-top:14px;">
+	          <div class="form-label">ペットの有無</div>
+	          <select class="form-input" id="host-profile-has-pets" onchange="toggleHostPetFields('profile')"><option selected>いる</option><option>いない</option></select>
+	          <div id="host-profile-pet-type-wrap" style="margin-top:10px;"><div class="form-label">動物の種類</div><input class="form-input" id="host-profile-pet-type" type="text" value="犬" placeholder="犬、猫、鳥、うさぎ、その他" /></div>
 	        </div>
 	      </div>
-	      <div class="homestay-profile-only">
-	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">同居メンバー / 家族情報</div>
-	        <div id="host-profile-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
-	        <button type="button" onclick="showHostFamilyForm('profile')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 同居人/家族を追加</button>
-	        <div id="host-profile-family-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
-	          <div class="form-group"><div class="form-label">名前</div><input class="form-input" id="host-profile-member-name" type="text" placeholder="名前を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">他の人の年齢</div><input class="form-input" id="host-profile-member-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">他の人の性別</div><div class="form-chip-row" id="host-profile-member-gender"><div class="form-chip selected" onclick="hostMemberChip(this)">女性</div><div class="form-chip" onclick="hostMemberChip(this)">男性</div><div class="form-chip" onclick="hostMemberChip(this)">選択しない</div></div></div>
-	          <div class="form-group"><div class="form-label">他の人の国籍</div><input class="form-input" id="host-profile-member-nationality" type="text" placeholder="国籍を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="host-profile-member-hobbies" type="text" placeholder="趣味を入力してください" /></div>
-	          <div class="form-group"><div class="form-label">生活スタイル</div><input class="form-input" id="host-profile-member-lifestyle" type="text" placeholder="生活スタイルを入力してください" /></div>
-	          <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="host-profile-member-note" placeholder="一言を入力してください"></textarea></div>
-	          <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('profile')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('profile')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
-	        </div>
-	      </div>
-	      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">住所</div>
-        <input class="form-input" id="host-profile-address" type="text" value="Manhattan, New York" placeholder="都道府県、市区町村、番地、郵便番号などを入力してください" />
-      </div>
-      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">1泊あたりの料金</div>
-        <input class="form-input" id="host-profile-nightly-price" type="number" min="0" inputmode="numeric" value="45" placeholder="金額を入力してください" />
-      </div>
-      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">Room Information</div>
-        <input class="form-input" id="host-profile-room-size" type="text" value="10㎡（約6畳）" placeholder="部屋サイズ" style="margin-bottom:10px;" />
-        <input class="form-input" id="host-profile-bath" type="text" value="共用（2人でシェア）" placeholder="バス/トイレ" style="margin-bottom:10px;" />
-        <input class="form-input" id="host-profile-sunlight" type="text" value="東向き・午前良好" placeholder="日当たり" style="margin-bottom:10px;" />
-        <input class="form-input" id="host-profile-wifi" type="text" value="光回線・無制限" placeholder="Wi-Fi" style="margin-bottom:10px;" />
-        <input class="form-input" id="host-profile-station" type="text" value="72nd St" placeholder="最寄駅" style="margin-bottom:10px;" />
-        <input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="徒歩分数" />
-      </div>
-      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">写真登録 / 写真変更</div>
-        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-          <span style="font-size:28px;">📷</span>
-          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span>
-          <span style="font-size:12px;color:var(--light);">画像を選択</span>
-          <input type="file" accept="image/*" multiple style="display:none;" />
-        </label>
-      </div>
-      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">ペットの有無</div>
-        <select class="form-input" id="host-profile-has-pets" onchange="toggleHostPetFields('profile')">
-          <option>いる</option>
-          <option>いない</option>
-        </select>
-        <div id="host-profile-pet-type-wrap" style="margin-top:10px;">
-          <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">動物の種類</div>
-          <input class="form-input" id="host-profile-pet-type" type="text" value="犬" placeholder="犬、猫、鳥、うさぎ、その他" />
-        </div>
-      </div>
-      <div class="homestay-profile-only">
-        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;" data-i18n="host_rules">ハウスルール</div>
-        <select class="form-input" id="host-profile-rule-curfew"><option>門限あり</option><option>門限なし</option></select>
-        <input class="form-input" id="host-profile-rule-curfew-time" type="text" value="22:30" placeholder="22:00 / 22:30 / 23:00 / 自由入力" style="margin-top:8px;" />
-        <select class="form-input" id="host-profile-rule-kitchen" style="margin-top:10px;"><option>OK</option><option selected>制限あり</option><option>NG</option></select>
-        <input class="form-input" id="host-profile-rule-kitchen-time" type="text" value="〜21:00" placeholder="キッチン利用可能時間" style="margin-top:8px;" />
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
-          <select class="form-input" id="host-profile-rule-visitor"><option>来客 OK</option><option selected>来客 事前連絡必須</option><option>来客 NG</option></select>
-          <select class="form-input" id="host-profile-rule-overnight"><option>宿泊 OK</option><option>宿泊 事前連絡必須</option><option selected>宿泊 NG</option></select>
-          <select class="form-input" id="host-profile-rule-smoking"><option>喫煙 OK</option><option>喫煙 屋外のみ</option><option selected>喫煙 NG</option></select>
-          <select class="form-input" id="host-profile-rule-alcohol"><option>飲酒 OK</option><option selected>飲酒 節度を守る</option><option>飲酒 NG</option></select>
-          <select class="form-input" id="host-profile-rule-instrument"><option>楽器演奏 OK</option><option>楽器演奏 時間制限あり</option><option selected>楽器演奏 NG</option></select>
-        </div>
-        <input class="form-input" id="host-profile-rule-cleaning" type="text" value="週1回・共有部分" placeholder="共有スペース掃除" style="margin-top:10px;" />
-        <textarea class="form-textarea" id="host-profile-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea>
-      </div>
       <div class="sharehouse-profile-section" style="border-top:1px solid var(--border);padding-top:16px;display:none;">
         <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">シェアハウス情報</div>
         <div style="display:flex;flex-direction:column;gap:14px;">
@@ -7067,6 +7005,7 @@
 	    const extra = hostDetailExtras[currentHost] || hostDetailExtras.sarah;
 	    const availability = getHostAvailability(currentHost || 'sarah');
 	    const mealInfo = hostCompatibilityConditions[currentHost] || hostCompatibilityConditions.sarah || {};
+	    const formatList = (items, fallback) => (items && items.length ? items : fallback).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
 	    const mealRows = [
 	      { label: '食事提供', value: mealInfo.mealPlan || '朝食のみ' },
 	      ...(!['なし', '不要'].includes(mealInfo.mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
@@ -7092,8 +7031,18 @@
 	        { label: '性別', value: profile.gender },
 	        { label: '宗教', value: profile.religion || '回答しない' },
 	        { label: '英語レベル', value: profile.englishLevel || '回答しない' },
-	        { label: '家族構成', value: h.gender === 'couple' ? '夫婦' : h.gender === 'female' ? '女性ホスト' : '男性ホスト' },
+	        { label: '話せる言語', value: formatList(h.hostHousehold?.spokenLanguages, ['英語','日本語']) },
+	        { label: '家で使用する言語', value: formatList(h.hostHousehold?.homeLanguages, ['英語','日本語']) },
+	        { label: '家族構成', value: h.hostHousehold?.type || (h.gender === 'couple' ? '夫婦' : h.gender === 'female' ? '女性ホスト' : '男性ホスト') },
 	        { label: '家族/同居人情報', value: hostFamilyMembers.map(m => `${m.age} · ${localizeText(m.gender)} · ${localizeText(m.nationality)}`).join(' / ') || '同居メンバー未登録' },
+	        { label: '同居している留学生', value: h.hostHousehold?.students?.length ? `${h.hostHousehold.students.length}名` : 'いない' },
+	        { label: '喫煙者かどうか', value: h.hostHousehold?.smokingStatus || '吸わない' },
+	        { label: 'エリア', value: h.hostStayInfo?.area || h.city },
+	        { label: '最寄り駅', value: h.hostStayInfo?.station || '72nd St' },
+	        { label: '徒歩分数', value: h.hostStayInfo?.walkMin ? `${h.hostStayInfo.walkMin}分` : '5分' },
+	        { label: '最短滞在期間', value: h.hostStayInfo?.minStay || '3ヶ月' },
+	        { label: '最長滞在期間', value: h.hostStayInfo?.maxStay || '12ヶ月' },
+	        { label: '長期滞在', value: h.hostStayInfo?.longStay || '長期滞在可能' },
 	        ...mealRows
 	      ]),
 	      (availabilityCalendarState.homestay = { offset: 0, range: availability }, availabilityCalendar(availability, 'homestay'))
@@ -7148,6 +7097,7 @@
     ).join('');
     renderGuestPreferenceSummary('homestay');
     const detailExtra = hostDetailExtras[hostId] || hostDetailExtras.sarah;
+    const formatList = (items, fallback) => (items && items.length ? items : fallback).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
 
     // Lifestyle
 		    document.getElementById('detail-ls-grid').innerHTML = `
@@ -7161,10 +7111,24 @@
 		      <div class="ls-cell"><div class="ls-icon">🚫</div><div class="ls-label">${localizeText('NG条件')}</div><div class="ls-val">${localizeText(detailExtra.ng)}</div></div>
 		      <div class="ls-cell"><div class="ls-icon">💎</div><div class="ls-label">${localizeText('価値観')}</div><div class="ls-val">${localizeText(detailExtra.values)}</div></div>
 		      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${localizeText('一言')}</div><div class="ls-val">${localizeText(detailExtra.note)}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🗣️</div><div class="ls-label">${localizeText('話せる言語')}</div><div class="ls-val">${formatList(h.hostHousehold?.spokenLanguages, ['英語','日本語'])}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🏠</div><div class="ls-label">${localizeText('家で使用する言語')}</div><div class="ls-val">${formatList(h.hostHousehold?.homeLanguages, ['英語','日本語'])}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">👥</div><div class="ls-label">${localizeText('現在一緒に住んでいる家族')}</div><div class="ls-val">${localizeText(h.hostHousehold?.type || 'カップル')}</div></div>
+		      <div class="ls-cell"><div class="ls-icon">🎓</div><div class="ls-label">${localizeText('同居している留学生')}</div><div class="ls-val">${localizeText(h.hostHousehold?.students?.length ? `${h.hostHousehold.students.length}名` : 'いない')}</div></div>
 		      <div class="ls-cell"><div class="ls-icon">🐾</div><div class="ls-label">${localizeText('ペット')}</div><div class="ls-val">${localizeText(h.pets?.hasPets ? 'あり' : 'なし')}</div></div>
 		      ${h.pets?.hasPets ? `<div class="ls-cell"><div class="ls-icon">🐶</div><div class="ls-label">${localizeText('動物の種類')}</div><div class="ls-val">${localizeText(h.pets.type || 'その他')}</div></div>` : ''}
 		    `;
 		    renderHostFamilyList('detail-host-family', false);
+		    const detailFamily = document.getElementById('detail-host-family');
+		    if (detailFamily && h.hostHousehold?.students?.length) {
+		      detailFamily.insertAdjacentHTML('beforeend', h.hostHousehold.students.map(st => `
+		        <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;line-height:1.6;">
+		          <strong>${localizeText('同居している留学生')}</strong><br>
+		          ${localizeText('年齢')} ${localizeText(st.age)} · ${localizeText('性別')} ${localizeText(st.gender)} · ${localizeText('国籍')} ${localizeText(st.nationality)}<br>
+		          ${localizeText('起床時間')}：${localizeText(st.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(st.sleep || '22〜23時')} / ${localizeText('趣味')}：${localizeText(st.hobbies)} / ${localizeText('滞在期間')}：${localizeText(st.stay)}
+		        </div>
+		      `).join(''));
+		    }
 
 	    // Lifestyle reviews
     document.getElementById('detail-ls-reviews').innerHTML = h.lifestyleReviews.map(r => `
@@ -7195,7 +7159,7 @@
 
     // Price
     const priceBox = document.querySelector('.price-box');
-	    priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('1泊あたりの料金')}</span><span>$${(h.nightlyPrice || 45).toLocaleString()} ${currentLang === 'ja' ? '/泊' : '/night'}</span></div>`;
+	    priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金（CAD）')}</span><span>${(h.price || 1500).toLocaleString()} CAD ${currentLang === 'ja' ? '/月' : '/month'}</span></div>`;
 
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
@@ -8011,10 +7975,49 @@
 	    field.style.display = otherChip && otherChip.classList.contains('selected') ? 'block' : 'none';
 	  }
 
+	  function toggleHostOtherField(el, wrapId) {
+	    toggleMultiChip(el);
+	    const wrap = document.getElementById(wrapId);
+	    if (!wrap) return;
+	    const row = el.closest('.form-chip-row');
+	    const otherChip = row ? Array.from(row.querySelectorAll('.form-chip')).find(chip => {
+	      const text = chip.textContent.trim();
+	      return text.includes('その他') || text.includes('Other');
+	    }) : null;
+	    wrap.style.display = otherChip && otherChip.classList.contains('selected') ? 'block' : 'none';
+	  }
+
+	  function toggleHostHouseholdFields(el, scope) {
+	    toggleChip(el);
+	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
+	    const selected = el.textContent.trim();
+	    const partner = document.getElementById(prefix + '-partner-fields');
+	    const children = document.getElementById(prefix + '-children-fields');
+	    if (partner) partner.style.display = selected.includes('カップル') || selected.includes('Couple') ? 'block' : 'none';
+	    if (children) children.style.display = selected.includes('子供') || selected.includes('Children') ? 'block' : 'none';
+	  }
+
+	  function toggleHostStudentFields(el, scope) {
+	    toggleChip(el);
+	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
+	    const fields = document.getElementById(prefix + '-student-fields');
+	    if (fields) fields.style.display = el.textContent.trim().includes('いる') || el.textContent.trim().includes('Yes') ? 'block' : 'none';
+	  }
+
+	  function updateHostConditionalFields(prefix) {
+	    const curfew = formValue(prefix + '-rule-curfew', '門限あり');
+	    const curfewTime = document.getElementById(prefix + '-rule-curfew-time');
+	    if (curfewTime) curfewTime.style.display = curfew.includes('あり') ? 'block' : 'none';
+	    const kitchen = formValue(prefix + '-rule-kitchen', '制限あり');
+	    const kitchenTime = document.getElementById(prefix + '-rule-kitchen-time');
+	    if (kitchenTime) kitchenTime.style.display = kitchen.includes('制限') ? 'block' : 'none';
+	  }
+
 	  const hostFamilyMembers = [
 	    { name: 'Michael', age: '45', gender: '男性', nationality: 'アメリカ', hobbies: '料理、映画', lifestyle: '朝型・会話多め', note: '家族での食事と会話を大切にしています。' },
 	    { name: 'Emma', age: '12', gender: '女性', nationality: 'アメリカ', hobbies: '読書、音楽', lifestyle: '学校中心・早寝早起き', note: '週末は家族で公園に行くことが多いです。' }
 	  ];
+	  const hostInternationalStudents = [];
 
 	  function hostMemberChip(el) {
 	    const row = el.parentElement;
@@ -8032,6 +8035,16 @@
 	    if (form) form.style.display = 'none';
 	  }
 
+	  function showHostStudentForm(scope) {
+	    const form = document.getElementById(scope === 'profile' ? 'host-profile-student-form' : 'host-ob-student-form');
+	    if (form) form.style.display = 'block';
+	  }
+
+	  function hideHostStudentForm(scope) {
+	    const form = document.getElementById(scope === 'profile' ? 'host-profile-student-form' : 'host-ob-student-form');
+	    if (form) form.style.display = 'none';
+	  }
+
 	  function addHostFamilyMember(scope) {
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
 	    const nameEl = document.getElementById(prefix + '-member-name');
@@ -8039,22 +8052,24 @@
 	    const nationalityEl = document.getElementById(prefix + '-member-nationality');
 	    const genderEl = document.querySelector('#' + prefix + '-member-gender .form-chip.selected');
 	    const hobbiesEl = document.getElementById(prefix + '-member-hobbies');
-	    const lifestyleEl = document.getElementById(prefix + '-member-lifestyle');
 	    const noteEl = document.getElementById(prefix + '-member-note');
+	    const wake = selectedChipText(prefix + '-member-wake', '6〜8時');
+	    const sleep = selectedChipText(prefix + '-member-sleep', '22〜23時');
 	    hostFamilyMembers.push({
 	      name: nameEl?.value || '未入力',
 	      age: ageEl?.value || '未入力',
 	      gender: genderEl?.textContent.trim() || '選択しない',
 	      nationality: nationalityEl?.value || '未入力',
 	      hobbies: hobbiesEl?.value || '未入力',
-	      lifestyle: lifestyleEl?.value || '未入力',
+	      wake,
+	      sleep,
+	      lifestyle: `起床時間：${wake} / 就寝時間：${sleep}`,
 	      note: noteEl?.value || '未入力'
 	    });
 	    if (nameEl) nameEl.value = '';
 	    if (ageEl) ageEl.value = '';
 	    if (nationalityEl) nationalityEl.value = '';
 	    if (hobbiesEl) hobbiesEl.value = '';
-	    if (lifestyleEl) lifestyleEl.value = '';
 	    if (noteEl) noteEl.value = '';
 	    hideHostFamilyForm(scope);
 	    renderHostFamilyEditors();
@@ -8063,6 +8078,34 @@
 	  function removeHostFamilyMember(index) {
 	    hostFamilyMembers.splice(index, 1);
 	    renderHostFamilyEditors();
+	  }
+
+	  function addHostStudent(scope) {
+	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
+	    const genderEl = document.querySelector('#' + prefix + '-student-gender .form-chip.selected');
+	    const wake = selectedChipText(prefix + '-student-wake', '6〜8時');
+	    const sleep = selectedChipText(prefix + '-student-sleep', '22〜23時');
+	    hostInternationalStudents.push({
+	      age: formValue(prefix + '-student-age', '未入力'),
+	      gender: genderEl?.textContent.trim() || '選択しない',
+	      nationality: formValue(prefix + '-student-nationality', '未入力'),
+	      wake,
+	      sleep,
+	      lifestyle: `起床時間：${wake} / 就寝時間：${sleep}`,
+	      hobbies: formValue(prefix + '-student-hobbies', '未入力'),
+	      stay: formValue(prefix + '-student-stay', '未入力')
+	    });
+	    ['age','nationality','hobbies','stay'].forEach(key => {
+	      const el = document.getElementById(prefix + '-student-' + key);
+	      if (el) el.value = '';
+	    });
+	    hideHostStudentForm(scope);
+	    renderHostStudentEditors();
+	  }
+
+	  function removeHostStudent(index) {
+	    hostInternationalStudents.splice(index, 1);
+	    renderHostStudentEditors();
 	  }
 
 	  function renderHostFamilyList(containerId, removable = false) {
@@ -8079,7 +8122,7 @@
 	          <strong>${localizeText(m.name || '同居メンバー')}</strong><br>
 	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
 	          ${m.hobbies ? `<div style="color:var(--light);margin-top:4px;">${localizeText('趣味')}：${localizeText(m.hobbies)}</div>` : ''}
-	          ${m.lifestyle ? `<div style="color:var(--light);">${localizeText('生活スタイル')}：${localizeText(m.lifestyle)}</div>` : ''}
+	          <div style="color:var(--light);">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')}</div>
 	          ${m.note ? `<div style="color:var(--dark);margin-top:4px;">${localizeText(m.note)}</div>` : ''}
 	        </div>
 	        ${removable ? `<button type="button" onclick="removeHostFamilyMember(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
@@ -8091,6 +8134,32 @@
 	    renderHostFamilyList('host-ob-family-list', true);
 	    renderHostFamilyList('host-profile-family-list', true);
 	    renderHostFamilyList('detail-host-family', false);
+	  }
+
+	  function renderHostStudentList(containerId, removable = false) {
+	    const container = document.getElementById(containerId);
+	    if (!container) return;
+	    if (hostInternationalStudents.length === 0) {
+	      container.innerHTML = `<div style="font-size:13px;color:var(--light);padding:10px 0;">${localizeText('同居している留学生はいません')}</div>`;
+	      return;
+	    }
+	    container.innerHTML = hostInternationalStudents.map((m, i) => `
+	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;">
+	        <div style="width:38px;height:38px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:20px;">🎓</div>
+	        <div style="flex:1;font-size:13px;line-height:1.5;">
+	          <strong>${localizeText('留学生')}</strong><br>
+	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
+	          <div style="color:var(--light);margin-top:4px;">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')} / ${localizeText('趣味')}：${localizeText(m.hobbies)} / ${localizeText('滞在期間')}：${localizeText(m.stay)}</div>
+	        </div>
+	        ${removable ? `<button type="button" onclick="removeHostStudent(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
+	      </div>
+	    `).join('');
+	  }
+
+	  function renderHostStudentEditors() {
+	    renderHostStudentList('host-ob-student-list', true);
+	    renderHostStudentList('host-profile-student-list', true);
+	    renderHostStudentList('detail-host-students', false);
 	  }
 
 	  function formValue(id, fallback = '') {
@@ -8130,6 +8199,9 @@
 	    else if (kitchen === 'NG') rules.push({ ok: false, text: 'キッチン利用NG' });
 	    else rules.push({ warn: true, text: `キッチン利用：${kitchenTime}` });
 
+	    const shower = formValue(prefix + '-rule-shower', '制限なし');
+	    rules.push(shower === '制限なし' ? { ok: true, text: 'シャワーの利用時間：制限なし' } : { warn: true, text: `シャワーの利用時間：${shower}` });
+
 	    const optionRule = (id, okText, warnText, ngText, warnNeedle = '事前') => {
 	      const value = formValue(prefix + '-' + id, '');
 	      if (value.includes('NG')) rules.push({ ok: false, text: ngText });
@@ -8158,6 +8230,17 @@
 	    const gender = selectedChipText(prefix + '-gender', '女性');
 	    const religion = selectedChipText(prefix + '-religion', '回答しない');
 	    const englishLevel = selectedChipText(prefix + '-english-level', '日常会話');
+	    const spokenLanguages = selectedChipTexts('#' + prefix + '-spoken-languages');
+	    const spokenOther = formValue(prefix + '-spoken-language-other');
+	    const homeLanguages = selectedChipTexts('#' + prefix + '-home-languages');
+	    const homeOther = formValue(prefix + '-home-language-other');
+	    if (spokenOther) spokenLanguages.push(spokenOther);
+	    if (homeOther) homeLanguages.push(homeOther);
+	    const hobbies = selectedChipTexts('#' + prefix + '-hobbies');
+	    const hobbyOther = formValue(prefix + '-hobby-other');
+	    if (hobbyOther) hobbies.push(hobbyOther);
+	    const householdType = selectedChipText(prefix + '-household-type', 'カップル');
+	    const smokingStatus = selectedChipText(prefix + '-smoking-status', '吸わない');
 	    const guestTalk = selectedChipText(prefix + '-guest-talk', '適度に話したい');
 	    const mealPlan = selectedChipText(prefix + '-meal-plan', '朝食のみ');
 	    const breakfastDetails = formValue(prefix + '-breakfast-details', '');
@@ -8166,34 +8249,74 @@
 	    const diningStyle = selectedChipText(prefix + '-dining-style', '一緒に食べたい');
 	    const dietSupport = selectedChipTexts('#' + prefix + '-diet-support');
 	    const allergySupported = formValue(prefix + '-allergy-supported', '');
-	    const guestFrequency = selectedChipText(prefix + '-guest-frequency', '休日だけ');
+	    const guestFrequency = selectedChipText(prefix + '-guest-frequency', '食事の時など時々');
 	    const unacceptable = selectedChipTexts('#' + prefix + '-unacceptable');
 	    const address = formValue(prefix + '-address', 'Manhattan, New York');
+	    const area = selectedChipText(prefix + '-area', 'バンクーバー');
 	    const station = formValue(prefix + '-station', '72nd St');
 	    const walkMin = formValue(prefix + '-walk-min', '5');
+	    const availableStart = formValue(prefix + '-available-start') || formValue('host-available-start', '2026-07-01');
+	    const availableEnd = formValue(prefix + '-available-end') || formValue('host-available-end', '2026-12-31');
 	    const nightlyPrice = Number(formValue(prefix + '-nightly-price', host.nightlyPrice || 45));
+	    const monthlyRent = Number(formValue(prefix + '-monthly-rent', host.price || 1500));
+	    const minStayMonths = formValue(prefix + '-min-stay', '1');
+	    const maxStayMonths = formValue(prefix + '-max-stay', '12');
+	    const minStay = `${minStayMonths}ヶ月`;
+	    const maxStay = `${maxStayMonths}ヶ月`;
+	    const longStay = selectedChipText(prefix + '-long-stay', '長期滞在可能');
+	    const roomType = selectedChipText(prefix + '-room-type', '個室');
+	    const furniture = selectedChipText(prefix + '-furniture', '家具付き');
+	    const roomFloor = selectedChipText(prefix + '-room-floor', '1階');
+	    const bathroom = selectedChipText(prefix + '-bathroom', '家族と共有');
+	    const amenities = selectedChipTexts('#' + prefix + '-amenities');
+	    const amenityOther = formValue(prefix + '-amenity-other');
+	    if (amenityOther) amenities.push(amenityOther);
 	    const hasPets = formValue(prefix + '-has-pets', 'いる') === 'いる';
 
 	    host.name = hostName;
-	    host.city = address.split(',')[0]?.trim() || host.city;
-	    host.state = address.split(',').slice(1).join(',').trim() || host.state;
+	    host.city = area;
+	    host.state = 'Canada';
+	    host.roomType = roomType;
+	    host.price = Number.isFinite(monthlyRent) && monthlyRent > 0 ? monthlyRent : host.price || 1500;
 	    host.nightlyPrice = Number.isFinite(nightlyPrice) && nightlyPrice > 0 ? nightlyPrice : host.nightlyPrice || 45;
+	    host.hostStayInfo = { address, area, station, walkMin, availableStart, availableEnd, minStay, maxStay, longStay, monthlyRent: host.price };
+	    host.hostHousehold = {
+	      type: householdType,
+	      smokingStatus,
+	      spokenLanguages,
+	      homeLanguages,
+	      partner: {
+	        age: formValue(prefix + '-partner-age', '45'),
+	        gender: selectedChipText(prefix + '-partner-gender', '男性'),
+	        nationality: formValue(prefix + '-partner-nationality', 'カナダ'),
+	        wake: selectedChipText(prefix + '-partner-wake', '6〜8時'),
+	        sleep: selectedChipText(prefix + '-partner-sleep', '22〜23時'),
+	        lifestyle: `起床時間：${selectedChipText(prefix + '-partner-wake', '6〜8時')} / 就寝時間：${selectedChipText(prefix + '-partner-sleep', '22〜23時')}`,
+	        hobbies: formValue(prefix + '-partner-hobbies', '料理、映画')
+	      },
+	      students: hostInternationalStudents
+	    };
 	    host.pets = {
 	      hasPets,
 	      type: hasPets ? formValue(prefix + '-pet-type', '犬') : ''
 	    };
 	    host.lifestyle = {
-	      wake: formValue(prefix + '-wake', host.lifestyle.wake),
-	      sleep: formValue(prefix + '-sleep', host.lifestyle.sleep),
-	      talk: formValue(prefix + '-talk', host.lifestyle.talk),
+	      wake: selectedChipText(prefix + '-wake', host.lifestyle.wake),
+	      sleep: selectedChipText(prefix + '-sleep', host.lifestyle.sleep),
+	      talk: guestTalk,
 	      clean: formValue(prefix + '-clean', host.lifestyle.clean)
 	    };
 	    host.room = [
-	      { label: '広さ', val: formValue(prefix + '-room-size', '10㎡（約6畳）') },
-	      { label: 'バス・トイレ', val: formValue(prefix + '-bath', '共用（2人でシェア）') },
-	      { label: '日当たり', val: formValue(prefix + '-sunlight', '東向き・午前良好') },
-	      { label: 'Wi-Fi', val: formValue(prefix + '-wifi', '光回線・無制限') },
-	      { label: '最寄り', val: `${station} 徒歩${walkMin}分` }
+	      { label: '部屋タイプ', val: roomType },
+	      { label: '家具', val: furniture },
+	      { label: '部屋の階', val: roomFloor },
+	      { label: 'バスルーム', val: bathroom },
+	      { label: '設備', val: amenities.join('、') || 'Wi-Fi' },
+	      { label: '最寄り駅', val: station },
+	      { label: '徒歩分数', val: `${walkMin}分` },
+	      { label: '最短滞在期間', val: minStay },
+	      { label: '最長滞在期間', val: maxStay },
+	      { label: '長期滞在', val: longStay }
 	    ];
 	    host.mapNote = `最寄り駅：${station} 徒歩${walkMin}分`;
 	    host.rules = buildHostRulesFromFields(prefix);
@@ -8205,7 +8328,7 @@
 	      englishLevel
 	    };
 	    hostDetailExtras.sarah = {
-	      hobbies: formValue(prefix + '-hobbies', hostDetailExtras.sarah.hobbies),
+	      hobbies: hobbies.join('、') || hostDetailExtras.sarah.hobbies,
 	      ng: formValue(prefix + '-ng', hostDetailExtras.sarah.ng),
 	      values: formValue(prefix + '-values', hostDetailExtras.sarah.values),
 	      note: formValue(prefix + '-note', hostDetailExtras.sarah.note)
@@ -8222,12 +8345,9 @@
 	      guestFrequency,
 	      unacceptable
 	    };
-	    if (scope === 'ob') {
-	      const start = formValue('host-available-start');
-	      const end = formValue('host-available-end');
-	      if (start && end) HOST_AVAILABILITY.sarah = { start, end };
-	    }
+	    if (availableStart && availableEnd) HOST_AVAILABILITY.sarah = { start: availableStart, end: availableEnd };
 	    renderHostFamilyEditors();
+	    renderHostStudentEditors();
 	    showToast('保存しました ✓');
 	  }
 
@@ -10024,6 +10144,116 @@
     ,'最寄り駅：Fullerton Station 徒歩6分 · Lincoln Park Zoo 徒歩10分':'Nearest station: Fullerton Station, 6 min walk · 10 min walk to Lincoln Park Zoo'
   };
   Object.assign(autoTextTranslations, {
+    'ホスト・家族について':'Host & Family',
+    '家・滞在情報':'Home & Stay Information',
+    '話せる言語':'Languages Spoken',
+    '家で使用する言語':'Languages Spoken at Home',
+    '現在一緒に住んでいる家族':'Current Household',
+    '一人暮らし（女性）':'Living Alone (Female)',
+    '一人暮らし（男性）':'Living Alone (Male)',
+    '子供あり':'Household with Children',
+    '同居している留学生':'International Students Currently Staying',
+    '同居している留学生の有無':'International Students Currently Staying',
+    '喫煙者かどうか':'Smoking Status',
+    '吸わない':'Does not smoke',
+    '屋外で吸う':'Smokes outside',
+    '室内でも吸う':'Smokes indoors',
+    'ホストの生活スタイル':'Host Lifestyle',
+    'ゲストとどのくらい一緒に過ごしたいですか？':'How much time would you like to spend with your guest?',
+    '基本それぞれで過ごす':'Mostly spend time independently',
+    '休日に一緒に出かける':'Spend time together on days off',
+    '家族の一員のように交流する':'Interact like a member of the family',
+    'エリア':'Area',
+    '最寄り駅':'Nearest Station',
+    '最寄り駅まで徒歩何分':'Walking Time to Nearest Station',
+    '一般公開しません':'Private address — not publicly displayed',
+    '受け入れ可能開始日':'Available From',
+    '受け入れ可能終了日':'Available Until',
+    '最短滞在期間':'Minimum Stay',
+    '最長滞在期間':'Maximum Stay',
+    'ヶ月':'month(s)',
+    '1ヶ月':'1 month',
+    '2ヶ月':'2 months',
+    '3ヶ月':'3 months',
+    '4ヶ月':'4 months',
+    '5ヶ月':'5 months',
+    '6ヶ月':'6 months',
+    '7ヶ月':'7 months',
+    '8ヶ月':'8 months',
+    '9ヶ月':'9 months',
+    '10ヶ月':'10 months',
+    '11ヶ月':'11 months',
+    '12ヶ月':'12 months',
+    '長期滞在':'Long-term Stay',
+    '長期滞在可能':'Long-term Stay Available',
+    '長期滞在不可':'Long-term Stay Not Available',
+    '月額料金（CAD）':'Monthly Rent (CAD)',
+    '部屋の写真':'Room Photos',
+    '部屋タイプ':'Room Type',
+    '家具':'Furniture',
+    '家具付き':'Furnished',
+    '家具なし':'Unfurnished',
+    '部屋の階':'Room Floor',
+    'ベースメント':'Basement',
+    '1階':'1st floor',
+    '2階':'2nd floor',
+    '3階以上':'3rd floor or above',
+    'バスルーム':'Bathroom',
+    '専用':'Private',
+    '家族と共有':'Shared with family',
+    '他の留学生と共有':'Shared with other international students',
+    '設備':'Amenities',
+    '洗濯機':'Washer',
+    '乾燥機':'Dryer',
+    '冷蔵庫':'Refrigerator',
+    'エアコン':'Air conditioner',
+    'シャワーの利用時間':'Shower Time Limit',
+    '制限なし':'No limit',
+    '5分以内':'Within 5 minutes',
+    '5〜10分':'5–10 minutes',
+    '10〜15分':'10–15 minutes',
+    '共有スペース掃除':'Shared Space Cleaning',
+    '毎日':'Every day',
+    '週1回':'Once a week',
+    '月1回':'Once a month',
+    '掃除はしなくて良い':'No cleaning required',
+    'パートナー情報':'Partner Information',
+    '子供の情報':'Children Information',
+    '＋ 家族を追加':'Add Family Member',
+    '＋ 留学生を追加':'Add International Student',
+    '追加する':'Add',
+    'キャンセル':'Cancel',
+    '同居メンバーはまだ追加されていません':'No household members have been added yet',
+    '同居している留学生はいません':'No international students are currently staying',
+    '年齢を入力してください':'Enter age',
+    '国籍を入力してください':'Enter nationality',
+    '生活スタイルを入力してください':'Enter lifestyle',
+    '名前を入力してください':'Enter name',
+    '滞在期間':'Stay Duration',
+    '例：3ヶ月':'Example: 3 months',
+    '家族/同居人情報':'Family / Household Member Information',
+    '同居メンバー未登録':'No household members registered',
+    '喫煙者かどうか':'Smoking Status',
+    '部屋や外観の写真をアップロード':'Upload room and exterior photos',
+    '複数枚選択できます':'You can select multiple photos',
+    '部屋の写真をアップロード':'Upload room photos',
+    'その他の言語':'Other language',
+    'その他の設備':'Other amenities',
+    'その他ルール':'Other Rules',
+    '利用可能時間':'Available hours',
+    '22:00 / 22:30 / 23:00 / 自由入力':'22:00 / 22:30 / 23:00 / custom',
+    'パートナーの年齢':'Partner age',
+    '子供':'Child',
+    '夫婦':'Couple',
+    '女性ホスト':'Female host',
+    '男性ホスト':'Male host',
+    '家族構成':'Household Type',
+    '喫煙は屋外のみ':'Smoking outdoors only',
+    'シャワーの利用時間：制限なし':'Shower time limit: No limit',
+    'キッチン利用可能時間':'Kitchen available hours',
+    '登録完了 ✓':'Complete Registration ✓',
+    '次へ →':'Next →',
+    '← 戻る':'← Back',
     '希望条件と生活スタイル':'Preferences and Lifestyle',
     'あなたについて':'About You',
     '滞在・生活スタイル':'Stay & Lifestyle',
@@ -10043,6 +10273,24 @@
     '英語、日本語':'English, Japanese',
     '韓国語、日本語、英語':'Korean, Japanese, English',
     '英語、日本語、スペイン語':'English, Japanese, Spanish',
+    'カナダ':'Canada',
+    'アメリカ':'United States',
+    '日本':'Japan',
+    '韓国':'South Korea',
+    '中国':'China',
+    '🎵 音楽':'Music',
+    '🎬 映画':'Movies',
+    '📚 読書':'Reading',
+    '🍳 料理':'Cooking',
+    '🏃 スポーツ':'Sports',
+    '🌿 アウトドア':'Outdoors',
+    '音楽':'Music',
+    '映画':'Movies',
+    '読書':'Reading',
+    '料理':'Cooking',
+    'スポーツ':'Sports',
+    '旅行':'Travel',
+    'ガーデニング':'Gardening',
     '留学目的':'Purpose of Stay',
     '学生':'Student',
     'ワーホリ':'Working Holiday',
@@ -10337,7 +10585,11 @@
 	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
 	    if (currentScreen === 'onboarding') renderOnboardStep();
 	    if (currentScreen === 'host-calendar') renderHostCalendar();
-	    if (currentScreen === 'host-profile' || currentScreen === 'host-onboarding') renderHostFamilyEditors();
+	    if (currentScreen === 'host-profile' || currentScreen === 'host-onboarding') {
+	      renderHostFamilyEditors();
+	      renderHostStudentEditors();
+	      renderHostObStep();
+	    }
 	    if (currentScreen === 'interview') generateInterviewDates();
 	    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
 	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
@@ -10838,17 +11090,20 @@
   const hostObTotal = 2;
 
   function renderHostObStep() {
-    const titles = ['ホスト情報を教えてください','部屋・ルールを設定してください'];
-    const subs = ['あなたのプロフィールがゲストへの第一印象になります','詳しく設定するほど条件比較がしやすくなります'];
+    const titles = [localizeText('ホスト・家族について'), localizeText('家・滞在情報')];
+    const subs = ['', ''];
     document.getElementById('host-ob-step-label').textContent = `STEP ${hostObStep} / ${hostObTotal}`;
     document.getElementById('host-ob-progress').style.width = (hostObStep / hostObTotal * 100) + '%';
     document.getElementById('host-ob-title').textContent = titles[hostObStep - 1];
-    document.getElementById('host-ob-sub').textContent = subs[hostObStep - 1];
+    const sub = document.getElementById('host-ob-sub');
+    sub.textContent = subs[hostObStep - 1];
+    sub.style.display = 'none';
     document.querySelectorAll('[id^="host-ob-panel-"]').forEach((p, i) => {
       p.classList.toggle('active', i + 1 === hostObStep);
     });
     document.getElementById('host-ob-back-btn').style.display = hostObStep > 1 ? 'block' : 'none';
-    document.getElementById('host-ob-next-btn').textContent = hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →';
+    document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
+    document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
   }
 
   function hostObNext() {
@@ -11030,6 +11285,12 @@
 
 	  function getHostAvailability(hostId) {
 	    const availability = { ...(HOST_AVAILABILITY[hostId] || HOST_AVAILABILITY.sarah) };
+	    const savedStayInfo = HOSTS[hostId]?.hostStayInfo;
+	    if (savedStayInfo?.availableStart && savedStayInfo?.availableEnd) {
+	      availability.start = savedStayInfo.availableStart;
+	      availability.end = savedStayInfo.availableEnd;
+	      return availability;
+	    }
 	    const startEl = document.getElementById('host-available-start');
 	    const endEl = document.getElementById('host-available-end');
 	    if (hostId === 'sarah' && startEl?.value && endEl?.value) {
