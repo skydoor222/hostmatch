@@ -1084,6 +1084,89 @@
       border-top: 1px solid var(--border); z-index: 320;
     }
 
+    .interview-request-card {
+      background: #FFF8F1;
+      border: 1.5px solid #FFD9A8;
+      border-radius: 16px;
+      padding: 14px;
+      margin: 12px 0;
+      color: var(--dark);
+    }
+    .interview-request-title { font-size: 14px; font-weight: 900; margin-bottom: 8px; }
+    .interview-request-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; padding: 4px 0; }
+    .interview-request-row span:first-child { color: var(--light); font-weight: 700; }
+    .interview-request-row span:last-child { font-weight: 900; text-align: right; }
+    .interview-status-pill {
+      display: inline-flex; align-items: center; border-radius: 999px;
+      padding: 4px 10px; font-size: 11px; font-weight: 900; margin-top: 8px;
+    }
+    .interview-request-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .interview-request-actions button,
+    .video-start-btn {
+      border: none; border-radius: 11px; padding: 10px 12px;
+      font-size: 13px; font-weight: 900; cursor: pointer;
+    }
+    .interview-accept-btn,
+    .video-start-btn { background: var(--primary); color: white; }
+    .interview-decline-btn { background: white; color: var(--dark); border: 1px solid var(--border) !important; }
+
+    .video-call-body {
+      flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      background: #111827; color: white; min-height: 0;
+    }
+    .video-main {
+      flex: 1; min-height: 320px; border-radius: 20px;
+      background: linear-gradient(135deg,#334155,#111827);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,.12);
+    }
+    .video-main video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #020617;
+    }
+    .video-main-name { font-size: 22px; font-weight: 900; text-align: center; position: relative; z-index: 1; }
+    .video-self {
+      position: absolute; right: 14px; bottom: 14px; width: 116px; height: 150px;
+      border-radius: 16px; background: linear-gradient(135deg,#FF5A5F,#FFB199);
+      border: 2px solid rgba(255,255,255,.75); display: flex; align-items: center;
+      justify-content: center; font-size: 13px; font-weight: 900;
+      overflow: hidden;
+    }
+    .video-self video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    #local-video-placeholder { position: relative; z-index: 1; }
+    .video-status {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      background: rgba(15,23,42,.72);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 900;
+      color: white;
+      z-index: 2;
+    }
+    .video-controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .video-control-btn {
+      border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.12);
+      color: white; border-radius: 999px; padding: 12px 16px; font-size: 13px;
+      font-weight: 900; cursor: pointer;
+    }
+    .video-end-btn { background: #EF4444; border-color: #EF4444; }
+    .video-signaling-note {
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
     /* ===== LOGIN SCREEN ===== */
     .login-screen {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -5217,16 +5300,41 @@
     </div>
   </div>
   <div class="interview-footer">
-    <button class="interview-btn-primary" onclick="confirmInterview()" data-i18n="confirm_interview">面談を確定する</button>
+    <button class="interview-btn-primary" onclick="confirmInterview()" data-i18n="send_interview_request">面談リクエストを送る</button>
     <button class="interview-btn-cancel" onclick="navigate(currentScreen,interviewBackScreen)" data-i18n="cancel">キャンセル</button>
   </div>
 </div>
 
-<!-- ==================== 面談確定画面 ==================== -->
+<!-- ==================== ビデオ通話デモ画面 ==================== -->
+<div class="screen" id="screen-video-call">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="endVideoCall()">←</div>
+    <div class="mypage-sub-title" data-i18n="start_video_call">ビデオ通話を開始</div>
+  </div>
+  <div class="video-call-body">
+    <div class="video-main">
+      <div class="video-status" id="video-status" data-i18n="waiting_for_peer">相手を待っています</div>
+      <video id="remote-video" autoplay playsinline></video>
+      <div class="video-main-name" id="video-peer-name">Sarah Johnson</div>
+      <div class="video-self">
+        <video id="local-video" autoplay muted playsinline></video>
+        <span id="local-video-placeholder" data-i18n="your_video">自分の映像</span>
+      </div>
+    </div>
+    <div class="video-controls">
+      <button class="video-control-btn" id="video-mic-btn" onclick="toggleVideoControl(this,'mic')" data-i18n="microphone">マイク</button>
+      <button class="video-control-btn" id="video-camera-btn" onclick="toggleVideoControl(this,'camera')" data-i18n="camera">カメラ</button>
+      <button class="video-control-btn video-end-btn" onclick="endVideoCall()" data-i18n="end_call">通話終了</button>
+    </div>
+    <div class="video-signaling-note" data-i18n="signaling_required_note">実際に相手と接続するには、Supabase Realtime または WebSocket signaling server で offer / answer / ICE candidate を交換する必要があります。</div>
+  </div>
+</div>
+
+<!-- ==================== 面談リクエスト送信画面（旧完了画面） ==================== -->
 <div class="screen" id="screen-complete">
   <div class="complete-body">
     <div class="complete-check">✅</div>
-    <div class="complete-title" data-i18n="interview_confirmed">面談が確定しました！</div>
+    <div class="complete-title" data-i18n="interview_confirmed">面談リクエストを送りました</div>
     <div class="complete-sub" data-i18n-html="interview_confirmed_sub">ホストからの日程調整メッセージをお待ちください。<br>契約・支払い等は当事者間でご確認ください。</div>
     <div class="complete-card">
       <div class="complete-card-row"><span id="complete-listing-label">ホスト</span><span id="complete-host-name">Sarah Johnson</span></div>
@@ -6655,6 +6763,11 @@
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
   const interviewedListings = new Set();
+  const interviewRequests = new Map();
+  let currentVideoBack = 'messages';
+  let currentVideoRequestKey = null;
+  let localVideoStream = null;
+  let videoPeerConnection = null;
   const contactHistory = new Map();
   const hostProfileInfo = {
     sarah: { age: '43歳', nationality: 'アメリカ', gender: '女性', religion: '回答しない', englishLevel: 'ネイティブレベル' },
@@ -6689,7 +6802,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -7727,7 +7840,9 @@
     currentHost = hostId || currentHost;
     currentListing = makeHomestayListing(currentHost);
     currentApplicationId = currentListing.type + ':' + currentListing.id;
-    contactHistory.set(currentApplicationId, { listing: currentListing, status: interviewedListings.has(currentApplicationId) ? 'interviewed' : 'contacted' });
+    if (!contactHistory.has(currentApplicationId)) {
+      contactHistory.set(currentApplicationId, { listing: currentListing, status: interviewedListings.has(currentApplicationId) ? 'interviewed' : 'contacted' });
+    }
     currentChatApplicant = null;
     chatBackScreen = 'messages';
     chatDetailMode = 'host';
@@ -7757,6 +7872,7 @@
           <div class="bubble-time">${m.time}</div>
         </div>
       `).join('');
+    appendInterviewRequestCard(area, currentListing, 'guest');
 
     navigate(currentScreen, 'chat');
 	    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
@@ -7788,7 +7904,9 @@
 	      : SHAREHOUSE_LISTINGS.sh1;
 	    currentListing = listing;
 	    currentApplicationId = listing.type + ':' + listing.id;
-	    contactHistory.set(currentApplicationId, { listing, status: interviewedListings.has(currentApplicationId) ? 'interviewed' : 'contacted' });
+	    if (!contactHistory.has(currentApplicationId)) {
+	      contactHistory.set(currentApplicationId, { listing, status: interviewedListings.has(currentApplicationId) ? 'interviewed' : 'contacted' });
+	    }
 	    currentChatApplicant = null;
 	    chatBackScreen = 'messages';
 	    chatDetailMode = 'sharehouse';
@@ -7828,6 +7946,7 @@
 	        <div class="bubble-time">10:28</div>
 	      </div>
 	    `;
+	    appendInterviewRequestCard(area, currentListing, 'guest');
 
 	    navigate(currentScreen, 'chat');
 	    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
@@ -7864,6 +7983,8 @@
           <div class="bubble-time">${m.time}</div>
         </div>
       `).join('');
+    const hostReq = getLatestHostInterviewRequest();
+    if (hostReq) area.insertAdjacentHTML('beforeend', renderInterviewRequestCard(hostReq, 'host'));
 
     navigate(currentScreen, 'chat');
     setTimeout(() => area.scrollTop = area.scrollHeight, 50);
@@ -7879,6 +8000,223 @@
 	      return;
 	    }
 	    openDetail(currentHost);
+	  }
+
+	  function interviewRequestKey(listing) {
+	    return listing ? `${listing.type}:${listing.id}` : currentApplicationId;
+	  }
+
+	  function getInterviewStatusMeta(status) {
+	    if (status === 'accepted') return { text: localizeText('承諾済み'), bg: '#E8F7EF', color: '#167A45' };
+	    if (status === 'declined') return { text: localizeText('不可'), bg: '#FFF0F0', color: '#B42318' };
+	    return { text: localizeText('承諾待ち'), bg: '#FFF3CD', color: '#856404' };
+	  }
+
+	  function formatInterviewDate(date) {
+	    if (!date) return '';
+	    const d = new Date(date);
+	    if (isNaN(d.getTime())) return date;
+	    if (currentLang === 'ja') {
+	      return `${d.getMonth() + 1}月${d.getDate()}日`;
+	    }
+	    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	  }
+
+	  const INTERVIEW_JOIN_WINDOW = { beforeMinutes: 10, afterMinutes: 60 };
+
+	  function interviewStartDateTime(req) {
+	    if (!req?.date || !req?.time) return null;
+	    const [hour, minute] = req.time.split(':').map(Number);
+	    const date = new Date(req.date + 'T00:00:00');
+	    if (isNaN(date.getTime()) || !Number.isFinite(hour)) return null;
+	    date.setHours(hour, Number.isFinite(minute) ? minute : 0, 0, 0);
+	    return date;
+	  }
+
+	  function interviewWindowState(req, now = new Date()) {
+	    const start = interviewStartDateTime(req);
+	    if (!start) return { canJoin: false, phase: 'before', start };
+	    const openAt = new Date(start.getTime() - INTERVIEW_JOIN_WINDOW.beforeMinutes * 60000);
+	    const closeAt = new Date(start.getTime() + INTERVIEW_JOIN_WINDOW.afterMinutes * 60000);
+	    if (now < openAt) return { canJoin: false, phase: 'before', start, openAt, closeAt };
+	    if (now > closeAt) return { canJoin: false, phase: 'ended', start, openAt, closeAt };
+	    return { canJoin: true, phase: 'open', start, openAt, closeAt };
+	  }
+
+	  function formatInterviewAvailableFrom(req) {
+	    const start = interviewStartDateTime(req);
+	    if (!start) return localizeText('面談時間になると通話できます');
+	    if (currentLang === 'ja') {
+	      return `${formatInterviewDate(req.date)} ${req.time}から通話できます`;
+	    }
+	    const date = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+	    const time = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+	    return `Video call available from ${date} at ${time}`;
+	  }
+
+	  function renderInterviewRequestCard(req, context = 'guest') {
+	    if (!req) return '';
+	    const meta = getInterviewStatusMeta(req.status);
+	    const isHost = context === 'host';
+	    const title = isHost ? localizeText('面談リクエストが届いています') : localizeText('面談リクエスト');
+	    const statusMessage = req.status === 'accepted'
+	      ? (isHost ? localizeText('面談リクエストを承諾しました') : localizeText('面談リクエストが承諾されました'))
+	      : req.status === 'declined'
+	        ? (isHost ? localizeText('面談リクエストを不可にしました') : localizeText('面談リクエストが承諾されませんでした'))
+	        : localizeText('面談リクエストを送信しました');
+	    const acceptActions = isHost && req.status === 'pending' ? `
+	      <div class="interview-request-actions">
+	        <button class="interview-accept-btn" onclick="setInterviewRequestStatus('${req.key}','accepted')">${localizeText('承諾する')}</button>
+	        <button class="interview-decline-btn" onclick="setInterviewRequestStatus('${req.key}','declined')">${localizeText('不可')}</button>
+	      </div>
+	    ` : '';
+	    const windowState = interviewWindowState(req);
+	    const videoAction = req.status === 'accepted'
+	      ? windowState.canJoin
+	        ? `<button class="video-start-btn" style="margin-top:12px;width:100%;" onclick="openVideoCall('${req.key}')">${localizeText('ビデオ通話を開始')}</button>`
+	        : `<div style="font-size:12px;color:var(--mid);line-height:1.5;margin-top:10px;font-weight:800;">${windowState.phase === 'ended' ? localizeText('この面談の通話時間は終了しました') : formatInterviewAvailableFrom(req)}</div>`
+	      : '';
+	    return `
+	      <div class="interview-request-card">
+	        <div class="interview-request-title">${req.status === 'accepted' ? localizeText('面談予約') : title}</div>
+	        <div class="interview-request-row"><span>${localizeText('相手')}</span><span>${localizeText(req.listing.name)}</span></div>
+	        ${isHost ? `<div class="interview-request-row"><span>${localizeText('ゲスト名')}</span><span>${localizeText(req.guestName || '中村 さくら')}</span></div>` : ''}
+	        <div class="interview-request-row"><span>${localizeText('希望日')}</span><span>${formatInterviewDate(req.date)}</span></div>
+	        <div class="interview-request-row"><span>${localizeText('希望時間')}</span><span>${req.time}</span></div>
+	        <span class="interview-status-pill" style="background:${meta.bg};color:${meta.color};">${meta.text}</span>
+	        <div style="font-size:12px;color:var(--mid);line-height:1.5;margin-top:8px;">${statusMessage}</div>
+	        ${acceptActions}
+	        ${videoAction}
+	      </div>
+	    `;
+	  }
+
+	  function appendInterviewRequestCard(area, listing, context = 'guest') {
+	    const req = interviewRequests.get(interviewRequestKey(listing));
+	    if (area && req) area.insertAdjacentHTML('beforeend', renderInterviewRequestCard(req, context));
+	  }
+
+	  function refreshOpenInterviewRequestCard() {
+	    if (currentScreen !== 'chat' || !interviewRequests.size) return;
+	    if (chatDetailMode === 'host' && currentHost) {
+	      openChat(currentHost);
+	      return;
+	    }
+	    if (chatDetailMode === 'sharehouse' && currentListing?.type === 'sharehouse') {
+	      openSharehouseChat(currentListing.id);
+	      return;
+	    }
+	    if (chatDetailMode === 'applicant') {
+	      openHostApplicantChat(currentChatApplicant || 'sakura');
+	    }
+	  }
+
+	  function getLatestHostInterviewRequest() {
+	    return Array.from(interviewRequests.values()).find(req => req.status === 'pending')
+	      || Array.from(interviewRequests.values()).find(req => req.status === 'accepted')
+	      || Array.from(interviewRequests.values())[0];
+	  }
+
+	  function setInterviewRequestStatus(key, status) {
+	    const req = interviewRequests.get(key);
+	    if (!req) return;
+	    req.status = status;
+	    if (status === 'accepted' && !req.roomId) req.roomId = 'interview-room-' + key.replace(/[^a-zA-Z0-9]/g, '-');
+	    interviewRequests.set(key, req);
+	    contactHistory.set(key, { listing: req.listing, status: status === 'accepted' ? 'interview_accepted' : 'interview_declined' });
+	    showToast(status === 'accepted' ? localizeText('面談リクエストを承諾しました') : localizeText('面談リクエストを不可にしました'));
+	    if (chatDetailMode === 'applicant') openHostApplicantChat(currentChatApplicant || 'sakura');
+	  }
+
+	  async function openVideoCall(key) {
+	    const req = interviewRequests.get(key) || getLatestHostInterviewRequest();
+	    if (!req || req.status !== 'accepted') return;
+	    const windowState = interviewWindowState(req);
+	    if (!windowState.canJoin) {
+	      showToast(windowState.phase === 'ended' ? localizeText('この面談の通話時間は終了しました') : localizeText('面談時間になると通話できます'));
+	      return;
+	    }
+	    document.getElementById('video-peer-name').textContent = chatDetailMode === 'applicant'
+	      ? localizeText(req.guestName || '中村 さくら')
+	      : localizeText(req.listing.name);
+	    currentVideoBack = currentScreen === 'chat' ? 'chat' : 'messages';
+	    currentVideoRequestKey = req.key;
+	    navigate(currentScreen, 'video-call');
+	    await startLocalVideoSession(req);
+	  }
+
+	  function endVideoCall() {
+	    stopVideoSession();
+	    navigate(currentScreen, currentVideoBack || 'messages');
+	  }
+
+	  function toggleVideoControl(btn, type) {
+	    const tracks = type === 'mic' ? localVideoStream?.getAudioTracks() : localVideoStream?.getVideoTracks();
+	    if (!tracks || !tracks.length) return;
+	    const nextEnabled = !tracks[0].enabled;
+	    tracks.forEach(track => { track.enabled = nextEnabled; });
+	    btn.classList.toggle('off', !nextEnabled);
+	    const label = type === 'mic' ? localizeText('マイク') : localizeText('カメラ');
+	    btn.textContent = `${label} ${nextEnabled ? 'ON' : 'OFF'}`;
+	  }
+
+	  async function startLocalVideoSession(req) {
+	    const statusEl = document.getElementById('video-status');
+	    const localVideo = document.getElementById('local-video');
+	    const remoteVideo = document.getElementById('remote-video');
+	    const placeholder = document.getElementById('local-video-placeholder');
+	    if (statusEl) statusEl.textContent = localizeText('接続中');
+	    try {
+	      localVideoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+	      if (localVideo) localVideo.srcObject = localVideoStream;
+	      if (placeholder) placeholder.style.display = 'none';
+	      videoPeerConnection = new RTCPeerConnection({
+	        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+	      });
+	      localVideoStream.getTracks().forEach(track => videoPeerConnection.addTrack(track, localVideoStream));
+	      videoPeerConnection.ontrack = event => {
+	        if (remoteVideo && event.streams[0]) {
+	          remoteVideo.srcObject = event.streams[0];
+	          document.getElementById('video-peer-name').style.display = 'none';
+	          if (statusEl) statusEl.textContent = localizeText('接続済み');
+	        }
+	      };
+	      videoPeerConnection.onicecandidate = event => {
+	        if (event.candidate) {
+	          console.log('ICE candidate for future signaling room:', req.roomId, event.candidate);
+	        }
+	      };
+	      req.roomId = req.roomId || 'interview-room-' + req.key.replace(/[^a-zA-Z0-9]/g, '-');
+	      interviewRequests.set(req.key, req);
+	      if (statusEl) statusEl.textContent = localizeText('相手を待っています');
+	      const micBtn = document.getElementById('video-mic-btn');
+	      const cameraBtn = document.getElementById('video-camera-btn');
+	      if (micBtn) micBtn.textContent = localizeText('マイク') + ' ON';
+	      if (cameraBtn) cameraBtn.textContent = localizeText('カメラ') + ' ON';
+	    } catch (error) {
+	      console.error(error);
+	      if (statusEl) statusEl.textContent = localizeText('ビデオ通話にはカメラとマイクの許可が必要です');
+	      showToast(localizeText('ビデオ通話にはカメラとマイクの許可が必要です'));
+	    }
+	  }
+
+	  function stopVideoSession() {
+	    if (localVideoStream) {
+	      localVideoStream.getTracks().forEach(track => track.stop());
+	      localVideoStream = null;
+	    }
+	    if (videoPeerConnection) {
+	      videoPeerConnection.close();
+	      videoPeerConnection = null;
+	    }
+	    const localVideo = document.getElementById('local-video');
+	    const remoteVideo = document.getElementById('remote-video');
+	    if (localVideo) localVideo.srcObject = null;
+	    if (remoteVideo) remoteVideo.srcObject = null;
+	    const placeholder = document.getElementById('local-video-placeholder');
+	    if (placeholder) placeholder.style.display = '';
+	    const peerName = document.getElementById('video-peer-name');
+	    if (peerName) peerName.style.display = '';
 	  }
 
   function sendMessage() {
@@ -7975,23 +8313,22 @@
     const listing = getCurrentListing();
     if (!listing) return;
     currentApplicationId = listing.type + ':' + listing.id;
-    interviewedListings.add(currentApplicationId);
-    contactHistory.set(currentApplicationId, { listing, status: 'interviewed' });
-    document.getElementById('complete-listing-label').textContent = listing.label;
-    document.getElementById('complete-host-name').textContent = listing.name;
-    document.getElementById('complete-price').textContent = formatListingPrice(listing) + ' /月';
-    const card = document.querySelector('#screen-complete .complete-card');
-    const existing = document.getElementById('complete-date-row');
-    if (existing) existing.remove();
-    const d = new Date(selectedDate);
-    const days = ['日','月','火','水','木','金','土'];
-    const dayLabel = isNaN(d.getTime()) ? selectedDate : (d.getMonth()+1) + '/' + d.getDate() + '（' + days[d.getDay()] + '）';
-    const row = document.createElement('div');
-    row.className = 'complete-card-row'; row.id = 'complete-date-row';
-    row.innerHTML = '<span>面談日時</span><span>' + dayLabel + ' ' + time + '</span>';
-    card.appendChild(row);
+    interviewRequests.set(currentApplicationId, {
+      key: currentApplicationId,
+      listing,
+      date: selectedDate,
+      time,
+      status: 'pending',
+      guestName: '中村 さくら'
+    });
+    contactHistory.set(currentApplicationId, { listing, status: 'interview_pending' });
+    showToast(localizeText('面談リクエストを送りました'));
     updateListingActionButtons();
-    navigate(currentScreen, 'complete');
+    if (listing.type === 'sharehouse') {
+      openSharehouseChat(listing.id);
+    } else {
+      openChat(listing.id);
+    }
   }
 
   function goToGuestMessagesFromComplete() {
@@ -8031,6 +8368,15 @@
   function getContactStatusMeta(status) {
     if (status === 'interviewed') {
       return { text: t('interview_done'), bg: '#E8F7EF', color: '#167A45', note: t('direct_agreement_notice') };
+    }
+    if (status === 'interview_pending') {
+      return { text: localizeText('承諾待ち'), bg: '#FFF3CD', color: '#856404', note: localizeText('面談リクエストを送信しました') };
+    }
+    if (status === 'interview_accepted') {
+      return { text: localizeText('承諾済み'), bg: '#E8F7EF', color: '#167A45', note: localizeText('面談リクエストが承諾されました') };
+    }
+    if (status === 'interview_declined') {
+      return { text: localizeText('不可'), bg: '#FFF0F0', color: '#B42318', note: localizeText('面談リクエストが承諾されませんでした') };
     }
     return { text: t('contacted'), bg: '#F0FFF8', color: '#00875A', note: t('continue_by_message') };
   }
@@ -9401,8 +9747,8 @@
       interview_sub:'ホストとビデオ通話で面談を行います。<br>お互いの雰囲気を確認しましょう。',
       monthly_price:'月額料金', interview_method:'面談方法', video_call_15:'ビデオ通話（15分）', fee:'費用', free:'無料',
       select_date:'日付を選択', select_preferred_date:'希望日を選択してください',
-      select_time:'時間帯を選択...', confirm_interview:'面談を確定する', cancel:'キャンセル',
-      interview_confirmed:'面談が確定しました！',
+      select_time:'時間帯を選択...', confirm_interview:'面談リクエストを送る', send_interview_request:'面談リクエストを送る', cancel:'キャンセル',
+      interview_confirmed:'面談リクエストを送りました',
       interview_confirmed_sub:'ホストからの日程調整メッセージをお待ちください。<br>面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。',
       back_to_detail:'詳細画面へ戻る', check_messages:'💬 メッセージを確認する',
       submit_application_q:'正式に申し込みますか？',
@@ -9513,8 +9859,8 @@
       interview_sub:'You will have a video interview with the host.<br>Use it to see if you are a good fit.',
       monthly_price:'Monthly Price', interview_method:'Interview Method', video_call_15:'Video call (15 min)', fee:'Fee', free:'Free',
       select_date:'Select Date', select_preferred_date:'Please choose your preferred date',
-      select_time:'Select a time...', confirm_interview:'Confirm Interview', cancel:'Cancel',
-      interview_confirmed:'Interview Confirmed!',
+      select_time:'Select a time...', confirm_interview:'Send Interview Request', send_interview_request:'Send Interview Request', cancel:'Cancel',
+      interview_confirmed:'Interview request sent',
       interview_confirmed_sub:'Please wait for the host to message you about scheduling.<br>After the interview, press “Submit Application” on the detail page if you want to apply.',
       back_to_detail:'Back to Detail', check_messages:'💬 Check Messages',
       submit_application_q:'Submit your application?',
@@ -9578,7 +9924,17 @@
     faq_interview_a:'詳細画面の「面談を申し込む」から日付と時間を選択できます。面談後もMessageでやり取りできます。',
     faq_cancel_q:'契約や支払いはHostMatch上で行いますか？',
     faq_cancel_a:'HostMatchは掲載・検索・条件比較・メッセージのためのプラットフォームです。契約・支払い等は当事者間でご確認ください。',
-    interview_confirmed_sub:'ホストからの日程調整メッセージをお待ちください。<br>契約・支払い等は当事者間でご確認ください。',
+    confirm_interview:'面談リクエストを送る',
+    send_interview_request:'面談リクエストを送る',
+    interview_confirmed:'面談リクエストを送りました',
+    interview_confirmed_sub:'ホストの承諾後にビデオ通話を開始できます。<br>契約・支払い等は当事者間でご確認ください。',
+    start_video_call:'ビデオ通話を開始',
+    your_video:'自分の映像',
+    waiting_for_peer:'相手を待っています',
+    signaling_required_note:'実際に相手と接続するには、Supabase Realtime または WebSocket signaling server で offer / answer / ICE candidate を交換する必要があります。',
+    microphone:'マイク',
+    camera:'カメラ',
+    end_call:'通話終了',
     submit_application_q:'面談後はMessageでやり取りしてください',
     submit_application_sub:'HostMatchは正式申込み・予約・決済には関与しません。<br>契約・支払い等は当事者間でご確認ください。',
     send_application_request:'Messageを続ける',
@@ -9653,7 +10009,17 @@
     faq_interview_a:'Choose a date and time from “Request an Interview” on the detail page. You can continue messaging after the interview.',
     faq_cancel_q:'Are agreements or payments handled on HostMatch?',
     faq_cancel_a:'HostMatch is a platform for listings, search, condition comparison, and messaging. Please arrange any agreements and payments directly between users.',
-    interview_confirmed_sub:'Please wait for the host to message you about scheduling.<br>Please arrange any agreements and payments directly between users.',
+    confirm_interview:'Send Interview Request',
+    send_interview_request:'Send Interview Request',
+    interview_confirmed:'Interview request sent',
+    interview_confirmed_sub:'You can start the video call after the host accepts the request.<br>Please arrange any agreements and payments directly between users.',
+    start_video_call:'Start Video Call',
+    your_video:'Your video',
+    waiting_for_peer:'Waiting for the other person',
+    signaling_required_note:'To connect with another user, offer / answer / ICE candidates must be exchanged through Supabase Realtime or a WebSocket signaling server.',
+    microphone:'Microphone',
+    camera:'Camera',
+    end_call:'End Call',
     submit_application_q:'Continue by Message after the interview',
     submit_application_sub:'HostMatch does not handle formal applications, bookings, or payments.<br>Please arrange any agreements and payments directly between users.',
     send_application_request:'Continue Messaging',
@@ -10591,7 +10957,7 @@
     ,'時間帯を選択...':'Select a time...'
     ,'面談を確定する':'Confirm Interview'
     ,'キャンセル':'Cancel'
-    ,'面談が確定しました！':'Interview Confirmed!'
+    ,'面談が確定しました！':'Interview request sent'
     ,'ホストからの日程調整メッセージをお待ちください。':'Please wait for the host to message you about scheduling.'
     ,'面談後、正式に申し込む場合はホスト詳細ページから「正式に申し込む」を押してください。':'After the interview, press “Submit Application” on the host detail page if you want to apply formally.'
     ,'詳細画面へ戻る':'Back to Detail'
@@ -10698,6 +11064,35 @@
     ,'特になし':'None'
     ,'おおよその位置':'Approximate location'
     ,'正確な住所はプライバシー保護のため表示していません':'The exact address is not shown for privacy reasons.'
+    ,'面談リクエスト':'Interview Request'
+    ,'面談予約':'Interview Booking'
+    ,'面談リクエストを送る':'Send Interview Request'
+    ,'面談リクエストを送りました':'Interview request sent'
+    ,'面談リクエストを送信しました':'Interview request sent'
+    ,'面談リクエストが届いています':'You have received an interview request'
+    ,'ゲスト名':'Guest Name'
+    ,'相手':'Person'
+    ,'希望日':'Preferred Date'
+    ,'希望時間':'Preferred Time'
+    ,'承諾待ち':'Pending approval'
+    ,'承諾する':'Accept'
+    ,'不可':'Decline'
+    ,'承諾済み':'Accepted'
+    ,'面談リクエストを承諾しました':'Interview request accepted'
+    ,'面談リクエストを不可にしました':'Interview request declined'
+    ,'面談リクエストが承諾されました':'Your interview request has been accepted'
+    ,'面談リクエストが承諾されませんでした':'Your interview request was declined'
+    ,'ビデオ通話を開始':'Start Video Call'
+    ,'面談時間になると通話できます':'You can start the video call when the interview time arrives'
+    ,'この面談の通話時間は終了しました':'The video call time for this interview has ended'
+    ,'ビデオ通話にはカメラとマイクの許可が必要です':'Camera and microphone access is required for the video call.'
+    ,'接続中':'Connecting'
+    ,'接続済み':'Connected'
+    ,'相手を待っています':'Waiting for the other person'
+    ,'自分の映像':'Your video'
+    ,'マイク':'Microphone'
+    ,'カメラ':'Camera'
+    ,'通話終了':'End Call'
     ,'家族みんなで温かくお迎えします。日本の文化や料理を一緒に楽しみましょう！':'Our whole family will warmly welcome you. Let’s enjoy Japanese culture and home cooking together!'
     ,'食事提供あり':'Meals included'
     ,'お支払い方法':'Payment Method'
@@ -12361,6 +12756,7 @@
     attributeFilter: ['placeholder']
   });
   applyLang();
+  setInterval(refreshOpenInterviewRequestCard, 60000);
   setLoginMode(isSignupMode, true);
   updateFavIcons();
   // 初期画面はonAuthStateChangedで制御（Firebase認証確定後に表示）
