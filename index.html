@@ -880,6 +880,12 @@
       padding: 14px 16px; background: white; cursor: pointer;
       border-bottom: 1px solid var(--border); font-size: 15px;
     }
+    .mypage-item-link {
+      width: 100%;
+      text-decoration: none;
+      color: inherit;
+      box-sizing: border-box;
+    }
     .mypage-item-icon { font-size: 20px; width: 28px; text-align: center; }
     .mypage-item-label { flex: 1; }
     .mypage-item-arrow { color: var(--light); font-size: 13px; }
@@ -3510,7 +3516,7 @@
 
     <div class="mypage-section-title" data-i18n="support">サポート</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
-    <a href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;"><div class="mypage-item"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></div></a>
+    <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></a>
     <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
