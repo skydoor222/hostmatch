@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>HostMatch</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     :root {
@@ -697,6 +698,46 @@
     }
     .price-row.total span:last-child { color: var(--primary); }
     .price-note { font-size: 11px; color: var(--light); margin-top: 8px; }
+
+    .detail-osm-map {
+      width: 100%;
+      height: 280px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      background: #E8F0E9;
+      position: relative;
+      z-index: 1;
+    }
+    .detail-osm-map .leaflet-control-zoom a {
+      width: 34px;
+      height: 34px;
+      line-height: 34px;
+      font-size: 18px;
+      color: var(--dark);
+    }
+    .location-privacy-note {
+      font-size: 12px;
+      color: var(--light);
+      line-height: 1.5;
+      margin-top: 8px;
+    }
+    .location-station-note {
+      font-size: 13px;
+      color: var(--dark);
+      font-weight: 800;
+      margin-top: 10px;
+    }
+    .approx-location-label {
+      background: rgba(255,255,255,.92);
+      border: 1px solid rgba(255,90,95,.28);
+      color: var(--primary);
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.12);
+      font-size: 12px;
+      font-weight: 900;
+      padding: 4px 10px;
+    }
 
     .detail-info-card {
       background: var(--bg);
@@ -1963,6 +2004,10 @@
       grid-template-columns: repeat(2, minmax(220px, 1fr));
     }
 
+    .detail-osm-map {
+      height: 400px;
+    }
+
     .ls-cell,
     .info-row,
     .rule-row,
@@ -3162,10 +3207,9 @@
 
     <div class="detail-section" style="padding-bottom:16px;">
       <div class="detail-section-title" data-i18n="location">📍 ロケーション</div>
-      <div class="match-card-map" style="border-radius:14px; height:160px; border:1px solid var(--border);">
-        <div class="match-map-pin" id="detail-map-pin">📍 Manhattan, New York</div>
-      </div>
-      <div style="font-size:12px; color:var(--light); margin-top:8px;">最寄り駅：72nd St 徒歩5分 · Central Park まで徒歩10分</div>
+      <div id="detail-leaflet-map" class="detail-osm-map" aria-label="おおよその位置"></div>
+      <div class="location-station-note" id="detail-station-note">72nd St 徒歩5分</div>
+      <div class="location-privacy-note" id="detail-location-privacy">正確な住所はプライバシー保護のため表示していません</div>
     </div>
 
   </div>
@@ -6268,6 +6312,8 @@
   });
 </script>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
 <script>
   /* ===== HOST DATA ===== */
   const HOSTS = {
@@ -6604,6 +6650,7 @@
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
   let guestMessageService = 'homestay';
+  let homestayDetailMap = null;
   let homestayHostListType = 'new';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
@@ -7504,10 +7551,6 @@
     // Rules
     document.querySelector('#screen-detail .rule-list').innerHTML = h.rules.map(r => renderRuleRow(r)).join('');
 
-    // Map
-    document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
-    document.querySelector('#screen-detail .match-card-map + div').textContent = localizeText(h.mapNote);
-
     // Update action button state
     updateDetailActionBtn();
 
@@ -7515,6 +7558,7 @@
     document.querySelector('.detail-scroll').scrollTop = 0;
 
     navigate(currentScreen, 'detail');
+    setTimeout(() => renderHomestayLocationMap(hostId), 80);
   }
 
   /* ===== PHOTO SLIDER ===== */
@@ -10652,6 +10696,8 @@
     ,'徒歩分数':'Walking Time'
     ,'月額料金（CAD）':'Monthly Rent (CAD)'
     ,'特になし':'None'
+    ,'おおよその位置':'Approximate location'
+    ,'正確な住所はプライバシー保護のため表示していません':'The exact address is not shown for privacy reasons.'
     ,'家族みんなで温かくお迎えします。日本の文化や料理を一緒に楽しみましょう！':'Our whole family will warmly welcome you. Let’s enjoy Japanese culture and home cooking together!'
     ,'食事提供あり':'Meals included'
     ,'お支払い方法':'Payment Method'
@@ -11984,6 +12030,82 @@
 	    jennifer: { start: '2026-07-01', end: '2026-08-15' },
 	    robert: { start: '2026-10-01', end: '2027-03-31' }
 	  };
+
+	  const HOMESTAY_APPROX_LOCATIONS = {
+	    vancouver: { center: [49.2626, -123.1042], radius: 850, label: 'Vancouver' },
+	    toronto: { center: [43.6538, -79.3839], radius: 850, label: 'Toronto' },
+	    sarah: { center: [40.7812, -73.9738], radius: 800, label: 'Manhattan, New York' },
+	    michael: { center: [34.0270, -118.4870], radius: 900, label: 'Santa Monica, Los Angeles' },
+	    emily: { center: [42.3736, -71.1190], radius: 800, label: 'Cambridge, Boston' },
+	    thompson: { center: [37.7522, -122.4184], radius: 800, label: 'Mission District, San Francisco' },
+	    jennifer: { center: [47.6220, -122.3200], radius: 800, label: 'Capitol Hill, Seattle' },
+	    robert: { center: [41.9250, -87.6490], radius: 800, label: 'Lincoln Park, Chicago' }
+	  };
+
+	  function getHomestayApproxLocation(hostId) {
+	    const h = HOSTS[hostId] || HOSTS.sarah;
+	    const areaText = [h.hostStayInfo?.area, h.city, h.state].filter(Boolean).join(' ');
+	    if (/バンクーバー|Vancouver/i.test(areaText)) return HOMESTAY_APPROX_LOCATIONS.vancouver;
+	    if (/トロント|Toronto/i.test(areaText)) return HOMESTAY_APPROX_LOCATIONS.toronto;
+	    return HOMESTAY_APPROX_LOCATIONS[hostId] || HOMESTAY_APPROX_LOCATIONS.sarah;
+	  }
+
+	  function getHomestayStationWalkText(hostId) {
+	    const h = HOSTS[hostId] || HOSTS.sarah;
+	    const stationMatch = (h.mapNote || '').match(/最寄り駅：(.+?) 徒歩(\d+)分/);
+	    const station = h.hostStayInfo?.station || stationMatch?.[1] || 'Central Station';
+	    const walkMin = h.hostStayInfo?.walkMin || stationMatch?.[2] || '8';
+	    return currentLang === 'ja' ? `${station} 徒歩${walkMin}分` : `${walkMin} min walk from ${station}`;
+	  }
+
+	  function renderHomestayLocationMap(hostId) {
+	    const mapEl = document.getElementById('detail-leaflet-map');
+	    const stationNote = document.getElementById('detail-station-note');
+	    const privacyNote = document.getElementById('detail-location-privacy');
+	    if (!mapEl) return;
+	    const loc = getHomestayApproxLocation(hostId);
+	    if (stationNote) stationNote.textContent = getHomestayStationWalkText(hostId);
+	    if (privacyNote) privacyNote.textContent = localizeText('正確な住所はプライバシー保護のため表示していません');
+	    mapEl.setAttribute('aria-label', localizeText('おおよその位置'));
+
+	    if (homestayDetailMap) {
+	      homestayDetailMap.remove();
+	      homestayDetailMap = null;
+	    }
+
+	    if (!window.L) {
+	      mapEl.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--light);font-size:13px;font-weight:800;">${localizeText('おおよその位置')}</div>`;
+	      return;
+	    }
+
+	    mapEl.innerHTML = '';
+	    homestayDetailMap = L.map(mapEl, {
+	      zoomControl: true,
+	      scrollWheelZoom: true,
+	      dragging: true,
+	      touchZoom: true,
+	      tap: true
+	    }).setView(loc.center, 13);
+
+	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	      maxZoom: 19,
+	      attribution: '&copy; OpenStreetMap contributors'
+	    }).addTo(homestayDetailMap);
+
+	    L.circle(loc.center, {
+	      radius: loc.radius,
+	      color: '#FF5A5F',
+	      weight: 2,
+	      fillColor: '#FF5A5F',
+	      fillOpacity: 0.16
+	    }).addTo(homestayDetailMap).bindTooltip(localizeText('おおよその位置'), {
+	      permanent: true,
+	      direction: 'center',
+	      className: 'approx-location-label'
+	    }).openTooltip();
+
+	    setTimeout(() => homestayDetailMap?.invalidateSize(), 120);
+	  }
 
 	  function getGuestStayRange() {
 	    const startEl = document.getElementById('guest-stay-start');
