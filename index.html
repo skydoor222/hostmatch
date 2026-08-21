@@ -213,6 +213,51 @@
 
     /* ===== SEARCH SCREEN BODY ===== */
     .search-body { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+    .hm-filter-shell { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .hm-filter-panel, .hm-results-panel {
+      background: white; border: 1px solid var(--border); border-radius: 16px; padding: 16px;
+    }
+    .hm-filter-title { font-size: 17px; font-weight: 900; color: var(--dark); margin-bottom: 4px; }
+    .hm-filter-sub { font-size: 12px; color: var(--light); line-height: 1.5; margin-bottom: 14px; }
+    .hm-filter-group { padding: 14px 0; border-top: 1px solid var(--border); }
+    .hm-filter-group:first-of-type { border-top: 0; padding-top: 0; }
+    .hm-filter-label { font-size: 13px; font-weight: 900; color: var(--dark); margin-bottom: 9px; }
+    .hm-filter-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hm-filter-chip {
+      border: 1.5px solid var(--border); border-radius: 999px; background: white; color: var(--mid);
+      padding: 9px 12px; font-size: 13px; font-weight: 800; cursor: pointer; user-select: none;
+    }
+    .hm-filter-chip.selected { border-color: var(--primary); background: #FFF3F3; color: var(--primary); }
+    .hm-filter-date-grid, .hm-filter-two-col { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .hm-filter-input {
+      width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 12px;
+      font-size: 14px; outline: none; background: white;
+    }
+    .hm-filter-toggle {
+      display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; font-weight: 800; color: var(--mid);
+      cursor: pointer;
+    }
+    .hm-filter-toggle input { width: 18px; height: 18px; accent-color: var(--primary); }
+    .hm-budget-value { font-size: 13px; font-weight: 900; color: var(--primary); margin-top: 8px; }
+    .hm-filter-details { border-top: 1px solid var(--border); padding: 12px 0; }
+    .hm-filter-details summary { cursor: pointer; font-size: 14px; font-weight: 900; color: var(--dark); list-style: none; }
+    .hm-filter-details summary::-webkit-details-marker { display: none; }
+    .hm-filter-actions { display: flex; gap: 10px; position: sticky; bottom: 0; background: white; padding-top: 12px; border-top: 1px solid var(--border); }
+    .hm-filter-actions button {
+      flex: 1; border-radius: 12px; padding: 13px; font-size: 14px; font-weight: 900; cursor: pointer;
+    }
+    .hm-btn-primary { border: 0; background: var(--primary); color: white; }
+    .hm-btn-secondary { border: 1.5px solid var(--border); background: white; color: var(--mid); }
+    .hm-result-summary { font-size: 13px; color: var(--light); margin-bottom: 12px; line-height: 1.5; }
+    .hm-result-list { display: grid; grid-template-columns: 1fr; gap: 14px; }
+    .hm-match-breakdown { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; line-height: 1.45; }
+    .hm-match-ok { color: #167A45; font-weight: 800; }
+    .hm-match-near { color: #9A5B00; font-weight: 800; }
+    .hm-match-out { color: #B42318; font-weight: 800; }
+    .hm-empty-result {
+      border: 1px dashed var(--border); border-radius: 14px; padding: 22px; text-align: center; color: var(--light);
+      font-size: 14px; line-height: 1.6; background: var(--bg);
+    }
 
     /* ===== MAP SECTION ===== */
     .map-section { position: relative; margin: 0; height: 240px; overflow: hidden; cursor: pointer; }
@@ -1640,6 +1685,34 @@
       padding: 14px 20px;
     }
 
+    .hm-filter-shell {
+      display: grid;
+      grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+      align-items: start;
+      gap: 22px;
+      padding: 24px clamp(36px, 5vw, 72px);
+    }
+
+    .hm-filter-panel {
+      position: sticky;
+      top: 100px;
+      max-height: calc(100vh - 124px);
+      overflow-y: auto;
+    }
+
+    .hm-filter-date-grid,
+    .hm-filter-two-col {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hm-result-list {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hm-result-list .match-card {
+      margin: 0;
+    }
+
     .cat-chip-row {
       padding-left: clamp(36px, 5vw, 72px);
       padding-right: clamp(36px, 5vw, 72px);
@@ -2302,6 +2375,180 @@
       <div style="flex:1;">
         <div style="font-size:14px;font-weight:800;color:#00875A;" data-i18n="ai_match_done">条件比較完了 · 6件</div>
         <div style="font-size:12px;color:#00875A;margin-top:2px;" data-i18n="view_results">結果を見る →</div>
+      </div>
+    </div>
+
+    <div class="hm-filter-shell">
+      <div class="hm-filter-panel">
+        <div class="hm-filter-title">条件比較検索</div>
+        <div class="hm-filter-sub">絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。</div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">① エリア</div>
+          <div class="hm-filter-row" id="hmf-area">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">バンクーバー</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">トロント</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">② 滞在期間</div>
+          <div class="hm-filter-date-grid">
+            <div><div class="price-input-label">入居希望日</div><input class="hm-filter-input" id="hmf-start" type="date" /></div>
+            <div><div class="price-input-label">退去希望日</div><input class="hm-filter-input" id="hmf-end" type="date" /></div>
+          </div>
+          <label class="hm-filter-toggle"><input id="hmf-full-period" type="checkbox" />この期間すべて受け入れ可能なホストのみ表示</label>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">③ 月額予算</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--light);margin-bottom:6px;"><span>C$800</span><span>C$2,000+</span></div>
+          <input id="hmf-budget" type="range" min="800" max="2000" step="50" value="2000" style="width:100%;accent-color:var(--primary);" oninput="hmUpdateBudgetLabel()" />
+          <div class="hm-budget-value" id="hmf-budget-label">C$2,000+</div>
+          <label class="hm-filter-toggle"><input id="hmf-budget-only" type="checkbox" />予算内のみ表示</label>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">④ 食事</div>
+          <div class="hm-filter-row" id="hmf-meal">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">食事なし</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">朝食あり</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">朝・夕食あり</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">3食あり</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑤ 食事スタイル</div>
+          <div class="hm-filter-row" id="hmf-dining">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">一緒に食べたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">たまに一緒</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">別々でOK</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑥ 食事制限対応</div>
+          <div class="hm-filter-row" id="hmf-diet">
+            <button type="button" class="hm-filter-chip" onclick="hmToggleChip(this)">ベジタリアン</button>
+            <button type="button" class="hm-filter-chip" onclick="hmToggleChip(this)">ヴィーガン</button>
+            <button type="button" class="hm-filter-chip" onclick="hmToggleChip(this)">ハラール</button>
+            <button type="button" class="hm-filter-chip" onclick="hmToggleChip(this)">グルテンフリー</button>
+            <button type="button" class="hm-filter-chip" onclick="hmToggleChip(this)">アレルギー対応</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑦ ペット</div>
+          <div class="hm-filter-row" id="hmf-pets">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ペットOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ペットなし希望</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑧ 喫煙環境</div>
+          <div class="hm-filter-row" id="hmf-smoking">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">完全禁煙</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">屋外喫煙ならOK</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑨ 他の留学生</div>
+          <div class="hm-filter-row" id="hmf-students">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">他の留学生がいてもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">他の留学生なし希望</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑩ ホストとの会話量</div>
+          <div class="hm-filter-sub" style="margin-bottom:8px;">どのくらい会話したい？</div>
+          <div class="hm-filter-row" id="hmf-talk">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">必要最低限</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">適度に話したい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">毎日会話したい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">家族のように過ごしたい</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑪ ホストとの交流頻度</div>
+          <div class="hm-filter-row" id="hmf-frequency">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">基本それぞれで過ごしたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">食事の時など時々</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">休日もたまに一緒に過ごしたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">家族の一員のように交流したい</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">⑫ ホストの家族構成</div>
+          <div class="hm-filter-row" id="hmf-family">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">一人暮らし</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">カップル</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">子どものいる家庭</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">子どものいない家庭</button>
+          </div>
+        </div>
+
+        <details class="hm-filter-details">
+          <summary>生活スタイルで絞り込む</summary>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑬ 起床時間</div>
+            <div class="hm-filter-row" id="hmf-wake">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">〜6時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">6〜8時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">8〜9時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">9時〜</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑭ 就寝時間</div>
+            <div class="hm-filter-row" id="hmf-sleep">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">21〜22時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">22〜23時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">23時〜</button>
+            </div>
+          </div>
+        </details>
+
+        <details class="hm-filter-details">
+          <summary>ハウスルールで絞り込む</summary>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑮ 門限</div>
+            <div class="hm-filter-row" id="hmf-curfew">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">門限なし</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑯ 来客</div>
+            <div class="hm-filter-row" id="hmf-visitor">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">友人の来客OK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前確認ならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">来客不可でもOK</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑰ シャワー</div>
+            <div class="hm-filter-row" id="hmf-shower">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">時間制限なし</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">制限ありでもOK</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="hm-filter-actions">
+          <button type="button" class="hm-btn-secondary" onclick="resetHomestayFilters()">条件をリセット</button>
+          <button type="button" class="hm-btn-primary" onclick="applyHomestayFilters()">検索する</button>
+        </div>
+      </div>
+
+      <div class="hm-results-panel">
+        <div class="hm-filter-title">条件比較結果</div>
+        <div class="hm-result-summary" id="hm-filter-summary">条件が未選択のため、全ホストを表示しています。</div>
+        <div class="hm-result-list" id="hm-filter-results"></div>
       </div>
     </div>
 
@@ -6333,6 +6580,7 @@
     if (to === 'favorites') renderFavorites();
 	    if (to === 'search') {
 	      switchSearchCat(currentSearchCat);
+	      if (currentSearchCat === 'homestay') applyHomestayFilters();
 	      window.scrollTo(0, 0);
 	    }
     if (to === 'ai-result') renderAiResult();
@@ -7741,6 +7989,10 @@
 
   /* ===== SEARCH MODAL ===== */
   function openSearchModal() {
+    if (currentSearchCat === 'homestay') {
+      document.querySelector('#search-content-homestay .hm-filter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     document.getElementById('search-modal-overlay').classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -7900,6 +8152,227 @@
     document.getElementById('t4').classList.add('on');
     document.getElementById('pill-main').textContent = '検索を開始';
     document.getElementById('pill-sub').textContent = '目的地・日付・条件を選ぶ';
+  }
+
+  const HOMESTAY_FILTER_HOST_META = {
+    sarah: { area: 'バンクーバー', meal: '朝食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','アレルギー対応'], pets: 'あり', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '食事の時など時々', wake: '6〜8時', sleep: '22〜23時', curfew: '門限あり', visitor: '事前確認ならOK', shower: '時間制限なし' },
+    michael: { area: 'バンクーバー', meal: '3食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','ハラール'], pets: 'あり', smoking: '完全禁煙', students: 'いる', family: 'カップル', talk: '毎日会話したい', frequency: '家族の一員のように交流したい', wake: '6〜8時', sleep: '21〜22時', curfew: '門限なし', visitor: '友人の来客OK', shower: '時間制限なし' },
+    emily: { area: 'トロント', meal: '朝食あり', dining: 'たまに一緒', diet: ['グルテンフリー'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '一人暮らし', talk: '適度に話したい', frequency: '食事の時など時々', wake: '8〜9時', sleep: '23時〜', curfew: '門限なし', visitor: '事前確認ならOK', shower: '制限ありでもOK' },
+    thompson: { area: 'トロント', meal: '朝食あり', dining: '別々でOK', diet: ['アレルギー対応'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '子どものいない家庭', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '6〜8時', sleep: '22〜23時', curfew: '門限なし', visitor: '友人の来客OK', shower: '時間制限なし' },
+    jennifer: { area: 'バンクーバー', meal: '食事なし', dining: '別々でOK', diet: [], pets: 'なし', smoking: '屋外喫煙ならOK', students: 'いる', family: '一人暮らし', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '8〜9時', sleep: '23時〜', curfew: '門限あり', visitor: '来客不可でもOK', shower: '制限ありでもOK' },
+    robert: { area: 'トロント', meal: '朝・夕食あり', dining: 'たまに一緒', diet: ['Vegetarian','Halal'].map(v => v === 'Vegetarian' ? 'ベジタリアン' : 'ハラール'), pets: 'なし', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '休日もたまに一緒に過ごしたい', wake: '〜6時', sleep: '21〜22時', curfew: '門限なし', visitor: '事前確認ならOK', shower: '時間制限なし' }
+  };
+
+  function hmSelectChip(el) {
+    const wasSelected = el.classList.contains('selected');
+    el.parentElement.querySelectorAll('.hm-filter-chip').forEach(chip => chip.classList.remove('selected'));
+    if (!wasSelected) el.classList.add('selected');
+  }
+
+  function hmToggleChip(el) {
+    el.classList.toggle('selected');
+  }
+
+  function hmSelected(id) {
+    return document.querySelector('#' + id + ' .hm-filter-chip.selected')?.textContent.trim() || '';
+  }
+
+  function hmSelectedMany(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' .hm-filter-chip.selected')).map(el => el.textContent.trim());
+  }
+
+  function hmUpdateBudgetLabel() {
+    const budget = Number(document.getElementById('hmf-budget')?.value || 2000);
+    const label = document.getElementById('hmf-budget-label');
+    if (label) label.textContent = budget >= 2000 ? 'C$2,000+' : `C$${budget.toLocaleString()}`;
+  }
+
+  function hmNormalizeMeal(value) {
+    const map = { 'なし': '食事なし', '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
+    return map[value] || value;
+  }
+
+  function hmHostMeta(hostId) {
+    const h = HOSTS[hostId];
+    const base = { ...(HOMESTAY_FILTER_HOST_META[hostId] || {}) };
+    const stayInfo = h.hostStayInfo || {};
+    const household = h.hostHousehold || {};
+    const compat = hostCompatibilityConditions[hostId] || {};
+    if (stayInfo.area) base.area = stayInfo.area;
+    if (household.smokingStatus) base.smoking = household.smokingStatus === '吸わない' ? '完全禁煙' : '屋外喫煙ならOK';
+    if (household.students) base.students = household.students.length ? 'いる' : 'いない';
+    if (household.type) base.family = household.type.includes('子供') ? '子どものいる家庭' : household.type.includes('カップル') ? 'カップル' : household.type.includes('一人暮らし') ? '一人暮らし' : base.family;
+    if (compat.mealPlan) base.meal = hmNormalizeMeal(compat.mealPlan);
+    if (compat.diningStyle) base.dining = compat.diningStyle;
+    if (compat.dietSupport?.length) base.diet = compat.dietSupport.map(d => d === 'アレルギー対応可' ? 'アレルギー対応' : d);
+    if (compat.guestTalk) base.talk = compat.guestTalk === '毎日話したい' ? '毎日会話したい' : compat.guestTalk;
+    if (compat.guestFrequency) base.frequency = compat.guestFrequency === '休日に一緒に出かける' ? '休日もたまに一緒に過ごしたい' : compat.guestFrequency;
+    if (h.pets) base.pets = h.pets.hasPets ? 'あり' : 'なし';
+    if (h.lifestyle?.wake) base.wake = hmNormalizeWake(h.lifestyle.wake);
+    if (h.lifestyle?.sleep) base.sleep = hmNormalizeSleep(h.lifestyle.sleep);
+    if (h.rules?.some(r => r.text.includes('門限なし'))) base.curfew = '門限なし';
+    if (h.rules?.some(r => r.text.includes('来客OK'))) base.visitor = '友人の来客OK';
+    if (h.rules?.some(r => r.text.includes('来客') && r.text.includes('事前'))) base.visitor = '事前確認ならOK';
+    if (h.rules?.some(r => r.text.includes('シャワー') && r.text.includes('制限なし'))) base.shower = '時間制限なし';
+    return base;
+  }
+
+  function hmNormalizeWake(value) {
+    if (!value) return '';
+    if (value.includes('6時以前') || value.includes('6:') || value.includes('Before 6')) return value.includes('6:') ? '6〜8時' : '〜6時';
+    if (value.includes('6〜8') || value.includes('7:')) return '6〜8時';
+    if (value.includes('8〜9')) return '8〜9時';
+    if (value.includes('9時') || value.includes('9:')) return '9時〜';
+    return value;
+  }
+
+  function hmNormalizeSleep(value) {
+    if (!value) return '';
+    if (value.includes('21〜22') || value.includes('10:30')) return '21〜22時';
+    if (value.includes('22〜23') || value.includes('11:00')) return '22〜23時';
+    if (value.includes('23') || value.includes('11:30')) return '23時〜';
+    return value;
+  }
+
+  function hmFilters() {
+    return {
+      area: hmSelected('hmf-area'),
+      start: document.getElementById('hmf-start')?.value || '',
+      end: document.getElementById('hmf-end')?.value || '',
+      fullPeriod: !!document.getElementById('hmf-full-period')?.checked,
+      budget: Number(document.getElementById('hmf-budget')?.value || 2000),
+      budgetOnly: !!document.getElementById('hmf-budget-only')?.checked,
+      meal: hmSelected('hmf-meal'),
+      dining: hmSelected('hmf-dining'),
+      diet: hmSelectedMany('hmf-diet'),
+      pets: hmSelected('hmf-pets'),
+      smoking: hmSelected('hmf-smoking'),
+      students: hmSelected('hmf-students'),
+      talk: hmSelected('hmf-talk'),
+      frequency: hmSelected('hmf-frequency'),
+      family: hmSelected('hmf-family'),
+      wake: hmSelected('hmf-wake'),
+      sleep: hmSelected('hmf-sleep'),
+      curfew: hmSelected('hmf-curfew'),
+      visitor: hmSelected('hmf-visitor'),
+      shower: hmSelected('hmf-shower')
+    };
+  }
+
+  function hmAddCondition(items, filters, active, label, ok, near = false) {
+    if (!active) return true;
+    items.push({ label, status: ok ? 'ok' : near ? 'near' : 'out' });
+    return ok || near;
+  }
+
+  function hmEvaluateHost(hostId, filters) {
+    const h = HOSTS[hostId];
+    const meta = hmHostMeta(hostId);
+    const items = [];
+    let hardPass = true;
+    let activeHard = 0;
+    let matchedHard = 0;
+    let activeNear = 0;
+    let matchedNear = 0;
+    const hard = (active, label, ok) => {
+      if (!active) return;
+      activeHard++;
+      if (ok) matchedHard++; else hardPass = false;
+      hmAddCondition(items, filters, true, label, ok);
+    };
+    const near = (active, label, ok) => {
+      if (!active) return;
+      activeNear++;
+      if (ok) matchedNear++;
+      hmAddCondition(items, filters, true, label, ok, true);
+    };
+
+    hard(filters.area, filters.area, meta.area === filters.area);
+    if (filters.fullPeriod && filters.start && filters.end) {
+      const range = getHostAvailability(hostId);
+      hard(true, '希望期間すべて受け入れ可能', isDateRangeCovered({ start: filters.start, end: filters.end }, range));
+    } else if (filters.start || filters.end) {
+      near(true, '滞在期間を確認', true);
+    }
+    hard(filters.budgetOnly, '予算内', (h.price || 0) <= filters.budget);
+    hard(filters.meal, filters.meal, meta.meal === filters.meal);
+    hard(filters.dining, filters.dining, meta.dining === filters.dining);
+    filters.diet.forEach(d => hard(true, d, (meta.diet || []).includes(d)));
+    hard(filters.pets, filters.pets, filters.pets === 'ペットOK' ? true : meta.pets === 'なし');
+    hard(filters.smoking, filters.smoking, filters.smoking === '完全禁煙' ? meta.smoking === '完全禁煙' : ['完全禁煙','屋外喫煙ならOK'].includes(meta.smoking));
+    hard(filters.students, filters.students, filters.students.includes('いてもOK') ? true : meta.students === 'いない');
+    hard(filters.family, filters.family, filters.family === '子どものいない家庭' ? meta.family !== '子どものいる家庭' : meta.family === filters.family);
+    hard(filters.curfew, filters.curfew, meta.curfew === '門限なし');
+    hard(filters.visitor, filters.visitor, filters.visitor === '来客不可でもOK' ? true : meta.visitor === filters.visitor || (filters.visitor === '事前確認ならOK' && meta.visitor === '友人の来客OK'));
+    hard(filters.shower, filters.shower, filters.shower === '制限ありでもOK' ? true : meta.shower === '時間制限なし');
+    near(filters.talk, '会話量が近い', meta.talk === filters.talk || (filters.talk === '毎日会話したい' && meta.talk === '家族のように過ごしたい'));
+    near(filters.frequency, '交流頻度が近い', meta.frequency === filters.frequency);
+    near(filters.wake, '起床時間が近い', meta.wake === filters.wake);
+    near(filters.sleep, '就寝時間が近い', meta.sleep === filters.sleep);
+
+    const activeTotal = activeHard + activeNear;
+    const matchedTotal = matchedHard + matchedNear;
+    return { hostId, hardPass, activeTotal, matchedTotal, items, score: activeTotal ? Math.round((matchedTotal / activeTotal) * 100) : h.match };
+  }
+
+  function renderHomestayFilterCard(result) {
+    const h = HOSTS[result.hostId];
+    const summary = result.activeTotal
+      ? `${localizeText('条件一致')} ${result.matchedTotal}/${result.activeTotal}`
+      : localizeText('全ホスト表示');
+    const rows = result.items.length ? result.items.slice(0, 10).map(item => {
+      const mark = item.status === 'ok' ? '✓' : item.status === 'near' ? '△' : '×';
+      const cls = item.status === 'ok' ? 'hm-match-ok' : item.status === 'near' ? 'hm-match-near' : 'hm-match-out';
+      return `<div class="${cls}">${mark} ${localizeText(item.label)}</div>`;
+    }).join('') : `<div class="hm-match-ok">✓ ${localizeText('条件未選択')}</div>`;
+    return `
+      <div class="match-card" onclick="openDetail('${result.hostId}')">
+        <div class="match-card-img">
+          <img src="${h.photos[0]}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge">${summary}</div>
+          <div class="match-card-flag">📍 ${localizeText(hmHostMeta(result.hostId).area || h.city)}</div>
+          <div class="match-card-save">${favorites.has(result.hostId) ? '❤️' : '🤍'}</div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1"><div class="match-card-name">${h.name}</div><div class="match-card-rating">★ ${h.rating}</div></div>
+          <div class="match-card-location">${localizeText(hmHostMeta(result.hostId).area || h.city)} · ${localizeText(h.roomType)} · ${t('host_years').replace('{years}', h.years)}</div>
+          <div class="hm-match-breakdown">${rows}</div>
+          <div class="match-card-footer"><div class="match-card-price"><strong>C$${(h.price || 0).toLocaleString()}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(hmHostMeta(result.hostId).meal || h.mealsTag)}</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function applyHomestayFilters() {
+    syncGuestServiceContext('homestay');
+    const filters = hmFilters();
+    const results = ['sarah','michael','emily','thompson','jennifer','robert']
+      .map(id => hmEvaluateHost(id, filters))
+      .filter(result => result.hardPass)
+      .sort((a, b) => b.matchedTotal - a.matchedTotal || b.score - a.score || HOSTS[b.hostId].match - HOSTS[a.hostId].match);
+    const selectedCount = Object.entries(filters).filter(([key, value]) => {
+      if (['budget','budgetOnly','fullPeriod'].includes(key)) return key === 'budgetOnly' ? value : key === 'fullPeriod' ? value : false;
+      return Array.isArray(value) ? value.length : !!value;
+    }).length;
+    const summary = document.getElementById('hm-filter-summary');
+    if (summary) summary.textContent = selectedCount
+      ? (currentLang === 'ja' ? `選択条件 ${selectedCount}件で条件比較しました。` : `Compared conditions using ${selectedCount} selected filter(s).`)
+      : localizeText('条件が未選択のため、全ホストを表示しています。');
+    const list = document.getElementById('hm-filter-results');
+    if (!list) return;
+    list.innerHTML = results.length
+      ? results.map(renderHomestayFilterCard).join('')
+      : `<div class="hm-empty-result">${localizeText('条件に一致するホストが見つかりませんでした。条件を減らして再検索してください。')}</div>`;
+  }
+
+  function resetHomestayFilters() {
+    document.querySelectorAll('#search-content-homestay .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
+    ['hmf-start','hmf-end'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['hmf-full-period','hmf-budget-only'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+    const budget = document.getElementById('hmf-budget');
+    if (budget) budget.value = 2000;
+    hmUpdateBudgetLabel();
+    applyHomestayFilters();
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
@@ -10254,6 +10727,75 @@
     '登録完了 ✓':'Complete Registration ✓',
     '次へ →':'Next →',
     '← 戻る':'← Back',
+    '条件比較検索':'Condition Comparison Search',
+    '絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。':'Select only the conditions you want to filter by. Unselected conditions are not used for search matching.',
+    '① エリア':'① Area',
+    '② 滞在期間':'② Stay Period',
+    '入居希望日':'Desired Move-in Date',
+    '退去希望日':'Desired Move-out Date',
+    'この期間すべて受け入れ可能なホストのみ表示':'Show only hosts available for the entire period',
+    '③ 月額予算':'③ Monthly Budget',
+    '予算内のみ表示':'Show only hosts within budget',
+    '④ 食事':'④ Meals',
+    '食事なし':'No meals',
+    '朝食あり':'Breakfast included',
+    '朝・夕食あり':'Breakfast and dinner included',
+    '3食あり':'Three meals included',
+    '⑤ 食事スタイル':'⑤ Dining Style',
+    '⑥ 食事制限対応':'⑥ Dietary Restrictions Supported',
+    'ベジタリアン':'Vegetarian',
+    'ヴィーガン':'Vegan',
+    'ハラール':'Halal',
+    'グルテンフリー':'Gluten-free',
+    'アレルギー対応':'Allergy support',
+    '⑦ ペット':'⑦ Pets',
+    'ペットなし希望':'Prefer no pets',
+    '⑧ 喫煙環境':'⑧ Smoking Environment',
+    '完全禁煙':'Completely non-smoking',
+    '屋外喫煙ならOK':'Outdoor smoking is OK',
+    '⑨ 他の留学生':'⑨ Other International Students',
+    '他の留学生がいてもOK':'OK with other international students',
+    '他の留学生なし希望':'Prefer no other international students',
+    '⑩ ホストとの会話量':'⑩ Conversation with Host',
+    'どのくらい会話したい？':'How much would you like to talk?',
+    '毎日会話したい':'I would like daily conversations',
+    '⑪ ホストとの交流頻度':'⑪ Time with Host',
+    '基本それぞれで過ごしたい':'I prefer to mostly spend time independently',
+    '休日もたまに一緒に過ごしたい':'I would like to occasionally spend time together on days off',
+    '⑫ ホストの家族構成':'⑫ Host Household Type',
+    '一人暮らし':'Living alone',
+    '子どものいる家庭':'Household with children',
+    '子どものいない家庭':'Household without children',
+    '生活スタイルで絞り込む':'Lifestyle Filters',
+    '⑬ 起床時間':'⑬ Wake-up Time',
+    '〜6時':'Before 6 AM',
+    '9時〜':'After 9 AM',
+    '⑭ 就寝時間':'⑭ Bedtime',
+    '23時〜':'After 11 PM',
+    'ハウスルールで絞り込む':'House Rule Filters',
+    '⑮ 門限':'⑮ Curfew',
+    '⑯ 来客':'⑯ Visitors',
+    '友人の来客OK':'Friends may visit',
+    '事前確認ならOK':'OK with prior confirmation',
+    '来客不可でもOK':'No visitors is OK',
+    '⑰ シャワー':'⑰ Shower',
+    '時間制限なし':'No time limit',
+    '制限ありでもOK':'Time limit is OK',
+    '条件をリセット':'Reset Conditions',
+    '検索する':'Search',
+    '条件比較結果':'Condition Comparison Results',
+    '条件が未選択のため、全ホストを表示しています。':'No conditions selected, so all hosts are shown.',
+    '条件に一致するホストが見つかりませんでした。条件を減らして再検索してください。':'No hosts matched your conditions. Try removing some filters and search again.',
+    '条件一致':'Condition Match',
+    '全ホスト表示':'Showing All Hosts',
+    '条件未選択':'No conditions selected',
+    '希望期間すべて受け入れ可能':'Available for the entire preferred period',
+    '滞在期間を確認':'Check stay period',
+    '予算内':'Within budget',
+    '会話量が近い':'Conversation preference is close',
+    '交流頻度が近い':'Time together preference is close',
+    '起床時間が近い':'Wake-up time is close',
+    '就寝時間が近い':'Bedtime is close',
     '希望条件と生活スタイル':'Preferences and Lifestyle',
     'あなたについて':'About You',
     '滞在・生活スタイル':'Stay & Lifestyle',
@@ -10462,7 +11004,7 @@
   function shouldSkipAutoTranslate(node) {
     const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!el) return true;
-    if (el.closest('script,style,svg,[data-i18n],[data-i18n-html],[data-lang-option]')) return true;
+    if (el.closest('script,style,svg,.hm-filter-shell,[data-i18n],[data-i18n-html],[data-lang-option]')) return true;
     return false;
   }
 
@@ -10539,6 +11081,24 @@
     autoTranslating = false;
   }
 
+  function localizeHomestayFilterUi() {
+    const root = document.querySelector('#search-content-homestay .hm-filter-shell');
+    if (!root) return;
+    root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-label,.hm-filter-chip,summary,.hm-filter-actions button,.price-input-label').forEach(el => {
+      if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
+      const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
+      if (el.textContent.trim() !== nextText) el.textContent = nextText;
+    });
+    root.querySelectorAll('.hm-filter-toggle').forEach(label => {
+      const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
+      if (!label.dataset.hmfOriginalText) label.dataset.hmfOriginalText = textNode ? textNode.nodeValue.trim() : '';
+      if (textNode) {
+        const nextText = currentLang === 'ja' ? label.dataset.hmfOriginalText : localizeText(label.dataset.hmfOriginalText);
+        textNode.nodeValue = ` ${nextText}`;
+      }
+    });
+  }
+
   function scheduleAutoTextTranslations() {
     if (autoTranslating) return;
     clearTimeout(autoTranslateTimer);
@@ -10569,6 +11129,7 @@
       const btn = document.getElementById(id);
       if (btn) btn.textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
     });
+    localizeHomestayFilterUi();
     applyAutoTextTranslations();
   }
 
@@ -10578,6 +11139,10 @@
     if (currentScreen === 'write-review') renderReviewHosts();
     if (currentScreen === 'stay-history') renderStayHistory();
     if (currentScreen === 'homestay-host-list') renderHomestayHostList();
+    if (currentScreen === 'search' && currentSearchCat === 'homestay') {
+      localizeHomestayFilterUi();
+      applyHomestayFilters();
+    }
     if (currentScreen === 'pending-hosts') renderGuestRequestList();
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
     if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
@@ -10704,6 +11269,7 @@
 	    if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
 	    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
 	    updateSearchHeaderForCat(cat);
+	    if (cat === 'homestay') applyHomestayFilters();
 	  }
 
 	  function updateSearchHeaderForCat(cat) {
