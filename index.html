@@ -698,6 +698,77 @@
     .price-row.total span:last-child { color: var(--primary); }
     .price-note { font-size: 11px; color: var(--light); margin-top: 8px; }
 
+    .detail-info-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .detail-info-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .detail-info-item {
+      background: white;
+      border: 1px solid rgba(0,0,0,.04);
+      border-radius: 11px;
+      padding: 10px 12px;
+    }
+    .detail-info-label {
+      font-size: 11px;
+      color: var(--light);
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .detail-info-value {
+      margin-top: 4px;
+      font-size: 14px;
+      color: var(--dark);
+      font-weight: 800;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .detail-member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .detail-member-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .detail-member-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: white;
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .detail-member-main {
+      min-width: 0;
+      flex: 1;
+    }
+    .detail-member-name {
+      font-size: 14px;
+      color: var(--dark);
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
     .detail-cta {
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
       width: 100%; max-width: 430px;
@@ -1884,6 +1955,14 @@
       gap: 12px;
     }
 
+    .detail-info-card {
+      max-width: 980px;
+    }
+
+    .detail-info-grid {
+      grid-template-columns: repeat(2, minmax(220px, 1fr));
+    }
+
     .ls-cell,
     .info-row,
     .rule-row,
@@ -3032,27 +3111,33 @@
 
     <div class="divider"></div>
 
-		    <div class="detail-section">
-		      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
-		      <div class="ls-grid" id="detail-ls-grid"></div>
-		    </div>
-
-		    <div class="detail-section" style="padding-top:0;">
-		      <div class="detail-section-title">💎 価値観</div>
-		      <div class="ls-grid" id="detail-values-grid"></div>
-		    </div>
-
-	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">👨‍👩‍👧 ホストファミリー / 同居メンバー</div>
-	      <div id="detail-host-family" style="display:flex;flex-direction:column;gap:10px;"></div>
-	    </div>
-
-	    <div class="detail-section" style="padding-top:0;">
-      <div class="detail-section-title" style="font-size:13px; color:var(--light); font-weight:600;" data-i18n="student_reviews">💬 過去の留学生からの評価</div>
-      <div class="ls-review-list" id="detail-ls-reviews"></div>
+    <div class="detail-section">
+      <div class="detail-section-title">👤 基本プロフィール</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="detail-basic-profile"></div></div>
     </div>
 
-    <div class="divider"></div>
+    <div class="detail-section">
+      <div class="detail-section-title">👨‍👩‍👧 ホスト・家族情報</div>
+      <div class="detail-info-card">
+        <div class="detail-info-grid" id="detail-household-summary"></div>
+        <div class="detail-member-list" id="detail-host-family"></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">🌙 生活スタイル</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="detail-lifestyle-info"></div></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">🍽️ 食事・交流</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="detail-meal-info"></div></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">🏠 滞在・部屋情報</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="detail-stay-room-info"></div></div>
+    </div>
 
     <div class="detail-section">
       <div class="detail-section-title" data-i18n="house_rules">📋 ハウスルール</div>
@@ -3068,24 +3153,9 @@
 
     <div class="divider"></div>
 
-    <div class="detail-section">
-      <div class="detail-section-title" data-i18n="room_info">🏠 部屋情報</div>
-      <div class="info-grid">
-        <div class="info-row"><span class="info-label">広さ</span><span class="info-val">10㎡（約6畳）</span></div>
-        <div class="info-row"><span class="info-label">バス・トイレ</span><span class="info-val">共用（2人でシェア）</span></div>
-        <div class="info-row"><span class="info-label">日当たり</span><span class="info-val">東向き・午前良好</span></div>
-        <div class="info-row"><span class="info-label">Wi-Fi</span><span class="info-val">光回線・無制限</span></div>
-        <div class="info-row"><span class="info-label">最寄り</span><span class="info-val">72nd St 徒歩5分</span></div>
-      </div>
-    </div>
-
-    <div class="divider"></div>
-
-    <div class="detail-section" style="padding-bottom:16px;">
-	      <div class="detail-section-title" data-i18n="price_simple">💰 料金</div>
-	      <div class="price-box">
-	        <div class="price-row total"><span>月額</span><span>$950 /月</span></div>
-	      </div>
+    <div class="detail-section" style="padding-top:0;">
+      <div class="detail-section-title" style="font-size:13px; color:var(--light); font-weight:600;" data-i18n="student_reviews">💬 過去の留学生からの評価</div>
+      <div class="ls-review-list" id="detail-ls-reviews"></div>
     </div>
 
     <div class="divider"></div>
@@ -7249,18 +7319,6 @@
 	    }
 
 	    const h = HOSTS[currentHost] || HOSTS.sarah;
-	    const profile = hostProfileInfo[currentHost] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
-	    const extra = hostDetailExtras[currentHost] || hostDetailExtras.sarah;
-	    const availability = getHostAvailability(currentHost || 'sarah');
-	    const mealInfo = hostCompatibilityConditions[currentHost] || hostCompatibilityConditions.sarah || {};
-	    const formatList = (items, fallback) => (items && items.length ? items : fallback).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
-	    const mealRows = [
-	      { label: '食事提供', value: mealInfo.mealPlan || '朝食のみ' },
-	      ...(!['なし', '不要'].includes(mealInfo.mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
-	      ...(mealInfo.mealPlan === '3食' && mealInfo.lunchDetails ? [{ label: '昼食の内容', value: mealInfo.lunchDetails }] : []),
-	      ...(['朝夕食', '3食'].includes(mealInfo.mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : [])
-	    ];
-
 	    container.innerHTML = [
 	      conditionComparisonCard(h.match || 86, [
 	        ['✓', '非喫煙', 'ok'],
@@ -7271,29 +7329,7 @@
 	        ['✓', '交流頻度一致', 'ok'],
 	        ['△', '清潔感に少し差あり', 'warn'],
 	        ['△', '来客頻度に差あり', 'warn']
-	      ]),
-	      preferenceCard('プロフィール', [
-	        { label: 'ホスト名', value: h.name },
-	        { label: '年齢', value: profile.age },
-	        { label: '国籍', value: profile.nationality },
-	        { label: '性別', value: profile.gender },
-	        { label: '宗教', value: profile.religion || '回答しない' },
-	        { label: '英語レベル', value: profile.englishLevel || '回答しない' },
-	        { label: '話せる言語', value: formatList(h.hostHousehold?.spokenLanguages, ['英語','日本語']) },
-	        { label: '家で使用する言語', value: formatList(h.hostHousehold?.homeLanguages, ['英語','日本語']) },
-	        { label: '家族構成', value: h.hostHousehold?.type || (h.gender === 'couple' ? '夫婦' : h.gender === 'female' ? '女性ホスト' : '男性ホスト') },
-	        { label: '家族/同居人情報', value: hostFamilyMembers.map(m => `${m.age} · ${localizeText(m.gender)} · ${localizeText(m.nationality)}`).join(' / ') || '同居メンバー未登録' },
-	        { label: '同居している留学生', value: h.hostHousehold?.students?.length ? `${h.hostHousehold.students.length}名` : 'いない' },
-	        { label: '喫煙者かどうか', value: h.hostHousehold?.smokingStatus || '吸わない' },
-	        { label: 'エリア', value: h.hostStayInfo?.area || h.city },
-	        { label: '最寄り駅', value: h.hostStayInfo?.station || '72nd St' },
-	        { label: '徒歩分数', value: h.hostStayInfo?.walkMin ? `${h.hostStayInfo.walkMin}分` : '5分' },
-	        { label: '最短滞在期間', value: h.hostStayInfo?.minStay || '3ヶ月' },
-	        { label: '最長滞在期間', value: h.hostStayInfo?.maxStay || '12ヶ月' },
-	        { label: '長期滞在', value: h.hostStayInfo?.longStay || '長期滞在可能' },
-	        ...mealRows
-	      ]),
-	      (availabilityCalendarState.homestay = { offset: 0, range: availability }, availabilityCalendar(availability, 'homestay'))
+	      ])
 	    ].join('');
 	  }
 
@@ -7344,39 +7380,107 @@
       `<span class="dtag ${t.cls}">${localizeText(t.text)}</span>`
     ).join('');
     renderGuestPreferenceSummary('homestay');
-    const detailExtra = hostDetailExtras[hostId] || hostDetailExtras.sarah;
+    const detailData = detailFallbackHostMeta(hostId, h);
+    const detailExtra = detailData.extra;
+    const mealInfo = detailData.meal;
+    const meta = detailData.meta;
+    const household = detailData.household;
+    const stayInfo = detailData.stay;
+    const availability = detailData.availability;
     const formatList = (items, fallback) => (items && items.length ? items : fallback).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
 
-    // Lifestyle
-		    document.getElementById('detail-ls-grid').innerHTML = `
-		      <div class="ls-cell"><div class="ls-icon">⏰</div><div class="ls-label">${t('wake_time')}</div><div class="ls-val">${h.lifestyle.wake}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🌙</div><div class="ls-label">${t('sleep_time')}</div><div class="ls-val">${h.lifestyle.sleep}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${t('conversation')}</div><div class="ls-val">${localizeText(h.lifestyle.talk)}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🧹</div><div class="ls-label">${t('cleanliness')}</div><div class="ls-val">${localizeText(h.lifestyle.clean)}</div></div>
-		    `;
-		    document.getElementById('detail-values-grid').innerHTML = `
-		      <div class="ls-cell"><div class="ls-icon">🎨</div><div class="ls-label">${localizeText('趣味')}</div><div class="ls-val">${localizeText(detailExtra.hobbies)}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🚫</div><div class="ls-label">${localizeText('NG条件')}</div><div class="ls-val">${localizeText(detailExtra.ng)}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">💎</div><div class="ls-label">${localizeText('価値観')}</div><div class="ls-val">${localizeText(detailExtra.values)}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">💬</div><div class="ls-label">${localizeText('一言')}</div><div class="ls-val">${localizeText(detailExtra.note)}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🗣️</div><div class="ls-label">${localizeText('話せる言語')}</div><div class="ls-val">${formatList(h.hostHousehold?.spokenLanguages, ['英語','日本語'])}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🏠</div><div class="ls-label">${localizeText('家で使用する言語')}</div><div class="ls-val">${formatList(h.hostHousehold?.homeLanguages, ['英語','日本語'])}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">👥</div><div class="ls-label">${localizeText('現在一緒に住んでいる家族')}</div><div class="ls-val">${localizeText(h.hostHousehold?.type || 'カップル')}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🎓</div><div class="ls-label">${localizeText('同居している留学生')}</div><div class="ls-val">${localizeText(h.hostHousehold?.students?.length ? `${h.hostHousehold.students.length}名` : 'いない')}</div></div>
-		      <div class="ls-cell"><div class="ls-icon">🐾</div><div class="ls-label">${localizeText('ペット')}</div><div class="ls-val">${localizeText(h.pets?.hasPets ? 'あり' : 'なし')}</div></div>
-		      ${h.pets?.hasPets ? `<div class="ls-cell"><div class="ls-icon">🐶</div><div class="ls-label">${localizeText('動物の種類')}</div><div class="ls-val">${localizeText(h.pets.type || 'その他')}</div></div>` : ''}
-		    `;
-		    renderHostFamilyList('detail-host-family', false);
-		    const detailFamily = document.getElementById('detail-host-family');
-		    if (detailFamily && h.hostHousehold?.students?.length) {
-		      detailFamily.insertAdjacentHTML('beforeend', h.hostHousehold.students.map(st => `
-		        <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;line-height:1.6;">
-		          <strong>${localizeText('同居している留学生')}</strong><br>
-		          ${localizeText('年齢')} ${localizeText(st.age)} · ${localizeText('性別')} ${localizeText(st.gender)} · ${localizeText('国籍')} ${localizeText(st.nationality)}<br>
-		          ${localizeText('起床時間')}：${localizeText(st.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(st.sleep || '22〜23時')} / ${localizeText('趣味')}：${localizeText(st.hobbies)} / ${localizeText('滞在期間')}：${localizeText(st.stay)}
-		        </div>
-		      `).join(''));
-		    }
+    renderDetailInfoGrid('detail-basic-profile', [
+      { label: 'ホスト名', value: h.name },
+      { label: '年齢', value: profile.age },
+      { label: '国籍', value: profile.nationality },
+      { label: '性別', value: profile.gender },
+      { label: '話せる言語', value: formatList(household.spokenLanguages, ['英語']) },
+      { label: '家で使用する言語', value: formatList(household.homeLanguages, ['英語']) },
+      { label: '宗教', value: profile.religion || '回答しない' },
+      { label: '英語レベル', value: profile.englishLevel || 'ネイティブレベル' }
+    ]);
+
+    renderDetailInfoGrid('detail-household-summary', [
+      { label: '現在一緒に住んでいる家族', value: household.type || (h.gender === 'couple' ? 'カップル' : h.gender === 'female' ? '一人暮らし（女性）' : '一人暮らし（男性）') },
+      { label: '同居している留学生', value: (household.students?.length || 0) ? `${household.students.length}名` : 'いない' },
+      { label: 'ペット', value: h.pets?.hasPets ? 'あり' : 'なし' },
+      ...(h.pets?.hasPets ? [{ label: '動物の種類', value: h.pets.type || 'その他' }] : [])
+    ]);
+
+    const familyCards = [];
+    if ((household.type || '').includes('カップル') && household.partner) {
+      familyCards.push(detailMemberCard('パートナー', household.partner.gender === '男性' ? '👨' : '👩', [
+        { label: '年齢', value: `${household.partner.age}${String(household.partner.age).includes('歳') ? '' : '歳'}` },
+        { label: '性別', value: household.partner.gender },
+        { label: '国籍', value: household.partner.nationality },
+        { label: '起床時間', value: household.partner.wake || '6〜8時' },
+        { label: '就寝時間', value: household.partner.sleep || '22〜23時' },
+        { label: '趣味', value: household.partner.hobbies }
+      ]));
+    }
+    const memberSource = currentHost === 'sarah' ? hostFamilyMembers : [];
+    familyCards.push(...memberSource.map((m, i) => detailMemberCard(m.name || `家族 ${i + 1}`, m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑', [
+      { label: '年齢', value: `${m.age}${String(m.age).includes('歳') ? '' : '歳'}` },
+      { label: '性別', value: m.gender },
+      { label: '国籍', value: m.nationality },
+      { label: '起床時間', value: m.wake || '6〜8時' },
+      { label: '就寝時間', value: m.sleep || '22〜23時' },
+      { label: '趣味', value: m.hobbies },
+      { label: '一言', value: m.note }
+    ])));
+    const students = household.students || (currentHost === 'sarah' ? hostInternationalStudents : []);
+    familyCards.push(...students.map((st, i) => detailMemberCard(`${localizeText('同居している留学生')} ${i + 1}`, '🎓', [
+      { label: '年齢', value: `${st.age}${String(st.age).includes('歳') ? '' : '歳'}` },
+      { label: '性別', value: st.gender },
+      { label: '国籍', value: st.nationality },
+      { label: '起床時間', value: st.wake || '6〜8時' },
+      { label: '就寝時間', value: st.sleep || '22〜23時' },
+      { label: '趣味', value: st.hobbies },
+      { label: '滞在期間', value: st.stay }
+    ])));
+    document.getElementById('detail-host-family').innerHTML = familyCards.length
+      ? familyCards.join('')
+      : `<div class="detail-info-item"><div class="detail-info-value">${localizeText('同居メンバーはまだ追加されていません')}</div></div>`;
+
+    renderDetailInfoGrid('detail-lifestyle-info', [
+      { label: '起床時間', value: meta.wake || h.lifestyle.wake },
+      { label: '就寝時間', value: meta.sleep || h.lifestyle.sleep },
+      { label: 'ゲストとの会話頻度', value: mealInfo.guestTalk || meta.talk || h.lifestyle.talk },
+      { label: 'ゲストとどのくらい一緒に過ごしたいですか？', value: mealInfo.guestFrequency || meta.frequency || '食事の時など時々' },
+      { label: '喫煙', value: household.smokingStatus || '吸わない' },
+      { label: '趣味', value: detailExtra.hobbies },
+      { label: '一言', value: detailExtra.note }
+    ]);
+
+    const mealPlan = mealInfo.mealPlan || meta.meal || '朝食あり';
+    renderDetailInfoGrid('detail-meal-info', [
+      { label: '提供できる食事', value: mealPlan },
+      ...(!['なし', '不要', '食事なし'].includes(mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
+      ...(mealPlan === '3食' && mealInfo.lunchDetails ? [{ label: '昼食の内容', value: mealInfo.lunchDetails }] : []),
+      ...(['朝夕食', '朝・夕食あり', '3食'].includes(mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : []),
+      { label: '理想の食事スタイル', value: mealInfo.diningStyle || meta.dining || 'たまに一緒' },
+      { label: '対応できる食事制限', value: (mealInfo.dietSupport && mealInfo.dietSupport.length) ? mealInfo.dietSupport : (meta.diet || ['特になし']) },
+      ...(mealInfo.allergySupported ? [{ label: '対応できるアレルギー内容', value: mealInfo.allergySupported }] : []),
+      { label: 'ゲストとの会話頻度', value: mealInfo.guestTalk || meta.talk || '適度に話したい' },
+      { label: 'ゲストとの交流頻度', value: mealInfo.guestFrequency || meta.frequency || '食事の時など時々' }
+    ]);
+
+    availabilityCalendarState.homestay = { offset: 0, range: availability };
+    renderDetailInfoGrid('detail-stay-room-info', [
+      { label: 'エリア', value: stayInfo.area || meta.area || h.city },
+      { label: '最寄り駅', value: detailData.station },
+      { label: '徒歩', value: `${detailData.walkMin}分` },
+      { label: '受け入れ可能期間', value: `${availability.start}〜${availability.end}` },
+      { label: '最短滞在期間', value: stayInfo.minStay || '1ヶ月' },
+      { label: '最長滞在期間', value: stayInfo.maxStay || '12ヶ月' },
+      { label: '長期滞在', value: stayInfo.longStay || '長期滞在可能' },
+      { label: '月額料金（CAD）', value: `C$${(h.price || 1500).toLocaleString()}` },
+      ...h.room.map(r => ({ label: r.label, value: r.val }))
+    ]);
+    const stayRoomInfo = document.getElementById('detail-stay-room-info');
+    if (stayRoomInfo) {
+      stayRoomInfo.insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1;">${availabilityCalendar(availability, 'homestay')}</div>`);
+    }
 
 	    // Lifestyle reviews
     document.getElementById('detail-ls-reviews').innerHTML = h.lifestyleReviews.map(r => `
@@ -7398,16 +7502,7 @@
     `).join('');
 
     // Rules
-    document.querySelector('.rule-list').innerHTML = h.rules.map(r => renderRuleRow(r)).join('');
-
-    // Room info
-    document.querySelector('.info-grid').innerHTML = h.room.map(r =>
-      `<div class="info-row"><span class="info-label">${localizeText(r.label)}</span><span class="info-val">${localizeText(r.val)}</span></div>`
-    ).join('');
-
-    // Price
-    const priceBox = document.querySelector('.price-box');
-	    priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金（CAD）')}</span><span>${(h.price || 1500).toLocaleString()} CAD ${currentLang === 'ja' ? '/月' : '/month'}</span></div>`;
+    document.querySelector('#screen-detail .rule-list').innerHTML = h.rules.map(r => renderRuleRow(r)).join('');
 
     // Map
     document.getElementById('detail-map-pin').textContent = '📍 ' + h.city + ', ' + h.state;
@@ -8649,6 +8744,52 @@
 	    const cls = rule.warn ? 'rule-warn' : rule.ok ? 'rule-ok' : 'rule-ng';
 	    const mark = rule.warn ? '!' : rule.ok ? '✓' : '✕';
 	    return `<div class="rule-row"><span class="${cls}">${mark}</span> ${localizeText(rule.text)}</div>`;
+	  }
+
+	  function detailInfoItems(rows) {
+	    return rows
+	      .filter(row => row && row.value !== undefined && row.value !== null && String(row.value).trim() !== '')
+	      .map(row => `
+	        <div class="detail-info-item">
+	          <div class="detail-info-label">${localizeText(row.label)}</div>
+	          <div class="detail-info-value">${Array.isArray(row.value) ? row.value.map(v => localizeText(v)).join(currentLang === 'ja' ? '、' : ', ') : localizeText(String(row.value))}</div>
+	        </div>
+	      `).join('');
+	  }
+
+	  function renderDetailInfoGrid(containerId, rows) {
+	    const container = document.getElementById(containerId);
+	    if (container) container.innerHTML = detailInfoItems(rows);
+	  }
+
+	  function detailMemberCard(title, icon, rows) {
+	    return `
+	      <div class="detail-member-card">
+	        <div class="detail-member-icon">${icon}</div>
+	        <div class="detail-member-main">
+	          <div class="detail-member-name">${localizeText(title)}</div>
+	          <div class="detail-info-grid">${detailInfoItems(rows)}</div>
+	        </div>
+	      </div>
+	    `;
+	  }
+
+	  function detailFallbackHostMeta(hostId, h) {
+	    const meta = hmHostMeta(hostId);
+	    const profile = hostProfileInfo[hostId] || {};
+	    const availability = getHostAvailability(hostId);
+	    const stationMatch = (h.mapNote || '').match(/最寄り駅：(.+?) 徒歩(\d+)分/);
+	    return {
+	      profile,
+	      extra: hostDetailExtras[hostId] || hostDetailExtras.sarah,
+	      meal: hostCompatibilityConditions[hostId] || {},
+	      household: h.hostHousehold || {},
+	      stay: h.hostStayInfo || {},
+	      meta,
+	      availability,
+	      station: h.hostStayInfo?.station || stationMatch?.[1] || 'Central Station',
+	      walkMin: h.hostStayInfo?.walkMin || stationMatch?.[2] || '8'
+	    };
 	  }
 
 	  function toggleHostPetFields(scope) {
@@ -10489,6 +10630,28 @@
     ,'銀行口座を登録して自動振込を受け取る':'Register your bank account to receive automatic payouts'
     ,'Stripeで口座を登録する':'Set up bank account with Stripe'
     ,'ホスト名':'Host Name'
+    ,'基本プロフィール':'Basic Profile'
+    ,'ホスト・家族情報':'Host & Family Information'
+    ,'食事・交流':'Meals & Interaction'
+    ,'滞在・部屋情報':'Stay & Room Information'
+    ,'現在一緒に住んでいる家族':'Current Household'
+    ,'パートナー':'Partner'
+    ,'提供できる食事':'Meals You Can Provide'
+    ,'朝食の内容':'Breakfast Details'
+    ,'昼食の内容':'Lunch Details'
+    ,'夕食の内容':'Dinner Details'
+    ,'理想の食事スタイル':'Preferred Dining Style'
+    ,'対応できる食事制限':'Dietary restrictions you can accommodate'
+    ,'対応できるアレルギー内容':'Allergies you can accommodate'
+    ,'ゲストとの会話頻度':'Conversation Frequency with Guest'
+    ,'ゲストとの交流頻度':'Time with Guest'
+    ,'ゲストとどのくらい一緒に過ごしたいですか？':'How much time would you like to spend with your guest?'
+    ,'喫煙者かどうか':'Smoking Status'
+    ,'受け入れ可能期間':'Available Period'
+    ,'徒歩':'Walking Time'
+    ,'徒歩分数':'Walking Time'
+    ,'月額料金（CAD）':'Monthly Rent (CAD)'
+    ,'特になし':'None'
     ,'家族みんなで温かくお迎えします。日本の文化や料理を一緒に楽しみましょう！':'Our whole family will warmly welcome you. Let’s enjoy Japanese culture and home cooking together!'
     ,'食事提供あり':'Meals included'
     ,'お支払い方法':'Payment Method'
