@@ -266,42 +266,6 @@
       padding: 16px;
       box-sizing: border-box;
     }
-    .sh-top-matches {
-      background: white;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 14px;
-    }
-    .sh-top-match-header {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: flex-end;
-      margin-bottom: 12px;
-    }
-    .sh-top-match-title { font-size: 17px; font-weight: 900; color: var(--dark); }
-    .sh-top-match-sub { font-size: 12px; color: var(--light); line-height: 1.5; margin-top: 4px; }
-    .sh-top-match-list {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-    .sh-top-card {
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      background: white;
-      cursor: pointer;
-      min-width: 0;
-    }
-    .sh-top-card-img { height: 130px; position: relative; background: var(--bg); }
-    .sh-top-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .sh-top-card-body { padding: 12px; }
-    .sh-top-card-name { font-size: 15px; font-weight: 900; color: var(--dark); }
-    .sh-top-card-meta { font-size: 12px; color: var(--light); margin-top: 4px; line-height: 1.45; }
-    .sh-top-card-price { font-size: 14px; font-weight: 900; color: var(--primary); margin-top: 8px; }
-    .sh-top-card-matches { display: flex; flex-direction: column; gap: 4px; margin-top: 9px; font-size: 12px; color: #167A45; font-weight: 800; }
     .sh-filter-toggle-btn {
       display: none;
       width: 100%;
@@ -1121,17 +1085,6 @@
     @media (max-width: 700px) {
       .host-dashboard-grid { grid-template-columns: 1fr !important; }
       #search-content-sharehouse .sh-search-wrap { padding: 14px; }
-      .sh-top-match-list {
-        display: flex;
-        overflow-x: auto;
-        gap: 12px;
-        padding-bottom: 4px;
-        scroll-snap-type: x mandatory;
-      }
-      .sh-top-card {
-        min-width: 260px;
-        scroll-snap-align: start;
-      }
       .sh-filter-toggle-btn { display: block; }
       #search-content-sharehouse .sh-filter-shell {
         display: flex;
@@ -2054,10 +2007,6 @@
     #search-content-sharehouse .hm-result-list {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       align-items: start;
-    }
-
-    .sh-top-match-list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .cat-chip-row {
@@ -3033,14 +2982,12 @@
   <!-- シェアハウスコンテンツ -->
   <div id="search-content-sharehouse" style="display:none;">
     <div class="sh-search-wrap">
-    <div class="sh-top-matches">
-      <div class="sh-top-match-header">
-        <div>
-          <div class="sh-top-match-title">条件が合うシェアメイト</div>
-          <div class="sh-top-match-sub">登録した条件に近い掲載を先に確認できます。</div>
-        </div>
+    <div id="sh-result-banner" style="display:none;margin:16px 16px 0;background:#F0FFF8;border:1.5px solid #B2EFE4;border-radius:16px;padding:14px 16px;display:none;align-items:center;gap:12px;cursor:pointer;" onclick="openSharehouseResultBanner()">
+      <div style="font-size:24px;">✅</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:800;color:#00875A;" id="sh-result-banner-title">条件比較完了・3件</div>
+        <div style="font-size:12px;color:#00875A;margin-top:2px;" data-i18n="view_results">結果を見る →</div>
       </div>
-      <div class="sh-top-match-list" id="sh-top-match-list"></div>
     </div>
     <button class="sh-filter-toggle-btn" type="button" onclick="toggleSharehouseFilterPanel()">絞り込み</button>
     <div class="hm-filter-shell sh-filter-shell">
@@ -3264,12 +3211,12 @@
 
         <div class="hm-filter-actions">
           <button type="button" onclick="resetSharehouseFilters()">条件をリセット</button>
-          <button type="button" onclick="applySharehouseFilters()">検索する</button>
+          <button type="button" onclick="applySharehouseFilters(true)">検索する</button>
         </div>
       </div>
-      <div class="hm-results-panel">
+      <div class="hm-results-panel" id="sh-results-panel">
         <div class="hm-filter-title">条件に合う掲載</div>
-        <div class="hm-result-summary" id="sh-filter-summary">現在すべての掲載を表示しています。</div>
+        <div class="hm-result-summary" id="sh-filter-summary" style="display:none;"></div>
         <div class="hm-result-list" id="sh-filter-results"></div>
       </div>
     </div>
@@ -9869,6 +9816,44 @@
     document.querySelector('#search-content-sharehouse .hm-filter-panel')?.classList.toggle('open');
   }
 
+  function scrollToSharehouseResults() {
+    document.getElementById('sh-results-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  let sharehouseInitialComparisonReady = false;
+
+  function openSharehouseResultBanner() {
+    if (sharehouseInitialComparisonReady) {
+      openSharehouseInitialResults();
+      return;
+    }
+    scrollToSharehouseResults();
+  }
+
+  function updateSharehouseResultBanner(count, show = false) {
+    const banner = document.getElementById('sh-result-banner');
+    const title = document.getElementById('sh-result-banner-title');
+    if (title) title.textContent = currentLang === 'ja'
+      ? `条件比較完了・${count}件`
+      : `Comparison complete · ${count} listings`;
+    if (banner) banner.style.display = show ? 'flex' : 'none';
+  }
+
+  function showSharehouseInitialComparisonBanner() {
+    const results = sharehouseInitialComparisonResults();
+    sharehouseInitialComparisonReady = true;
+    updateSharehouseResultBanner(results.length, true);
+  }
+
+  function openSharehouseInitialResults() {
+    syncGuestServiceContext('sharehouse');
+    window._serviceType = 'sharehouse';
+    currentSearchCat = 'sharehouse';
+    aiResultBackScreen = 'search';
+    aiResultBackCat = 'sharehouse';
+    navigate(currentScreen, 'ai-result');
+  }
+
   function sharehouseGuestPreferenceForMatch() {
     return defaultSharehouseGuestProfile(APPLICANTS?.sakura);
   }
@@ -9891,32 +9876,78 @@
     return { listing, matched, total: checks.length };
   }
 
-  function renderSharehouseTopMatches() {
-    const list = document.getElementById('sh-top-match-list');
-    if (!list) return;
-    const ranked = ['sh1','sh2','sh3']
-      .map(id => shCompareWithGuestProfile(id))
-      .sort((a, b) => b.matched.length - a.matched.length)
-      .slice(0, 3);
-    list.innerHTML = ranked.map(result => {
-      const listing = result.listing;
-      const matchedRows = result.matched.slice(0, 4).map(item => `<div>✓ ${localizeText(item.label)}</div>`).join('');
-      return `
-        <div class="sh-top-card" onclick="openSharehouseDetail('${listing.id}')">
-          <div class="sh-top-card-img"><img src="${listing.photo}" alt="${localizeText('部屋写真')}" loading="lazy" /></div>
-          <div class="sh-top-card-body">
-            <div class="sh-top-card-name">${localizeText(listing.name)}</div>
-            <div class="sh-top-card-meta">${localizeText(listing.stay.area)} · ${localizeText(listing.stay.room)} · ${localizeText(listing.stay.furniture)}</div>
-            <div class="sh-top-card-price">${localizeText(listing.stay.budget)} ${currentLang === 'ja' ? '/ 月' : '/ month'}</div>
-            <div class="sh-top-card-meta">${escapeHtml(listing.stay.moveIn)} - ${escapeHtml(listing.stay.moveOut)}</div>
-            <div class="sh-top-card-matches">
-              <div>${localizeText('条件一致')} ${result.matched.length}${currentLang === 'ja' ? '項目' : ' items'}</div>
-              ${matchedRows || `<div>✓ ${localizeText('条件未選択')}</div>`}
-            </div>
+  function sharehouseInitialComparisonResults() {
+    const guest = sharehouseGuestPreferenceForMatch();
+    const budget = Number(String(guest.stay.budget || '').replace(/[^0-9]/g, '')) || 2000;
+    const hardLabel = currentLang === 'ja' ? '希望期間すべて入居可能' : 'Available for your preferred dates';
+    const results = ['sh1','sh2','sh3'].map(id => {
+      const profile = sharehouseListingProfile(id);
+      const matched = [];
+      const near = [];
+      const out = [];
+      const addHard = (label, ok) => (ok ? matched : out).push(label);
+      const addNear = (label, ok) => (ok ? matched : near).push(label);
+
+      addHard(profile.stay.area, guest.stay.area === profile.stay.area);
+      addHard(currentLang === 'ja' ? '月額予算内' : 'Within monthly budget', profile.stay.rentNumber <= budget);
+      addHard(profile.stay.room, shCompatible(guest.stay.room, profile.stay.room));
+      addHard(profile.stay.furniture, shCompatible(guest.stay.furniture, profile.stay.furniture));
+      addHard(hardLabel, isDateRangeCovered({ start: guest.stay.moveIn, end: guest.stay.moveOut }, profile.available));
+      addHard(currentLang === 'ja' ? 'ペット条件一致' : 'Pet preference matches', guest.ideal.pets === profile.ideal.pets);
+      addHard(currentLang === 'ja' ? '喫煙条件一致' : 'Smoking preference matches', shCompatible(guest.ideal.roommateSmoking, profile.ideal.roommateSmoking));
+      addHard(currentLang === 'ja' ? '飲酒条件一致' : 'Alcohol preference matches', shCompatible(guest.ideal.roommateAlcohol, profile.ideal.roommateAlcohol));
+      addHard(currentLang === 'ja' ? '来客条件一致' : 'Visitor preference matches', shCompatible(guest.ideal.visitors, profile.ideal.visitors));
+      addHard(currentLang === 'ja' ? '恋人・宿泊客条件一致' : 'Overnight guest preference matches', shCompatible(guest.ideal.overnightGuests, profile.ideal.overnightGuests));
+      addHard(profile.ideal.bathroom, shCompatible(guest.ideal.bathroom, profile.ideal.bathroom));
+      addHard(currentLang === 'ja' ? 'キッチン条件一致' : 'Kitchen preference matches', shCompatible(guest.ideal.kitchen, profile.ideal.kitchen));
+      if (!['回答しない','わからない / 未診断','Prefer not to say'].includes(guest.ideal.mbti || '')) {
+        addHard('MBTI', guest.ideal.mbti === profile.ideal.mbti);
+      }
+
+      addNear(currentLang === 'ja' ? '起床時間が近い' : 'Similar wake-up time', guest.lifestyle.wakeTime === profile.lifestyle.wakeTime);
+      addNear(currentLang === 'ja' ? '就寝時間が近い' : 'Similar bedtime', guest.lifestyle.bedtime === profile.lifestyle.bedtime);
+      addNear(currentLang === 'ja' ? '在宅時間が近い' : 'Similar time at home', guest.lifestyle.homeTime === profile.lifestyle.homeTime);
+      addNear(currentLang === 'ja' ? '自炊頻度が近い' : 'Similar cooking frequency', guest.lifestyle.cookingFrequency === profile.lifestyle.cookingFrequency);
+      addNear(currentLang === 'ja' ? '交流頻度が近い' : 'Similar roommate interaction', guest.ideal.roommateInteraction === profile.ideal.roommateInteraction);
+      addNear(currentLang === 'ja' ? '清潔感が近い' : 'Similar cleanliness preference', guest.ideal.cleanliness === profile.ideal.cleanliness);
+      addNear(currentLang === 'ja' ? '掃除頻度が近い' : 'Similar cleaning frequency', guest.ideal.cleaningFrequency === profile.ideal.cleaningFrequency);
+      addNear(currentLang === 'ja' ? '生活音の希望が近い' : 'Similar noise preference', guest.ideal.lifeNoise === profile.ideal.lifeNoise);
+      addNear(currentLang === 'ja' ? '夜の静かな時間が近い' : 'Similar quiet-hours preference', guest.ideal.quietHours === profile.ideal.quietHours);
+
+      return { id, profile, matched, near, out };
+    });
+    return results.sort((a, b) => b.matched.length - a.matched.length || a.near.length - b.near.length);
+  }
+
+  function renderSharehouseInitialResultCard(result) {
+    const profile = result.profile;
+    const matchedRows = result.matched.slice(0, 8).map(label => `<div class="hm-match-ok">✓ ${localizeText(label)}</div>`).join('');
+    const nearRows = result.near.slice(0, 3).map(label => `<div class="hm-match-near">△ ${localizeText(label)}</div>`).join('');
+    const rows = matchedRows + nearRows;
+    const countText = currentLang === 'ja'
+      ? `条件一致 ${result.matched.length}項目`
+      : `Condition match ${result.matched.length} items`;
+    const availabilityText = `${formatDateRange(profile.available)}`;
+    return `
+      <div class="match-card" onclick="openSharehouseDetail('${result.id}')">
+        <div class="match-card-img">
+          <img src="${profile.photo}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge">${countText}</div>
+          <div class="match-card-flag">📍 ${localizeText(profile.stay.area)}</div>
+          <div class="match-card-save">🤍</div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div><div class="match-card-rating">★ 4.8</div></div>
+          <div class="match-card-location">${localizeText(profile.stay.area)} · ${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)}</div>
+          <div style="font-size:12px;color:var(--light);font-weight:700;margin-top:6px;">${localizeText('入居可能期間')}: ${availabilityText}</div>
+          <div class="hm-match-breakdown">${rows}</div>
+          <div class="match-card-footer">
+            <div class="match-card-price"><strong>${localizeText(profile.stay.budget)}</strong><span> ${currentLang === 'ja' ? '/月' : '/mo'}</span></div>
+            <div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div>
           </div>
         </div>
-      `;
-    }).join('');
+      </div>
+    `;
   }
 
   function shFilters() {
@@ -10043,9 +10074,9 @@
     `;
   }
 
-  function applySharehouseFilters() {
+  function applySharehouseFilters(showStatusBanner) {
     syncGuestServiceContext('sharehouse');
-    renderSharehouseTopMatches();
+    if (showStatusBanner === true || showStatusBanner === false) sharehouseInitialComparisonReady = false;
     const filters = shFilters();
     const results = ['sh1','sh2','sh3']
       .map(id => shEvaluateListing(id, filters))
@@ -10056,24 +10087,25 @@
       return Array.isArray(value) ? value.length : !!value;
     }).length;
     const summary = document.getElementById('sh-filter-summary');
-    if (summary) summary.textContent = selectedCount
-      ? (currentLang === 'ja' ? `選択条件 ${selectedCount}件で条件比較しました。` : `Compared conditions using ${selectedCount} selected filter(s).`)
-      : localizeText('現在すべての掲載を表示しています。');
+    if (summary) summary.textContent = '';
     const list = document.getElementById('sh-filter-results');
     if (!list) return;
+    const bannerWasVisible = document.getElementById('sh-result-banner')?.style.display === 'flex';
+    updateSharehouseResultBanner(results.length, showStatusBanner === undefined ? bannerWasVisible : showStatusBanner);
     list.innerHTML = results.length
       ? results.map(renderSharehouseFilterCard).join('')
       : `<div class="hm-empty-result">${localizeText('条件に一致する掲載が見つかりませんでした。条件を減らして再検索してください。')}</div>`;
   }
 
   function resetSharehouseFilters() {
+    sharehouseInitialComparisonReady = false;
     document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
     ['shf-start','shf-end'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     ['shf-full-period','shf-budget-only'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
     const budget = document.getElementById('shf-budget');
     if (budget) budget.value = 2000;
     shUpdateBudgetLabel();
-    applySharehouseFilters();
+    applySharehouseFilters(false);
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
@@ -10653,7 +10685,8 @@
 
 	  function sharehouseListingProfile(id) {
 	    const match = sharehouseMatchProfiles[id] || sharehouseMatchProfiles.sh1;
-	    const rentNumber = Number(String(match.rent || '').replace(/[^0-9]/g, '')) || 1200;
+	    const demoRentCad = { sh1: 1200, sh2: 1450, sh3: 980 };
+	    const rentNumber = demoRentCad[id] || Number(String(match.rent || '').replace(/[^0-9]/g, '')) || 1200;
 	    const isToronto = ['sh2'].includes(id);
 	    const smoke = match.shareLifestyle?.smoking?.includes('吸わない') ? 'NG' : '屋外のみならOK';
 	    return {
@@ -11268,6 +11301,7 @@
   /* ===== AI MATCHING ===== */
 	  function startMatching() {
 	    rememberAiResultBackTarget();
+	    const type = window._serviceType || 'homestay';
 	    // reset
 	    document.querySelectorAll('.matching-step-item').forEach(el => {
       el.classList.remove('show', 'done');
@@ -11286,6 +11320,15 @@
     setTimeout(() => {
       document.getElementById('mstep-4').classList.add('done');
       setTimeout(() => {
+        if (type === 'sharehouse') {
+          collectSharehouseGuestProfile();
+          window._serviceType = 'sharehouse';
+          currentSearchCat = 'sharehouse';
+          navigate('matching', 'search');
+          switchSearchCat('sharehouse');
+          showSharehouseInitialComparisonBanner();
+          return;
+        }
         // ホームのバナーをAI完了状態に切り替え
         const ctaBanner = document.getElementById('ai-cta-banner');
         const resultBanner = document.getElementById('ai-result-banner');
@@ -12951,8 +12994,6 @@
     ,'よくある質問（FAQ）':'FAQ'
     ,'フォームで問い合わせ':'Contact Form'
     ,'利用規約・プライバシーポリシー':'Terms & Privacy Policy'
-    ,'条件が合うシェアメイト':'Listings Matching Your Preferences'
-    ,'登録した条件に近い掲載を先に確認できます。':'Review listings that are close to your registered preferences first.'
     ,'条件に合う掲載':'Listings Matching Your Conditions'
     ,'現在すべての掲載を表示しています。':'Showing all listings.'
     ,'全掲載表示':'Showing all listings'
@@ -14040,6 +14081,7 @@
 	      renderHostObStep();
 	    }
 	    if (currentScreen === 'interview') generateInterviewDates();
+	    if (currentScreen === 'ai-result') renderAiResult();
 	    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
 	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
 	    updateListingActionButtons();
@@ -14878,6 +14920,15 @@
     if (!listEl) return;
 
     if (type === 'sharehouse') {
+      const results = sharehouseInitialComparisonResults();
+      if (titleEl) titleEl.textContent = currentLang === 'ja' ? 'あなたの条件に合う掲載' : 'Listings Matching Your Preferences';
+      if (subtitleEl) subtitleEl.textContent = currentLang === 'ja'
+        ? `初回登録内容を使った条件比較 · ${results.length}件`
+        : `Compared using your registered preferences · ${results.length} listings`;
+      listEl.innerHTML = results.length
+        ? results.map(renderSharehouseInitialResultCard).join('')
+        : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合う掲載が見つかりませんでした。' : 'No listings matched your preferences.'}</div>`;
+      return;
       if (titleEl) titleEl.textContent = t('condition_comparison_results');
       if (subtitleEl) subtitleEl.textContent = 'あなたのライフスタイルに合うシェアハウス · 3件';
       listEl.innerHTML = `
