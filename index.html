@@ -8870,12 +8870,14 @@
   function saveSubScreen(name) {
     // Update mypage header if profile was edited
     if (name === 'profile') {
-      const newName = document.getElementById('prof-name').value.trim();
-      const newEmail = document.getElementById('prof-email').value.trim();
+      const nameInput = document.getElementById('prof-name');
+      const emailInput = document.getElementById('prof-email');
+      const newName = nameInput ? nameInput.value.trim() : '';
+      const newEmail = emailInput ? emailInput.value.trim() : '';
       if (newName) document.querySelector('.mypage-name').textContent = newName;
       if (newEmail) document.querySelector('.mypage-meta').textContent = newEmail;
     }
-    showToast('保存しました ✓');
+    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
     navigate(currentScreen, 'mypage');
   }
 
@@ -9358,7 +9360,7 @@
 	    if (availableStart && availableEnd) HOST_AVAILABILITY.sarah = { start: availableStart, end: availableEnd };
 	    renderHostFamilyEditors();
 	    renderHostStudentEditors();
-	    showToast('保存しました ✓');
+	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
 	  }
 
 	  function saveSharehouseSettings(scope = 'res') {
@@ -9408,7 +9410,7 @@
 	      { label: '最寄駅', value: station },
 	      { label: '徒歩分数', value: `${walkMin}分` }
 	    ];
-	    showToast('保存しました ✓');
+	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
 	  }
 
 	  function saveHostProfileScreen() {
