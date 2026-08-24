@@ -1040,6 +1040,9 @@
       opacity: 0; transition: opacity .3s; pointer-events: none;
     }
     .form-saved-toast.show { opacity: 1; }
+    @media (max-width: 700px) {
+      .host-dashboard-grid { grid-template-columns: 1fr !important; }
+    }
 
     /* interview date picker */
     .interview-date-section { margin-top: 16px; }
@@ -2346,7 +2349,6 @@
       max-width: 48%;
     }
 
-    #screen-host-dashboard .screen-header + div,
     #screen-sharehouse .screen-header + div,
     #screen-roommate .screen-header + div {
       padding-left: clamp(36px, 5vw, 72px) !important;
@@ -2358,10 +2360,20 @@
       align-content: start;
     }
 
-    #screen-host-dashboard .screen-header + div > *,
     #screen-sharehouse .screen-header + div > *,
     #screen-roommate .screen-header + div > * {
       margin: 0 !important;
+    }
+
+    #screen-host-dashboard .screen-header + div,
+    #screen-host-settings .mypage-sub-body,
+    #screen-host-profile .mypage-sub-body,
+    #screen-host-messages .mypage-sub-body {
+      width: min(100%, 1180px) !important;
+      margin-left: auto !important;
+      margin-right: auto !important;
+      padding-left: clamp(24px, 4vw, 48px) !important;
+      padding-right: clamp(24px, 4vw, 48px) !important;
     }
   }
 
@@ -3217,6 +3229,12 @@
   </div>
 
   <div class="detail-scroll">
+    <div class="detail-section" id="host-preview-banner" style="display:none;padding-top:14px;">
+      <div style="background:#F0F7FF;border:1px solid #C5D3FF;color:#1A4FB8;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.6;font-weight:800;">
+        <div data-i18n="preview_mode">プレビューモード</div>
+        <div style="font-size:12px;font-weight:600;margin-top:2px;" data-i18n="preview_actions_disabled">これはプレビューです。操作はできません。</div>
+      </div>
+    </div>
 
     <div class="detail-host-row">
       <div class="detail-avatar av1" id="detail-avatar">👩</div>
@@ -3304,7 +3322,7 @@
   </div>
 
   <div class="detail-cta">
-    <button class="btn-outline" onclick="openChat()" data-i18n="message_button">💬 メッセージ</button>
+    <button class="btn-outline" id="detail-message-btn" onclick="openChat()" data-i18n="message_button">💬 メッセージ</button>
     <button class="btn-primary" id="detail-action-btn" onclick="requestInterview()">📹 面談を申し込む</button>
   </div>
 </div>
@@ -3585,40 +3603,40 @@
 <!-- ==================== 通知設定 ==================== -->
 <div class="screen" id="screen-notification-settings">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,notificationBackScreen)">←</div>
     <div class="mypage-sub-title" data-i18n="notifications">通知設定</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
     <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div class="notification-setting-row">
         <div>
-          <div class="notification-setting-title" data-i18n="notif_messages">メッセージが届いた時</div>
-          <div class="notification-setting-sub" data-i18n="notif_messages_sub">ホストからの新着メッセージを通知</div>
+          <div class="notification-setting-title" id="notification-message-title" data-i18n="notif_messages">メッセージが届いた時</div>
+          <div class="notification-setting-sub" id="notification-message-sub" data-i18n="notif_messages_sub">ホストからの新着メッセージを通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="メッセージが届いた時"></button>
       </div>
-      <div class="notification-setting-row">
+      <div class="notification-setting-row non-host-notification-row">
         <div>
           <div class="notification-setting-title" data-i18n="notif_interview">面談の日程調整が届いた時</div>
           <div class="notification-setting-sub" data-i18n="notif_interview_sub">面談に関する新着メッセージを通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="面談の日程調整が届いた時"></button>
       </div>
-      <div class="notification-setting-row">
+      <div class="notification-setting-row non-host-notification-row">
         <div>
           <div class="notification-setting-title" data-i18n="notif_profile_view">プロフィールに新しい反応があった時</div>
           <div class="notification-setting-sub" data-i18n="notif_profile_view_sub">掲載情報へのコンタクトを通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="プロフィールに新しい反応があった時"></button>
       </div>
-      <div class="notification-setting-row">
+      <div class="notification-setting-row non-host-notification-row">
         <div>
           <div class="notification-setting-title" data-i18n="notif_recommend">条件一致度の高い掲載が見つかった時</div>
           <div class="notification-setting-sub" data-i18n="notif_recommend_sub">入力条件と合う掲載情報を通知</div>
         </div>
         <button type="button" class="toggle-switch on" onclick="toggleNotificationSwitch(this)" aria-label="条件一致度の高い掲載が見つかった時"></button>
       </div>
-      <div class="notification-setting-row">
+      <div class="notification-setting-row non-host-notification-row">
         <div>
           <div class="notification-setting-title" data-i18n="notif_reminder">滞在前のリマインド</div>
           <div class="notification-setting-sub" data-i18n="notif_reminder_sub">滞在開始前の確認を通知</div>
@@ -3947,17 +3965,17 @@
 <!-- ==================== サポート画面 ==================== -->
 <div class="screen" id="screen-support">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,'mypage')">←</div>
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,supportBackScreen)">←</div>
     <div class="mypage-sub-title" data-i18n="support">サポート</div>
   </div>
   <div class="mypage-sub-body" style="padding: 20px 16px 100px;">
     <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px;" data-i18n="faq">よくある質問</div>
     <div class="faq-list">
-      <div class="faq-item">
+      <div class="faq-item non-host-faq-item">
         <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_apply_q">気になる相手にはどう連絡しますか？</span><span class="faq-arrow">›</span></button>
         <div class="faq-answer" data-i18n="faq_apply_a">相手の詳細画面からMessageを送れます。必要であれば面談も申し込めます。契約・支払い等は当事者間でご確認ください。</div>
       </div>
-      <div class="faq-item">
+      <div class="faq-item non-host-faq-item">
         <button type="button" class="faq-question" onclick="toggleFaq(this)"><span data-i18n="faq_interview_q">面談はどうやって行いますか？</span><span class="faq-arrow">›</span></button>
         <div class="faq-answer" data-i18n="faq_interview_a">詳細画面の「面談を申し込む」から日付と時間を選択できます。面談後もMessageでやり取りできます。</div>
       </div>
@@ -5623,88 +5641,70 @@
 	      <button type="button" onclick="navigate(currentScreen,'host-profile')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;">編集</button>
 	    </div>
 
-	    <!-- 掲載サマリー -->
-	    <div style="background:linear-gradient(135deg,#FF5A5F,#FF8C00);border-radius:20px;padding:20px;color:white;">
-      <div style="font-size:13px;opacity:.85;" data-i18n="listing_status">掲載状況</div>
-      <div style="font-size:32px;font-weight:900;margin:4px 0;" data-i18n="listing_public">公開中</div>
-      <div style="display:flex;gap:20px;margin-top:12px;">
-        <div>
-          <div style="font-size:11px;opacity:.75;" data-i18n="host_applicants">問い合わせユーザー</div>
-          <div style="font-size:20px;font-weight:800;">3件</div>
+    <div style="display:grid;grid-template-columns:minmax(0,1.5fr) minmax(280px,.9fr);gap:16px;" class="host-dashboard-grid">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;">
+            <div>
+              <div style="font-size:13px;font-weight:900;color:var(--light);text-transform:uppercase;letter-spacing:.04em;" data-i18n="listing_status">掲載状況</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+                <span id="host-listing-status-dot" style="width:10px;height:10px;border-radius:50%;background:#00A699;"></span>
+                <span id="host-listing-status-label" style="font-size:24px;font-weight:900;" data-i18n="listing_active">公開中</span>
+              </div>
+              <div id="host-listing-status-note" style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:6px;" data-i18n="listing_visible_note">ゲストの検索結果に表示されています。</div>
+            </div>
+            <div id="host-listing-pill" style="background:#F0FFF8;color:#00875A;border:1px solid #B2EFE4;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;" data-i18n="listing_platform_label">掲載中</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px;">
+            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="area">エリア</div><div style="font-size:15px;font-weight:900;margin-top:4px;">Vancouver</div></div>
+            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="monthly_rent_cad">月額料金（CAD）</div><div style="font-size:15px;font-weight:900;margin-top:4px;">C$1,500 / 月</div></div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="navigate(currentScreen,'host-profile')" style="flex:1;min-width:120px;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="edit_listing">掲載を編集</button>
+            <button onclick="previewHostListing()" style="flex:1;min-width:120px;background:white;color:var(--dark);border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="preview_listing">プレビュー</button>
+            <button id="host-listing-pause-btn" onclick="toggleHostListingStatus()" style="flex:1;min-width:120px;background:var(--bg);color:var(--mid);border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="pause_listing">掲載を一時停止</button>
+          </div>
         </div>
-        <div>
-          <div style="font-size:11px;opacity:.75;" data-i18n="host_messages">メッセージ</div>
-          <div style="font-size:20px;font-weight:800;">5件</div>
-        </div>
-        <div>
-          <div style="font-size:11px;opacity:.75;" data-i18n="host_rating">評価</div>
-          <div style="font-size:20px;font-weight:800;">★4.9</div>
-        </div>
-      </div>
-    </div>
 
-    <!-- クイックアクション -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div onclick="navigate(currentScreen,'host-applicants')" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:28px;margin-bottom:6px;">📋</div>
-        <div style="font-size:13px;font-weight:700;" data-i18n="host_applicants">問い合わせユーザー</div>
-        <div style="font-size:11px;color:var(--primary);font-weight:700;margin-top:2px;">3件の新着</div>
-      </div>
-      <div onclick="navigate(currentScreen,'host-messages')" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:28px;margin-bottom:6px;">💬</div>
-        <div style="font-size:13px;font-weight:700;" data-i18n="host_messages">メッセージ</div>
-        <div style="font-size:11px;color:var(--primary);font-weight:700;margin-top:2px;">5件未読</div>
-      </div>
-      <div onclick="navigate(currentScreen,'host-calendar')" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:28px;margin-bottom:6px;">📅</div>
-        <div style="font-size:13px;font-weight:700;" data-i18n="host_calendar">カレンダー</div>
-        <div style="font-size:11px;color:var(--light);margin-top:2px;">空室管理</div>
-      </div>
-      <div onclick="navigate(currentScreen,'host-revenue')" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;cursor:pointer;">
-        <div style="font-size:28px;margin-bottom:6px;">🏠</div>
-        <div style="font-size:13px;font-weight:700;" data-i18n="listing_status">掲載状況</div>
-        <div style="font-size:11px;color:var(--light);margin-top:2px;" data-i18n="listing_public">公開中</div>
-      </div>
-    </div>
-
-    <!-- 現在の入居者 -->
-    <div style="font-size:14px;font-weight:800;color:var(--dark);" data-i18n="host_current_guests">現在の入居者</div>
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-      <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);">
-        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:22px;">👩</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;">山田 花子</div>
-          <div style="font-size:12px;color:var(--light);">入居中 〜 2025年3月末</div>
+        <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
+          <div style="font-size:15px;font-weight:900;margin-bottom:12px;" data-i18n="availability">受け入れ可能期間</div>
+          <div style="font-size:22px;font-weight:900;color:var(--dark);" id="host-dashboard-availability">2026年7月1日 ～ 2026年12月31日</div>
+          <div style="font-size:12px;color:var(--light);line-height:1.6;margin-top:8px;" data-i18n="availability_note">ゲストには受け入れ可能期間として表示されます。</div>
+          <button onclick="navigate(currentScreen,'host-profile')" style="width:100%;margin-top:14px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="edit_availability">受け入れ期間を編集</button>
         </div>
-        <div style="font-size:14px;font-weight:800;color:var(--primary);">¥65,000/月</div>
       </div>
-      <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;">
-        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:22px;">👨</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;">佐藤 太郎</div>
-          <div style="font-size:12px;color:var(--light);">入居中 〜 2025年6月末</div>
-        </div>
-        <div style="font-size:14px;font-weight:800;color:var(--primary);">¥63,000/月</div>
-      </div>
-    </div>
 
-    <!-- プロフィール編集 -->
-    <div onclick="navigate(currentScreen,'host-profile')" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;cursor:pointer;">
-      <div style="font-size:28px;">✏️</div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:700;" data-i18n="host_edit_profile">ホストプロフィールを編集</div>
-        <div style="font-size:12px;color:var(--light);" data-i18n="host_edit_profile_sub">写真・ルール・空き状況を更新</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div onclick="navigate(currentScreen,'host-messages')" style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;cursor:pointer;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <div>
+              <div style="font-size:15px;font-weight:900;" data-i18n="host_messages">メッセージ</div>
+              <div style="font-size:30px;font-weight:900;margin-top:8px;color:var(--primary);" data-i18n="unread_count_demo">5件の未読</div>
+              <div style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;" data-i18n="new_conversations_demo">3件の新しい会話</div>
+            </div>
+            <div style="font-size:38px;">💬</div>
+          </div>
+          <button style="width:100%;margin-top:14px;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="view_messages">確認する</button>
+        </div>
+
+        <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
+          <div style="font-size:15px;font-weight:900;margin-bottom:12px;" data-i18n="listing_stats">掲載統計</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">👁</div><div style="font-size:18px;font-weight:900;">48</div><div style="font-size:11px;color:var(--light);font-weight:800;">Views</div></div>
+            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">♡</div><div style="font-size:18px;font-weight:900;">7</div><div style="font-size:11px;color:var(--light);font-weight:800;">Saves</div></div>
+            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">💬</div><div style="font-size:18px;font-weight:900;">4</div><div style="font-size:11px;color:var(--light);font-weight:800;">Conversations</div></div>
+          </div>
+        </div>
       </div>
-      <div style="color:var(--light);">›</div>
     </div>
   </div>
 </div>
 
-<!-- ==================== ホスト問い合わせユーザー ==================== -->
+<!-- ==================== ホストメッセージ関連ユーザー（旧問い合わせ一覧・直接ナビなし） ==================== -->
 <div class="screen" id="screen-host-applicants">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,'host-dashboard')">←</div>
-    <div class="mypage-sub-title" data-i18n="host_applicants">問い合わせユーザー</div>
+    <div class="mypage-sub-title" data-i18n="host_applicants">メッセージしたユーザー</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;">
     <div style="background:#F0FFF8;border:1px solid #B2EFE4;border-radius:16px;padding:14px 16px;color:#00875A;font-size:13px;line-height:1.6;font-weight:700;" data-i18n="host_contacts_note">Messageや面談でコンタクトしたユーザーを確認できます。契約・支払い等は当事者間でご確認ください。</div>
@@ -5715,7 +5715,6 @@
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="font-size:15px;font-weight:800;">中村 さくら</div>
-            <span style="background:#E8F7EF;color:#167A45;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;" data-i18n="condition_match_8_10">条件一致度 8/10</span>
           </div>
           <div style="font-size:12px;color:var(--light);margin-top:2px;">23歳 · 日本 · 女性 · 朝型・適度に交流したい</div>
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">希望期間：2025年2月から3ヶ月 · 非喫煙 · 朝夕食希望</div>
@@ -5733,7 +5732,6 @@
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="font-size:15px;font-weight:800;">김 민준</div>
-            <span style="background:#E8F7EF;color:#167A45;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;" data-i18n="condition_match_7_10">条件一致度 7/10</span>
           </div>
           <div style="font-size:12px;color:var(--light);margin-top:2px;">26歳 · 韓国 · 男性 · 普通・一人時間も大切</div>
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">希望期間：2025年3月から6ヶ月 · 静かな環境希望</div>
@@ -5751,7 +5749,6 @@
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <div style="font-size:15px;font-weight:800;">Smith Emma</div>
-            <span style="background:#FFF8E6;color:#9A5B00;font-size:11px;font-weight:800;padding:3px 10px;border-radius:10px;" data-i18n="condition_match_6_10">条件一致度 6/10</span>
           </div>
           <div style="font-size:12px;color:var(--light);margin-top:2px;">21歳 · アメリカ · 女性 · 夜型・たくさん話したい</div>
           <div style="font-size:13px;color:var(--mid);margin-top:6px;">文化交流を楽しみたい · 共有スペースをきれいに使いたい</div>
@@ -5930,21 +5927,21 @@
       <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:14px;font-weight:700;">中村 さくら</div>
-          <div style="font-size:12px;color:var(--light);">Message · 条件一致度 8/10</div>
+          <div style="font-size:12px;color:var(--light);">Message</div>
         </div>
         <button onclick="openHostApplicantChat('sakura')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;" data-i18n="message_button">💬 メッセージ</button>
       </div>
       <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
         <div>
           <div style="font-size:14px;font-weight:700;">김 민준</div>
-          <div style="font-size:12px;color:var(--light);">面談調整中 · 条件一致度 7/10</div>
+          <div style="font-size:12px;color:var(--light);" data-i18n="interview_scheduling">面談調整中</div>
         </div>
         <button onclick="openHostApplicantChat('minjun')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;" data-i18n="message_button">💬 メッセージ</button>
       </div>
       <div style="padding:14px 16px;display:flex;justify-content:space-between;align-items:center;">
         <div>
           <div style="font-size:14px;font-weight:700;">Smith Emma</div>
-          <div style="font-size:12px;color:var(--light);">問い合わせあり · 条件一致度 6/10</div>
+          <div style="font-size:12px;color:var(--light);" data-i18n="contact_received">問い合わせあり</div>
         </div>
         <button onclick="openHostApplicantChat('emma')" style="background:var(--primary);color:white;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;" data-i18n="message_button">💬 メッセージ</button>
       </div>
@@ -6329,6 +6326,38 @@
   </div>
 </div>
 
+<!-- ==================== ホスト設定 ==================== -->
+<div class="screen" id="screen-host-settings">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,'host-dashboard')">←</div>
+    <div class="mypage-sub-title" data-i18n="settings">設定</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div class="mypage-item" onclick="navigate(currentScreen,'host-profile')"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="edit_listing">掲載を編集</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
+      <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
+      <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
+      <div class="mypage-item" onclick="openDeleteAccountModal()"><span class="mypage-item-icon">🗑</span><span class="mypage-item-label" data-i18n="delete_account">アカウント削除</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="doLogout()" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== アカウント削除確認モーダル ==================== -->
+<div id="delete-account-modal" style="display:none;position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:3000;align-items:center;justify-content:center;padding:20px;">
+  <div role="dialog" aria-modal="true" aria-labelledby="delete-account-title" style="width:min(100%,420px);background:white;border-radius:18px;padding:22px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.22);">
+    <div id="delete-account-title" style="font-size:18px;font-weight:900;color:var(--dark);line-height:1.5;" data-i18n="delete_account_confirm_title">本当にアカウントを削除しますか？</div>
+    <div style="font-size:13px;color:var(--mid);line-height:1.7;margin-top:8px;" data-i18n="delete_account_confirm_body">この操作は取り消せません。</div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button type="button" onclick="closeDeleteAccountModal()" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
+      <button type="button" onclick="confirmDeleteAccountDemo()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="delete_account_action">削除する</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== BOTTOM NAV ==================== -->
 <!-- ゲスト用ボトムナビ -->
 <nav class="bottom-nav" id="bottom-nav">
@@ -6354,20 +6383,19 @@
 <!-- ホスト用ボトムナビ -->
 <nav class="host-bottom-nav" id="host-bottom-nav">
   <div class="bnav-item active" id="hbnav-dashboard" onclick="hostNavigate('host-dashboard')">
-    <div class="bnav-icon">📊</div>
+    <div class="bnav-icon">🏠</div>
     <div data-i18n="nav_home">ホーム</div>
-  </div>
-  <div class="bnav-item" id="hbnav-applicants" onclick="hostNavigate('host-applicants')">
-    <div class="bnav-icon">📋</div>
-    <div data-i18n="host_applicants">応募者</div>
-    <div class="bnav-badge">3</div>
   </div>
   <div class="bnav-item" id="hbnav-host-messages" onclick="hostNavigate('host-messages')">
     <div class="bnav-icon">💬</div>
     <div data-i18n="host_messages">メッセージ</div>
     <div class="bnav-badge">5</div>
   </div>
-  <div class="bnav-item" id="hbnav-host-mypage" onclick="hostNavigate('host-profile')">
+  <div class="bnav-item" id="hbnav-host-listing" onclick="hostNavigate('host-profile')">
+    <div class="bnav-icon">📝</div>
+    <div data-i18n="listing">掲載情報</div>
+  </div>
+  <div class="bnav-item" id="hbnav-host-settings" onclick="hostNavigate('host-settings')">
     <div class="bnav-icon">⚙️</div>
     <div data-i18n="settings">設定</div>
   </div>
@@ -6765,8 +6793,11 @@
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
+  let notificationBackScreen = 'mypage';
+  let supportBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
+  let hostPreviewMode = false;
   let homestayHostListType = 'new';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
@@ -6802,6 +6833,8 @@
 
   /* ===== NAVIGATION ===== */
   function navigate(from, to) {
+    if (to !== 'detail') hostPreviewMode = false;
+    if (to === 'support') supportBackScreen = from || 'mypage';
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-' + to).classList.add('active');
     currentScreen = to;
@@ -6811,7 +6844,7 @@
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
     const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
-    const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','sharehouse','roommate'];
+    const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
@@ -6831,11 +6864,15 @@
     }
     if (to === 'host-profile') updateHostProfileMode();
     if (to === 'lifestyle') updateGuestLifestyleMode();
+    if (to === 'support') updateSupportMode();
     if (to === 'host-calendar') renderHostCalendar();
-    if (to === 'host-dashboard') updateSharehouseManagerProfileCard();
+    if (to === 'host-dashboard') {
+      updateSharehouseManagerProfileCard();
+      updateHostDashboardListing();
+    }
     // ホスト用ナビのアクティブ同期
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
-    const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-applicants':'hbnav-applicants','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-mypage'};
+    const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-listing','host-settings':'hbnav-host-settings'};
     if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
   }
 
@@ -6843,6 +6880,56 @@
     const card = document.getElementById('sharehouse-manager-profile-card');
     if (!card) return;
     card.style.display = window._serviceType === 'sharehouse' ? 'flex' : 'none';
+  }
+
+  function isHostListingPaused() {
+    return localStorage.getItem('hostmatch_host_listing_paused') === '1';
+  }
+
+  function updateHostDashboardListing() {
+    const paused = isHostListingPaused();
+    const statusLabel = document.getElementById('host-listing-status-label');
+    const statusNote = document.getElementById('host-listing-status-note');
+    const statusDot = document.getElementById('host-listing-status-dot');
+    const pauseBtn = document.getElementById('host-listing-pause-btn');
+    const pill = document.getElementById('host-listing-pill');
+    if (statusLabel) statusLabel.textContent = localizeText(paused ? '一時停止中' : '公開中');
+    if (statusNote) statusNote.textContent = localizeText(paused ? '現在ゲストの検索結果には表示されていません。' : 'ゲストの検索結果に表示されています。');
+    if (statusDot) statusDot.style.background = paused ? '#B26A00' : '#00A699';
+    if (pauseBtn) pauseBtn.textContent = localizeText(paused ? '掲載を再開' : '掲載を一時停止');
+    if (pill) {
+      pill.textContent = localizeText(paused ? '一時停止中' : '公開中');
+      pill.style.background = paused ? '#FFF8E6' : '#F0FFF8';
+      pill.style.color = paused ? '#B26A00' : '#00875A';
+      pill.style.borderColor = paused ? '#FFE1A6' : '#B2EFE4';
+    }
+    const availability = HOST_AVAILABILITY.sarah || { start: '2026-07-01', end: '2026-12-31' };
+    const availabilityEl = document.getElementById('host-dashboard-availability');
+    if (availabilityEl) availabilityEl.textContent = currentLang === 'ja'
+      ? `${formatDateJa(availability.start)} ～ ${formatDateJa(availability.end)}`
+      : `${formatDateEn(availability.start)} – ${formatDateEn(availability.end)}`;
+  }
+
+  function toggleHostListingStatus() {
+    localStorage.setItem('hostmatch_host_listing_paused', isHostListingPaused() ? '0' : '1');
+    updateHostDashboardListing();
+  }
+
+  function previewHostListing() {
+    hostPreviewMode = true;
+    openDetail('sarah', 'host-dashboard');
+  }
+
+  function formatDateJa(value) {
+    const date = new Date(value + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return value;
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+
+  function formatDateEn(value) {
+    const date = new Date(value + 'T00:00:00');
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   function isSharehouseHostEditing() {
@@ -6871,7 +6958,7 @@
 
   function openHomestayHostList(type) {
     homestayHostListType = type === 'popular' ? 'popular' : 'new';
-    syncGuestServiceContext('homestay');
+    if (!hostPreviewMode) syncGuestServiceContext('homestay');
     renderHomestayHostList();
     navigate(currentScreen, 'homestay-host-list');
   }
@@ -7032,12 +7119,35 @@
   }
 
   function openNotificationSettings() {
+    notificationBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
+    const isHostNotification = notificationBackScreen === 'host-settings';
+    document.querySelectorAll('#screen-notification-settings .non-host-notification-row').forEach(row => {
+      row.style.display = isHostNotification ? 'none' : '';
+    });
+    const title = document.getElementById('notification-message-title');
+    const sub = document.getElementById('notification-message-sub');
+    if (title) {
+      title.dataset.i18n = isHostNotification ? 'new_message_notifications' : 'notif_messages';
+      title.textContent = t(title.dataset.i18n);
+    }
+    if (sub) {
+      sub.dataset.i18n = isHostNotification ? 'new_message_notifications_sub' : 'notif_messages_sub';
+      sub.textContent = t(sub.dataset.i18n);
+    }
     const message = document.getElementById('notification-save-message');
     if (message) message.style.display = 'none';
     document.querySelectorAll('#screen-notification-settings .toggle-switch').forEach(toggle => {
       toggle.setAttribute('aria-pressed', toggle.classList.contains('on') ? 'true' : 'false');
     });
     navigate(currentScreen, 'notification-settings');
+  }
+
+  function updateSupportMode() {
+    const isHostSupport = supportBackScreen === 'host-settings';
+    document.querySelectorAll('#screen-support .non-host-faq-item').forEach(item => {
+      item.style.display = isHostSupport ? 'none' : '';
+    });
+    document.querySelectorAll('#screen-support .faq-item.open').forEach(item => item.classList.remove('open'));
   }
 
   function toggleNotificationSwitch(toggle) {
@@ -7056,6 +7166,45 @@
 	    const item = button.closest('.faq-item');
 	    if (item) item.classList.toggle('open');
 	  }
+
+  function openDeleteAccountModal() {
+    const modal = document.getElementById('delete-account-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      applyLang();
+    }
+  }
+
+  function closeDeleteAccountModal() {
+    const modal = document.getElementById('delete-account-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function confirmDeleteAccountDemo() {
+    closeDeleteAccountModal();
+    currentRole = 'guest';
+    currentSearchCat = 'homestay';
+    window._serviceType = 'homestay';
+    window._currentUser = null;
+    hostPreviewMode = false;
+    localStorage.removeItem('hostmatch_host_listing_paused');
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const login = document.getElementById('screen-login');
+    if (login) login.classList.add('active');
+    currentScreen = 'login';
+    window.currentScreen = 'login';
+    const bottomNav = document.getElementById('bottom-nav');
+    const hostNav = document.getElementById('host-bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    if (hostNav) hostNav.style.display = 'none';
+    const email = document.getElementById('login-email');
+    const password = document.getElementById('login-password');
+    const error = document.getElementById('login-error');
+    if (email) email.value = '';
+    if (password) password.value = '';
+    if (error) error.textContent = '';
+    applyLang();
+  }
 
 	  function escapeHtml(value) {
 	    return String(value ?? '').replace(/[&<>"']/g, ch => ({
@@ -7518,6 +7667,10 @@
     };
     syncGuestServiceContext('homestay');
     detailBackScreen = backScreen;
+    const previewBanner = document.getElementById('host-preview-banner');
+    if (previewBanner) previewBanner.style.display = hostPreviewMode ? 'block' : 'none';
+    const saveBtn = document.getElementById('detail-save');
+    if (saveBtn) saveBtn.style.display = hostPreviewMode ? 'none' : 'block';
 
     // Photos
     const track = document.getElementById('photo-track');
@@ -8443,9 +8596,33 @@
   function updateListingActionButtons() {
     const btn = document.getElementById('detail-action-btn');
     if (btn && currentListing?.type === 'homestay') {
-      btn.textContent = '📹 ' + t('request_interview');
-      btn.onclick = requestInterview;
-      btn.style.background = '';
+      if (hostPreviewMode) {
+        btn.textContent = '📹 ' + t('request_interview');
+        btn.onclick = event => event.preventDefault();
+        btn.disabled = true;
+        btn.style.background = 'var(--light)';
+        btn.style.cursor = 'not-allowed';
+      } else {
+        btn.textContent = '📹 ' + t('request_interview');
+        btn.onclick = requestInterview;
+        btn.disabled = false;
+        btn.style.background = '';
+        btn.style.cursor = 'pointer';
+      }
+    }
+    const messageBtn = document.getElementById('detail-message-btn');
+    if (messageBtn) {
+      if (hostPreviewMode) {
+        messageBtn.onclick = event => event.preventDefault();
+        messageBtn.disabled = true;
+        messageBtn.style.cursor = 'not-allowed';
+        messageBtn.style.opacity = '.65';
+      } else {
+        messageBtn.onclick = openChat;
+        messageBtn.disabled = false;
+        messageBtn.style.cursor = 'pointer';
+        messageBtn.style.opacity = '';
+      }
     }
 
     const shBtn = document.getElementById('sharehouse-action-btn');
@@ -9706,7 +9883,7 @@
       resident_recruiting:'入居中・ルームメイトを募集', resident_recruiting_desc:'自分のプロフィールを登録して募集する',
       host_dashboard:'ホストダッシュボード', host_revenue_month:'今月の収益',
       host_guests:'入居者数', host_occupancy:'稼働率', host_rating:'評価',
-      host_applicants:'応募者管理', host_messages:'メッセージ', host_calendar:'カレンダー',
+      host_applicants:'メッセージしたユーザー', host_messages:'メッセージ', host_calendar:'カレンダー',
       host_revenue:'収益管理', host_current_guests:'現在の入居者',
       host_edit_profile:'ホストプロフィールを編集', host_edit_profile_sub:'写真・ルール・空き状況を更新',
       sh_recommended:'おすすめシェアハウス', rm_list:'ルームメイト候補', rm_contact:'連絡する',
@@ -9818,7 +9995,7 @@
       resident_recruiting:'Resident / Recruiting Roommates', resident_recruiting_desc:'Register your profile and recruit roommates',
       host_dashboard:'Host Dashboard', host_revenue_month:'This month\'s revenue',
       host_guests:'Guests', host_occupancy:'Occupancy', host_rating:'Rating',
-      host_applicants:'Applicants', host_messages:'Messages', host_calendar:'Calendar',
+      host_applicants:'Message Contacts', host_messages:'Messages', host_calendar:'Calendar',
       host_revenue:'Revenue', host_current_guests:'Current Guests',
       host_edit_profile:'Edit Host Profile', host_edit_profile_sub:'Update photos, rules & availability',
       sh_recommended:'Recommended Share Houses', rm_list:'Roommate Candidates', rm_contact:'Contact',
@@ -9906,16 +10083,61 @@
     condition_match_8_10:'条件一致度 8/10',
     condition_match_7_10:'条件一致度 7/10',
     condition_match_6_10:'条件一致度 6/10',
-    host_applicants:'問い合わせユーザー',
+    host_applicants:'メッセージしたユーザー',
     host_revenue:'掲載状況',
     listing_status:'掲載状況',
     listing_public:'公開中',
+    listing:'掲載情報',
+    listing_section:'掲載',
+    notification_section:'通知',
+    listing_active:'公開中',
+    listing_paused:'一時停止中',
+    listing_visible_note:'ゲストの検索結果に表示されています。',
+    listing_hidden_note:'現在ゲストの検索結果には表示されていません。',
+    listing_platform_label:'掲載中',
+    edit_listing:'掲載を編集',
+    preview_listing:'プレビュー',
+    pause_listing:'掲載を一時停止',
+    resume_listing:'掲載を再開',
+    availability:'受け入れ可能期間',
+    availability_note:'ゲストには受け入れ可能期間として表示されます。',
+    edit_availability:'受け入れ期間を編集',
+    monthly_rent_cad:'月額料金（CAD）',
+    condition_match:'条件一致',
+    unread_count_demo:'5件の未読',
+    new_conversations_demo:'3件の新しい会話',
+    view_messages:'確認する',
+    listing_stats:'掲載統計',
+    switch_to_guest_mode:'ゲストモードに切り替える',
+    preview_mode:'プレビューモード',
+    preview_actions_disabled:'これはプレビューです。操作はできません。',
+    listing_management:'掲載管理',
+    new_message_notifications:'メッセージ受信通知',
+    new_message_notifications_sub:'新しいメッセージが届いた時だけ通知',
+    language_setting:'言語設定',
+    contact_us:'お問い合わせ',
+    other:'その他',
+    host_lifestyle_edit:'生活スタイル編集',
+    identity_info:'本人確認情報',
+    profile_visibility:'プロフィール公開範囲',
+    address_privacy:'住所の公開設定',
+    private_address_short:'非公開',
+    online_status:'オンライン状態の表示',
+    message_preferences:'メッセージ受信設定',
+    change_password:'パスワード変更',
+    login_information:'ログイン情報',
+    delete_account:'アカウント削除',
+    delete_account_confirm_title:'本当にアカウントを削除しますか？',
+    delete_account_confirm_body:'この操作は取り消せません。',
+    delete_account_action:'削除する',
     listing_profile_live:'掲載プロフィール公開中',
     mvp_platform_notice:'HostMatchの役割',
     direct_agreement_notice:'契約・支払い等は当事者間でご確認ください。',
     reserved:'調整中',
     contacts_history:'コンタクト履歴',
     contact_history:'コンタクトした相手',
+    interview_scheduling:'面談調整中',
+    contact_received:'問い合わせあり',
     host_contacts_note:'Messageや面談でコンタクトしたユーザーを確認できます。契約・支払い等は当事者間でご確認ください。',
     contacted:'コンタクト中',
     interview_done:'面談済み',
@@ -9932,8 +10154,10 @@
     faq_apply_q:'気になる相手にはどう連絡しますか？',
     faq_apply_a:'相手の詳細画面からMessageを送れます。必要であれば面談も申し込めます。契約・支払い等は当事者間でご確認ください。',
     faq_interview_a:'詳細画面の「面談を申し込む」から日付と時間を選択できます。面談後もMessageでやり取りできます。',
-    faq_cancel_q:'契約や支払いはHostMatch上で行いますか？',
-    faq_cancel_a:'HostMatchは掲載・検索・条件比較・メッセージのためのプラットフォームです。契約・支払い等は当事者間でご確認ください。',
+    faq_cancel_q:'契約・支払いについて',
+    faq_cancel_a:'HostMatchは契約・支払いには関与しません。契約条件や支払い方法については、当事者間で直接ご確認ください。',
+    faq_trouble_q:'トラブルについて',
+    faq_trouble_a:'トラブルが発生した場合は、お問い合わせフォームからご連絡ください。',
     confirm_interview:'面談リクエストを送る',
     send_interview_request:'面談リクエストを送る',
     interview_confirmed:'面談リクエストを送りました',
@@ -9991,16 +10215,61 @@
     condition_match_8_10:'Condition Match 8/10',
     condition_match_7_10:'Condition Match 7/10',
     condition_match_6_10:'Condition Match 6/10',
-    host_applicants:'Contacts',
+    host_applicants:'Message Contacts',
     host_revenue:'Listing Status',
     listing_status:'Listing Status',
     listing_public:'Published',
+    listing:'Listing',
+    listing_section:'Listing',
+    notification_section:'Notifications',
+    listing_active:'Active',
+    listing_paused:'Paused',
+    listing_visible_note:'Your listing is visible in guest search results.',
+    listing_hidden_note:'Your listing is currently not shown in guest search results.',
+    listing_platform_label:'Listed',
+    edit_listing:'Edit Listing',
+    preview_listing:'Preview',
+    pause_listing:'Pause Listing',
+    resume_listing:'Resume Listing',
+    availability:'Availability',
+    availability_note:'This is shown to guests as your available period.',
+    edit_availability:'Edit Availability',
+    monthly_rent_cad:'Monthly Rent (CAD)',
+    condition_match:'Condition Match',
+    unread_count_demo:'5 unread',
+    new_conversations_demo:'3 new conversations',
+    view_messages:'View Messages',
+    listing_stats:'Listing Stats',
+    switch_to_guest_mode:'Switch to Guest Mode',
+    preview_mode:'Preview Mode',
+    preview_actions_disabled:'This is a preview. Actions are disabled.',
+    listing_management:'Listing Management',
+    new_message_notifications:'New Message Notifications',
+    new_message_notifications_sub:'Notify me only when a new message arrives',
+    language_setting:'Language',
+    contact_us:'Contact Us',
+    other:'Other',
+    host_lifestyle_edit:'Edit Lifestyle',
+    identity_info:'Identity Verification',
+    profile_visibility:'Profile Visibility',
+    address_privacy:'Address Privacy',
+    private_address_short:'Private',
+    online_status:'Online Status',
+    message_preferences:'Message Preferences',
+    change_password:'Change Password',
+    login_information:'Login Information',
+    delete_account:'Delete Account',
+    delete_account_confirm_title:'Are you sure you want to delete your account?',
+    delete_account_confirm_body:'This action cannot be undone.',
+    delete_account_action:'Delete Account',
     listing_profile_live:'Listing profile is published',
     mvp_platform_notice:'HostMatch’s Role',
     direct_agreement_notice:'Please arrange any agreements and payments directly between users.',
     reserved:'Coordinating',
     contacts_history:'Contact History',
     contact_history:'People You Contacted',
+    interview_scheduling:'Interview Scheduling',
+    contact_received:'Contact Received',
     host_contacts_note:'Review users who contacted you through Message or interviews. Please arrange any agreements and payments directly between users.',
     contacted:'Contacted',
     interview_done:'Interview Completed',
@@ -10017,8 +10286,10 @@
     faq_apply_q:'How do I contact someone I am interested in?',
     faq_apply_a:'You can send a Message from the detail page. You can also request an interview if needed. Please arrange any agreements and payments directly between users.',
     faq_interview_a:'Choose a date and time from “Request an Interview” on the detail page. You can continue messaging after the interview.',
-    faq_cancel_q:'Are agreements or payments handled on HostMatch?',
-    faq_cancel_a:'HostMatch is a platform for listings, search, condition comparison, and messaging. Please arrange any agreements and payments directly between users.',
+    faq_cancel_q:'Agreements and Payments',
+    faq_cancel_a:'HostMatch does not handle agreements or payments. Please confirm all terms and payment arrangements directly with the other user.',
+    faq_trouble_q:'Trouble or Safety Issues',
+    faq_trouble_a:'If a problem occurs, please contact us through the inquiry form.',
     confirm_interview:'Send Interview Request',
     send_interview_request:'Send Interview Request',
     interview_confirmed:'Interview request sent',
@@ -11232,6 +11503,26 @@
     ,'最寄り駅：Fullerton Station 徒歩6分 · Lincoln Park Zoo 徒歩10分':'Nearest station: Fullerton Station, 6 min walk · 10 min walk to Lincoln Park Zoo'
   };
   Object.assign(autoTextTranslations, {
+    '公開中':'Active',
+    '一時停止中':'Paused',
+    '掲載中':'Listed',
+    '掲載状況':'Listing Status',
+    '掲載情報':'Listing',
+    '掲載を編集':'Edit Listing',
+    'プレビュー':'Preview',
+    '掲載を一時停止':'Pause Listing',
+    '掲載を再開':'Resume Listing',
+    'ゲストの検索結果に表示されています。':'Your listing is visible in guest search results.',
+    '現在ゲストの検索結果には表示されていません。':'Your listing is currently not shown in guest search results.',
+    '受け入れ可能期間':'Availability',
+    '受け入れ期間を編集':'Edit Availability',
+    'ゲストには受け入れ可能期間として表示されます。':'This is shown to guests as your available period.',
+    '掲載統計':'Listing Stats',
+    '確認する':'View Messages',
+    '5件の未読':'5 unread',
+    '3件の新しい会話':'3 new conversations',
+    'ゲストモードに切り替える':'Switch to Guest Mode',
+    'メッセージしたユーザー':'Message Contacts',
     'ホスト・家族について':'Host & Family',
     '家・滞在情報':'Home & Stay Information',
     '話せる言語':'Languages Spoken',
@@ -11765,6 +12056,7 @@
 	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
 	    if (currentScreen === 'onboarding') renderOnboardStep();
 	    if (currentScreen === 'host-calendar') renderHostCalendar();
+	    if (currentScreen === 'host-dashboard') updateHostDashboardListing();
 	    if (currentScreen === 'host-profile' || currentScreen === 'host-onboarding') {
 	      renderHostFamilyEditors();
 	      renderHostStudentEditors();
@@ -11866,7 +12158,6 @@
   /* ===== ホスト専用ナビ ===== */
   function hostNavigate(screen) {
     navigate(currentScreen, screen);
-    if (screen === 'host-dashboard') renderHostCalendar();
   }
 
   /* ===== 検索カテゴリ切り替え ===== */
