@@ -4836,6 +4836,7 @@
       <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-min-stay" type="number" min="1" inputmode="numeric" value="1" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
       <div class="form-group"><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-max-stay" type="number" min="1" inputmode="numeric" value="12" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
       <div class="form-group"><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-ob-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
+      <div class="form-group"><div class="form-label">ゲストに提供できる食事</div><div class="form-chip-row" id="host-ob-meal-plan"><div class="form-chip" onclick="toggleChip(this)">食事提供なし</div><div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div><div class="form-chip" onclick="toggleChip(this)">朝・夕食</div><div class="form-chip" onclick="toggleChip(this)">3食</div></div></div>
       <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-ob-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /></div>
       <input type="hidden" id="host-ob-nightly-price" value="50" />
       <div class="form-section-title">🖼️ 部屋情報</div>
@@ -6154,6 +6155,7 @@
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-profile-available-start" type="date" value="2026-07-01" /></div><div><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-profile-available-end" type="date" value="2026-12-31" /></div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
 	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
+	          <div><div class="form-label">ゲストに提供できる食事</div><div class="form-chip-row" id="host-profile-meal-plan"><div class="form-chip" onclick="toggleChip(this)">食事提供なし</div><div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div><div class="form-chip" onclick="toggleChip(this)">朝・夕食</div><div class="form-chip" onclick="toggleChip(this)">3食</div></div></div>
 	          <div><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-profile-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /><input type="hidden" id="host-profile-nightly-price" value="50" /></div>
 	        </div>
 	      </div>
@@ -7620,10 +7622,10 @@
 
     const mealPlan = mealInfo.mealPlan || meta.meal || '朝食あり';
     renderDetailInfoGrid('detail-meal-info', [
-      { label: '提供できる食事', value: mealPlan },
-      ...(!['なし', '不要', '食事なし'].includes(mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
+      { label: 'ゲストに提供できる食事', value: mealPlan },
+      ...(!['なし', '不要', '食事なし', '食事提供なし'].includes(mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
       ...(mealPlan === '3食' && mealInfo.lunchDetails ? [{ label: '昼食の内容', value: mealInfo.lunchDetails }] : []),
-      ...(['朝夕食', '朝・夕食あり', '3食'].includes(mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : []),
+      ...(['朝夕食', '朝・夕食', '朝・夕食あり', '3食'].includes(mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : []),
       { label: '理想の食事スタイル', value: mealInfo.diningStyle || meta.dining || 'たまに一緒' },
       { label: '対応できる食事制限', value: (mealInfo.dietSupport && mealInfo.dietSupport.length) ? mealInfo.dietSupport : (meta.diet || ['特になし']) },
       ...(mealInfo.allergySupported ? [{ label: '対応できるアレルギー内容', value: mealInfo.allergySupported }] : []),
@@ -8679,7 +8681,7 @@
   }
 
   function hmNormalizeMeal(value) {
-    const map = { 'なし': '食事なし', '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
+    const map = { 'なし': '食事なし', '不要': '食事なし', '食事提供なし': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '朝・夕食': '朝・夕食あり', '3食': '3食あり' };
     return map[value] || value;
   }
 
@@ -10305,8 +10307,8 @@
     '家族のように過ごしたい':'I’d like to spend time like a family member',
     'ゲストとどのくらい会話したいですか？':'How much would you like to interact with the guest?',
     'ゲストと食事をどのように取りたいですか？':'How would you like to share meals with the guest?',
-    'ゲストに提供できる食事':'Meals You Can Provide',
-    '食事提供':'Meals You Can Provide',
+    'ゲストに提供できる食事':'Meals Provided',
+    '食事提供':'Meals Provided',
     '朝食の内容':'Breakfast Details',
     '昼食の内容':'Lunch Details',
     '夕食の内容':'Dinner Details',
@@ -10443,9 +10445,9 @@
     'ファミリー':'Family',
     '食事':'Meals',
     '不要':'Not needed',
-    '朝食のみ':'Breakfast only',
+    '朝食のみ':'Breakfast Only',
     '朝夕食':'Breakfast and dinner',
-    '3食':'3 meals',
+    '3食':'Three Meals a Day',
     '趣味・興味（複数可）':'Hobbies / Interests (multiple selections allowed)',
     '🎵 音楽':'🎵 Music',
     '🎬 映画':'🎬 Movies',
@@ -10659,8 +10661,9 @@
     'バス/トイレ':'Bath / Toilet',
     '部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ':'Entire room, bed area, storage, shared space, kitchen, bath / toilet',
     '画像を選択':'Choose Images',
+    '食事提供なし':'No Meals',
     '食事なし':'No meals',
-    '朝・夕食':'Breakfast and dinner',
+    '朝・夕食':'Breakfast & Dinner',
     '受け入れ可能人数':'Number of Guests Accepted',
     '1名':'1 person',
     '3名以上':'3+ people',
