@@ -3571,6 +3571,7 @@
     <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="notifications">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
     <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="support">サポート</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
@@ -6395,6 +6396,7 @@
       <div class="mypage-item" onclick="navigate(currentScreen,'host-profile')"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="edit_listing">掲載を編集</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
       <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
@@ -6411,7 +6413,10 @@
     <div class="mypage-sub-title" data-i18n="privacy_security">プライバシー・セキュリティ</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="privacy_intro">HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。</div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="privacy_security">プライバシー・セキュリティ</div>
+      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="privacy_intro">HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。</div>
+    </div>
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
       <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_personal_info_title">個人情報について</div>
       <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_personal_info_body">登録時に入力されたメールアドレス、電話番号、生年月日などの情報は、他のユーザーには公開されません。プロフィール上には、ユーザー自身が公開することを選択した情報のみが表示されます。</div>
@@ -6436,11 +6441,16 @@
       <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_sensitive_title">大切な個人情報を守るために</div>
       <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_sensitive_body">パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。</div>
     </div>
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
-      <div class="mypage-item" onclick="toggleBlockedUsersList()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
-      <div id="blocked-users-list" style="display:none;padding:0 16px 16px;"></div>
-    </div>
   </div>
+</div>
+
+<!-- ==================== ブロックしたユーザー ==================== -->
+<div class="screen" id="screen-blocked-users">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,blockedUsersBackScreen)">←</div>
+    <div class="mypage-sub-title" data-i18n="blocked_users">ブロックしたユーザー</div>
+  </div>
+  <div class="mypage-sub-body" id="blocked-users-page-list" style="padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:100px;"></div>
 </div>
 
 <!-- ==================== アカウント削除確認モーダル ==================== -->
@@ -6920,6 +6930,7 @@
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
+  let blockedUsersBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let hostPreviewMode = false;
@@ -6970,7 +6981,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -7335,22 +7346,27 @@
 
   function openPrivacySecurity() {
     privacyBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
-    renderBlockedUsersList();
     navigate(currentScreen, 'privacy-security');
+  }
+
+  function openBlockedUsers() {
+    blockedUsersBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
+    renderBlockedUsersList();
+    navigate(currentScreen, 'blocked-users');
   }
 
   function getCurrentUserTarget() {
     if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
       const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
-      return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse' };
+      return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse', avatar: '🏢' };
     }
     if ((chatDetailMode === 'applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
       const applicant = APPLICANTS[currentChatApplicant];
-      return { id: `guest:${currentChatApplicant}`, name: applicant?.name || currentChatApplicant, type: 'guest' };
+      return { id: `guest:${currentChatApplicant}`, name: applicant?.name || currentChatApplicant, type: 'guest', avatar: applicant?.avatar || '👤' };
     }
     const hostId = currentHost || currentListing?.id || 'sarah';
     const host = HOSTS[hostId] || HOSTS.sarah;
-    return { id: `host:${hostId}`, name: host.name, type: 'host' };
+    return { id: `host:${hostId}`, name: host.name, type: 'host', avatar: host.avatar || '👤' };
   }
 
   function isCurrentTargetBlocked() {
@@ -7398,23 +7414,21 @@
   }
 
   function toggleBlockedUsersList() {
-    const list = document.getElementById('blocked-users-list');
-    if (!list) return;
-    list.style.display = list.style.display === 'none' || !list.style.display ? 'block' : 'none';
-    renderBlockedUsersList();
+    openBlockedUsers();
   }
 
   function renderBlockedUsersList() {
-    const list = document.getElementById('blocked-users-list');
+    const list = document.getElementById('blocked-users-page-list');
     if (!list) return;
     if (!blockedUsers.size) {
-      list.innerHTML = `<div style="font-size:13px;color:var(--light);padding:12px 0;" data-i18n="no_blocked_users">${t('no_blocked_users')}</div>`;
+      list.innerHTML = `<div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;font-size:13px;color:var(--light);font-weight:800;" data-i18n="no_blocked_users">${t('no_blocked_users')}</div>`;
       return;
     }
     list.innerHTML = Array.from(blockedUsers.values()).map(user => `
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border);">
-        <div style="font-size:14px;font-weight:900;color:var(--dark);">${escapeHtml(user.name)}</div>
-        <button type="button" onclick="unblockUser('${escapeHtml(user.id)}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer;">${t('unblock')}</button>
+      <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${escapeHtml(user.avatar || '👤')}</div>
+        <div style="font-size:14px;font-weight:900;color:var(--dark);flex:1;min-width:0;">${escapeHtml(user.name)}</div>
+        <button type="button" onclick="unblockUser('${escapeHtml(user.id)}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer;flex-shrink:0;">${t('unblock')}</button>
       </div>
     `).join('');
   }
@@ -7445,12 +7459,40 @@
       send.style.opacity = blocked ? '.45' : '';
       send.style.cursor = blocked ? 'not-allowed' : 'pointer';
     }
-    document.querySelectorAll('.chat-banner-btn-apply, #detail-action-btn, #detail-message-btn, #sharehouse-action-btn, #sharehouse-message-btn').forEach(btn => {
-      if (!btn) return;
-      btn.disabled = blocked;
-      btn.style.opacity = blocked ? '.45' : '';
-      btn.style.cursor = blocked ? 'not-allowed' : 'pointer';
-    });
+    const detailAction = document.getElementById('detail-action-btn');
+    const detailMessage = document.getElementById('detail-message-btn');
+    if (detailAction && currentListing?.type === 'homestay') {
+      detailAction.disabled = hostPreviewMode || blocked;
+      detailAction.onclick = (hostPreviewMode || blocked) ? (event => event.preventDefault()) : requestInterview;
+      detailAction.style.opacity = blocked ? '.45' : '';
+      detailAction.style.cursor = (hostPreviewMode || blocked) ? 'not-allowed' : 'pointer';
+    }
+    if (detailMessage) {
+      detailMessage.disabled = hostPreviewMode || blocked;
+      detailMessage.onclick = (hostPreviewMode || blocked) ? (event => event.preventDefault()) : (() => openChat(currentHost));
+      detailMessage.style.opacity = hostPreviewMode ? '.65' : (blocked ? '.45' : '');
+      detailMessage.style.cursor = (hostPreviewMode || blocked) ? 'not-allowed' : 'pointer';
+    }
+    const sharehouseAction = document.getElementById('sharehouse-action-btn');
+    const sharehouseMessage = document.getElementById('sharehouse-message-btn');
+    if (sharehouseAction && currentListing?.type === 'sharehouse') {
+      sharehouseAction.disabled = blocked;
+      sharehouseAction.onclick = blocked ? (event => event.preventDefault()) : requestSharehouseInterview;
+      sharehouseAction.style.opacity = blocked ? '.45' : '';
+      sharehouseAction.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    }
+    if (sharehouseMessage) {
+      sharehouseMessage.disabled = blocked;
+      sharehouseMessage.onclick = blocked ? (event => event.preventDefault()) : (() => openSharehouseChat(currentListing?.id));
+      sharehouseMessage.style.opacity = blocked ? '.45' : '';
+      sharehouseMessage.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    }
+    const chatApply = document.querySelector('.chat-banner-btn-apply');
+    if (chatApply) {
+      chatApply.disabled = blocked;
+      chatApply.style.opacity = blocked ? '.45' : '';
+      chatApply.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    }
   }
 
   function openReportModal() {
