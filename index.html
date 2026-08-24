@@ -259,6 +259,62 @@
       border: 1px dashed var(--border); border-radius: 14px; padding: 22px; text-align: center; color: var(--light);
       font-size: 14px; line-height: 1.6; background: var(--bg);
     }
+    .sh-search-wrap {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .sh-top-matches {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .sh-top-match-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 12px;
+    }
+    .sh-top-match-title { font-size: 17px; font-weight: 900; color: var(--dark); }
+    .sh-top-match-sub { font-size: 12px; color: var(--light); line-height: 1.5; margin-top: 4px; }
+    .sh-top-match-list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .sh-top-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: white;
+      cursor: pointer;
+      min-width: 0;
+    }
+    .sh-top-card-img { height: 130px; position: relative; background: var(--bg); }
+    .sh-top-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sh-top-card-body { padding: 12px; }
+    .sh-top-card-name { font-size: 15px; font-weight: 900; color: var(--dark); }
+    .sh-top-card-meta { font-size: 12px; color: var(--light); margin-top: 4px; line-height: 1.45; }
+    .sh-top-card-price { font-size: 14px; font-weight: 900; color: var(--primary); margin-top: 8px; }
+    .sh-top-card-matches { display: flex; flex-direction: column; gap: 4px; margin-top: 9px; font-size: 12px; color: #167A45; font-weight: 800; }
+    .sh-filter-toggle-btn {
+      display: none;
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 16px;
+      background: var(--dark);
+      color: white;
+      font-size: 14px;
+      font-weight: 900;
+      margin-bottom: 12px;
+      cursor: pointer;
+    }
 
     /* ===== MAP SECTION ===== */
     .map-section { position: relative; margin: 0; height: 240px; overflow: hidden; cursor: pointer; }
@@ -1064,6 +1120,34 @@
     .form-saved-toast.show { opacity: 1; }
     @media (max-width: 700px) {
       .host-dashboard-grid { grid-template-columns: 1fr !important; }
+      #search-content-sharehouse .sh-search-wrap { padding: 14px; }
+      .sh-top-match-list {
+        display: flex;
+        overflow-x: auto;
+        gap: 12px;
+        padding-bottom: 4px;
+        scroll-snap-type: x mandatory;
+      }
+      .sh-top-card {
+        min-width: 260px;
+        scroll-snap-align: start;
+      }
+      .sh-filter-toggle-btn { display: block; }
+      #search-content-sharehouse .sh-filter-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 0;
+      }
+      #search-content-sharehouse .hm-filter-panel {
+        display: none;
+        position: static;
+        max-height: none;
+        overflow: visible;
+      }
+      #search-content-sharehouse .hm-filter-panel.open { display: block; }
+      #search-content-sharehouse .hm-results-panel { padding: 14px; }
+      #search-content-sharehouse .hm-result-list { grid-template-columns: 1fr; }
     }
 
     /* interview date picker */
@@ -1551,8 +1635,7 @@
       padding-right: 0;
     }
 
-    .match-list,
-    #search-content-sharehouse:not([style*="display:none"]):not([style*="display: none"]) {
+    .match-list {
       display: grid !important;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 22px;
@@ -1769,7 +1852,6 @@
 
   @media (min-width: 1120px) {
     .match-list,
-    #search-content-sharehouse,
     .fav-list {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
@@ -1946,6 +2028,38 @@
       margin: 0;
     }
 
+    #search-content-sharehouse {
+      display: none;
+      width: 100%;
+    }
+
+    #search-content-sharehouse .sh-search-wrap {
+      padding: 24px clamp(36px, 5vw, 72px);
+    }
+
+    #search-content-sharehouse .sh-filter-shell {
+      display: grid;
+      grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+      gap: 22px;
+      padding: 0;
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+    }
+
+    #search-content-sharehouse .hm-results-panel {
+      min-width: 0;
+    }
+
+    #search-content-sharehouse .hm-result-list {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      align-items: start;
+    }
+
+    .sh-top-match-list {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
     .cat-chip-row {
       padding-left: clamp(36px, 5vw, 72px);
       padding-right: clamp(36px, 5vw, 72px);
@@ -2008,7 +2122,6 @@
     }
 
     .match-list,
-    #search-content-sharehouse:not([style*="display:none"]):not([style*="display: none"]),
     .fav-list {
       max-width: none;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2416,7 +2529,6 @@
 
   @media (min-width: 1440px) {
     .match-list,
-    #search-content-sharehouse:not([style*="display:none"]):not([style*="display: none"]),
     .fav-list,
     #ai-result-list,
     #homestay-host-list-cards {
@@ -2919,84 +3031,249 @@
   </div><!-- /search-content-homestay -->
 
   <!-- シェアハウスコンテンツ -->
-  <!-- シェアハウスコンテンツ（ルームメイト募集バッジ付き） -->
   <div id="search-content-sharehouse" style="display:none;">
-
-    <!-- sh1: ルームメイト募集中あり -->
-    <div class="sh-card" onclick="openSharehouseDetail('sh1')">
-      <div style="position:relative;">
-        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
-        <div style="position:absolute;top:10px;left:10px;background:#1A73E8;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;">👥 ルームメイト募集中</div>
-        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
+    <div class="sh-search-wrap">
+    <div class="sh-top-matches">
+      <div class="sh-top-match-header">
+        <div>
+          <div class="sh-top-match-title">条件が合うシェアメイト</div>
+          <div class="sh-top-match-sub">登録した条件に近い掲載を先に確認できます。</div>
+        </div>
       </div>
-      <div style="padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">田中 あおい</div><div style="font-size:12px;color:var(--light);margin-top:2px;">日本 · 24歳 · 条件一致度94% · 新宿区 · 個室 · 残り1室</div></div>
-          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥65,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-          <span class="ctag ok">✓ 初期費用なし</span><span class="ctag ok">✓ 家具付き</span><span class="ctag">🚭 禁煙</span>
-        </div>
-        <!-- 入居中メンバー -->
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--light);font-weight:700;margin-bottom:8px;">現在の入居者</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <div style="display:flex;gap:-4px;">
-              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;">👩</div>
-              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-8px;">👨</div>
-              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;margin-left:-8px;">👩</div>
-            </div>
-            <div style="font-size:12px;color:var(--light);">3名入居中 · あと1名募集</div>
+      <div class="sh-top-match-list" id="sh-top-match-list"></div>
+    </div>
+    <button class="sh-filter-toggle-btn" type="button" onclick="toggleSharehouseFilterPanel()">絞り込み</button>
+    <div class="hm-filter-shell sh-filter-shell">
+      <div class="hm-filter-panel">
+        <div class="hm-filter-title">条件比較検索</div>
+        <div class="hm-filter-sub">絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。</div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">エリア</div>
+          <div class="hm-filter-row" id="shf-area">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">Vancouver</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">Toronto</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- sh2: 満室（ルームメイト募集なし） -->
-    <div class="sh-card" onclick="openSharehouseDetail('sh2')">
-      <div style="position:relative;">
-        <img src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
-        <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:10px;">満室</div>
-        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
-      </div>
-      <div style="padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">鈴木 みさき</div><div style="font-size:12px;color:var(--light);margin-top:2px;">日本 · 24歳 · 条件一致度91% · 渋谷区 · 個室 · 6名満室</div></div>
-          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥72,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">入居時期</div>
+          <div class="hm-filter-date-grid">
+            <div><div class="price-input-label">希望入居日</div><input class="hm-filter-input" id="shf-start" type="date" /></div>
+            <div><div class="price-input-label">希望退去日</div><input class="hm-filter-input" id="shf-end" type="date" /></div>
+          </div>
+          <label class="hm-filter-toggle"><input id="shf-full-period" type="checkbox" />この期間すべて入居可能な掲載のみ表示</label>
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-          <span class="ctag ok">✓ 駅徒歩3分</span><span class="ctag ok">✓ Wi-Fi完備</span><span class="ctag ok">✓ 女性専用フロア</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- sh3: ルームメイト募集中あり -->
-    <div class="sh-card" onclick="openSharehouseDetail('sh3')">
-      <div style="position:relative;">
-        <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80" style="width:100%;height:180px;object-fit:cover;display:block;" />
-        <div style="position:absolute;top:10px;left:10px;background:#1A73E8;color:white;font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;">👥 ルームメイト募集中</div>
-        <div style="position:absolute;top:10px;right:10px;font-size:22px;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));cursor:pointer;">🤍</div>
-      </div>
-      <div style="padding:14px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-          <div><div style="font-size:16px;font-weight:800;">佐藤 けんじ</div><div style="font-size:12px;color:var(--light);margin-top:2px;">日本 · 27歳 · 条件一致度89% · 目黒区 · 個室 · 残り2室</div></div>
-          <div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:var(--primary);">¥58,000</div><div style="font-size:11px;color:var(--light);">/月〜</div></div>
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">月額予算（CAD）</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--light);font-weight:800;margin-bottom:8px;"><span>C$800</span><span id="shf-budget-label">C$2,000+</span></div>
+          <input id="shf-budget" type="range" min="800" max="2000" step="50" value="2000" oninput="shUpdateBudgetLabel()" style="width:100%;accent-color:var(--primary);" />
+          <label class="hm-filter-toggle"><input id="shf-budget-only" type="checkbox" />予算内のみ表示</label>
         </div>
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-          <span class="ctag ok">✓ 庭付き</span><span class="ctag ok">✓ ペット可</span>
-        </div>
-        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-          <div style="font-size:11px;color:var(--light);font-weight:700;margin-bottom:8px;">現在の入居者</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <div style="display:flex;">
-              <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:14px;">👨</div>
-            </div>
-            <div style="font-size:12px;color:var(--light);">1名入居中 · あと2名募集</div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">希望する部屋</div>
+          <div class="hm-filter-row" id="shf-room">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">個室希望</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">相部屋でもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">どちらでもOK</button>
           </div>
         </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">家具</div>
+          <div class="hm-filter-row" id="shf-furniture">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">家具付き希望</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">家具なしでもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">どちらでもOK</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">バスルーム</div>
+          <div class="hm-filter-row" id="shf-bathroom">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">専用バスルーム希望</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">共用でもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">どちらでもOK</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">ペット</div>
+          <div class="hm-filter-row" id="shf-pets">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ペットOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ペットNG</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">喫煙環境</div>
+          <div class="hm-filter-row" id="shf-smoking">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">OK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">屋外のみならOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">NG</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">ルームメイトとの交流頻度</div>
+          <div class="hm-filter-row" id="shf-roommate-interaction">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">基本それぞれで過ごしたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">会った時に少し話すくらい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">時々一緒に食事や会話をしたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">休日などに一緒に出かけることもしたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">友達のような関係になりたい</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">飲酒</div>
+          <div class="hm-filter-row" id="shf-alcohol">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">気にしない</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">程度による</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり好まない</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">来客</div>
+          <div class="hm-filter-row" id="shf-visitors">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">気にしない</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前に教えてくれればOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">頻繁でなければOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">できれば来客は少ない方がいい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">来客NG希望</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">恋人・宿泊客</div>
+          <div class="hm-filter-row" id="shf-overnight-guests">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">問題ない</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">たまにならOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前相談があればOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">NG</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">一緒に住む人数</div>
+          <div class="hm-filter-row" id="shf-housemate-count">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">1人とのシェア希望</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">2〜3人</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">4人以上でもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">特に気にしない</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">キッチン</div>
+          <div class="hm-filter-row" id="shf-kitchen">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">キッチンをよく使うので自由に使いたい</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">共用で問題ない</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">使用時間に多少ルールがあってもOK</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり使わない</button>
+          </div>
+        </div>
+
+        <div class="hm-filter-group">
+          <div class="hm-filter-label">MBTI</div>
+          <div class="hm-filter-row" id="shf-mbti">
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">INTJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">INTP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ENTJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ENTP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">INFJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">INFP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ENFJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ENFP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ISTJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ISFJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ESTJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ESFJ</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ISTP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ISFP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ESTP</button><button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ESFP</button>
+          </div>
+        </div>
+
+        <details class="hm-filter-details">
+          <summary>生活スタイルで絞り込む</summary>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">起床時間</div>
+            <div class="hm-filter-row" id="shf-wake">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">6時以前</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">6〜7時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">7〜8時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">8〜9時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">9時以降</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">就寝時間</div>
+            <div class="hm-filter-row" id="shf-sleep">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">22時以前</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">22〜23時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">23〜24時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">0〜1時</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">1時以降</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">在宅時間</div>
+            <div class="hm-filter-row" id="shf-home-time">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">日中も家にいることが多い</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">学校・仕事で日中はいないことが多い</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">夜を中心に家にいる</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">日によって異なる</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">自炊頻度</div>
+            <div class="hm-filter-row" id="shf-cooking">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ほぼ毎日</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">週に数回</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">たまに</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ほとんどしない</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">清潔感</div>
+            <div class="hm-filter-row" id="shf-cleanliness">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり気にしない</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">最低限綺麗ならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ある程度綺麗にしたい</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">常に綺麗に保ちたい</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">掃除頻度</div>
+            <div class="hm-filter-row" id="shf-cleaning-frequency">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">毎日軽く</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">週に数回</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">週1回</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">汚れたら</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">特にこだわらない</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">生活音</div>
+            <div class="hm-filter-row" id="shf-life-noise">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">静かな環境が絶対いい</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">比較的静かな方がいい</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">普通なら問題ない</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり気にならない</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">夜の静かな時間について</div>
+            <div class="hm-filter-row" id="shf-quiet-hours">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">厳しく守りたい</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">ある程度静かならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり気にしない</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="hm-filter-actions">
+          <button type="button" onclick="resetSharehouseFilters()">条件をリセット</button>
+          <button type="button" onclick="applySharehouseFilters()">検索する</button>
+        </div>
+      </div>
+      <div class="hm-results-panel">
+        <div class="hm-filter-title">条件に合う掲載</div>
+        <div class="hm-result-summary" id="sh-filter-summary">現在すべての掲載を表示しています。</div>
+        <div class="hm-result-list" id="sh-filter-results"></div>
       </div>
     </div>
-
+    </div>
   </div>
 
   </div><!-- /search-body -->
@@ -3599,7 +3876,7 @@
     <div class="mypage-section-title" data-i18n="support">サポート</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
     <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></a>
-    <div class="mypage-item"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openTermsPrivacy()"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
@@ -4794,7 +5071,7 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">💎 価値観</div>
+	      <div class="detail-section-title">💎 理想のシェア生活</div>
 	      <div class="ls-grid" id="sharehouse-values-grid"></div>
 	    </div>
 
@@ -6558,6 +6835,7 @@
       <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="openTermsPrivacy()"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
       <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
@@ -6601,6 +6879,32 @@
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
       <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_sensitive_title">大切な個人情報を守るために</div>
       <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_sensitive_body">パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 利用規約・プライバシーポリシー ==================== -->
+<div class="screen" id="screen-terms-privacy">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,termsBackScreen)">←</div>
+    <div class="mypage-sub-title" data-i18n="terms_privacy">利用規約・プライバシーポリシー</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_service_model_title">HostMatchのサービス範囲</div>
+      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_service_model_body">HostMatchは、ホームステイ先やシェアハウス相手を掲載・検索・比較し、メッセージや面談を通じて直接つながるためのプラットフォームです。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_no_transaction_title">契約・支払いについて</div>
+      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_no_transaction_body">HostMatchは、予約、契約、入居申込、家賃回収、デポジット、決済、返金、成約確認には関与しません。契約条件や支払い方法は、ユーザー同士で直接ご確認ください。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_user_responsibility_title">ユーザー間の確認</div>
+      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_user_responsibility_body">掲載内容、住居条件、生活ルール、費用、滞在期間、本人確認、契約条件などは、メッセージや面談を通じて当事者間で十分に確認してください。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_privacy_link_title">プライバシーについて</div>
+      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_privacy_link_body">個人情報、住所、メッセージ、安全な利用に関する方針は、プライバシー・セキュリティ画面で確認できます。ホームステイとシェアハウスのすべてのユーザーに同じ方針を適用します。</div>
     </div>
   </div>
 </div>
@@ -7092,6 +7396,7 @@
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
   let blockedUsersBackScreen = 'mypage';
+  let termsBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let hostPreviewMode = false;
@@ -7142,7 +7447,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','terms-privacy','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -7151,6 +7456,7 @@
 	    if (to === 'search') {
 	      switchSearchCat(currentSearchCat);
 	      if (currentSearchCat === 'homestay') applyHomestayFilters();
+	      if (currentSearchCat === 'sharehouse') applySharehouseFilters();
 	      window.scrollTo(0, 0);
 	    }
     if (to === 'ai-result') renderAiResult();
@@ -7162,6 +7468,7 @@
       toggleHostPetFields(to === 'host-profile' ? 'profile' : 'ob');
     }
     if (to === 'host-profile') updateHostProfileMode();
+    if (to === 'profile') updateGuestProfileMode();
     if (to === 'lifestyle') updateGuestLifestyleMode();
     if (to === 'support') updateSupportMode();
     if (to === 'host-calendar') renderHostCalendar();
@@ -7246,9 +7553,16 @@
   }
 
   function updateGuestLifestyleMode() {
-    const isSharehouse = window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse';
+    const body = document.querySelector('#screen-lifestyle .mypage-sub-body');
+    if (!body) return;
+    if (homestayLifestyleBodyHtml === null) homestayLifestyleBodyHtml = body.innerHTML;
+    if (isSharehouseGuestContext()) {
+      body.innerHTML = sharehouseGuestEditLifestyleHtml(defaultSharehouseGuestProfile(APPLICANTS?.sakura));
+      return;
+    }
+    if (body.innerHTML !== homestayLifestyleBodyHtml) body.innerHTML = homestayLifestyleBodyHtml;
     document.querySelectorAll('#screen-lifestyle .sharehouse-guest-lifestyle-only').forEach(el => {
-      el.style.display = isSharehouse ? 'block' : 'none';
+      el.style.display = 'none';
     });
   }
 
@@ -7508,6 +7822,11 @@
   function openPrivacySecurity() {
     privacyBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
     navigate(currentScreen, 'privacy-security');
+  }
+
+  function openTermsPrivacy() {
+    termsBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
+    navigate(currentScreen, 'terms-privacy');
   }
 
   function openBlockedUsers() {
@@ -7926,6 +8245,7 @@
 	    if (isSharehouse) {
 	      const listing = currentListing || SHAREHOUSE_LISTINGS.sh1;
 	      const match = sharehouseMatchProfiles[listing.id] || sharehouseMatchProfiles.sh1;
+	      const profile = sharehouseListingProfile(listing.id);
 	      renderSharehouseRoomPhotoSlider(match);
 	      const shName = document.getElementById('sharehouse-match-name');
 	      const shMeta = document.getElementById('sharehouse-match-meta');
@@ -7933,54 +8253,75 @@
 	      const shRating = document.getElementById('sharehouse-match-rating');
 	      const shAvatar = document.getElementById('sharehouse-match-avatar');
 	      const reviewScore = (match.review.match(/★\d(?:\.\d)?/) || ['★4.8'])[0];
-	      if (shName) shName.textContent = match.name;
+	      if (shName) shName.textContent = profile.name;
 	      if (shAvatar) shAvatar.textContent = match.gender === '男性' ? '👨' : '👩';
-	      if (shBadge) shBadge.textContent = ` ${localizeText('条件一致度')}：${match.match}%`;
-	      if (shMeta) shMeta.textContent = `📍 ${localizeText(match.area)}`;
+	      if (shBadge) shBadge.textContent = ` ${localizeText('条件一致度')}：${profile.match}%`;
+	      if (shMeta) shMeta.textContent = `📍 ${localizeText(profile.stay.area)} · ${localizeText('月額料金')} ${localizeText(profile.stay.budget)} · ${localizeText(profile.stay.room)}`;
 	      if (shRating) shRating.innerHTML = `${reviewScore} <span>(${currentLang === 'ja' ? '24件のレビュー' : '24 reviews'})</span>`;
-		      availabilityCalendarState.sharehouse = { offset: 0, range: match.available };
+		      availabilityCalendarState.sharehouse = { offset: 0, range: profile.available };
 		      container.innerHTML = [
-		        conditionComparisonCard(match.match || 84, [
-		          ['✓', '非喫煙', 'ok'],
-		          ['✓', '希望エリア一致', 'ok'],
-		          ['✓', '希望期間対応可能', 'ok'],
-		          ['✓', '騒音・音楽の希望一致', 'ok'],
-		          ['✓', '料理頻度が近い', 'ok'],
-		          ['△', '清潔感に少し差あり', 'warn'],
-		          ['△', '交流頻度に少し差あり', 'warn']
+		        conditionComparisonCard(profile.match || 84, [
+		          ['✓', profile.stay.area, 'ok'],
+		          ['✓', '月額予算内', 'ok'],
+		          ['✓', '希望期間すべて入居可能', 'ok'],
+		          ['✓', profile.stay.room, 'ok'],
+		          ['✓', profile.stay.furniture, 'ok'],
+		          ['✓', profile.ideal.roommateSmoking, 'ok'],
+		          ['△', '起床時間が近い', 'warn'],
+		          ['△', '生活音の希望が近い', 'warn']
 		        ]),
-		        preferenceCard('プロフィール', [
-		          { label: '名前', value: match.name },
-		          { label: '国籍', value: match.nationality },
-		          { label: '性別', value: match.gender },
-		          { label: '宗教', value: match.religion || '回答しない' },
-		          { label: '英語レベル', value: match.englishLevel || '回答しない' }
+		        preferenceCard('基本プロフィール', [
+		          { label: '名前', value: profile.basic.name },
+		          { label: '年齢', value: profile.basic.age },
+		          { label: '国籍', value: profile.basic.nationality },
+		          { label: '性別', value: profile.basic.gender },
+		          { label: '宗教', value: profile.basic.religion },
+		          { label: '使用言語', value: profile.basic.languages },
+		          { label: '英語レベル', value: profile.basic.englishLevel },
+		          { label: '渡航・滞在目的', value: profile.basic.purpose }
 		        ]),
-		        availabilityCalendar(match.available, 'sharehouse')
+		        preferenceCard('滞在条件', [
+		          { label: '希望エリア', value: profile.stay.area },
+		          { label: '希望入居日', value: profile.stay.moveIn },
+		          { label: '希望退去日', value: profile.stay.moveOut },
+		          { label: '月額予算（CAD）', value: profile.stay.budget },
+		          { label: '希望する部屋', value: profile.stay.room },
+		          { label: '家具', value: profile.stay.furniture }
+		        ]),
+		        availabilityCalendar(profile.available, 'sharehouse')
 		      ].join('');
-		      const lifestyle = match.lifestyleCards || {};
-		      const shareLifestyle = match.shareLifestyle || {};
+		      const lifestyle = profile.lifestyle || {};
+		      const ideal = profile.ideal || {};
 		      const lsGrid = document.getElementById('sharehouse-ls-grid');
 		      if (lsGrid) {
 		        lsGrid.innerHTML = [
-		          { icon: '⏰', label: '起床', value: lifestyle.wake || '未設定' },
-		          { icon: '🌙', label: '就寝', value: lifestyle.sleep || '未設定' },
-		          { icon: '💬', label: '会話量', value: lifestyle.talk || '未設定' },
-		          { icon: '🧹', label: '清潔度', value: lifestyle.clean || '未設定' },
-		          { icon: '🔇', label: '騒音・音楽', value: shareLifestyle.noise || '未設定' },
-		          { icon: '🍳', label: '料理頻度', value: shareLifestyle.cooking || '未設定' },
-		          { icon: '🚭', label: '喫煙', value: shareLifestyle.smoking || '未設定' },
-		          { icon: '🍷', label: 'お酒', value: shareLifestyle.alcohol || '未設定' },
-		          { icon: '🧭', label: 'MBTI', value: shareLifestyle.mbti === '選択しない' ? '未選択' : (shareLifestyle.mbti || '未選択') }
+		          { icon: '⏰', label: '起床時間', value: lifestyle.wakeTime || '未設定' },
+		          { icon: '🌙', label: '就寝時間', value: lifestyle.bedtime || '未設定' },
+		          { icon: '🏠', label: '普段どのくらい家にいますか？', value: lifestyle.homeTime || '未設定' },
+		          { icon: '🍳', label: 'どのくらい料理をしますか？', value: lifestyle.cookingFrequency || '未設定' },
+		          { icon: '🚭', label: '喫煙', value: profile.basic.personalSmoking || '未設定' },
+		          { icon: '🍷', label: '飲酒', value: profile.basic.personalAlcohol || '未設定' },
+		          { icon: '🎨', label: '趣味', value: profile.basic.hobbies || '未設定' },
+		          { icon: '💬', label: '一言／自己紹介', value: profile.basic.intro || '未設定' }
 		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
 		      }
 		      const valuesGrid = document.getElementById('sharehouse-values-grid');
 		      if (valuesGrid) {
 		        valuesGrid.innerHTML = [
-		          { icon: '🎨', label: '趣味', value: match.hobbies },
-		          { icon: '🚫', label: 'NG条件', value: match.ng },
-		          { icon: '💎', label: '価値観', value: match.values },
-		          { icon: '💬', label: '一言', value: match.note }
+		          { icon: '👥', label: '一緒に住む人とはどのくらい交流したいですか？', value: ideal.roommateInteraction },
+		          { icon: '✨', label: '共用スペースをどのくらい綺麗に保ちたい？', value: ideal.cleanliness },
+		          { icon: '🧹', label: '共用部分の掃除はどのくらいしたい？', value: ideal.cleaningFrequency },
+		          { icon: '🔇', label: '家の中の生活音についてどのくらい気になりますか？', value: ideal.lifeNoise },
+		          { icon: '🚭', label: '喫煙するルームメイトとの同居は？', value: ideal.roommateSmoking },
+		          { icon: '🍷', label: '家で飲酒するルームメイトについて', value: ideal.roommateAlcohol },
+		          { icon: '🐾', label: 'ペット', value: ideal.pets },
+		          { icon: '🚪', label: 'ルームメイトが友人を家に呼ぶことについて', value: ideal.visitors },
+		          { icon: '🛏️', label: 'ルームメイトのパートナーなどが泊まることについて', value: ideal.overnightGuests },
+		          { icon: '🚿', label: 'バスルーム', value: ideal.bathroom },
+		          { icon: '🏘️', label: '一緒に住む人数', value: ideal.housemateCount },
+		          { icon: '🍳', label: 'キッチン', value: ideal.kitchen },
+		          { icon: '🌙', label: '夜の静かな時間について', value: ideal.quietHours },
+		          { icon: '🧭', label: 'MBTI', value: ideal.mbti === '回答しない' ? '回答しない' : (ideal.mbti || '回答しない') }
 		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
 		      }
 		      const roommateBox = document.getElementById('sharehouse-roommates');
@@ -7993,16 +8334,16 @@
 		            age: '20代',
 		            gender: match.gender,
 		            job: '会社員',
-		            wake: '6〜8時',
-		            sleep: '22〜24時',
-		            home: '夜だけ',
-		            clean: match.lifestyleCards?.clean || '普通',
-		            smoke: shareLifestyle.smoking || '吸わない',
-		            noise: shareLifestyle.noise || '静かにしたい',
-		            cooking: shareLifestyle.cooking || '未設定',
-		            alcohol: shareLifestyle.alcohol || '未設定',
-		            mbti: shareLifestyle.mbti === '選択しない' ? '未選択' : (shareLifestyle.mbti || '未選択'),
-		            social: 'たまに交流'
+		            wake: profile.lifestyle.wakeTime,
+		            sleep: profile.lifestyle.bedtime,
+		            home: profile.lifestyle.homeTime,
+		            clean: profile.ideal.cleanliness,
+		            smoke: profile.basic.personalSmoking,
+		            noise: profile.ideal.lifeNoise,
+		            cooking: profile.lifestyle.cookingFrequency,
+		            alcohol: profile.basic.personalAlcohol,
+		            mbti: profile.ideal.mbti === '回答しない' ? '未選択' : (profile.ideal.mbti || '未選択'),
+		            social: profile.ideal.roommateInteraction
 		          },
 		          ...match.roommates.map(r => ({
 		            name: r.name,
@@ -8072,8 +8413,8 @@
 		      }
 		      const ruleBox = document.getElementById('sharehouse-rules');
 		      if (ruleBox) {
-		        if (Array.isArray(match.rules)) {
-		          ruleBox.innerHTML = match.rules.map(rule => renderRuleRow(rule)).join('');
+		        if (Array.isArray(profile.houseRules)) {
+		          ruleBox.innerHTML = profile.houseRules.map(rule => renderRuleRow(rule)).join('');
 		        } else {
 		        const okRules = match.rules.split(' · ').filter(Boolean);
 		        const ngRules = match.ng.split('、').filter(Boolean);
@@ -8085,22 +8426,17 @@
 		      }
 		      const roomInfo = document.getElementById('sharehouse-room-info');
 		      if (roomInfo) {
-		        const rows = match.roomInfo || [
-		          { label: '住所/エリア', value: match.area },
-		          { label: '部屋タイプ', value: match.roomType },
-		          { label: '希望/募集条件', value: match.conditions },
-		          { label: 'Wi-Fi', value: match.roomType.includes('Wi-Fi') ? '光回線・無制限' : '共用Wi-Fiあり' }
-		        ];
+		        const rows = profile.roomInfo;
 		        roomInfo.innerHTML = rows.map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
 		      }
 		      const priceBox = document.getElementById('sharehouse-price-box');
 		      if (priceBox) {
-		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金')}</span><span>${localizeText(match.rent)}</span></div>`;
+		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金')}</span><span>${localizeText(profile.stay.budget)}${currentLang === 'ja' ? ' / 月' : ' / mo'}</span></div>`;
 		      }
 		      const mapPin = document.getElementById('sharehouse-map-pin');
-		      if (mapPin) mapPin.textContent = `📍 ${localizeText(match.mapPin || match.area)}`;
+		      if (mapPin) mapPin.textContent = `📍 ${localizeText(profile.mapPin || profile.stay.area)}`;
 		      const mapNote = document.getElementById('sharehouse-map-note');
-		      if (mapNote) mapNote.textContent = localizeText(match.mapNote || '最寄り駅：Central Station 徒歩8分');
+		      if (mapNote) mapNote.textContent = localizeText(profile.mapNote || '最寄り駅：Central Station 徒歩8分');
 	      return;
 	    }
 
@@ -9321,11 +9657,12 @@
   }
 
   function hmSelected(id) {
-    return document.querySelector('#' + id + ' .hm-filter-chip.selected')?.textContent.trim() || '';
+    const chip = document.querySelector('#' + id + ' .hm-filter-chip.selected');
+    return chip ? (chip.dataset.hmfOriginalText || chip.textContent.trim()) : '';
   }
 
   function hmSelectedMany(id) {
-    return Array.from(document.querySelectorAll('#' + id + ' .hm-filter-chip.selected')).map(el => el.textContent.trim());
+    return Array.from(document.querySelectorAll('#' + id + ' .hm-filter-chip.selected')).map(el => el.dataset.hmfOriginalText || el.textContent.trim());
   }
 
   function hmUpdateBudgetLabel() {
@@ -9522,8 +9859,235 @@
     applyHomestayFilters();
   }
 
+  function shUpdateBudgetLabel() {
+    const budget = Number(document.getElementById('shf-budget')?.value || 2000);
+    const label = document.getElementById('shf-budget-label');
+    if (label) label.textContent = budget >= 2000 ? 'C$2,000+' : `C$${budget.toLocaleString()}`;
+  }
+
+  function toggleSharehouseFilterPanel() {
+    document.querySelector('#search-content-sharehouse .hm-filter-panel')?.classList.toggle('open');
+  }
+
+  function sharehouseGuestPreferenceForMatch() {
+    return defaultSharehouseGuestProfile(APPLICANTS?.sakura);
+  }
+
+  function shCompareWithGuestProfile(listingId) {
+    const guest = sharehouseGuestPreferenceForMatch();
+    const listing = sharehouseListingProfile(listingId);
+    const checks = [
+      { label: listing.stay.area, ok: guest.stay.area === listing.stay.area },
+      { label: '月額予算内', ok: listing.stay.rentNumber <= (Number(String(guest.stay.budget).replace(/[^0-9]/g, '')) || 2000) },
+      { label: listing.stay.room, ok: shCompatible(guest.stay.room, listing.stay.room) },
+      { label: listing.stay.furniture, ok: shCompatible(guest.stay.furniture, listing.stay.furniture) },
+      { label: '生活音の希望が近い', ok: guest.ideal.lifeNoise === listing.ideal.lifeNoise },
+      { label: '交流頻度が近い', ok: guest.ideal.roommateInteraction === listing.ideal.roommateInteraction },
+      { label: '清潔感が近い', ok: guest.ideal.cleanliness === listing.ideal.cleanliness },
+      { label: 'ペット条件一致', ok: guest.ideal.pets === listing.ideal.pets },
+      { label: '喫煙条件一致', ok: shCompatible(guest.ideal.roommateSmoking, listing.ideal.roommateSmoking) }
+    ];
+    const matched = checks.filter(item => item.ok);
+    return { listing, matched, total: checks.length };
+  }
+
+  function renderSharehouseTopMatches() {
+    const list = document.getElementById('sh-top-match-list');
+    if (!list) return;
+    const ranked = ['sh1','sh2','sh3']
+      .map(id => shCompareWithGuestProfile(id))
+      .sort((a, b) => b.matched.length - a.matched.length)
+      .slice(0, 3);
+    list.innerHTML = ranked.map(result => {
+      const listing = result.listing;
+      const matchedRows = result.matched.slice(0, 4).map(item => `<div>✓ ${localizeText(item.label)}</div>`).join('');
+      return `
+        <div class="sh-top-card" onclick="openSharehouseDetail('${listing.id}')">
+          <div class="sh-top-card-img"><img src="${listing.photo}" alt="${localizeText('部屋写真')}" loading="lazy" /></div>
+          <div class="sh-top-card-body">
+            <div class="sh-top-card-name">${localizeText(listing.name)}</div>
+            <div class="sh-top-card-meta">${localizeText(listing.stay.area)} · ${localizeText(listing.stay.room)} · ${localizeText(listing.stay.furniture)}</div>
+            <div class="sh-top-card-price">${localizeText(listing.stay.budget)} ${currentLang === 'ja' ? '/ 月' : '/ month'}</div>
+            <div class="sh-top-card-meta">${escapeHtml(listing.stay.moveIn)} - ${escapeHtml(listing.stay.moveOut)}</div>
+            <div class="sh-top-card-matches">
+              <div>${localizeText('条件一致')} ${result.matched.length}${currentLang === 'ja' ? '項目' : ' items'}</div>
+              ${matchedRows || `<div>✓ ${localizeText('条件未選択')}</div>`}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function shFilters() {
+    return {
+      area: hmSelected('shf-area'),
+      start: document.getElementById('shf-start')?.value || '',
+      end: document.getElementById('shf-end')?.value || '',
+      fullPeriod: !!document.getElementById('shf-full-period')?.checked,
+      budget: Number(document.getElementById('shf-budget')?.value || 2000),
+      budgetOnly: !!document.getElementById('shf-budget-only')?.checked,
+      room: hmSelected('shf-room'),
+      furniture: hmSelected('shf-furniture'),
+      bathroom: hmSelected('shf-bathroom'),
+      pets: hmSelected('shf-pets'),
+      smoking: hmSelected('shf-smoking'),
+      roommateInteraction: hmSelected('shf-roommate-interaction'),
+      alcohol: hmSelected('shf-alcohol'),
+      visitors: hmSelected('shf-visitors'),
+      overnightGuests: hmSelected('shf-overnight-guests'),
+      housemateCount: hmSelected('shf-housemate-count'),
+      kitchen: hmSelected('shf-kitchen'),
+      mbti: hmSelected('shf-mbti'),
+      wake: hmSelected('shf-wake'),
+      sleep: hmSelected('shf-sleep'),
+      homeTime: hmSelected('shf-home-time'),
+      cooking: hmSelected('shf-cooking'),
+      cleanliness: hmSelected('shf-cleanliness'),
+      cleaningFrequency: hmSelected('shf-cleaning-frequency'),
+      lifeNoise: hmSelected('shf-life-noise'),
+      quietHours: hmSelected('shf-quiet-hours')
+    };
+  }
+
+  function shCompatible(selected, actual) {
+    if (!selected) return true;
+    if (selected.includes('どちらでもOK') || selected.includes('気にしない') || selected.includes('特に気にしない')) return true;
+    if (selected === actual) return true;
+    if (selected === '相部屋でもOK' && ['相部屋でもOK','どちらでもOK'].includes(actual)) return true;
+    if (selected === '家具なしでもOK' && ['家具なしでもOK','どちらでもOK'].includes(actual)) return true;
+    if (selected === '共用でもOK' && ['共用でもOK','どちらでもOK'].includes(actual)) return true;
+    if (selected === '屋外のみならOK' && ['OK','屋外のみならOK'].includes(actual)) return true;
+    if (selected === 'たまにならOK' && ['問題ない','たまにならOK','事前相談があればOK'].includes(actual)) return true;
+    if (selected === '事前相談があればOK' && ['問題ない','事前相談があればOK'].includes(actual)) return true;
+    return false;
+  }
+
+  function shEvaluateListing(id, filters) {
+    const profile = sharehouseListingProfile(id);
+    const items = [];
+    let hardPass = true;
+    let activeHard = 0;
+    let matchedHard = 0;
+    let activeNear = 0;
+    let matchedNear = 0;
+    const hard = (active, label, ok) => {
+      if (!active) return;
+      activeHard++;
+      if (ok) matchedHard++; else hardPass = false;
+      items.push({ label, status: ok ? 'ok' : 'out' });
+    };
+    const near = (active, label, ok) => {
+      if (!active) return;
+      activeNear++;
+      if (ok) matchedNear++;
+      items.push({ label, status: ok ? 'ok' : 'near' });
+    };
+
+    hard(filters.area, filters.area, profile.stay.area === filters.area);
+    if (filters.fullPeriod && filters.start && filters.end) {
+      hard(true, '希望期間すべて入居可能', isDateRangeCovered({ start: filters.start, end: filters.end }, profile.available));
+    } else if (filters.start || filters.end) {
+      near(true, '入居時期を確認', true);
+    }
+    hard(filters.budgetOnly, '月額予算内', profile.stay.rentNumber <= filters.budget);
+    hard(filters.room, filters.room, shCompatible(filters.room, profile.stay.room));
+    hard(filters.furniture, filters.furniture, shCompatible(filters.furniture, profile.stay.furniture));
+    hard(filters.bathroom, filters.bathroom, shCompatible(filters.bathroom, profile.ideal.bathroom));
+    hard(filters.pets, filters.pets, profile.ideal.pets === filters.pets);
+    hard(filters.smoking, '喫煙条件一致', shCompatible(filters.smoking, profile.ideal.roommateSmoking));
+    hard(filters.alcohol, filters.alcohol, shCompatible(filters.alcohol, profile.ideal.roommateAlcohol));
+    hard(filters.visitors, filters.visitors, shCompatible(filters.visitors, profile.ideal.visitors));
+    hard(filters.overnightGuests, filters.overnightGuests, shCompatible(filters.overnightGuests, profile.ideal.overnightGuests));
+    hard(filters.housemateCount, filters.housemateCount, shCompatible(filters.housemateCount, profile.ideal.housemateCount));
+    hard(filters.kitchen, filters.kitchen, shCompatible(filters.kitchen, profile.ideal.kitchen));
+    hard(filters.mbti, 'MBTI', profile.ideal.mbti === filters.mbti);
+    near(filters.roommateInteraction, '交流頻度が近い', profile.ideal.roommateInteraction === filters.roommateInteraction);
+    near(filters.wake, '起床時間が近い', profile.lifestyle.wakeTime === filters.wake);
+    near(filters.sleep, '就寝時間が近い', profile.lifestyle.bedtime === filters.sleep);
+    near(filters.homeTime, '在宅時間が近い', profile.lifestyle.homeTime === filters.homeTime);
+    near(filters.cooking, '自炊頻度が近い', profile.lifestyle.cookingFrequency === filters.cooking);
+    near(filters.cleanliness, '清潔感が近い', profile.ideal.cleanliness === filters.cleanliness);
+    near(filters.cleaningFrequency, '掃除頻度が近い', profile.ideal.cleaningFrequency === filters.cleaningFrequency);
+    near(filters.lifeNoise, '生活音の希望が近い', profile.ideal.lifeNoise === filters.lifeNoise);
+    near(filters.quietHours, '夜の静かな時間が近い', profile.ideal.quietHours === filters.quietHours);
+
+    const activeTotal = activeHard + activeNear;
+    const matchedTotal = matchedHard + matchedNear;
+    return { id, profile, hardPass, activeTotal, matchedTotal, items, score: activeTotal ? Math.round((matchedTotal / activeTotal) * 100) : profile.match };
+  }
+
+  function renderSharehouseFilterCard(result) {
+    const profile = result.profile;
+    const rows = result.items.length ? result.items.slice(0, 10).map(item => {
+      const mark = item.status === 'ok' ? '✓' : item.status === 'near' ? '△' : '×';
+      const cls = item.status === 'ok' ? 'hm-match-ok' : item.status === 'near' ? 'hm-match-near' : 'hm-match-out';
+      return `<div class="${cls}">${mark} ${localizeText(item.label)}</div>`;
+    }).join('') : `<div class="hm-match-ok">✓ ${localizeText('条件未選択')}</div>`;
+    const summary = result.activeTotal ? `${localizeText('条件一致')} ${result.matchedTotal}/${result.activeTotal}` : localizeText('全掲載表示');
+    return `
+      <div class="match-card" onclick="openSharehouseDetail('${result.id}')">
+        <div class="match-card-img">
+          <img src="${profile.photo}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge">${summary}</div>
+          <div class="match-card-flag">📍 ${localizeText(profile.stay.area)}</div>
+          <div class="match-card-save">🤍</div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div><div class="match-card-rating">★ 4.8</div></div>
+          <div class="match-card-location">${localizeText(profile.basic.nationality)} · ${localizeText(profile.basic.age)}${currentLang === 'ja' ? '歳' : ''} · ${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)}</div>
+          <div class="hm-match-breakdown">${rows}</div>
+          <div class="match-card-footer"><div class="match-card-price"><strong>${localizeText(profile.stay.budget)}</strong><span> ${currentLang === 'ja' ? '/月' : '/mo'}</span></div><div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function applySharehouseFilters() {
+    syncGuestServiceContext('sharehouse');
+    renderSharehouseTopMatches();
+    const filters = shFilters();
+    const results = ['sh1','sh2','sh3']
+      .map(id => shEvaluateListing(id, filters))
+      .filter(result => result.hardPass)
+      .sort((a, b) => b.matchedTotal - a.matchedTotal || b.score - a.score || b.profile.match - a.profile.match);
+    const selectedCount = Object.entries(filters).filter(([key, value]) => {
+      if (['budget','budgetOnly','fullPeriod'].includes(key)) return key === 'budgetOnly' ? value : key === 'fullPeriod' ? value : false;
+      return Array.isArray(value) ? value.length : !!value;
+    }).length;
+    const summary = document.getElementById('sh-filter-summary');
+    if (summary) summary.textContent = selectedCount
+      ? (currentLang === 'ja' ? `選択条件 ${selectedCount}件で条件比較しました。` : `Compared conditions using ${selectedCount} selected filter(s).`)
+      : localizeText('現在すべての掲載を表示しています。');
+    const list = document.getElementById('sh-filter-results');
+    if (!list) return;
+    list.innerHTML = results.length
+      ? results.map(renderSharehouseFilterCard).join('')
+      : `<div class="hm-empty-result">${localizeText('条件に一致する掲載が見つかりませんでした。条件を減らして再検索してください。')}</div>`;
+  }
+
+  function resetSharehouseFilters() {
+    document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
+    ['shf-start','shf-end'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    ['shf-full-period','shf-budget-only'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
+    const budget = document.getElementById('shf-budget');
+    if (budget) budget.value = 2000;
+    shUpdateBudgetLabel();
+    applySharehouseFilters();
+  }
+
   /* ===== MYPAGE SUB SCREENS ===== */
   function saveSubScreen(name) {
+    if (isSharehouseGuestContext() && (name === 'profile' || name === 'lifestyle')) {
+      collectSharehouseGuestProfileFromEdit();
+      if (name === 'profile') {
+        const newName = sharehouseGuestDemoProfile?.basic?.name || '';
+        if (newName) document.querySelector('.mypage-name').textContent = newName;
+      }
+      showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+      navigate(currentScreen, 'mypage');
+      return;
+    }
     // Update mypage header if profile was edited
     if (name === 'profile') {
       const nameInput = document.getElementById('prof-name');
@@ -9924,6 +10488,237 @@
 	        quietHours: 'ある程度静かならOK',
 	        mbti: applicant?.mbti || 'INFP'
 	      }
+	    };
+	  }
+
+	  const SHG_LANG_OPTIONS = ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語'];
+	  const SHG_HOBBY_OPTIONS = ['🎵 音楽','🎬 映画','📚 読書','🍳 料理','🏃 スポーツ','🎮 ゲーム','🌿 アウトドア','🎨 アート','🐾 動物好き','その他'];
+	  const SHG_MBTI_OPTIONS = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP','わからない / 未診断','回答しない'];
+	  let homestayProfileBodyHtml = null;
+	  let homestayLifestyleBodyHtml = null;
+
+	  function shSelectedChipText(prefix, key, fallback = '') {
+	    return selectedChipText(`${prefix}-${key}`, fallback);
+	  }
+
+	  function shSelectedChipTexts(prefix, key) {
+	    return selectedChipTexts(`#${prefix}-${key}`);
+	  }
+
+	  function shChipRow(prefix, key, options, selected, multi = false, onClick = '') {
+	    const selectedValues = Array.isArray(selected) ? selected : [selected];
+	    const handler = onClick || (multi ? 'toggleMultiChip(this)' : 'toggleChip(this)');
+	    return `
+	      <div class="form-chip-row" id="${prefix}-${key}">
+	        ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" onclick="${handler}">${localizeText(option)}</div>`).join('')}
+	      </div>
+	    `;
+	  }
+
+	  function shTextInput(id, value = '', placeholder = '') {
+	    return `<input class="form-input" id="${id}" type="text" value="${escapeHtml(value)}" placeholder="${localizeText(placeholder)}" />`;
+	  }
+
+	  function sharehouseGuestEditProfileHtml(profile, prefix = 'shge') {
+	    return `
+	      <div class="form-section">
+	        <div class="form-section-title">👤 ${localizeText('自分の情報')}</div>
+	        <div class="form-group">
+	          <div class="form-label">${localizeText('プロフィール写真')}</div>
+	          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:20px 14px;background:var(--bg);cursor:pointer;text-align:center;">
+	            <span style="font-size:32px;">👤</span><span style="font-size:14px;font-weight:800;">${localizeText('顔写真をアップロード')}</span>
+	            <input type="file" accept="image/*" style="display:none;" />
+	          </label>
+	        </div>
+	        <div class="form-group"><div class="form-label">${localizeText('名前')}</div>${shTextInput(`${prefix}-name`, profile.basic.name, '名前')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('年齢')}</div><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(profile.basic.age)}" /></div>
+	        <div class="form-group"><div class="form-label">${localizeText('国籍')}</div>${shTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('性別')}</div>${shChipRow(prefix, 'gender', ['女性','男性','選択しない'], profile.basic.gender)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('宗教')}</div>${shChipRow(prefix, 'religion', ['仏教','キリスト教','イスラム教','ヒンドゥー教','ユダヤ教','無宗教','その他','回答しない'], profile.basic.religion)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('使用言語')}</div>${shChipRow(prefix, 'languages', SHG_LANG_OPTIONS, profile.basic.languages, true)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('英語レベル')}</div>${shChipRow(prefix, 'english-level', ['初心者','日常会話','ビジネスレベル','ネイティブレベル','回答しない'], profile.basic.englishLevel)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('渡航・滞在目的')}</div>${shChipRow(prefix, 'purpose', ['留学','ワーホリ','就職','その他'], profile.basic.purpose)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('喫煙')}</div>${shChipRow(prefix, 'personal-smoking', ['吸わない','屋外で吸う','室内でも吸う'], profile.basic.personalSmoking)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('飲酒')}</div>${shChipRow(prefix, 'personal-alcohol', ['よく飲む','たまに飲む','飲まない'], profile.basic.personalAlcohol)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('趣味')}</div>${shChipRow(prefix, 'hobbies', SHG_HOBBY_OPTIONS, profile.basic.hobbies, true)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('一言／自己紹介')}</div><textarea class="form-textarea" id="${prefix}-intro" rows="4">${escapeHtml(profile.basic.intro)}</textarea></div>
+	      </div>
+	    `;
+	  }
+
+	  function sharehouseGuestEditLifestyleHtml(profile, prefix = 'shge') {
+	    return `
+	      <div class="form-section">
+	        <div class="form-section-title">🏠 ${localizeText('滞在条件')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('希望エリア')}</div>${shChipRow(prefix, 'area', ['Vancouver','Toronto'], profile.stay.area)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('入居時期')}</div><div class="form-range-row"><input class="form-range-input" id="${prefix}-move-in" type="date" value="${escapeHtml(profile.stay.moveIn)}" /><input class="form-range-input" id="${prefix}-move-out" type="date" value="${escapeHtml(profile.stay.moveOut)}" /></div></div>
+	        <div class="form-group"><div class="form-label">${localizeText('月額予算（CAD）')}</div><input class="form-input" id="${prefix}-budget" type="number" value="${escapeHtml(String(profile.stay.budget).replace(/[^0-9]/g, '') || '1200')}" /></div>
+	        <div class="form-group"><div class="form-label">${localizeText('希望する部屋')}</div>${shChipRow(prefix, 'room', ['個室希望','相部屋でもOK','どちらでもOK'], profile.stay.room)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('家具')}</div>${shChipRow(prefix, 'furniture', ['家具付き希望','家具なしでもOK','どちらでもOK'], profile.stay.furniture)}</div>
+	      </div>
+	      <div class="form-section">
+	        <div class="form-section-title">🌙 ${localizeText('自分の生活スタイル')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('起床時間')}</div>${shChipRow(prefix, 'wake-time', ['6時以前','6〜7時','7〜8時','8〜9時','9時以降'], profile.lifestyle.wakeTime)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('就寝時間')}</div>${shChipRow(prefix, 'bedtime', ['22時以前','22〜23時','23〜24時','0〜1時','1時以降'], profile.lifestyle.bedtime)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('普段どのくらい家にいますか？')}</div>${shChipRow(prefix, 'home-time', ['日中も家にいることが多い','学校・仕事で日中はいないことが多い','夜を中心に家にいる','日によって異なる'], profile.lifestyle.homeTime)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('どのくらい料理をしますか？')}</div>${shChipRow(prefix, 'cooking-frequency', ['ほぼ毎日','週に数回','たまに','ほとんどしない'], profile.lifestyle.cookingFrequency)}</div>
+	      </div>
+	      <div class="form-section">
+	        <div class="form-section-title">💎 ${localizeText('理想のシェア生活')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('一緒に住む人とはどのくらい交流したいですか？')}</div>${shChipRow(prefix, 'roommate-interaction', ['基本それぞれで過ごしたい','会った時に少し話すくらい','時々一緒に食事や会話をしたい','休日などに一緒に出かけることもしたい','友達のような関係になりたい'], profile.ideal.roommateInteraction)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('共用スペースをどのくらい綺麗に保ちたい？')}</div>${shChipRow(prefix, 'cleanliness', ['あまり気にしない','最低限綺麗ならOK','ある程度綺麗にしたい','常に綺麗に保ちたい'], profile.ideal.cleanliness)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('共用部分の掃除はどのくらいしたい？')}</div>${shChipRow(prefix, 'cleaning-frequency', ['毎日軽く','週に数回','週1回','汚れたら','特にこだわらない'], profile.ideal.cleaningFrequency)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('家の中の生活音についてどのくらい気になりますか？')}</div>${shChipRow(prefix, 'life-noise', ['静かな環境が絶対いい','比較的静かな方がいい','普通なら問題ない','あまり気にならない'], profile.ideal.lifeNoise)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('喫煙するルームメイトとの同居は？')}</div>${shChipRow(prefix, 'roommate-smoking', ['OK','屋外のみならOK','NG'], profile.ideal.roommateSmoking)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('家で飲酒するルームメイトについて')}</div>${shChipRow(prefix, 'roommate-alcohol', ['気にしない','程度による','あまり好まない'], profile.ideal.roommateAlcohol)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('ペット')}</div>${shChipRow(prefix, 'pets', ['ペットOK','ペットNG'], profile.ideal.pets)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('ルームメイトが友人を家に呼ぶことについて')}</div>${shChipRow(prefix, 'visitors', ['気にしない','事前に教えてくれればOK','頻繁でなければOK','できれば来客は少ない方がいい','来客NG希望'], profile.ideal.visitors)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('ルームメイトのパートナーなどが泊まることについて')}</div>${shChipRow(prefix, 'overnight-guests', ['問題ない','たまにならOK','事前相談があればOK','NG'], profile.ideal.overnightGuests)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('バスルーム')}</div>${shChipRow(prefix, 'bathroom', ['専用バスルーム希望','共用でもOK','どちらでもOK'], profile.ideal.bathroom)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('一緒に住む人数')}</div>${shChipRow(prefix, 'housemate-count', ['1人とのシェア希望','2〜3人','4人以上でもOK','特に気にしない'], profile.ideal.housemateCount)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('キッチン')}</div>${shChipRow(prefix, 'kitchen', ['キッチンをよく使うので自由に使いたい','共用で問題ない','使用時間に多少ルールがあってもOK','あまり使わない'], profile.ideal.kitchen)}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('夜の静かな時間について')}</div>${shChipRow(prefix, 'quiet-hours', ['厳しく守りたい','ある程度静かならOK','あまり気にしない'], profile.ideal.quietHours)}</div>
+	        <div class="form-group"><div class="form-label">MBTI</div>${shChipRow(prefix, 'mbti', SHG_MBTI_OPTIONS, profile.ideal.mbti)}</div>
+	      </div>
+	    `;
+	  }
+
+	  function collectSharehouseGuestProfileFromEdit() {
+	    const existing = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
+	    const hobbies = shSelectedChipTexts('shge', 'hobbies').filter(v => !['その他', 'Other'].includes(v));
+	    sharehouseGuestDemoProfile = {
+	      basic: {
+	        name: formValue('shge-name', existing.basic.name),
+	        age: formValue('shge-age', existing.basic.age),
+	        nationality: formValue('shge-nationality', existing.basic.nationality),
+	        gender: shSelectedChipText('shge', 'gender', existing.basic.gender),
+	        religion: shSelectedChipText('shge', 'religion', existing.basic.religion),
+	        languages: shSelectedChipTexts('shge', 'languages'),
+	        englishLevel: shSelectedChipText('shge', 'english-level', existing.basic.englishLevel),
+	        purpose: shSelectedChipText('shge', 'purpose', existing.basic.purpose),
+	        personalSmoking: shSelectedChipText('shge', 'personal-smoking', existing.basic.personalSmoking),
+	        personalAlcohol: shSelectedChipText('shge', 'personal-alcohol', existing.basic.personalAlcohol),
+	        hobbies: hobbies.length ? hobbies : existing.basic.hobbies,
+	        intro: formValue('shge-intro', existing.basic.intro)
+	      },
+	      stay: {
+	        area: shSelectedChipText('shge', 'area', existing.stay.area),
+	        moveIn: formValue('shge-move-in', existing.stay.moveIn),
+	        moveOut: formValue('shge-move-out', existing.stay.moveOut),
+	        budget: formValue('shge-budget', String(existing.stay.budget).replace(/[^0-9]/g, '') || '1200') + ' CAD',
+	        room: shSelectedChipText('shge', 'room', existing.stay.room),
+	        furniture: shSelectedChipText('shge', 'furniture', existing.stay.furniture)
+	      },
+	      lifestyle: {
+	        wakeTime: shSelectedChipText('shge', 'wake-time', existing.lifestyle.wakeTime),
+	        bedtime: shSelectedChipText('shge', 'bedtime', existing.lifestyle.bedtime),
+	        homeTime: shSelectedChipText('shge', 'home-time', existing.lifestyle.homeTime),
+	        cookingFrequency: shSelectedChipText('shge', 'cooking-frequency', existing.lifestyle.cookingFrequency)
+	      },
+	      ideal: {
+	        roommateInteraction: shSelectedChipText('shge', 'roommate-interaction', existing.ideal.roommateInteraction),
+	        cleanliness: shSelectedChipText('shge', 'cleanliness', existing.ideal.cleanliness),
+	        cleaningFrequency: shSelectedChipText('shge', 'cleaning-frequency', existing.ideal.cleaningFrequency),
+	        lifeNoise: shSelectedChipText('shge', 'life-noise', existing.ideal.lifeNoise),
+	        roommateSmoking: shSelectedChipText('shge', 'roommate-smoking', existing.ideal.roommateSmoking),
+	        roommateAlcohol: shSelectedChipText('shge', 'roommate-alcohol', existing.ideal.roommateAlcohol),
+	        pets: shSelectedChipText('shge', 'pets', existing.ideal.pets),
+	        visitors: shSelectedChipText('shge', 'visitors', existing.ideal.visitors),
+	        overnightGuests: shSelectedChipText('shge', 'overnight-guests', existing.ideal.overnightGuests),
+	        bathroom: shSelectedChipText('shge', 'bathroom', existing.ideal.bathroom),
+	        housemateCount: shSelectedChipText('shge', 'housemate-count', existing.ideal.housemateCount),
+	        kitchen: shSelectedChipText('shge', 'kitchen', existing.ideal.kitchen),
+	        quietHours: shSelectedChipText('shge', 'quiet-hours', existing.ideal.quietHours),
+	        mbti: shSelectedChipText('shge', 'mbti', existing.ideal.mbti)
+	      }
+	    };
+	    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) APPLICANTS.sakura.sharehouseGuestProfile = sharehouseGuestDemoProfile;
+	    return sharehouseGuestDemoProfile;
+	  }
+
+	  function isSharehouseGuestContext() {
+	    return currentRole === 'guest' && (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse');
+	  }
+
+	  function updateGuestProfileMode() {
+	    const body = document.querySelector('#screen-profile .mypage-sub-body');
+	    if (!body) return;
+	    if (homestayProfileBodyHtml === null) homestayProfileBodyHtml = body.innerHTML;
+	    if (isSharehouseGuestContext()) {
+	      body.innerHTML = sharehouseGuestEditProfileHtml(defaultSharehouseGuestProfile(APPLICANTS?.sakura));
+	    } else if (body.innerHTML !== homestayProfileBodyHtml) {
+	      body.innerHTML = homestayProfileBodyHtml;
+	    }
+	  }
+
+	  function sharehouseListingProfile(id) {
+	    const match = sharehouseMatchProfiles[id] || sharehouseMatchProfiles.sh1;
+	    const rentNumber = Number(String(match.rent || '').replace(/[^0-9]/g, '')) || 1200;
+	    const isToronto = ['sh2'].includes(id);
+	    const smoke = match.shareLifestyle?.smoking?.includes('吸わない') ? 'NG' : '屋外のみならOK';
+	    return {
+	      id,
+	      name: match.name,
+	      match: match.match || 88,
+	      photo: getSharehouseRoomPhotos(match)[0]?.src || '',
+	      basic: {
+	        name: match.name,
+	        age: id === 'sh3' ? '27' : '24',
+	        nationality: match.nationality || '日本',
+	        gender: match.gender || '回答しない',
+	        religion: match.religion || '回答しない',
+	        languages: ['日本語','英語'],
+	        englishLevel: match.englishLevel || '日常会話',
+	        purpose: '就職',
+	        personalSmoking: match.shareLifestyle?.smoking?.replace('🚭 ', '') || '吸わない',
+	        personalAlcohol: match.shareLifestyle?.alcohol || 'たまに飲む',
+	        hobbies: String(match.hobbies || '').split(/[、,]/).map(v => v.trim()).filter(Boolean),
+	        intro: match.note
+	      },
+	      stay: {
+	        area: isToronto ? 'Toronto' : 'Vancouver',
+	        moveIn: match.available?.start || '2026-09-01',
+	        moveOut: match.available?.end || '2027-02-28',
+	        budget: `C$${rentNumber}`,
+	        rentNumber,
+	        room: match.roomType?.includes('相部屋') ? '相部屋でもOK' : '個室希望',
+	        furniture: match.roomType?.includes('家具') ? '家具付き希望' : 'どちらでもOK'
+	      },
+	      lifestyle: {
+	        wakeTime: match.lifestyleCards?.wake?.includes('9') ? '9時以降' : match.lifestyleCards?.wake?.includes('6') ? '6〜7時' : '7〜8時',
+	        bedtime: match.lifestyleCards?.sleep?.includes('1') ? '1時以降' : match.lifestyleCards?.sleep?.includes('22') ? '22〜23時' : '23〜24時',
+	        homeTime: id === 'sh2' ? '学校・仕事で日中はいないことが多い' : '夜を中心に家にいる',
+	        cookingFrequency: match.shareLifestyle?.cooking || '週に数回'
+	      },
+	      ideal: {
+	        roommateInteraction: id === 'sh3' ? '基本それぞれで過ごしたい' : '時々一緒に食事や会話をしたい',
+	        cleanliness: match.lifestyleCards?.clean?.includes('かなり') ? '常に綺麗に保ちたい' : 'ある程度綺麗にしたい',
+	        cleaningFrequency: id === 'sh1' ? '週1回' : '週に数回',
+	        lifeNoise: match.shareLifestyle?.noise || '普通なら問題ない',
+	        roommateSmoking: smoke,
+	        roommateAlcohol: match.shareLifestyle?.alcohol === '飲まない' ? 'あまり好まない' : '気にしない',
+	        pets: match.roomType?.includes('ペット') ? 'ペットOK' : 'ペットNG',
+	        visitors: id === 'sh2' ? '事前に教えてくれればOK' : '頻繁でなければOK',
+	        overnightGuests: '事前相談があればOK',
+	        bathroom: '共用でもOK',
+	        housemateCount: id === 'sh3' ? '2〜3人' : '4人以上でもOK',
+	        kitchen: match.shareLifestyle?.cooking?.includes('使わない') ? 'あまり使わない' : '共用で問題ない',
+	        quietHours: id === 'sh1' ? 'ある程度静かならOK' : 'あまり気にしない',
+	        mbti: match.shareLifestyle?.mbti === '選択しない' ? '回答しない' : (match.shareLifestyle?.mbti || '回答しない')
+	      },
+	      members: match.roommates || [],
+	      roomInfo: match.roomInfo || [
+	        { label: '希望する部屋', value: match.roomType?.split(' · ')[0] || '個室希望' },
+	        { label: '家具', value: match.roomType?.includes('家具') ? '家具付き希望' : 'どちらでもOK' },
+	        { label: 'バスルーム', value: '共用でもOK' },
+	        { label: 'Wi-Fi', value: match.roomType?.includes('Wi-Fi') ? 'あり' : '共用Wi-Fiあり' }
+	      ],
+	      houseRules: Array.isArray(match.rules) ? match.rules : String(match.rules || '').split(' · ').filter(Boolean).map(text => ({ ok: !text.includes('なし') && !text.includes('禁煙'), warn: text.includes('相談') || text.includes('当番'), text })),
+	      review: match.review,
+	      available: match.available,
+	      mapPin: match.mapPin,
+	      mapNote: match.mapNote,
+	      raw: match
 	    };
 	  }
 
@@ -10805,6 +11600,14 @@
     privacy_interactions_body:'HostMatchは、ホームステイや共同生活を希望するユーザー同士が情報を確認し、直接つながるためのプラットフォームです。契約、予約、支払い、条件交渉等はユーザー同士で行っていただきます。',
     privacy_sensitive_title:'大切な個人情報を守るために',
     privacy_sensitive_body:'パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。',
+    terms_service_model_title:'HostMatchのサービス範囲',
+    terms_service_model_body:'HostMatchは、ホームステイ先やシェアハウス相手を掲載・検索・比較し、メッセージや面談を通じて直接つながるためのプラットフォームです。',
+    terms_no_transaction_title:'契約・支払いについて',
+    terms_no_transaction_body:'HostMatchは、予約、契約、入居申込、家賃回収、デポジット、決済、返金、成約確認には関与しません。契約条件や支払い方法は、ユーザー同士で直接ご確認ください。',
+    terms_user_responsibility_title:'ユーザー間の確認',
+    terms_user_responsibility_body:'掲載内容、住居条件、生活ルール、費用、滞在期間、本人確認、契約条件などは、メッセージや面談を通じて当事者間で十分に確認してください。',
+    terms_privacy_link_title:'プライバシーについて',
+    terms_privacy_link_body:'個人情報、住所、メッセージ、安全な利用に関する方針は、プライバシー・セキュリティ画面で確認できます。ホームステイとシェアハウスのすべてのユーザーに同じ方針を適用します。',
     blocked_users:'ブロックしたユーザー',
     no_blocked_users:'ブロックしたユーザーはいません',
     block_this_user:'このユーザーをブロック',
@@ -11130,6 +11933,14 @@
     privacy_interactions_body:'HostMatch is a platform that allows people looking for homestays or shared living arrangements to review information and connect directly. Agreements, reservations, payments, negotiations, and other arrangements are handled directly between users.',
     privacy_sensitive_title:'Protecting Sensitive Information',
     privacy_sensitive_body:'Do not casually send passport or identification images, bank account details, credit card information, or other sensitive personal information through messages.',
+    terms_service_model_title:'Scope of HostMatch Services',
+    terms_service_model_body:'HostMatch is a platform for listing, searching, comparing, and connecting directly with homestay hosts or shared living matches through messages and interviews.',
+    terms_no_transaction_title:'Agreements and Payments',
+    terms_no_transaction_body:'HostMatch does not handle reservations, agreements, move-in applications, rent collection, deposits, payments, refunds, or confirmation of completed arrangements. Please confirm all terms and payment arrangements directly between users.',
+    terms_user_responsibility_title:'User-to-User Confirmation',
+    terms_user_responsibility_body:'Please confirm listing details, housing conditions, house rules, costs, stay periods, identity information, and agreement terms directly with the other user through messages or interviews.',
+    terms_privacy_link_title:'Privacy',
+    terms_privacy_link_body:'Policies about personal information, address privacy, messages, and safe use are available on the Privacy & Security page. The same policy applies to all homestay and sharehouse users.',
     blocked_users:'Blocked Users',
     no_blocked_users:'No blocked users',
     block_this_user:'Block this user',
@@ -12140,6 +12951,15 @@
     ,'よくある質問（FAQ）':'FAQ'
     ,'フォームで問い合わせ':'Contact Form'
     ,'利用規約・プライバシーポリシー':'Terms & Privacy Policy'
+    ,'条件が合うシェアメイト':'Listings Matching Your Preferences'
+    ,'登録した条件に近い掲載を先に確認できます。':'Review listings that are close to your registered preferences first.'
+    ,'条件に合う掲載':'Listings Matching Your Conditions'
+    ,'現在すべての掲載を表示しています。':'Showing all listings.'
+    ,'全掲載表示':'Showing all listings'
+    ,'希望期間すべて入居可能':'Available for the full requested period'
+    ,'入居時期を確認':'Check move-in timing'
+    ,'条件一致':'Condition match'
+    ,'月額予算内':'Within monthly budget'
     ,'サービス':'Service'
     ,'ホームステイ／シェアハウスを変更':'Change Homestay / Share House'
     ,'ホームステイ':'Homestay'
@@ -13139,20 +13959,20 @@
   }
 
   function localizeHomestayFilterUi() {
-    const root = document.querySelector('#search-content-homestay .hm-filter-shell');
-    if (!root) return;
-    root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-label,.hm-filter-chip,summary,.hm-filter-actions button,.price-input-label').forEach(el => {
-      if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
-      const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
-      if (el.textContent.trim() !== nextText) el.textContent = nextText;
-    });
-    root.querySelectorAll('.hm-filter-toggle').forEach(label => {
-      const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-      if (!label.dataset.hmfOriginalText) label.dataset.hmfOriginalText = textNode ? textNode.nodeValue.trim() : '';
-      if (textNode) {
-        const nextText = currentLang === 'ja' ? label.dataset.hmfOriginalText : localizeText(label.dataset.hmfOriginalText);
-        textNode.nodeValue = ` ${nextText}`;
-      }
+    document.querySelectorAll('.hm-filter-shell').forEach(root => {
+      root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-label,.hm-filter-chip,summary,.hm-filter-actions button,.price-input-label').forEach(el => {
+        if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
+        const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
+        if (el.textContent.trim() !== nextText) el.textContent = nextText;
+      });
+      root.querySelectorAll('.hm-filter-toggle').forEach(label => {
+        const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
+        if (!label.dataset.hmfOriginalText) label.dataset.hmfOriginalText = textNode ? textNode.nodeValue.trim() : '';
+        if (textNode) {
+          const nextText = currentLang === 'ja' ? label.dataset.hmfOriginalText : localizeText(label.dataset.hmfOriginalText);
+          textNode.nodeValue = ` ${nextText}`;
+        }
+      });
     });
   }
 
@@ -13200,12 +14020,18 @@
       localizeHomestayFilterUi();
       applyHomestayFilters();
     }
+    if (currentScreen === 'search' && currentSearchCat === 'sharehouse') {
+      localizeHomestayFilterUi();
+      applySharehouseFilters();
+    }
     if (currentScreen === 'pending-hosts') renderGuestRequestList();
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
     if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
 	    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
 	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
 	    if (currentScreen === 'onboarding') renderOnboardStep();
+	    if (currentScreen === 'profile') updateGuestProfileMode();
+	    if (currentScreen === 'lifestyle') updateGuestLifestyleMode();
 	    if (currentScreen === 'host-calendar') renderHostCalendar();
 	    if (currentScreen === 'host-dashboard') updateHostDashboardListing();
 	    if (currentScreen === 'host-profile' || currentScreen === 'host-onboarding') {
@@ -13327,6 +14153,7 @@
 	    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
 	    updateSearchHeaderForCat(cat);
 	    if (cat === 'homestay') applyHomestayFilters();
+	    if (cat === 'sharehouse') applySharehouseFilters();
 	  }
 
 	  function updateSearchHeaderForCat(cat) {
