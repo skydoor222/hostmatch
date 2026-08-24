@@ -941,6 +941,28 @@
     }
     .chat-title { font-size: 15px; font-weight: 700; }
     .chat-subtitle { font-size: 12px; color: var(--light); }
+    .more-menu-wrap { position: relative; margin-left: auto; }
+    .more-menu-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border); background: white; color: var(--dark);
+      font-size: 18px; font-weight: 900; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .more-menu {
+      display: none; position: absolute; right: 0; top: 42px; width: 190px;
+      background: white; border: 1px solid var(--border); border-radius: 14px;
+      box-shadow: 0 12px 34px rgba(0,0,0,.14); overflow: hidden; z-index: 2600;
+    }
+    .more-menu.open { display: block; }
+    .more-menu button {
+      width: 100%; background: white; border: none; padding: 12px 14px;
+      text-align: left; font-size: 13px; font-weight: 800; color: var(--dark); cursor: pointer;
+    }
+    .more-menu button + button { border-top: 1px solid var(--border); }
+    .blocked-notice {
+      display: none; background: #FFF3CD; color: #856404; border: 1px solid #F6D365;
+      border-radius: 14px; padding: 12px 14px; font-size: 13px; font-weight: 800; line-height: 1.6;
+    }
 
     .chat-messages { flex: 1; overflow-y: auto; padding: 16px 16px 80px; display: flex; flex-direction: column; gap: 12px; }
     .bubble-wrap { display: flex; flex-direction: column; gap: 2px; }
@@ -3226,6 +3248,13 @@
     <div class="photo-counter" id="photo-counter">1 / 6</div>
     <div class="detail-back" onclick="navigate(currentScreen, detailBackScreen)">←</div>
     <div class="detail-save" id="detail-save">❤️</div>
+    <div class="more-menu-wrap" style="position:absolute;top:16px;right:58px;z-index:12;">
+      <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('detail-user-menu')">…</button>
+      <div class="more-menu" id="detail-user-menu">
+        <button type="button" onclick="startBlockCurrentUser()" data-i18n="block_this_user">このユーザーをブロック</button>
+        <button type="button" onclick="openReportModal()" data-i18n="report_user">通報</button>
+      </div>
+    </div>
   </div>
 
   <div class="detail-scroll">
@@ -3234,6 +3263,9 @@
         <div data-i18n="preview_mode">プレビューモード</div>
         <div style="font-size:12px;font-weight:600;margin-top:2px;" data-i18n="preview_actions_disabled">これはプレビューです。操作はできません。</div>
       </div>
+    </div>
+    <div class="detail-section" style="padding-top:14px;">
+      <div class="blocked-notice" id="detail-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
     </div>
 
     <div class="detail-host-row">
@@ -3389,6 +3421,13 @@
       <div class="chat-title">Sarah Johnson</div>
       <div class="chat-subtitle">🇺🇸 Manhattan, NY</div>
     </div>
+    <div class="more-menu-wrap">
+      <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('chat-user-menu')">…</button>
+      <div class="more-menu" id="chat-user-menu">
+        <button type="button" onclick="startBlockCurrentUser()" data-i18n="block">ブロック</button>
+        <button type="button" onclick="openReportModal()" data-i18n="report_user">通報</button>
+      </div>
+    </div>
   </div>
 
   <div class="chat-action-banner" id="chat-action-banner">
@@ -3403,6 +3442,7 @@
   </div>
 
   <div class="chat-messages">
+    <div class="blocked-notice" id="chat-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
     <div class="date-label">2026年4月8日</div>
 
     <div class="bubble-wrap them">
@@ -3530,7 +3570,7 @@
     <div class="mypage-section-title" data-i18n="settings">設定</div>
     <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="notifications">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
-    <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="support">サポート</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
@@ -4578,9 +4618,19 @@
     </div>
     <div class="detail-back" onclick="navigate(currentScreen,'ai-result')" style="position:absolute;top:16px;left:14px;z-index:10;">←</div>
     <div class="detail-save" style="position:absolute;top:16px;right:14px;z-index:10;">🤍</div>
+    <div class="more-menu-wrap" style="position:absolute;top:16px;right:58px;z-index:12;">
+      <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('sharehouse-user-menu')">…</button>
+      <div class="more-menu" id="sharehouse-user-menu">
+        <button type="button" onclick="startBlockCurrentUser()" data-i18n="block_this_user">このユーザーをブロック</button>
+        <button type="button" onclick="openReportModal()" data-i18n="report_user">通報</button>
+      </div>
+    </div>
   </div>
 
   <div class="detail-scroll">
+	    <div class="detail-section" style="padding-top:14px;">
+	      <div class="blocked-notice" id="sharehouse-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
+	    </div>
 	    <div class="detail-host-row">
 	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">👩</div>
 	      <div>
@@ -4652,7 +4702,7 @@
 
   <!-- CTA -->
   <div class="detail-cta">
-    <button class="btn-outline" onclick="openSharehouseChat()">💬 メッセージ</button>
+    <button class="btn-outline" id="sharehouse-message-btn" onclick="openSharehouseChat()">💬 メッセージ</button>
     <button class="btn-primary" id="sharehouse-action-btn" onclick="requestSharehouseInterview()">📹 面談を申し込む</button>
   </div>
 </div>
@@ -5767,8 +5817,16 @@
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,applicantDetailBackScreen)">←</div>
     <div class="mypage-sub-title">応募者詳細</div>
+    <div class="more-menu-wrap">
+      <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('applicant-user-menu')">…</button>
+      <div class="more-menu" id="applicant-user-menu">
+        <button type="button" onclick="startBlockCurrentUser()" data-i18n="block_this_user">このユーザーをブロック</button>
+        <button type="button" onclick="openReportModal()" data-i18n="report_user">通報</button>
+      </div>
+    </div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
+    <div class="blocked-notice" id="applicant-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
     <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:20px;text-align:center;">
       <div id="applicant-detail-avatar" style="width:84px;height:84px;border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:42px;"></div>
       <div id="applicant-detail-name" style="font-size:22px;font-weight:900;"></div>
@@ -6336,12 +6394,51 @@
     <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div class="mypage-item" onclick="navigate(currentScreen,'host-profile')"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="edit_listing">掲載を編集</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
-      <div class="mypage-item"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
       <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
       <div class="mypage-item" onclick="openDeleteAccountModal()"><span class="mypage-item-icon">🗑</span><span class="mypage-item-label" data-i18n="delete_account">アカウント削除</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="doLogout()" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== プライバシー・セキュリティ ==================== -->
+<div class="screen" id="screen-privacy-security">
+  <div class="mypage-sub-header">
+    <div class="mypage-sub-back" onclick="navigate(currentScreen,privacyBackScreen)">←</div>
+    <div class="mypage-sub-title" data-i18n="privacy_security">プライバシー・セキュリティ</div>
+  </div>
+  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="privacy_intro">HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。</div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_personal_info_title">個人情報について</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_personal_info_body">登録時に入力されたメールアドレス、電話番号、生年月日などの情報は、他のユーザーには公開されません。プロフィール上には、ユーザー自身が公開することを選択した情報のみが表示されます。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_address_title">住所について</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_address_body">ホストの正確な住所はプロフィール上には公開されません。エリアや最寄り駅など、住まい探しに必要な範囲の情報のみ表示します。詳細な住所を共有する場合は、メッセージを通してユーザー同士でご判断ください。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_messages_title">メッセージについて</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_messages_body">HostMatchでは、登録ユーザー同士が直接メッセージを送ることができます。住所、電話番号、SNS、身分証明書などの個人情報を共有する場合は、相手を十分に確認した上で行ってください。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_safety_title">安全な利用のために</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_safety_body">不審なユーザー、虚偽の掲載、迷惑行為などを発見した場合は、ブロック・通報機能をご利用ください。HostMatchは、利用規約に違反するアカウントや掲載について、確認・非公開・削除等の対応を行う場合があります。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_interactions_title">ユーザー間のやり取りについて</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_interactions_body">HostMatchは、ホームステイや共同生活を希望するユーザー同士が情報を確認し、直接つながるためのプラットフォームです。契約、予約、支払い、条件交渉等はユーザー同士で行っていただきます。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_sensitive_title">大切な個人情報を守るために</div>
+      <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_sensitive_body">パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。</div>
+    </div>
+    <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      <div class="mypage-item" onclick="toggleBlockedUsersList()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
+      <div id="blocked-users-list" style="display:none;padding:0 16px 16px;"></div>
     </div>
   </div>
 </div>
@@ -6355,6 +6452,33 @@
       <button type="button" onclick="closeDeleteAccountModal()" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
       <button type="button" onclick="confirmDeleteAccountDemo()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="delete_account_action">削除する</button>
     </div>
+  </div>
+</div>
+
+<!-- ==================== ブロック確認モーダル ==================== -->
+<div id="block-user-modal" style="display:none;position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:3100;align-items:center;justify-content:center;padding:20px;">
+  <div role="dialog" aria-modal="true" style="width:min(100%,420px);background:white;border-radius:18px;padding:22px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.22);">
+    <div style="font-size:18px;font-weight:900;color:var(--dark);line-height:1.5;" data-i18n="block_confirm_title">このユーザーをブロックしますか？</div>
+    <div style="font-size:13px;color:var(--mid);line-height:1.7;margin-top:8px;" data-i18n="block_confirm_body">ブロックすると、相手はあなたのプロフィールを見ることができなくなり、メッセージも送れなくなります。</div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button type="button" onclick="closeBlockModal()" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
+      <button type="button" onclick="confirmBlockCurrentUser()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="block_action">ブロックする</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 通報デモモーダル ==================== -->
+<div id="report-user-modal" style="display:none;position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:3100;align-items:center;justify-content:center;padding:20px;">
+  <div role="dialog" aria-modal="true" style="width:min(100%,460px);background:white;border-radius:18px;padding:22px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.22);">
+    <div style="font-size:18px;font-weight:900;color:var(--dark);line-height:1.5;" data-i18n="report_user">通報</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;">
+      <button type="button" class="form-chip" onclick="submitReportDemo()" data-i18n="report_false_info">虚偽の情報</button>
+      <button type="button" class="form-chip" onclick="submitReportDemo()" data-i18n="report_harassment">迷惑行為</button>
+      <button type="button" class="form-chip" onclick="submitReportDemo()" data-i18n="report_inappropriate_message">不適切なメッセージ</button>
+      <button type="button" class="form-chip" onclick="submitReportDemo()" data-i18n="report_scam">詐欺の疑い</button>
+      <button type="button" class="form-chip" onclick="submitReportDemo()" data-i18n="other">その他</button>
+    </div>
+    <button type="button" onclick="closeReportModal()" style="width:100%;margin-top:16px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
   </div>
 </div>
 
@@ -6795,9 +6919,12 @@
   let chatDetailMode = 'host';
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
+  let privacyBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let hostPreviewMode = false;
+  const blockedUsers = new Map();
+  let currentBlockTarget = null;
   let homestayHostListType = 'new';
   let currentReviewRating = 0;
   let favorites = new Set(['michael', 'thompson']);
@@ -6843,7 +6970,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -7204,6 +7331,145 @@
     if (password) password.value = '';
     if (error) error.textContent = '';
     applyLang();
+  }
+
+  function openPrivacySecurity() {
+    privacyBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
+    renderBlockedUsersList();
+    navigate(currentScreen, 'privacy-security');
+  }
+
+  function getCurrentUserTarget() {
+    if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
+      const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
+      return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse' };
+    }
+    if ((chatDetailMode === 'applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
+      const applicant = APPLICANTS[currentChatApplicant];
+      return { id: `guest:${currentChatApplicant}`, name: applicant?.name || currentChatApplicant, type: 'guest' };
+    }
+    const hostId = currentHost || currentListing?.id || 'sarah';
+    const host = HOSTS[hostId] || HOSTS.sarah;
+    return { id: `host:${hostId}`, name: host.name, type: 'host' };
+  }
+
+  function isCurrentTargetBlocked() {
+    const target = getCurrentUserTarget();
+    return blockedUsers.has(target.id);
+  }
+
+  function toggleUserActionMenu(id) {
+    document.querySelectorAll('.more-menu').forEach(menu => {
+      if (menu.id !== id) menu.classList.remove('open');
+    });
+    const menu = document.getElementById(id);
+    if (menu) menu.classList.toggle('open');
+  }
+
+  function startBlockCurrentUser() {
+    document.querySelectorAll('.more-menu').forEach(menu => menu.classList.remove('open'));
+    currentBlockTarget = getCurrentUserTarget();
+    const modal = document.getElementById('block-user-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      applyLang();
+    }
+  }
+
+  function closeBlockModal() {
+    const modal = document.getElementById('block-user-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function confirmBlockCurrentUser() {
+    const target = currentBlockTarget || getCurrentUserTarget();
+    blockedUsers.set(target.id, target);
+    closeBlockModal();
+    renderBlockedUsersList();
+    updateBlockedUi();
+    showToast(t('blocked_by_you_notice'));
+  }
+
+  function unblockUser(id) {
+    blockedUsers.delete(id);
+    renderBlockedUsersList();
+    updateBlockedUi();
+    showToast(t('unblocked_toast'));
+  }
+
+  function toggleBlockedUsersList() {
+    const list = document.getElementById('blocked-users-list');
+    if (!list) return;
+    list.style.display = list.style.display === 'none' || !list.style.display ? 'block' : 'none';
+    renderBlockedUsersList();
+  }
+
+  function renderBlockedUsersList() {
+    const list = document.getElementById('blocked-users-list');
+    if (!list) return;
+    if (!blockedUsers.size) {
+      list.innerHTML = `<div style="font-size:13px;color:var(--light);padding:12px 0;" data-i18n="no_blocked_users">${t('no_blocked_users')}</div>`;
+      return;
+    }
+    list.innerHTML = Array.from(blockedUsers.values()).map(user => `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:900;color:var(--dark);">${escapeHtml(user.name)}</div>
+        <button type="button" onclick="unblockUser('${escapeHtml(user.id)}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer;">${t('unblock')}</button>
+      </div>
+    `).join('');
+  }
+
+  function updateBlockedUi() {
+    const blocked = isCurrentTargetBlocked();
+    const detailNotice = document.getElementById('detail-blocked-notice');
+    const shNotice = document.getElementById('sharehouse-blocked-notice');
+    const applicantNotice = document.getElementById('applicant-blocked-notice');
+    if (detailNotice) detailNotice.style.display = blocked && currentScreen === 'detail' ? 'block' : 'none';
+    if (shNotice) shNotice.style.display = blocked && currentScreen === 'sharehouse-detail' ? 'block' : 'none';
+    if (applicantNotice) applicantNotice.style.display = blocked && currentScreen === 'host-applicant-detail' ? 'block' : 'none';
+    let notice = document.getElementById('chat-blocked-notice');
+    const messageArea = document.querySelector('#screen-chat .chat-messages');
+    if (!notice && messageArea) {
+      messageArea.insertAdjacentHTML('afterbegin', `<div class="blocked-notice" id="chat-blocked-notice" data-i18n="blocked_by_you_notice">${t('blocked_by_you_notice')}</div>`);
+      notice = document.getElementById('chat-blocked-notice');
+    }
+    if (notice) notice.style.display = blocked && currentScreen === 'chat' ? 'block' : 'none';
+    const input = document.querySelector('#screen-chat .chat-input');
+    const send = document.querySelector('#screen-chat .chat-send');
+    if (input) {
+      input.disabled = blocked;
+      input.placeholder = blocked ? t('message_unavailable') : t('message_placeholder');
+    }
+    if (send) {
+      send.disabled = blocked;
+      send.style.opacity = blocked ? '.45' : '';
+      send.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    }
+    document.querySelectorAll('.chat-banner-btn-apply, #detail-action-btn, #detail-message-btn, #sharehouse-action-btn, #sharehouse-message-btn').forEach(btn => {
+      if (!btn) return;
+      btn.disabled = blocked;
+      btn.style.opacity = blocked ? '.45' : '';
+      btn.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    });
+  }
+
+  function openReportModal() {
+    document.querySelectorAll('.more-menu').forEach(menu => menu.classList.remove('open'));
+    const modal = document.getElementById('report-user-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      applyLang();
+    }
+  }
+
+  function closeReportModal() {
+    const modal = document.getElementById('report-user-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function submitReportDemo() {
+    closeReportModal();
+    showToast(t('report_received'));
   }
 
 	  function escapeHtml(value) {
@@ -7832,6 +8098,7 @@
     document.querySelector('.detail-scroll').scrollTop = 0;
 
     navigate(currentScreen, 'detail');
+    updateBlockedUi();
     setTimeout(() => renderHomestayLocationMap(hostId), 80);
   }
 
@@ -8036,6 +8303,7 @@
     appendInterviewRequestCard(area, currentListing, 'guest');
 
     navigate(currentScreen, 'chat');
+    updateBlockedUi();
 	    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
 	  }
 
@@ -8110,6 +8378,7 @@
 	    appendInterviewRequestCard(area, currentListing, 'guest');
 
 	    navigate(currentScreen, 'chat');
+    updateBlockedUi();
 	    setTimeout(() => area.scrollTop = area.scrollHeight, 50);
 	  }
 
@@ -8148,6 +8417,7 @@
     if (hostReq) area.insertAdjacentHTML('beforeend', renderInterviewRequestCard(hostReq, 'host'));
 
     navigate(currentScreen, 'chat');
+    updateBlockedUi();
     setTimeout(() => area.scrollTop = area.scrollHeight, 50);
   }
 
@@ -8451,6 +8721,10 @@
 
   function requestInterviewForListing(listing) {
     currentListing = listing;
+    if (isCurrentTargetBlocked()) {
+      showToast(t('message_unavailable'));
+      return;
+    }
     syncGuestServiceContext(listing.type);
     currentApplicationId = listing.type + ':' + listing.id;
     contactHistory.set(currentApplicationId, { listing, status: 'contacted' });
@@ -10130,6 +10404,37 @@
     delete_account_confirm_title:'本当にアカウントを削除しますか？',
     delete_account_confirm_body:'この操作は取り消せません。',
     delete_account_action:'削除する',
+    privacy_intro:'HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。',
+    privacy_personal_info_title:'個人情報について',
+    privacy_personal_info_body:'登録時に入力されたメールアドレス、電話番号、生年月日などの情報は、他のユーザーには公開されません。プロフィール上には、ユーザー自身が公開することを選択した情報のみが表示されます。',
+    privacy_address_title:'住所について',
+    privacy_address_body:'ホストの正確な住所はプロフィール上には公開されません。エリアや最寄り駅など、住まい探しに必要な範囲の情報のみ表示します。詳細な住所を共有する場合は、メッセージを通してユーザー同士でご判断ください。',
+    privacy_messages_title:'メッセージについて',
+    privacy_messages_body:'HostMatchでは、登録ユーザー同士が直接メッセージを送ることができます。住所、電話番号、SNS、身分証明書などの個人情報を共有する場合は、相手を十分に確認した上で行ってください。',
+    privacy_safety_title:'安全な利用のために',
+    privacy_safety_body:'不審なユーザー、虚偽の掲載、迷惑行為などを発見した場合は、ブロック・通報機能をご利用ください。HostMatchは、利用規約に違反するアカウントや掲載について、確認・非公開・削除等の対応を行う場合があります。',
+    privacy_interactions_title:'ユーザー間のやり取りについて',
+    privacy_interactions_body:'HostMatchは、ホームステイや共同生活を希望するユーザー同士が情報を確認し、直接つながるためのプラットフォームです。契約、予約、支払い、条件交渉等はユーザー同士で行っていただきます。',
+    privacy_sensitive_title:'大切な個人情報を守るために',
+    privacy_sensitive_body:'パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。',
+    blocked_users:'ブロックしたユーザー',
+    no_blocked_users:'ブロックしたユーザーはいません',
+    block_this_user:'このユーザーをブロック',
+    block:'ブロック',
+    block_confirm_title:'このユーザーをブロックしますか？',
+    block_confirm_body:'ブロックすると、相手はあなたのプロフィールを見ることができなくなり、メッセージも送れなくなります。',
+    block_action:'ブロックする',
+    unblock:'ブロック解除',
+    blocked_by_you_notice:'このユーザーをブロックしています',
+    unblocked_toast:'ブロック解除しました',
+    message_unavailable:'このユーザーにはメッセージを送信できません',
+    profile_unavailable:'このプロフィールは現在表示できません',
+    report_user:'通報',
+    report_false_info:'虚偽の情報',
+    report_harassment:'迷惑行為',
+    report_inappropriate_message:'不適切なメッセージ',
+    report_scam:'詐欺の疑い',
+    report_received:'通報を受け付けました',
     listing_profile_live:'掲載プロフィール公開中',
     mvp_platform_notice:'HostMatchの役割',
     direct_agreement_notice:'契約・支払い等は当事者間でご確認ください。',
@@ -10262,6 +10567,37 @@
     delete_account_confirm_title:'Are you sure you want to delete your account?',
     delete_account_confirm_body:'This action cannot be undone.',
     delete_account_action:'Delete Account',
+    privacy_intro:"HostMatch is committed to protecting users' personal information and privacy so that everyone can search for compatible homestay hosts or housemates with confidence.",
+    privacy_personal_info_title:'Personal Information',
+    privacy_personal_info_body:'Information such as your email address, phone number, and date of birth entered during registration is not shown to other users. Only information you choose to make visible on your profile will be displayed.',
+    privacy_address_title:'Address Privacy',
+    privacy_address_body:"A host's exact address is not displayed publicly. Only information necessary for finding accommodation, such as the general area and nearest station, is shown. If you choose to share a detailed address, please do so directly with the other user through messages and at your own discretion.",
+    privacy_messages_title:'Messages',
+    privacy_messages_body:'Registered HostMatch users can communicate directly through messages. Please make sure you trust the other person before sharing personal information such as your address, phone number, social media accounts, or identification documents.',
+    privacy_safety_title:'Staying Safe',
+    privacy_safety_body:'If you find a suspicious user, false listing, or inappropriate behavior, please use the block or report functions. HostMatch may review, hide, or remove accounts or listings that violate its terms of use.',
+    privacy_interactions_title:'Interactions Between Users',
+    privacy_interactions_body:'HostMatch is a platform that allows people looking for homestays or shared living arrangements to review information and connect directly. Agreements, reservations, payments, negotiations, and other arrangements are handled directly between users.',
+    privacy_sensitive_title:'Protecting Sensitive Information',
+    privacy_sensitive_body:'Do not casually send passport or identification images, bank account details, credit card information, or other sensitive personal information through messages.',
+    blocked_users:'Blocked Users',
+    no_blocked_users:'No blocked users',
+    block_this_user:'Block this user',
+    block:'Block',
+    block_confirm_title:'Block this user?',
+    block_confirm_body:'Once blocked, this user will no longer be able to view your profile or send you messages.',
+    block_action:'Block',
+    unblock:'Unblock',
+    blocked_by_you_notice:'You have blocked this user',
+    unblocked_toast:'Unblocked',
+    message_unavailable:'You cannot send messages to this user',
+    profile_unavailable:'This profile is currently unavailable',
+    report_user:'Report',
+    report_false_info:'False information',
+    report_harassment:'Harassment',
+    report_inappropriate_message:'Inappropriate message',
+    report_scam:'Suspected scam',
+    report_received:'Report received',
     listing_profile_live:'Listing profile is published',
     mvp_platform_notice:'HostMatch’s Role',
     direct_agreement_notice:'Please arrange any agreements and payments directly between users.',
@@ -12451,6 +12787,7 @@
   function openApplicantDetail(id, backScreen = 'host-applicants') {
     const applicant = APPLICANTS[id];
     if (!applicant) return;
+    currentChatApplicant = id;
     applicantDetailBackScreen = backScreen;
     const avatar = document.getElementById('applicant-detail-avatar');
     avatar.textContent = applicant.avatar;
@@ -12494,6 +12831,7 @@
     document.getElementById('applicant-detail-family-frequency').textContent = localizeText(applicant.familyFrequency || '食事の時など時々');
     document.getElementById('applicant-detail-absolute-ng').textContent = localizeText(applicant.absoluteNg || applicant.ng || '未設定');
     navigate(currentScreen, 'host-applicant-detail');
+    updateBlockedUi();
   }
 
   function approveApplicant(btn) {
@@ -12543,6 +12881,7 @@
     navigate(currentScreen, 'sharehouse-detail');
 	    renderGuestPreferenceSummary('sharehouse');
 	    updateListingActionButtons();
+    updateBlockedUi();
 	  }
 
   let shPhotoIndex = 0;
@@ -12857,6 +13196,7 @@
 	  }
 
 	  function renderHomestayAiCard(hostId, matchInfo) {
+	    if (blockedUsers.has(`host:${hostId}`)) return '';
 	    const h = HOSTS[hostId];
 	    const statusBg = matchInfo.available ? '#E8F7EF' : '#FFF3CD';
 	    const statusColor = matchInfo.available ? '#167A45' : '#856404';
