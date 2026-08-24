@@ -1249,6 +1249,13 @@
     }
     .onboard-step-panel { display: none; }
     .onboard-step-panel.active { display: block; }
+    .sh-guest-onboard-panel.active {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
 
     /* ===== MATCHING SCREEN ===== */
     .matching-screen {
@@ -2319,6 +2326,14 @@
       box-shadow: 0 10px 30px rgba(15,23,42,.08);
     }
 
+    .sh-guest-onboard-panel.active {
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+
     .interview-body {
       max-width: none;
       display: grid;
@@ -2533,6 +2548,14 @@
 
     .role-cards {
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .sh-guest-onboard-panel.active {
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding: 0 !important;
     }
 
     .onboard-body {
@@ -4344,222 +4367,338 @@
       </div>
     </div>
 
-    <!-- シェアハウス用 Step 1: プロフィール情報 -->
-    <div class="onboard-step-panel" id="sh-onboard-panel-1" style="display:none;">
+    <!-- シェアハウスゲスト Step 1: 自分の情報 -->
+    <div class="onboard-step-panel sh-guest-onboard-panel" id="sh-onboard-panel-1" style="display:none;">
       <div class="form-section" style="padding-top:0;">
-        <div class="form-section-title">👤 プロフィール情報</div>
+        <div class="form-section-title" data-i18n="basic_info">基本情報</div>
         <div class="form-group">
-          <div class="form-label">顔写真</div>
+          <div class="form-label" data-i18n="profile_photo">プロフィール写真</div>
           <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
             <span style="font-size:34px;">🧑</span>
-            <span style="font-size:14px;font-weight:700;color:var(--dark);">プロフィール写真を選択</span>
-            <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-            <input type="file" accept="image/*" style="display:none;" />
+            <span style="font-size:14px;font-weight:700;color:var(--dark);" data-i18n="upload_profile_photo">プロフィール写真をアップロード</span>
+            <span style="font-size:12px;color:var(--light);" data-i18n="demo_image_upload">画像保存は行わないデモUIです</span>
+            <input id="shg-profile-photo" type="file" accept="image/*" style="display:none;" />
           </label>
         </div>
         <div class="form-group">
-          <div class="form-label">名前</div>
-          <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
+          <div class="form-label" data-i18n="name_plain">名前</div>
+          <input class="form-input" id="shg-name" type="text" placeholder="山田 由紀" value="中村 さくら" />
         </div>
         <div class="form-group">
-          <div class="form-label">生年月日</div>
-          <input class="form-input" type="date" value="2002-04-12" />
+          <div class="form-label" data-i18n="age">年齢</div>
+          <input class="form-input" id="shg-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
         </div>
         <div class="form-group">
-          <div class="form-label">年齢</div>
-          <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+          <div class="form-label" data-i18n="nationality">国籍</div>
+          <input class="form-input" id="shg-nationality" type="text" placeholder="国籍を入力してください" value="日本" />
         </div>
         <div class="form-group">
-          <div class="form-label">国籍</div>
-          <input class="form-input" type="text" placeholder="国籍を入力してください" value="日本" />
-        </div>
-        <div class="form-group">
-          <div class="form-label">性別</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
-            <div class="form-chip" onclick="toggleChip(this)">男性</div>
-            <div class="form-chip" onclick="toggleChip(this)">選択しない</div>
+          <div class="form-label" data-i18n="gender">性別</div>
+          <div class="form-chip-row" id="shg-gender">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="female">女性</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="male">男性</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="do_not_select">選択しない</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">宗教</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">仏教</div>
-            <div class="form-chip" onclick="toggleChip(this)">キリスト教</div>
-            <div class="form-chip" onclick="toggleChip(this)">イスラム教</div>
-            <div class="form-chip" onclick="toggleChip(this)">ヒンドゥー教</div>
-            <div class="form-chip" onclick="toggleChip(this)">ユダヤ教</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">無宗教</div>
-            <div class="form-chip" onclick="toggleChip(this)">その他</div>
-            <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
+          <div class="form-label" data-i18n="religion">宗教</div>
+          <div class="form-chip-row" id="shg-religion">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="buddhism">仏教</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="christianity">キリスト教</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="islam">イスラム教</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="hinduism">ヒンドゥー教</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="judaism">ユダヤ教</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="no_religion">無宗教</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="other">その他</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="prefer_not_to_say">回答しない</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">英語レベル</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">初心者</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">日常会話</div>
-            <div class="form-chip" onclick="toggleChip(this)">ビジネスレベル</div>
-            <div class="form-chip" onclick="toggleChip(this)">ネイティブレベル</div>
-            <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
+          <div class="form-label" data-i18n="languages_spoken">使用言語</div>
+          <div class="form-chip-row" id="shg-languages">
+            <div class="form-chip selected" onclick="toggleMultiChip(this)" data-i18n="english">英語</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)" data-i18n="japanese">日本語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="chinese">中国語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="korean">韓国語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="spanish">スペイン語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="french">フランス語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="italian">イタリア語</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="german">ドイツ語</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="english_level">英語レベル</div>
+          <div class="form-chip-row" id="shg-english-level">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="beginner">初心者</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="conversational">日常会話</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="business_level">ビジネスレベル</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="native_level">ネイティブレベル</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="prefer_not_to_say">回答しない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="travel_stay_purpose">渡航・滞在目的</div>
+          <div class="form-chip-row" id="shg-purpose">
+            <div class="form-chip selected" onclick="toggleSharehouseGuestOther('purpose', this)" data-i18n="study_abroad">留学</div>
+            <div class="form-chip" onclick="toggleSharehouseGuestOther('purpose', this)" data-i18n="working_holiday">ワーホリ</div>
+            <div class="form-chip" onclick="toggleSharehouseGuestOther('purpose', this)" data-i18n="employment">就職</div>
+            <div class="form-chip" onclick="toggleSharehouseGuestOther('purpose', this)" data-i18n="other">その他</div>
+          </div>
+          <input class="form-input" id="shg-purpose-other" type="text" data-i18n-placeholder="purpose_other_placeholder" placeholder="目的を入力してください" style="display:none;margin-top:10px;" />
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="smoking">喫煙</div>
+          <div class="form-chip-row" id="shg-personal-smoking">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="does_not_smoke">吸わない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="smokes_outside">屋外で吸う</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="smokes_indoors">室内でも吸う</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="alcohol">飲酒</div>
+          <div class="form-chip-row" id="shg-personal-alcohol">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="often">よく飲む</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="occasionally">たまに飲む</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="do_not_drink">飲まない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="hobbies">趣味</div>
+          <div class="form-chip-row" id="shg-hobbies">
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="music">音楽</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)" data-i18n="movies">映画</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="reading">読書</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)" data-i18n="cooking">料理</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="sports">スポーツ</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="games">ゲーム</div>
+            <div class="form-chip selected" onclick="toggleMultiChip(this)" data-i18n="outdoors">アウトドア</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="art">アート</div>
+            <div class="form-chip" onclick="toggleMultiChip(this)" data-i18n="animal_lover">動物好き</div>
+            <div class="form-chip" onclick="toggleSharehouseGuestOther('hobby', this)" data-i18n="other">その他</div>
+          </div>
+          <input class="form-input" id="shg-hobby-other" type="text" data-i18n-placeholder="hobby_other_placeholder" placeholder="趣味を入力してください" style="display:none;margin-top:10px;" />
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="self_intro">一言／自己紹介</div>
+          <textarea class="form-textarea" id="shg-intro" rows="3" data-i18n-placeholder="shg_intro_placeholder" placeholder="例：きれいな共有スペースで、程よく交流できる住まいを探しています。">生活ルールを大切にしながら、程よく交流できるシェア生活をしたいです。</textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- シェアハウスゲスト Step 2: 滞在条件・自分の生活スタイル -->
+    <div class="onboard-step-panel sh-guest-onboard-panel" id="sh-onboard-panel-2" style="display:none;">
+      <div class="form-section" style="padding-top:0;">
+        <div class="form-section-title" data-i18n="housing_preferences">住まい探しの条件</div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="preferred_area">希望エリア</div>
+          <div class="form-chip-row" id="shg-area">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="vancouver">Vancouver</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="toronto">Toronto</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="move_in_period">入居時期</div>
+          <div class="form-range-row">
+            <input class="form-range-input" id="sharehouse-stay-start" type="date" value="2026-09-01" aria-label="希望入居日" />
+            <div class="form-range-sep">〜</div>
+            <input class="form-range-input" id="sharehouse-stay-end" type="date" value="2027-02-28" aria-label="希望退去日" />
+          </div>
+          <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--light);margin-top:6px;">
+            <span data-i18n="desired_move_in_date">希望入居日</span>
+            <span data-i18n="desired_move_out_date">希望退去日</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="monthly_budget_cad">月額予算（CAD）</div>
+          <input class="form-input" id="shg-budget" type="number" min="0" inputmode="numeric" value="1200" placeholder="1200" />
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="preferred_room">希望する部屋</div>
+          <div class="form-chip-row" id="shg-room">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="private_room_preferred">個室希望</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="shared_room_ok">相部屋でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="either_ok">どちらでもOK</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="furniture">家具</div>
+          <div class="form-chip-row" id="shg-furniture">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="furnished_preferred">家具付き希望</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="unfurnished_ok">家具なしでもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="either_ok">どちらでもOK</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-section">
+        <div class="form-section-title" data-i18n="my_lifestyle">自分の生活スタイル</div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="wake_time">起床時間</div>
+          <div class="form-chip-row" id="shg-wake-time">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="before_6">6時以前</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="six_to_seven">6〜7時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="seven_to_eight">7〜8時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="eight_to_nine">8〜9時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="after_9">9時以降</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="bedtime">就寝時間</div>
+          <div class="form-chip-row" id="shg-bedtime">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="before_22">22時以前</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="twenty_two_to_twenty_three">22〜23時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="twenty_three_to_twenty_four">23〜24時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="midnight_to_one">0〜1時</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="after_one">1時以降</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="time_at_home_question">普段どのくらい家にいますか？</div>
+          <div class="form-chip-row" id="shg-home-time">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="home_often_daytime">日中も家にいることが多い</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="away_daytime_school_work">学校・仕事で日中はいないことが多い</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="home_evening">夜を中心に家にいる</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="varies_by_day">日によって異なる</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="cooking_frequency_question">どのくらい料理をしますか？</div>
+          <div class="form-chip-row" id="shg-cooking-frequency">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="cook_almost_every_day">ほぼ毎日</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="cook_few_times_week">週に数回</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="cook_sometimes">たまに</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="cook_rarely">ほとんどしない</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- シェアハウス用 Step 2: 希望エリア・家賃・入居時期 -->
-    <div class="onboard-step-panel" id="sh-onboard-panel-2" style="display:none;">
-      <div class="form-section" style="padding-top:0;">
-	        <div class="form-group">
-	          <div class="form-label">希望エリア（複数可）</div>
-	          <div class="form-chip-row">
-	            <div class="form-chip selected" onclick="toggleMultiChip(this)">ボストン</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">ニューヨーク</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">シカゴ</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">バンクーバー</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
-	          </div>
-	        </div>
-	        <div class="form-group">
-	          <div class="form-label">月額予算（USD）</div>
-	          <div class="form-range-row">
-	            <input class="form-range-input" type="number" value="500" placeholder="最低金額" />
-	            <div class="form-range-sep">〜</div>
-	            <input class="form-range-input" type="number" value="1200" placeholder="最高金額" />
-	          </div>
-	        </div>
-		        <div class="form-group">
-		          <div class="form-label">滞在開始日</div>
-		          <input class="form-input" id="sharehouse-stay-start" type="date" value="2026-07-01" />
-		          <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
-		        </div>
-		        <div class="form-group">
-		          <div class="form-label">滞在終了日</div>
-		          <input class="form-input" id="sharehouse-stay-end" type="date" value="2026-09-30" />
-		          <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
-		        </div>
-      </div>
-    </div>
-
-    <!-- シェアハウス用 Step 3: 自分の生活スタイル -->
-    <div class="onboard-step-panel" id="sh-onboard-panel-3" style="display:none;">
+    <!-- シェアハウスゲスト Step 3: 理想のシェア生活 -->
+    <div class="onboard-step-panel sh-guest-onboard-panel" id="sh-onboard-panel-3" style="display:none;">
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
-          <div class="form-label">起床時間</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">6時前</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div>
-            <div class="form-chip" onclick="toggleChip(this)">8〜10時</div>
-            <div class="form-chip" onclick="toggleChip(this)">10時以降</div>
+          <div class="form-label" data-i18n="roommate_interaction_question">一緒に住む人とはどのくらい交流したいですか？</div>
+          <div class="form-chip-row" id="shg-roommate-interaction">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="mostly_independent">基本それぞれで過ごしたい</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="small_talk_when_meet">会った時に少し話すくらい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="sometimes_meals_chat">時々一緒に食事や会話をしたい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="go_out_on_days_off">休日などに一緒に出かけることもしたい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="friend_like_relation">友達のような関係になりたい</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">就寝時間</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">22時前</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">22〜24時</div>
-            <div class="form-chip" onclick="toggleChip(this)">0〜2時</div>
-            <div class="form-chip" onclick="toggleChip(this)">2時以降</div>
+          <div class="form-label" data-i18n="cleanliness_question">共用スペースをどのくらい綺麗に保ちたい？</div>
+          <div class="form-chip-row" id="shg-cleanliness">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="not_particular">あまり気にしない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="minimum_clean_ok">最低限綺麗ならOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="fairly_clean">ある程度綺麗にしたい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="always_clean">常に綺麗に保ちたい</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">在宅時間</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">ほぼ在宅</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">夜だけ</div>
-            <div class="form-chip" onclick="toggleChip(this)">週末のみ</div>
-            <div class="form-chip" onclick="toggleChip(this)">ほぼ外出</div>
+          <div class="form-label" data-i18n="cleaning_frequency_question">共用部分の掃除はどのくらいしたい？</div>
+          <div class="form-chip-row" id="shg-cleaning-frequency">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="light_daily">毎日軽く</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="few_times_week">週に数回</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="once_a_week">週1回</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="when_dirty">汚れたら</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="no_preference">特にこだわらない</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">清潔感</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">かなり気にする</div>
-            <div class="form-chip" onclick="toggleChip(this)">普通</div>
-            <div class="form-chip" onclick="toggleChip(this)">あまり気にしない</div>
+          <div class="form-label" data-i18n="house_noise_question">家の中の生活音についてどのくらい気になりますか？</div>
+          <div class="form-chip-row" id="shg-life-noise">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="must_be_quiet">静かな環境が絶対いい</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="prefer_quiet">比較的静かな方がいい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="normal_ok">普通なら問題ない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="not_bothered">あまり気にならない</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">喫煙</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">🚭 吸わない</div>
-            <div class="form-chip" onclick="toggleChip(this)">外なら吸う</div>
-            <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
+          <div class="form-label" data-i18n="roommate_smoking_question">喫煙するルームメイトとの同居は？</div>
+          <div class="form-chip-row" id="shg-roommate-smoking">
+            <div class="form-chip" onclick="toggleChip(this)">OK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="outside_only_ok">屋外のみならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">NG</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">お酒</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">よく飲む</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">たまに飲む</div>
-            <div class="form-chip" onclick="toggleChip(this)">飲まない</div>
+          <div class="form-label" data-i18n="roommate_alcohol_question">家で飲酒するルームメイトについて</div>
+          <div class="form-chip-row" id="shg-roommate-alcohol">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="do_not_mind">気にしない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="depends_on_amount">程度による</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="prefer_not">あまり好まない</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">料理頻度</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">毎日</div>
-            <div class="form-chip" onclick="toggleChip(this)">週2、3回</div>
-            <div class="form-chip" onclick="toggleChip(this)">キッチンはほぼ使わない</div>
+          <div class="form-label" data-i18n="pets">ペット</div>
+          <div class="form-chip-row" id="shg-pets">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="pets_ok">ペットOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="pets_ng">ペットNG</div>
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">MBTI（任意）</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">選択しない</div>
+          <div class="form-label" data-i18n="visitors_question">ルームメイトが友人を家に呼ぶことについて</div>
+          <div class="form-chip-row" id="shg-visitors">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="do_not_mind">気にしない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="advance_notice_ok">事前に教えてくれればOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="if_not_frequent_ok">頻繁でなければOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="prefer_few_visitors">できれば来客は少ない方がいい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="visitor_ng_preferred">来客NG希望</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="overnight_guest_question">ルームメイトのパートナーなどが泊まることについて</div>
+          <div class="form-chip-row" id="shg-overnight-guests">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="no_problem">問題ない</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="occasionally_ok">たまにならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="with_prior_discussion_ok">事前相談があればOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">NG</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="bathroom">バスルーム</div>
+          <div class="form-chip-row" id="shg-bathroom">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="private_bathroom_preferred">専用バスルーム希望</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="shared_bathroom_ok">共用でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="either_ok">どちらでもOK</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="number_of_housemates">一緒に住む人数</div>
+          <div class="form-chip-row" id="shg-housemate-count">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="share_with_one">1人とのシェア希望</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="two_to_three_people">2〜3人</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="four_or_more_ok">4人以上でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="no_preference">特に気にしない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="kitchen">キッチン</div>
+          <div class="form-chip-row" id="shg-kitchen">
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="want_free_kitchen_use">キッチンをよく使うので自由に使いたい</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="shared_kitchen_ok">共用で問題ない</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="time_rules_ok">使用時間に多少ルールがあってもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="rarely_use_kitchen">あまり使わない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="quiet_night_time">夜の静かな時間について</div>
+          <div class="form-chip-row" id="shg-quiet-hours">
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="strict_quiet_hours">厳しく守りたい</div>
+            <div class="form-chip selected" onclick="toggleChip(this)" data-i18n="reasonably_quiet_ok">ある程度静かならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="not_much_concern">あまり気にしない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label" data-i18n="mbti_optional">MBTI（任意）</div>
+          <div class="form-chip-row" id="shg-mbti">
             <div class="form-chip" onclick="toggleChip(this)">INTJ</div><div class="form-chip" onclick="toggleChip(this)">INTP</div><div class="form-chip" onclick="toggleChip(this)">ENTJ</div><div class="form-chip" onclick="toggleChip(this)">ENTP</div>
-            <div class="form-chip" onclick="toggleChip(this)">INFJ</div><div class="form-chip" onclick="toggleChip(this)">INFP</div><div class="form-chip" onclick="toggleChip(this)">ENFJ</div><div class="form-chip" onclick="toggleChip(this)">ENFP</div>
+            <div class="form-chip" onclick="toggleChip(this)">INFJ</div><div class="form-chip selected" onclick="toggleChip(this)">INFP</div><div class="form-chip" onclick="toggleChip(this)">ENFJ</div><div class="form-chip" onclick="toggleChip(this)">ENFP</div>
             <div class="form-chip" onclick="toggleChip(this)">ISTJ</div><div class="form-chip" onclick="toggleChip(this)">ISFJ</div><div class="form-chip" onclick="toggleChip(this)">ESTJ</div><div class="form-chip" onclick="toggleChip(this)">ESFJ</div>
             <div class="form-chip" onclick="toggleChip(this)">ISTP</div><div class="form-chip" onclick="toggleChip(this)">ISFP</div><div class="form-chip" onclick="toggleChip(this)">ESTP</div><div class="form-chip" onclick="toggleChip(this)">ESFP</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="unknown_not_tested">わからない / 未診断</div>
+            <div class="form-chip" onclick="toggleChip(this)" data-i18n="prefer_not_to_say">回答しない</div>
           </div>
-        </div>
-      </div>
-    </div>
-
-	    <!-- シェアハウス用 Step 4: 求めるルームメイト像 -->
-	    <div class="onboard-step-panel" id="sh-onboard-panel-4" style="display:none;">
-	      <div class="form-section" style="padding-top:0;">
-	        <div class="form-group">
-	          <div class="form-label">趣味・興味（複数可）</div>
-	          <div class="form-chip-row">
-	            <div class="form-chip" onclick="toggleMultiChip(this)">🎵 音楽</div>
-	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🎬 映画</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">📚 読書</div>
-	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🍳 料理</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">🏃 スポーツ</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">🎮 ゲーム</div>
-	            <div class="form-chip selected" onclick="toggleMultiChip(this)">🌿 アウトドア</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">🎨 アート</div>
-	            <div class="form-chip" onclick="toggleMultiChip(this)">🐾 動物好き</div>
-	          </div>
-	        </div>
-	        <div class="form-group">
-	          <div class="form-label">騒音・音楽</div>
-          <div class="form-chip-row">
-            <div class="form-chip selected" onclick="toggleChip(this)">静かにしたい</div>
-            <div class="form-chip" onclick="toggleChip(this)">適度な生活音ならOK</div>
-            <div class="form-chip" onclick="toggleChip(this)">音楽も電話も問題ない</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="form-label">来客</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">NG</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">事前相談</div>
-            <div class="form-chip" onclick="toggleChip(this)">自由</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="form-label">交流スタイル</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleChip(this)">一人で過ごしたい</div>
-            <div class="form-chip selected" onclick="toggleChip(this)">たまに交流</div>
-            <div class="form-chip" onclick="toggleChip(this)">積極的に交流</div>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="form-label">どんな人と住みたいか（一言）</div>
-          <textarea class="form-textarea" rows="3" placeholder="例：在宅ワーカーで静かに過ごせる方がいいです。料理が好きな方だと嬉しいです。"></textarea>
         </div>
       </div>
     </div>
@@ -5837,6 +5976,28 @@
     <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
       <div style="font-size:14px;font-weight:800;margin-bottom:8px;">自己紹介</div>
       <div id="applicant-detail-bio" style="font-size:14px;color:var(--mid);line-height:1.7;"></div>
+    </div>
+
+    <div id="applicant-sharehouse-guest-profile-card" style="display:none;background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px;" data-i18n="sharehouse_guest_registered_info">シェアハウス登録情報</div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;" data-i18n="basic_info">基本情報</div>
+          <div class="detail-info-grid" id="applicant-shg-basic-info"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;" data-i18n="stay_conditions">滞在条件</div>
+          <div class="detail-info-grid" id="applicant-shg-stay-conditions"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;" data-i18n="personal_lifestyle">本人の生活スタイル</div>
+          <div class="detail-info-grid" id="applicant-shg-personal-lifestyle"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:800;margin-bottom:10px;" data-i18n="ideal_shared_living">理想のシェア生活</div>
+          <div class="detail-info-grid" id="applicant-shg-ideal-share"></div>
+        </div>
+      </div>
     </div>
 
     <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
@@ -9633,6 +9794,192 @@
 	    return chip?.textContent.trim() || fallback;
 	  }
 
+	  let sharehouseGuestDemoProfile = null;
+
+	  function toggleSharehouseGuestOther(kind, el) {
+	    if (kind === 'purpose') {
+	      toggleChip(el);
+	      const field = document.getElementById('shg-purpose-other');
+	      if (field) field.style.display = el.textContent.trim() === 'その他' || el.textContent.trim() === 'Other' ? 'block' : 'none';
+	      return;
+	    }
+	    if (kind === 'hobby') {
+	      toggleMultiChip(el);
+	      const field = document.getElementById('shg-hobby-other');
+	      const selected = el.classList.contains('selected');
+	      if (field) field.style.display = selected ? 'block' : 'none';
+	    }
+	  }
+
+	  function collectSharehouseGuestProfile() {
+	    const purpose = selectedChipText('shg-purpose', '留学');
+	    const purposeOther = formValue('shg-purpose-other', '');
+	    const hobbyOther = formValue('shg-hobby-other', '');
+	    const hobbies = selectedChipTexts('#shg-hobbies').filter(v => !['その他', 'Other'].includes(v));
+	    if (hobbyOther) hobbies.push(hobbyOther);
+	    sharehouseGuestDemoProfile = {
+	      basic: {
+	        name: formValue('shg-name', '中村 さくら'),
+	        age: formValue('shg-age', '23'),
+	        nationality: formValue('shg-nationality', '日本'),
+	        gender: selectedChipText('shg-gender', '女性'),
+	        religion: selectedChipText('shg-religion', '無宗教'),
+	        languages: selectedChipTexts('#shg-languages'),
+	        englishLevel: selectedChipText('shg-english-level', '日常会話'),
+	        purpose: ['その他', 'Other'].includes(purpose) && purposeOther ? purposeOther : purpose,
+	        personalSmoking: selectedChipText('shg-personal-smoking', '吸わない'),
+	        personalAlcohol: selectedChipText('shg-personal-alcohol', 'たまに飲む'),
+	        hobbies,
+	        intro: formValue('shg-intro', '生活ルールを大切にしながら、程よく交流できるシェア生活をしたいです。')
+	      },
+	      stay: {
+	        area: selectedChipText('shg-area', 'Vancouver'),
+	        moveIn: formValue('sharehouse-stay-start', '2026-09-01'),
+	        moveOut: formValue('sharehouse-stay-end', '2027-02-28'),
+	        budget: formValue('shg-budget', '1200') + ' CAD',
+	        room: selectedChipText('shg-room', '個室希望'),
+	        furniture: selectedChipText('shg-furniture', '家具付き希望')
+	      },
+	      lifestyle: {
+	        wakeTime: selectedChipText('shg-wake-time', '6〜7時'),
+	        bedtime: selectedChipText('shg-bedtime', '22〜23時'),
+	        homeTime: selectedChipText('shg-home-time', '学校・仕事で日中はいないことが多い'),
+	        cookingFrequency: selectedChipText('shg-cooking-frequency', 'ほぼ毎日')
+	      },
+	      ideal: {
+	        roommateInteraction: selectedChipText('shg-roommate-interaction', '会った時に少し話すくらい'),
+	        cleanliness: selectedChipText('shg-cleanliness', 'ある程度綺麗にしたい'),
+	        cleaningFrequency: selectedChipText('shg-cleaning-frequency', '週1回'),
+	        lifeNoise: selectedChipText('shg-life-noise', '比較的静かな方がいい'),
+	        roommateSmoking: selectedChipText('shg-roommate-smoking', '屋外のみならOK'),
+	        roommateAlcohol: selectedChipText('shg-roommate-alcohol', '気にしない'),
+	        pets: selectedChipText('shg-pets', 'ペットOK'),
+	        visitors: selectedChipText('shg-visitors', '気にしない'),
+	        overnightGuests: selectedChipText('shg-overnight-guests', 'たまにならOK'),
+	        bathroom: selectedChipText('shg-bathroom', '共用でもOK'),
+	        housemateCount: selectedChipText('shg-housemate-count', '2〜3人'),
+	        kitchen: selectedChipText('shg-kitchen', 'キッチンをよく使うので自由に使いたい'),
+	        quietHours: selectedChipText('shg-quiet-hours', 'ある程度静かならOK'),
+	        mbti: selectedChipText('shg-mbti', 'INFP')
+	      }
+	    };
+	    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) {
+	      APPLICANTS.sakura.name = sharehouseGuestDemoProfile.basic.name;
+	      APPLICANTS.sakura.age = sharehouseGuestDemoProfile.basic.age + (String(sharehouseGuestDemoProfile.basic.age).includes('歳') ? '' : '歳');
+	      APPLICANTS.sakura.nationality = sharehouseGuestDemoProfile.basic.nationality;
+	      APPLICANTS.sakura.gender = sharehouseGuestDemoProfile.basic.gender;
+	      APPLICANTS.sakura.bio = sharehouseGuestDemoProfile.basic.intro;
+	      APPLICANTS.sakura.hobbies = sharehouseGuestDemoProfile.basic.hobbies.join('、');
+	      APPLICANTS.sakura.area = sharehouseGuestDemoProfile.stay.area;
+	      APPLICANTS.sakura.budget = sharehouseGuestDemoProfile.stay.budget;
+	      APPLICANTS.sakura.stay = `${sharehouseGuestDemoProfile.stay.moveIn}〜${sharehouseGuestDemoProfile.stay.moveOut}`;
+	      APPLICANTS.sakura.sharehouseGuestProfile = sharehouseGuestDemoProfile;
+	    }
+	    return sharehouseGuestDemoProfile;
+	  }
+
+	  function defaultSharehouseGuestProfile(applicant) {
+	    return applicant?.sharehouseGuestProfile || sharehouseGuestDemoProfile || {
+	      basic: {
+	        name: applicant?.name || '中村 さくら',
+	        age: String(applicant?.age || '23歳').replace('歳', ''),
+	        nationality: applicant?.nationality || '日本',
+	        gender: applicant?.gender || '女性',
+	        religion: applicant?.religion || '無宗教',
+	        languages: String(applicant?.languages || '英語、日本語').split(/[、,]/).map(v => v.trim()).filter(Boolean),
+	        englishLevel: applicant?.englishLevel || '日常会話',
+	        purpose: applicant?.purpose || '留学',
+	        personalSmoking: applicant?.smoking || '吸わない',
+	        personalAlcohol: applicant?.alcohol || 'たまに飲む',
+	        hobbies: String(applicant?.hobbies || '料理、映画、アウトドア').split(/[、,]/).map(v => v.trim()).filter(Boolean),
+	        intro: applicant?.note || applicant?.bio || '生活ルールを大切にしながら、程よく交流できるシェア生活をしたいです。'
+	      },
+	      stay: {
+	        area: applicant?.area || 'Vancouver',
+	        moveIn: '2026-09-01',
+	        moveOut: '2027-02-28',
+	        budget: applicant?.budget || '1200 CAD',
+	        room: '個室希望',
+	        furniture: '家具付き希望'
+	      },
+	      lifestyle: {
+	        wakeTime: applicant?.wakeTime || '6〜7時',
+	        bedtime: applicant?.bedtime || '22〜23時',
+	        homeTime: '学校・仕事で日中はいないことが多い',
+	        cookingFrequency: applicant?.cookingFrequency || 'ほぼ毎日'
+	      },
+	      ideal: {
+	        roommateInteraction: '会った時に少し話すくらい',
+	        cleanliness: 'ある程度綺麗にしたい',
+	        cleaningFrequency: '週1回',
+	        lifeNoise: applicant?.shareNoise || '比較的静かな方がいい',
+	        roommateSmoking: '屋外のみならOK',
+	        roommateAlcohol: '気にしない',
+	        pets: 'ペットOK',
+	        visitors: '気にしない',
+	        overnightGuests: 'たまにならOK',
+	        bathroom: '共用でもOK',
+	        housemateCount: '2〜3人',
+	        kitchen: 'キッチンをよく使うので自由に使いたい',
+	        quietHours: 'ある程度静かならOK',
+	        mbti: applicant?.mbti || 'INFP'
+	      }
+	    };
+	  }
+
+	  function renderSharehouseApplicantProfile(applicant) {
+	    const card = document.getElementById('applicant-sharehouse-guest-profile-card');
+	    if (!card) return;
+	    const show = isSharehouseHostEditing();
+	    card.style.display = show ? 'block' : 'none';
+	    if (!show) return;
+	    const profile = defaultSharehouseGuestProfile(applicant);
+	    renderDetailInfoGrid('applicant-shg-basic-info', [
+	      { label: '名前', value: profile.basic.name },
+	      { label: '年齢', value: profile.basic.age },
+	      { label: '国籍', value: profile.basic.nationality },
+	      { label: '性別', value: profile.basic.gender },
+	      { label: '宗教', value: profile.basic.religion },
+	      { label: '使用言語', value: profile.basic.languages },
+	      { label: '英語レベル', value: profile.basic.englishLevel },
+	      { label: '渡航・滞在目的', value: profile.basic.purpose },
+	      { label: '喫煙', value: profile.basic.personalSmoking },
+	      { label: '飲酒', value: profile.basic.personalAlcohol },
+	      { label: '趣味', value: profile.basic.hobbies },
+	      { label: '一言／自己紹介', value: profile.basic.intro }
+	    ]);
+	    renderDetailInfoGrid('applicant-shg-stay-conditions', [
+	      { label: '希望エリア', value: profile.stay.area },
+	      { label: '希望入居日', value: profile.stay.moveIn },
+	      { label: '希望退去日', value: profile.stay.moveOut },
+	      { label: '月額予算（CAD）', value: profile.stay.budget },
+	      { label: '希望する部屋', value: profile.stay.room },
+	      { label: '家具', value: profile.stay.furniture }
+	    ]);
+	    renderDetailInfoGrid('applicant-shg-personal-lifestyle', [
+	      { label: '起床時間', value: profile.lifestyle.wakeTime },
+	      { label: '就寝時間', value: profile.lifestyle.bedtime },
+	      { label: '普段どのくらい家にいますか？', value: profile.lifestyle.homeTime },
+	      { label: 'どのくらい料理をしますか？', value: profile.lifestyle.cookingFrequency }
+	    ]);
+	    renderDetailInfoGrid('applicant-shg-ideal-share', [
+	      { label: '一緒に住む人とはどのくらい交流したいですか？', value: profile.ideal.roommateInteraction },
+	      { label: '共用スペースをどのくらい綺麗に保ちたい？', value: profile.ideal.cleanliness },
+	      { label: '共用部分の掃除はどのくらいしたい？', value: profile.ideal.cleaningFrequency },
+	      { label: '家の中の生活音についてどのくらい気になりますか？', value: profile.ideal.lifeNoise },
+	      { label: '喫煙するルームメイトとの同居は？', value: profile.ideal.roommateSmoking },
+	      { label: '家で飲酒するルームメイトについて', value: profile.ideal.roommateAlcohol },
+	      { label: 'ペット', value: profile.ideal.pets },
+	      { label: 'ルームメイトが友人を家に呼ぶことについて', value: profile.ideal.visitors },
+	      { label: 'ルームメイトのパートナーなどが泊まることについて', value: profile.ideal.overnightGuests },
+	      { label: 'バスルーム', value: profile.ideal.bathroom },
+	      { label: '一緒に住む人数', value: profile.ideal.housemateCount },
+	      { label: 'キッチン', value: profile.ideal.kitchen },
+	      { label: '夜の静かな時間について', value: profile.ideal.quietHours },
+	      { label: 'MBTI', value: profile.ideal.mbti }
+	    ]);
+	  }
+
 	  function renderRuleRow(rule) {
 	    const cls = rule.warn ? 'rule-warn' : rule.ok ? 'rule-ok' : 'rule-ng';
 	    const mark = rule.warn ? '!' : rule.ok ? '✓' : '✕';
@@ -10066,20 +10413,18 @@
 	  /* ===== ONBOARDING ===== */
 	  let onboardStep = 1;
 	  const homestayOnboardTotal = 3;
-	  const sharehouseOnboardTotal = 4;
+	  const sharehouseOnboardTotal = 3;
 
 	  function renderOnboardStep() {
 	    const type = window._serviceType || 'homestay';
 	    const onboardTotal = type === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
-	    const profileTitle = type === 'sharehouse'
-	      ? (currentLang === 'ja' ? 'プロフィール情報' : 'Profile Information')
-	      : t('hs_onboard_title_about_you');
-	    const profileSub = currentLang === 'ja' ? 'ホストに見える基本プロフィールを入力してください' : 'Enter the basic profile hosts will see';
+	    const profileTitle = type === 'sharehouse' ? t('shg_onboard_title_self') : t('hs_onboard_title_about_you');
+	    const profileSub = type === 'sharehouse' ? '' : (currentLang === 'ja' ? 'ホストに見える基本プロフィールを入力してください' : 'Enter the basic profile hosts will see');
 	    const titles = type === 'sharehouse'
-	      ? [profileTitle, t('sh_onboard_title_1'), t('onboard_title_lifestyle'), t('sh_onboard_title_3')]
+	      ? [profileTitle, t('shg_onboard_title_stay_lifestyle'), t('shg_onboard_title_ideal_share')]
 	      : [profileTitle, t('hs_onboard_title_stay_lifestyle'), t('hs_onboard_title_ideal_homestay')];
 	    const subs = type === 'sharehouse'
-	      ? [profileSub, t('sh_onboard_sub_1'), t('sh_onboard_sub_2'), t('onboard_sub_ai')]
+	      ? ['', '', '']
 	      : [profileSub, t('hs_onboard_sub_preferences'), t('hs_onboard_sub_about_me')];
 
     document.getElementById('onboard-step-label').textContent = `STEP ${onboardStep} / ${onboardTotal}`;
@@ -10112,6 +10457,7 @@
       onboardStep++;
       renderOnboardStep();
     } else {
+      if ((window._serviceType || 'homestay') === 'sharehouse') collectSharehouseGuestProfile();
       navigate('onboarding', 'matching');
       startMatching();
     }
@@ -10543,7 +10889,169 @@
     hs_onboard_sub_preferences:'住まいの希望条件と基本的な生活スタイルを入力してください',
     hs_onboard_sub_about_me:'ホストとの暮らし方に関する希望を選んでください',
     other_hobby_placeholder:'趣味を入力してください',
-    guest_about_placeholder:'例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！'
+    guest_about_placeholder:'例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！',
+    shg_onboard_title_self:'自分の情報',
+    shg_onboard_title_stay_lifestyle:'滞在条件・自分の生活スタイル',
+    shg_onboard_title_ideal_share:'理想のシェア生活',
+    basic_info:'基本情報',
+    name_plain:'名前',
+    profile_photo:'プロフィール写真',
+    upload_profile_photo:'プロフィール写真をアップロード',
+    demo_image_upload:'画像保存は行わないデモUIです',
+    age:'年齢',
+    nationality:'国籍',
+    gender:'性別',
+    female:'女性',
+    male:'男性',
+    do_not_select:'選択しない',
+    prefer_not_to_say:'回答しない',
+    religion:'宗教',
+    buddhism:'仏教',
+    christianity:'キリスト教',
+    islam:'イスラム教',
+    hinduism:'ヒンドゥー教',
+    judaism:'ユダヤ教',
+    no_religion:'無宗教',
+    languages_spoken:'使用言語',
+    english:'英語',
+    japanese:'日本語',
+    chinese:'中国語',
+    korean:'韓国語',
+    spanish:'スペイン語',
+    french:'フランス語',
+    italian:'イタリア語',
+    german:'ドイツ語',
+    english_level:'英語レベル',
+    beginner:'初心者',
+    conversational:'日常会話',
+    business_level:'ビジネスレベル',
+    native_level:'ネイティブレベル',
+    travel_stay_purpose:'渡航・滞在目的',
+    study_abroad:'留学',
+    working_holiday:'ワーホリ',
+    employment:'就職',
+    purpose_other_placeholder:'目的を入力してください',
+    smoking:'喫煙',
+    does_not_smoke:'吸わない',
+    smokes_outside:'屋外で吸う',
+    smokes_indoors:'室内でも吸う',
+    alcohol:'飲酒',
+    often:'よく飲む',
+    occasionally:'たまに飲む',
+    do_not_drink:'飲まない',
+    hobbies:'趣味',
+    music:'音楽',
+    movies:'映画',
+    reading:'読書',
+    cooking:'料理',
+    sports:'スポーツ',
+    games:'ゲーム',
+    outdoors:'アウトドア',
+    art:'アート',
+    animal_lover:'動物好き',
+    hobby_other_placeholder:'趣味を入力してください',
+    self_intro:'一言／自己紹介',
+    shg_intro_placeholder:'例：きれいな共有スペースで、程よく交流できる住まいを探しています。',
+    housing_preferences:'住まい探しの条件',
+    preferred_area:'希望エリア',
+    vancouver:'Vancouver',
+    toronto:'Toronto',
+    move_in_period:'入居時期',
+    desired_move_in_date:'希望入居日',
+    desired_move_out_date:'希望退去日',
+    monthly_budget_cad:'月額予算（CAD）',
+    preferred_room:'希望する部屋',
+    private_room_preferred:'個室希望',
+    shared_room_ok:'相部屋でもOK',
+    either_ok:'どちらでもOK',
+    furniture:'家具',
+    furnished_preferred:'家具付き希望',
+    unfurnished_ok:'家具なしでもOK',
+    my_lifestyle:'自分の生活スタイル',
+    before_6:'6時以前',
+    six_to_seven:'6〜7時',
+    seven_to_eight:'7〜8時',
+    eight_to_nine:'8〜9時',
+    after_9:'9時以降',
+    bedtime:'就寝時間',
+    before_22:'22時以前',
+    twenty_two_to_twenty_three:'22〜23時',
+    twenty_three_to_twenty_four:'23〜24時',
+    midnight_to_one:'0〜1時',
+    after_one:'1時以降',
+    time_at_home_question:'普段どのくらい家にいますか？',
+    home_often_daytime:'日中も家にいることが多い',
+    away_daytime_school_work:'学校・仕事で日中はいないことが多い',
+    home_evening:'夜を中心に家にいる',
+    varies_by_day:'日によって異なる',
+    cooking_frequency_question:'どのくらい料理をしますか？',
+    cook_almost_every_day:'ほぼ毎日',
+    cook_few_times_week:'週に数回',
+    cook_sometimes:'たまに',
+    cook_rarely:'ほとんどしない',
+    roommate_interaction_question:'一緒に住む人とはどのくらい交流したいですか？',
+    mostly_independent:'基本それぞれで過ごしたい',
+    small_talk_when_meet:'会った時に少し話すくらい',
+    sometimes_meals_chat:'時々一緒に食事や会話をしたい',
+    go_out_on_days_off:'休日などに一緒に出かけることもしたい',
+    friend_like_relation:'友達のような関係になりたい',
+    cleanliness_question:'共用スペースをどのくらい綺麗に保ちたい？',
+    not_particular:'あまり気にしない',
+    minimum_clean_ok:'最低限綺麗ならOK',
+    fairly_clean:'ある程度綺麗にしたい',
+    always_clean:'常に綺麗に保ちたい',
+    cleaning_frequency_question:'共用部分の掃除はどのくらいしたい？',
+    light_daily:'毎日軽く',
+    few_times_week:'週に数回',
+    once_a_week:'週1回',
+    when_dirty:'汚れたら',
+    no_preference:'特にこだわらない',
+    house_noise_question:'家の中の生活音についてどのくらい気になりますか？',
+    must_be_quiet:'静かな環境が絶対いい',
+    prefer_quiet:'比較的静かな方がいい',
+    normal_ok:'普通なら問題ない',
+    not_bothered:'あまり気にならない',
+    roommate_smoking_question:'喫煙するルームメイトとの同居は？',
+    outside_only_ok:'屋外のみならOK',
+    roommate_alcohol_question:'家で飲酒するルームメイトについて',
+    do_not_mind:'気にしない',
+    depends_on_amount:'程度による',
+    prefer_not:'あまり好まない',
+    pets:'ペット',
+    pets_ok:'ペットOK',
+    pets_ng:'ペットNG',
+    visitors_question:'ルームメイトが友人を家に呼ぶことについて',
+    advance_notice_ok:'事前に教えてくれればOK',
+    if_not_frequent_ok:'頻繁でなければOK',
+    prefer_few_visitors:'できれば来客は少ない方がいい',
+    visitor_ng_preferred:'来客NG希望',
+    overnight_guest_question:'ルームメイトのパートナーなどが泊まることについて',
+    no_problem:'問題ない',
+    occasionally_ok:'たまにならOK',
+    with_prior_discussion_ok:'事前相談があればOK',
+    bathroom:'バスルーム',
+    private_bathroom_preferred:'専用バスルーム希望',
+    shared_bathroom_ok:'共用でもOK',
+    number_of_housemates:'一緒に住む人数',
+    share_with_one:'1人とのシェア希望',
+    two_to_three_people:'2〜3人',
+    four_or_more_ok:'4人以上でもOK',
+    kitchen:'キッチン',
+    want_free_kitchen_use:'キッチンをよく使うので自由に使いたい',
+    shared_kitchen_ok:'共用で問題ない',
+    time_rules_ok:'使用時間に多少ルールがあってもOK',
+    rarely_use_kitchen:'あまり使わない',
+    quiet_hours_question:'夜間の静かな時間について',
+    quiet_night_time:'夜の静かな時間について',
+    strict_quiet_hours:'厳しく守りたい',
+    reasonably_quiet_ok:'ある程度静かならOK',
+    not_much_concern:'あまり気にしない',
+    mbti_optional:'MBTI（任意）',
+    unknown_not_tested:'わからない / 未診断',
+    sharehouse_guest_registered_info:'シェアハウス登録情報',
+    stay_conditions:'滞在条件',
+    personal_lifestyle:'本人の生活スタイル',
+    ideal_shared_living:'理想のシェア生活'
   });
   Object.assign(i18n.en, {
     login_tagline:'Find people and homes<br>that fit your conditions',
@@ -10706,7 +11214,169 @@
     hs_onboard_sub_preferences:'Enter your housing preferences and basic lifestyle',
     hs_onboard_sub_about_me:'Choose how you would like to live with your host family',
     other_hobby_placeholder:'Enter your hobby',
-    guest_about_placeholder:'Example: I am a student from Japan. I enjoy cooking and would like to share meals with my host family.'
+    guest_about_placeholder:'Example: I am a student from Japan. I enjoy cooking and would like to share meals with my host family.',
+    shg_onboard_title_self:'My Information',
+    shg_onboard_title_stay_lifestyle:'Stay Conditions & My Lifestyle',
+    shg_onboard_title_ideal_share:'Ideal Shared Living',
+    basic_info:'Basic Information',
+    name_plain:'Name',
+    profile_photo:'Profile Photo',
+    upload_profile_photo:'Upload Profile Photo',
+    demo_image_upload:'Demo upload UI only. Images are not saved.',
+    age:'Age',
+    nationality:'Nationality',
+    gender:'Gender',
+    female:'Female',
+    male:'Male',
+    do_not_select:'Prefer not to say',
+    prefer_not_to_say:'Prefer not to say',
+    religion:'Religion',
+    buddhism:'Buddhism',
+    christianity:'Christianity',
+    islam:'Islam',
+    hinduism:'Hinduism',
+    judaism:'Judaism',
+    no_religion:'No religion',
+    languages_spoken:'Languages Spoken',
+    english:'English',
+    japanese:'Japanese',
+    chinese:'Chinese',
+    korean:'Korean',
+    spanish:'Spanish',
+    french:'French',
+    italian:'Italian',
+    german:'German',
+    english_level:'English Level',
+    beginner:'Beginner',
+    conversational:'Conversational',
+    business_level:'Business level',
+    native_level:'Native level',
+    travel_stay_purpose:'Purpose of Travel / Stay',
+    study_abroad:'Study abroad',
+    working_holiday:'Working holiday',
+    employment:'Employment',
+    purpose_other_placeholder:'Enter your purpose',
+    smoking:'Smoking',
+    does_not_smoke:'Does not smoke',
+    smokes_outside:'Smokes outside',
+    smokes_indoors:'Smokes indoors',
+    alcohol:'Alcohol',
+    often:'Often',
+    occasionally:'Occasionally',
+    do_not_drink:"I don't drink",
+    hobbies:'Hobbies',
+    music:'Music',
+    movies:'Movies',
+    reading:'Reading',
+    cooking:'Cooking',
+    sports:'Sports',
+    games:'Games',
+    outdoors:'Outdoors',
+    art:'Art',
+    animal_lover:'Animal lover',
+    hobby_other_placeholder:'Enter your hobby',
+    self_intro:'Short Introduction',
+    shg_intro_placeholder:'Example: I am looking for a place with clean shared spaces and a comfortable amount of interaction.',
+    housing_preferences:'Housing Preferences',
+    preferred_area:'Preferred Area',
+    vancouver:'Vancouver',
+    toronto:'Toronto',
+    move_in_period:'Move-in Period',
+    desired_move_in_date:'Desired Move-in Date',
+    desired_move_out_date:'Desired Move-out Date',
+    monthly_budget_cad:'Monthly Budget (CAD)',
+    preferred_room:'Preferred Room',
+    private_room_preferred:'Private room preferred',
+    shared_room_ok:'Shared room is OK',
+    either_ok:'Either is OK',
+    furniture:'Furniture',
+    furnished_preferred:'Furnished preferred',
+    unfurnished_ok:'Unfurnished is OK',
+    my_lifestyle:'My Lifestyle',
+    before_6:'Before 6 AM',
+    six_to_seven:'6–7 AM',
+    seven_to_eight:'7–8 AM',
+    eight_to_nine:'8–9 AM',
+    after_9:'After 9 AM',
+    bedtime:'Bedtime',
+    before_22:'Before 10 PM',
+    twenty_two_to_twenty_three:'10–11 PM',
+    twenty_three_to_twenty_four:'11 PM–12 AM',
+    midnight_to_one:'12–1 AM',
+    after_one:'After 1 AM',
+    time_at_home_question:'How much time do you usually spend at home?',
+    home_often_daytime:'Often at home during the day',
+    away_daytime_school_work:'Usually away during the day for school or work',
+    home_evening:'Mostly at home in the evening',
+    varies_by_day:'It varies by day',
+    cooking_frequency_question:'How often do you cook?',
+    cook_almost_every_day:'Almost every day',
+    cook_few_times_week:'A few times a week',
+    cook_sometimes:'Sometimes',
+    cook_rarely:'Rarely',
+    roommate_interaction_question:'How much would you like to interact with the people you live with?',
+    mostly_independent:'I prefer to mostly spend time independently',
+    small_talk_when_meet:'Just a little small talk when we see each other',
+    sometimes_meals_chat:'Sometimes share meals or conversations',
+    go_out_on_days_off:'Sometimes go out together on days off',
+    friend_like_relation:'I would like to become friends',
+    cleanliness_question:'How clean would you like to keep shared spaces?',
+    not_particular:'I am not very particular',
+    minimum_clean_ok:'Basic cleanliness is OK',
+    fairly_clean:'I would like it to be fairly clean',
+    always_clean:'I want it to always be clean',
+    cleaning_frequency_question:'How often would you like to clean shared areas?',
+    light_daily:'Light cleaning every day',
+    few_times_week:'A few times a week',
+    once_a_week:'Once a week',
+    when_dirty:'When it gets dirty',
+    no_preference:'No strong preference',
+    house_noise_question:'How sensitive are you to daily noise at home?',
+    must_be_quiet:'A quiet environment is essential',
+    prefer_quiet:'I prefer a relatively quiet place',
+    normal_ok:'Normal daily noise is fine',
+    not_bothered:'It does not bother me much',
+    roommate_smoking_question:'How do you feel about living with a roommate who smokes?',
+    outside_only_ok:'OK if they smoke outside only',
+    roommate_alcohol_question:'About roommates drinking alcohol at home',
+    do_not_mind:'I do not mind',
+    depends_on_amount:'It depends on the amount',
+    prefer_not:'I would prefer not',
+    pets:'Pets',
+    pets_ok:'Pets OK',
+    pets_ng:'No pets preferred',
+    visitors_question:'About roommates inviting friends home',
+    advance_notice_ok:'OK if they tell me in advance',
+    if_not_frequent_ok:'OK if it is not frequent',
+    prefer_few_visitors:'I prefer fewer visitors',
+    visitor_ng_preferred:'I prefer no visitors',
+    overnight_guest_question:'About a roommate’s partner or guests staying overnight',
+    no_problem:'No problem',
+    occasionally_ok:'Occasionally is OK',
+    with_prior_discussion_ok:'OK with prior discussion',
+    bathroom:'Bathroom',
+    private_bathroom_preferred:'Private bathroom preferred',
+    shared_bathroom_ok:'Shared bathroom is OK',
+    number_of_housemates:'Number of Housemates',
+    share_with_one:'Prefer sharing with one person',
+    two_to_three_people:'2–3 people',
+    four_or_more_ok:'4 or more is OK',
+    kitchen:'Kitchen',
+    want_free_kitchen_use:'I cook often and want to use the kitchen freely',
+    shared_kitchen_ok:'Shared use is fine',
+    time_rules_ok:'Some time rules are OK',
+    rarely_use_kitchen:'I rarely use the kitchen',
+    quiet_hours_question:'About quiet hours at night',
+    quiet_night_time:'Quiet Time at Night',
+    strict_quiet_hours:'I want to follow them strictly',
+    reasonably_quiet_ok:'Reasonably quiet is OK',
+    not_much_concern:'I am not very concerned',
+    mbti_optional:'MBTI (optional)',
+    unknown_not_tested:'I do not know / Not tested',
+    sharehouse_guest_registered_info:'Share House Registration Information',
+    stay_conditions:'Stay Conditions',
+    personal_lifestyle:'Personal Lifestyle',
+    ideal_shared_living:'Ideal Shared Living'
   });
   const autoTextTranslations = {
     '検索を開始':'Start Search',
@@ -11978,6 +12648,109 @@
     '子供の情報':'Children Information',
     '＋ 家族を追加':'Add Family Member',
     '＋ 留学生を追加':'Add International Student',
+    '自分の情報':'My Information',
+    '滞在条件・自分の生活スタイル':'Stay Conditions & My Lifestyle',
+    '理想のシェア生活':'Ideal Shared Living',
+    'シェアハウス登録情報':'Share House Registration Information',
+    '基本情報':'Basic Information',
+    '滞在条件':'Stay Conditions',
+    '本人の生活スタイル':'Personal Lifestyle',
+    '理想のシェア生活':'Ideal Shared Living',
+    'プロフィール写真':'Profile Photo',
+    'プロフィール写真をアップロード':'Upload Profile Photo',
+    '画像保存は行わないデモUIです':'Demo upload UI only. Images are not saved.',
+    '渡航・滞在目的':'Purpose of Travel / Stay',
+    '留学':'Study abroad',
+    'ワーホリ':'Working holiday',
+    '就職':'Employment',
+    '飲酒':'Alcohol',
+    'よく飲む':'Often',
+    'たまに飲む':'Occasionally',
+    '飲まない':"I don't drink",
+    '一言／自己紹介':'Short Introduction',
+    '住まい探しの条件':'Housing Preferences',
+    '入居時期':'Move-in Period',
+    '希望入居日':'Desired Move-in Date',
+    '希望退去日':'Desired Move-out Date',
+    '希望する部屋':'Preferred Room',
+    '個室希望':'Private room preferred',
+    '相部屋でもOK':'Shared room is OK',
+    'どちらでもOK':'Either is OK',
+    '家具付き希望':'Furnished preferred',
+    '家具なしでもOK':'Unfurnished is OK',
+    '自分の生活スタイル':'My Lifestyle',
+    '6時以前':'Before 6 AM',
+    '6〜7時':'6–7 AM',
+    '7〜8時':'7–8 AM',
+    '8〜9時':'8–9 AM',
+    '9時以降':'After 9 AM',
+    '22時以前':'Before 10 PM',
+    '22〜23時':'10–11 PM',
+    '23〜24時':'11 PM–12 AM',
+    '0〜1時':'12–1 AM',
+    '1時以降':'After 1 AM',
+    '普段どのくらい家にいますか？':'How much time do you usually spend at home?',
+    '日中も家にいることが多い':'Often at home during the day',
+    '学校・仕事で日中はいないことが多い':'Usually away during the day for school or work',
+    '夜を中心に家にいる':'Mostly at home in the evening',
+    '日によって異なる':'It varies by day',
+    'どのくらい料理をしますか？':'How often do you cook?',
+    'ほぼ毎日':'Almost every day',
+    '週に数回':'A few times a week',
+    'たまに':'Sometimes',
+    'ほとんどしない':'Rarely',
+    '一緒に住む人とはどのくらい交流したいですか？':'How much would you like to interact with the people you live with?',
+    '基本それぞれで過ごしたい':'I prefer to mostly spend time independently',
+    '会った時に少し話すくらい':'Just a little small talk when we see each other',
+    '時々一緒に食事や会話をしたい':'Sometimes share meals or conversations',
+    '休日などに一緒に出かけることもしたい':'Sometimes go out together on days off',
+    '友達のような関係になりたい':'I would like to become friends',
+    '共用スペースをどのくらい綺麗に保ちたい？':'How clean would you like to keep shared spaces?',
+    'あまり気にしない':'I am not very particular',
+    '最低限綺麗ならOK':'Basic cleanliness is OK',
+    'ある程度綺麗にしたい':'I would like it to be fairly clean',
+    '常に綺麗に保ちたい':'I want it to always be clean',
+    '共用部分の掃除はどのくらいしたい？':'How often would you like to clean shared areas?',
+    '毎日軽く':'Light cleaning every day',
+    '汚れたら':'When it gets dirty',
+    '特にこだわらない':'No strong preference',
+    '家の中の生活音についてどのくらい気になりますか？':'How sensitive are you to daily noise at home?',
+    '静かな環境が絶対いい':'A quiet environment is essential',
+    '比較的静かな方がいい':'I prefer a relatively quiet place',
+    '普通なら問題ない':'Normal daily noise is fine',
+    'あまり気にならない':'It does not bother me much',
+    '喫煙するルームメイトとの同居は？':'How do you feel about living with a roommate who smokes?',
+    '屋外のみならOK':'OK if they smoke outside only',
+    '家で飲酒するルームメイトについて':'About roommates drinking alcohol at home',
+    '気にしない':'I do not mind',
+    '程度による':'It depends on the amount',
+    'あまり好まない':'I would prefer not',
+    'ペットOK':'Pets OK',
+    'ペットNG':'No pets preferred',
+    'ルームメイトが友人を家に呼ぶことについて':'About roommates inviting friends home',
+    '事前に教えてくれればOK':'OK if they tell me in advance',
+    '頻繁でなければOK':'OK if it is not frequent',
+    'できれば来客は少ない方がいい':'I prefer fewer visitors',
+    '来客NG希望':'I prefer no visitors',
+    'ルームメイトのパートナーなどが泊まることについて':'About a roommate’s partner or guests staying overnight',
+    '問題ない':'No problem',
+    'たまにならOK':'Occasionally is OK',
+    '事前相談があればOK':'OK with prior discussion',
+    '専用バスルーム希望':'Private bathroom preferred',
+    '共用でもOK':'Shared bathroom is OK',
+    '一緒に住む人数':'Number of Housemates',
+    '1人とのシェア希望':'Prefer sharing with one person',
+    '2〜3人':'2–3 people',
+    '4人以上でもOK':'4 or more is OK',
+    'キッチンをよく使うので自由に使いたい':'I cook often and want to use the kitchen freely',
+    '共用で問題ない':'Shared use is fine',
+    '使用時間に多少ルールがあってもOK':'Some time rules are OK',
+    'あまり使わない':'I rarely use the kitchen',
+    '夜間の静かな時間について':'About quiet hours at night',
+    '夜の静かな時間について':'Quiet Time at Night',
+    '厳しく守りたい':'I want to follow them strictly',
+    'ある程度静かならOK':'Reasonably quiet is OK',
+    'わからない / 未診断':'I do not know / Not tested',
     '追加する':'Add',
     'キャンセル':'Cancel',
     '同居メンバーはまだ追加されていません':'No household members have been added yet',
@@ -12854,7 +13627,8 @@
     document.getElementById('applicant-detail-family-type').textContent = localizeText(applicant.familyType || 'こだわらない');
     const shCard = document.getElementById('applicant-sharehouse-lifestyle-card');
     const showSharehouseCard = isSharehouseHostEditing();
-    if (shCard) shCard.style.display = showSharehouseCard ? 'block' : 'none';
+    renderSharehouseApplicantProfile(applicant);
+    if (shCard) shCard.style.display = 'none';
     if (showSharehouseCard) {
       document.getElementById('applicant-detail-sh-noise').textContent = localizeText(applicant.shareNoise || '静かにしたい');
       document.getElementById('applicant-detail-sh-cooking').textContent = localizeText(applicant.cookingFrequency || '未設定');
