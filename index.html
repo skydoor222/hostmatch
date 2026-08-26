@@ -2230,9 +2230,16 @@
 
     #screen-profile .mypage-sub-body,
     #screen-lifestyle .mypage-sub-body,
-    #screen-host-profile .mypage-sub-body,
-    #screen-host-applicant-detail .mypage-sub-body {
+    #screen-host-profile .mypage-sub-body {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #screen-host-applicant-detail .mypage-sub-body {
+      display: flex !important;
+      flex-direction: column;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
     }
 
     #screen-support .mypage-sub-body,
@@ -4983,61 +4990,48 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:12px;">
-	      <div class="detail-section-title">👤 基本プロフィール</div>
-	      <div id="sharehouse-basic-profile" style="display:flex;flex-direction:column;gap:10px;"></div>
-	    </div>
-
-	    <div class="detail-section" style="padding-top:12px;">
 	      <div class="detail-section-title" data-i18n="condition_comparison">条件比較</div>
 	      <div id="sharehouse-guest-preferences" style="display:flex;flex-direction:column;gap:10px;"></div>
 	    </div>
 
-	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">🏠 滞在条件</div>
-	      <div id="sharehouse-stay-profile" style="display:flex;flex-direction:column;gap:10px;"></div>
-	    </div>
-
-	    <div class="divider"></div>
-
-	    <div class="detail-section">
-	      <div class="detail-section-title">🌙 生活スタイル</div>
-	      <div class="ls-grid" id="sharehouse-ls-grid"></div>
-	    </div>
-
-	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">💎 理想のシェア生活</div>
-	      <div class="ls-grid" id="sharehouse-values-grid"></div>
+	    <div class="detail-section" style="padding-top:12px;">
+	      <div class="detail-section-title">👤 基本プロフィール</div>
+	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-basic-profile"></div></div>
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
 	      <div class="detail-section-title" id="sharehouse-members-title">👥 入居者メンバー</div>
-	      <div id="sharehouse-roommates" style="display:flex;flex-direction:column;gap:10px;"></div>
+	      <div class="detail-member-list" id="sharehouse-roommates"></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">🌙 生活スタイル</div>
+	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-ls-grid"></div></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">💎 シェア生活</div>
+	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-values-grid"></div></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">🏠 家・入居情報</div>
+	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-stay-profile"></div></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">🧺 設備</div>
+	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-room-info"></div></div>
+	    </div>
+
+	    <div class="detail-section" style="padding-top:0;">
+	      <div class="detail-section-title">📋 ハウスルール</div>
+	      <div class="rule-list" id="sharehouse-rules"></div>
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
 	      <div class="detail-section-title" style="font-size:13px;color:var(--light);font-weight:600;">💬 レビュー</div>
 	      <div class="ls-review-list" id="sharehouse-reviews"></div>
-	    </div>
-
-	    <div class="divider"></div>
-
-	    <div class="detail-section">
-	      <div class="detail-section-title">📋 ハウスルール</div>
-	      <div class="rule-list" id="sharehouse-rules"></div>
-	    </div>
-
-	    <div class="divider"></div>
-
-	    <div class="detail-section">
-	      <div class="detail-section-title">🏠 部屋情報</div>
-	      <div class="info-grid" id="sharehouse-room-info"></div>
-	    </div>
-
-	    <div class="divider"></div>
-
-	    <div class="detail-section" style="padding-bottom:16px;">
-	      <div class="detail-section-title">💰 料金</div>
-	      <div class="price-box" id="sharehouse-price-box"></div>
 	    </div>
 
 	    <div class="divider"></div>
@@ -8160,9 +8154,7 @@
 	      if (shMeta) shMeta.textContent = `📍 ${localizeText(profile.stay.area)} · ${localizeText('月額料金')} ${localizeText(profile.stay.budget)} · ${localizeText(profile.stay.room)}`;
 	      if (shRating) shRating.innerHTML = `${reviewScore} <span>(${currentLang === 'ja' ? '24件のレビュー' : '24 reviews'})</span>`;
 		      availabilityCalendarState.sharehouse = { offset: 0, range: profile.available };
-		      const basicContainer = document.getElementById('sharehouse-basic-profile');
-		      const stayContainer = document.getElementById('sharehouse-stay-profile');
-		      if (basicContainer) basicContainer.innerHTML = preferenceCard('基本プロフィール', [
+		      renderDetailInfoGrid('sharehouse-basic-profile', [
 		        { label: '名前', value: profile.basic.name },
 		        { label: '年齢', value: profile.basic.age },
 		        { label: '国籍', value: profile.basic.nationality },
@@ -8170,7 +8162,11 @@
 		        { label: '宗教', value: profile.basic.religion },
 		        { label: '使用言語', value: profile.basic.languages },
 		        { label: '英語レベル', value: profile.basic.englishLevel },
-		        { label: '渡航・滞在目的', value: profile.basic.purpose }
+		        { label: '現在の立場', value: profile.basic.position || profile.basic.purpose },
+		        { label: '喫煙', value: profile.basic.personalSmoking },
+		        { label: '飲酒', value: profile.basic.personalAlcohol },
+		        { label: '趣味', value: profile.basic.hobbies },
+		        { label: '一言／自己紹介', value: profile.basic.intro }
 		      ]);
 		      container.innerHTML = [
 		        conditionComparisonCard(profile.match || 84, [
@@ -8184,50 +8180,45 @@
 		          ['△', '生活音の希望が近い', 'warn']
 		        ])
 		      ].join('');
-		      if (stayContainer) stayContainer.innerHTML = [
-		        preferenceCard('滞在条件', [
-		          { label: '希望エリア', value: profile.stay.area },
-		          { label: '希望入居日', value: profile.stay.moveIn },
-		          { label: '希望退去日', value: profile.stay.moveOut },
-		          { label: '月額予算（CAD）', value: profile.stay.budget },
-		          { label: '希望する部屋', value: profile.stay.room },
-		          { label: '家具', value: profile.stay.furniture }
-		        ]),
-		        availabilityCalendar(profile.available, 'sharehouse')
-		      ].join('');
+		      renderDetailInfoGrid('sharehouse-stay-profile', [
+		        { label: 'エリア', value: profile.stay.area },
+		        { label: '入居可能期間', value: formatDateRange({ start: profile.available?.start || profile.stay.moveIn, end: profile.available?.end || profile.stay.moveOut }) },
+		        { label: '最短滞在期間', value: profile.stay.minStay || '1ヶ月' },
+		        { label: '最長滞在期間', value: profile.stay.maxStay || '12ヶ月' },
+		        { label: '長期滞在', value: profile.stay.longTerm || '可能' },
+		        { label: '月額料金', value: `${localizeText(profile.stay.budget)}${currentLang === 'ja' ? ' / 月' : ' / mo'}` },
+		        { label: '部屋タイプ', value: profile.stay.room },
+		        { label: '家具', value: profile.stay.furniture },
+		        { label: '階', value: profile.stay.floor || '2階' },
+		        { label: 'バスルーム', value: profile.ideal.bathroom || '共用でもOK' },
+		        { label: 'キッチン利用', value: profile.stay.kitchenRule || profile.ideal.kitchen || '共用' }
+		      ]);
 		      const lifestyle = profile.lifestyle || {};
 		      const ideal = profile.ideal || {};
 		      const lsGrid = document.getElementById('sharehouse-ls-grid');
 		      if (lsGrid) {
-		        lsGrid.innerHTML = [
-		          { icon: '⏰', label: '起床時間', value: lifestyle.wakeTime || '未設定' },
-		          { icon: '🌙', label: '就寝時間', value: lifestyle.bedtime || '未設定' },
-		          { icon: '🏠', label: '普段どのくらい家にいますか？', value: lifestyle.homeTime || '未設定' },
-		          { icon: '🍳', label: 'どのくらい料理をしますか？', value: lifestyle.cookingFrequency || '未設定' },
-		          { icon: '🚭', label: '喫煙', value: profile.basic.personalSmoking || '未設定' },
-		          { icon: '🍷', label: '飲酒', value: profile.basic.personalAlcohol || '未設定' },
-		          { icon: '🎨', label: '趣味', value: profile.basic.hobbies || '未設定' },
-		          { icon: '💬', label: '一言／自己紹介', value: profile.basic.intro || '未設定' }
-		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
+		        lsGrid.innerHTML = detailInfoItems([
+		          { label: '起床時間', value: lifestyle.wakeTime || '未設定' },
+		          { label: '就寝時間', value: lifestyle.bedtime || '未設定' },
+		          { label: '普段どのくらい家にいますか？', value: lifestyle.homeTime || '未設定' },
+		          { label: 'どのくらい料理をしますか？', value: lifestyle.cookingFrequency || '未設定' }
+		        ]);
 		      }
 		      const valuesGrid = document.getElementById('sharehouse-values-grid');
 		      if (valuesGrid) {
-		        valuesGrid.innerHTML = [
-		          { icon: '👥', label: '一緒に住む人とはどのくらい交流したいですか？', value: ideal.roommateInteraction },
-		          { icon: '✨', label: '共用スペースをどのくらい綺麗に保ちたい？', value: ideal.cleanliness },
-		          { icon: '🧹', label: '共用部分の掃除はどのくらいしたい？', value: ideal.cleaningFrequency },
-		          { icon: '🔇', label: '家の中の生活音についてどのくらい気になりますか？', value: ideal.lifeNoise },
-		          { icon: '🚭', label: '喫煙するルームメイトとの同居は？', value: ideal.roommateSmoking },
-		          { icon: '🍷', label: '家で飲酒するルームメイトについて', value: ideal.roommateAlcohol },
-		          { icon: '🐾', label: 'ペット', value: ideal.pets },
-		          { icon: '🚪', label: 'ルームメイトが友人を家に呼ぶことについて', value: ideal.visitors },
-		          { icon: '🛏️', label: 'ルームメイトのパートナーなどが泊まることについて', value: ideal.overnightGuests },
-		          { icon: '🚿', label: 'バスルーム', value: ideal.bathroom },
-		          { icon: '🏘️', label: '一緒に住む人数', value: ideal.housemateCount },
-		          { icon: '🍳', label: 'キッチン', value: ideal.kitchen },
-		          { icon: '🌙', label: '夜の静かな時間について', value: ideal.quietHours },
-		          { icon: '🧭', label: 'MBTI', value: ideal.mbti === '回答しない' ? '回答しない' : (ideal.mbti || '回答しない') }
-		        ].map(item => `<div class="ls-cell"><div class="ls-icon">${item.icon}</div><div class="ls-label">${localizeText(item.label)}</div><div class="ls-val">${localizeText(item.value)}</div></div>`).join('');
+		        valuesGrid.innerHTML = detailInfoItems([
+		          { label: '一緒に住む人とは普段どのくらい交流しますか？', value: ideal.roommateInteraction },
+		          { label: '共用スペースをどのくらい綺麗に保っていますか？', value: ideal.cleanliness },
+		          { label: '共用部分の掃除頻度', value: ideal.cleaningFrequency },
+		          { label: '家の中の生活音', value: ideal.lifeNoise },
+		          { label: '喫煙環境', value: ideal.roommateSmoking },
+		          { label: '飲酒環境', value: ideal.roommateAlcohol },
+		          { label: 'ペット', value: ideal.pets },
+		          { label: '友人などの来客について', value: ideal.visitors },
+		          { label: 'パートナーなどの宿泊について', value: ideal.overnightGuests },
+		          { label: '夜の静かな時間について', value: ideal.quietHours },
+		          { label: 'MBTI', value: ideal.mbti === '回答しない' ? '回答しない' : (ideal.mbti || '回答しない') }
+		        ]);
 		      }
 		      const roommateBox = document.getElementById('sharehouse-roommates');
 		      if (roommateBox) {
@@ -8268,31 +8259,16 @@
 		          }))
 		        ];
 		        const members = resRoommates.length ? resRoommates : fallbackMembers;
-		        roommateBox.innerHTML = members.map(member => `
-		          <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;gap:12px;align-items:flex-start;">
-		            <div style="width:44px;height:44px;border-radius:50%;background:white;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑'}</div>
-		            <div style="min-width:0;flex:1;">
-		              <div style="font-size:14px;font-weight:900;color:var(--dark);">${localizeText(member.name)}</div>
-		              <div style="font-size:12px;color:var(--light);margin-top:3px;line-height:1.5;">
-		                ${localizeText('年齢')} ${localizeText(member.age)} · ${localizeText('性別')} ${localizeText(member.gender)} · ${localizeText('職業')} ${localizeText(member.job)}
-		              </div>
-		              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;">
-		                ${[
-		                  ['起床時間', member.wake],
-		                  ['就寝時間', member.sleep],
-		                  ['在宅時間', member.home],
-		                  ['清潔感', member.clean],
-		                  ['喫煙', member.smoke],
-		                  ['騒音・音楽', member.noise],
-		                  ['料理頻度', member.cooking],
-		                  ['お酒', member.alcohol],
-		                  ['MBTI', member.mbti],
-		                  ['ルームメイトとの交流', member.social]
-		                ].map(([label, value]) => `<div style="background:white;border-radius:10px;padding:8px;"><div style="font-size:10px;color:var(--light);font-weight:800;">${localizeText(label)}</div><div style="font-size:12px;font-weight:800;color:var(--dark);margin-top:2px;">${localizeText(value)}</div></div>`).join('')}
-		              </div>
-		            </div>
-		          </div>
-		        `).join('');
+		        roommateBox.innerHTML = members.map(member => detailMemberCard(member.name, member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑', [
+		          { label: '年齢', value: member.age },
+		          { label: '性別', value: member.gender },
+		          { label: '国籍', value: member.nationality || member.job },
+		          { label: '起床時間', value: member.wake },
+		          { label: '就寝時間', value: member.sleep },
+		          { label: '在宅時間', value: member.home },
+		          { label: '自炊頻度', value: member.cooking },
+		          { label: '趣味', value: member.hobbies || member.social }
+		        ])).join('');
 		      }
 		      const reviewBox = document.getElementById('sharehouse-reviews');
 		      if (reviewBox) {
@@ -8329,15 +8305,7 @@
 		        ].map(rule => renderRuleRow(rule)).join('');
 		        }
 		      }
-		      const roomInfo = document.getElementById('sharehouse-room-info');
-		      if (roomInfo) {
-		        const rows = profile.roomInfo;
-		        roomInfo.innerHTML = rows.map(row => `<div class="info-row"><span class="info-label">${localizeText(row.label)}</span><span class="info-val">${localizeText(row.value)}</span></div>`).join('');
-		      }
-		      const priceBox = document.getElementById('sharehouse-price-box');
-		      if (priceBox) {
-		        priceBox.innerHTML = `<div class="price-row total"><span>${localizeText('月額料金')}</span><span>${localizeText(profile.stay.budget)}${currentLang === 'ja' ? ' / 月' : ' / mo'}</span></div>`;
-		      }
+		      renderDetailInfoGrid('sharehouse-room-info', profile.roomInfo);
 		      const mapPin = document.getElementById('sharehouse-map-pin');
 		      if (mapPin) mapPin.textContent = `📍 ${localizeText(profile.mapPin || profile.stay.area)}`;
 		      const mapNote = document.getElementById('sharehouse-map-note');
@@ -11787,50 +11755,77 @@
 	    card.style.display = show ? 'block' : 'none';
 	    if (!show) return;
 	    const profile = defaultSharehouseGuestProfile(applicant, currentChatApplicant === 'sakura');
-	    renderDetailInfoGrid('applicant-shg-basic-info', [
-	      { label: '名前', value: profile.basic.name },
-	      { label: '年齢', value: profile.basic.age },
-	      { label: '国籍', value: profile.basic.nationality },
-	      { label: '性別', value: profile.basic.gender },
-	      { label: '宗教', value: profile.basic.religion },
-	      { label: '使用言語', value: profile.basic.languages },
-	      { label: '英語レベル', value: profile.basic.englishLevel },
-	      { label: '渡航・滞在目的', value: profile.basic.purpose },
-	      { label: '喫煙', value: profile.basic.personalSmoking },
-	      { label: '飲酒', value: profile.basic.personalAlcohol },
-	      { label: '趣味', value: profile.basic.hobbies },
-	      { label: '一言／自己紹介', value: profile.basic.intro }
-	    ]);
-	    renderDetailInfoGrid('applicant-shg-stay-conditions', [
-	      { label: '希望エリア', value: profile.stay.area },
-	      { label: '希望入居日', value: profile.stay.moveIn },
-	      { label: '希望退去日', value: profile.stay.moveOut },
-	      { label: '月額予算（CAD）', value: profile.stay.budget },
-	      { label: '希望する部屋', value: profile.stay.room },
-	      { label: '家具', value: profile.stay.furniture }
-	    ]);
-	    renderDetailInfoGrid('applicant-shg-personal-lifestyle', [
-	      { label: '起床時間', value: profile.lifestyle.wakeTime },
-	      { label: '就寝時間', value: profile.lifestyle.bedtime },
-	      { label: '普段どのくらい家にいますか？', value: profile.lifestyle.homeTime },
-	      { label: 'どのくらい料理をしますか？', value: profile.lifestyle.cookingFrequency }
-	    ]);
-	    renderDetailInfoGrid('applicant-shg-ideal-share', [
-	      { label: '一緒に住む人とはどのくらい交流したいですか？', value: profile.ideal.roommateInteraction },
-	      { label: '共用スペースをどのくらい綺麗に保ちたい？', value: profile.ideal.cleanliness },
-	      { label: '共用部分の掃除はどのくらいしたい？', value: profile.ideal.cleaningFrequency },
-	      { label: '家の中の生活音についてどのくらい気になりますか？', value: profile.ideal.lifeNoise },
-	      { label: '喫煙するルームメイトとの同居は？', value: profile.ideal.roommateSmoking },
-	      { label: '家で飲酒するルームメイトについて', value: profile.ideal.roommateAlcohol },
-	      { label: 'ペット', value: profile.ideal.pets },
-	      { label: 'ルームメイトが友人を家に呼ぶことについて', value: profile.ideal.visitors },
-	      { label: 'ルームメイトのパートナーなどが泊まることについて', value: profile.ideal.overnightGuests },
-	      { label: 'バスルーム', value: profile.ideal.bathroom },
-	      { label: '一緒に住む人数', value: profile.ideal.housemateCount },
-	      { label: 'キッチン', value: profile.ideal.kitchen },
-	      { label: '夜の静かな時間について', value: profile.ideal.quietHours },
-	      { label: 'MBTI', value: profile.ideal.mbti }
-	    ]);
+	    card.style.background = 'transparent';
+	    card.style.border = 'none';
+	    card.style.padding = '0';
+	    card.style.borderRadius = '0';
+	    card.innerHTML = `
+	      <div class="detail-section" style="padding-top:0;">
+	        <div class="detail-section-title">${localizeText('基本情報')}</div>
+	        <div class="detail-info-card"><div class="detail-info-grid">
+	          ${detailInfoItems([
+	            { label: 'プロフィール写真', value: profile.basic.photo ? '登録済み' : '未設定' },
+	            { label: '名前', value: profile.basic.name },
+	            { label: '年齢', value: profile.basic.age },
+	            { label: '国籍', value: profile.basic.nationality },
+	            { label: '性別', value: profile.basic.gender },
+	            { label: '宗教', value: profile.basic.religion },
+	            { label: '使用言語', value: profile.basic.languages },
+	            { label: '英語レベル', value: profile.basic.englishLevel },
+	            { label: '渡航・滞在目的', value: profile.basic.purpose },
+	            { label: '喫煙', value: profile.basic.personalSmoking },
+	            { label: '飲酒', value: profile.basic.personalAlcohol },
+	            { label: '趣味', value: profile.basic.hobbies },
+	            { label: '一言／自己紹介', value: profile.basic.intro }
+	          ])}
+	        </div></div>
+	      </div>
+	      <div class="detail-section" style="padding-top:0;">
+	        <div class="detail-section-title">${localizeText('滞在条件')}</div>
+	        <div class="detail-info-card"><div class="detail-info-grid">
+	          ${detailInfoItems([
+	            { label: '希望エリア', value: profile.stay.area },
+	            { label: '希望入居日', value: profile.stay.moveIn },
+	            { label: '希望退去日', value: profile.stay.moveOut },
+	            { label: '月額予算（CAD）', value: profile.stay.budget },
+	            { label: '希望する部屋', value: profile.stay.room },
+	            { label: '家具', value: profile.stay.furniture }
+	          ])}
+	        </div></div>
+	      </div>
+	      <div class="detail-section" style="padding-top:0;">
+	        <div class="detail-section-title">${localizeText('自分の生活スタイル')}</div>
+	        <div class="detail-info-card"><div class="detail-info-grid">
+	          ${detailInfoItems([
+	            { label: '起床時間', value: profile.lifestyle.wakeTime },
+	            { label: '就寝時間', value: profile.lifestyle.bedtime },
+	            { label: '普段どのくらい家にいますか？', value: profile.lifestyle.homeTime },
+	            { label: 'どのくらい料理をしますか？', value: profile.lifestyle.cookingFrequency }
+	          ])}
+	        </div></div>
+	      </div>
+	      <div class="detail-section" style="padding-top:0;">
+	        <div class="detail-section-title">${localizeText('理想のシェア生活')}</div>
+	        <div class="detail-info-card"><div class="detail-info-grid">
+	          ${detailInfoItems([
+	            { label: '一緒に住む人とはどのくらい交流したいですか？', value: profile.ideal.roommateInteraction },
+	            { label: '共用スペースをどのくらい綺麗に保ちたい？', value: profile.ideal.cleanliness },
+	            { label: '共用部分の掃除はどのくらいしたい？', value: profile.ideal.cleaningFrequency },
+	            { label: '家の中の生活音についてどのくらい気になりますか？', value: profile.ideal.lifeNoise },
+	            { label: '喫煙するルームメイトとの同居は？', value: profile.ideal.roommateSmoking },
+	            { label: '家で飲酒するルームメイトについて', value: profile.ideal.roommateAlcohol },
+	            { label: 'ペット', value: profile.ideal.pets },
+	            { label: 'ルームメイトが友人を家に呼ぶことについて', value: profile.ideal.visitors },
+	            { label: 'ルームメイトのパートナーなどが泊まることについて', value: profile.ideal.overnightGuests },
+	            { label: 'バスルーム', value: profile.ideal.bathroom },
+	            { label: '一緒に住む人数', value: profile.ideal.housemateCount },
+	            { label: 'キッチン', value: profile.ideal.kitchen },
+	            { label: '夜の静かな時間について', value: profile.ideal.quietHours },
+	            { label: 'MBTI', value: profile.ideal.mbti }
+	          ])}
+	        </div></div>
+	      </div>
+	    `;
 	  }
 
 	  function renderRuleRow(rule) {
