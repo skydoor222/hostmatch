@@ -62,28 +62,6 @@
     .header-row { display: flex; align-items: center; justify-content: space-between; }
 
     /* ===== ① 検索画面 ===== */
-    .search-top-bar {
-      background: white; padding: 12px 16px 14px;
-      border-bottom: 1px solid var(--border);
-      position: sticky; top: 0; z-index: 100;
-    }
-    .search-pill {
-      display: flex; align-items: center; gap: 10px;
-      background: white; border: 1px solid var(--border);
-      border-radius: 40px; padding: 12px 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.10);
-      cursor: pointer;
-    }
-    .search-pill-icon { color: var(--dark); flex-shrink: 0; }
-    .search-pill-texts { flex: 1; }
-    .search-pill-main { font-size: 14px; font-weight: 700; color: var(--dark); }
-    .search-pill-sub { font-size: 12px; color: var(--light); margin-top: 1px; }
-    .search-pill-filter {
-      width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-      font-size: 14px;
-    }
-
     .results-label {
       padding: 14px 16px 8px; font-size: 13px; color: var(--light);
     }
@@ -241,9 +219,13 @@
     }
     .hm-filter-toggle input { width: 18px; height: 18px; accent-color: var(--primary); }
     .hm-budget-value { font-size: 13px; font-weight: 900; color: var(--primary); margin-top: 8px; }
-    .hm-filter-details { border-top: 1px solid var(--border); padding: 12px 0; }
-    .hm-filter-details summary { cursor: pointer; font-size: 14px; font-weight: 900; color: var(--dark); list-style: none; }
-    .hm-filter-details summary::-webkit-details-marker { display: none; }
+    .hm-filter-section-title {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      font-size: 14px;
+      font-weight: 900;
+      color: var(--dark);
+    }
     .hm-filter-actions { display: flex; gap: 10px; position: sticky; bottom: 0; background: white; padding-top: 12px; border-top: 1px solid var(--border); }
     .hm-filter-actions button {
       flex: 1; border-radius: 12px; padding: 13px; font-size: 14px; font-weight: 900; cursor: pointer;
@@ -267,20 +249,6 @@
       padding: 16px;
       box-sizing: border-box;
     }
-    .sh-filter-toggle-btn {
-      display: none;
-      width: 100%;
-      border: 0;
-      border-radius: 14px;
-      padding: 13px 16px;
-      background: var(--dark);
-      color: white;
-      font-size: 14px;
-      font-weight: 900;
-      margin-bottom: 12px;
-      cursor: pointer;
-    }
-
     /* ===== MAP SECTION ===== */
     .map-section { position: relative; margin: 0; height: 240px; overflow: hidden; cursor: pointer; }
     .map-bg {
@@ -1086,7 +1054,6 @@
     @media (max-width: 700px) {
       .host-dashboard-grid { grid-template-columns: 1fr !important; }
       #search-content-sharehouse .sh-search-wrap { padding: 14px; }
-      .sh-filter-toggle-btn { display: block; }
       #search-content-sharehouse .sh-filter-shell {
         display: flex;
         flex-direction: column;
@@ -1094,12 +1061,10 @@
         padding: 0;
       }
       #search-content-sharehouse .hm-filter-panel {
-        display: none;
         position: static;
         max-height: none;
         overflow: visible;
       }
-      #search-content-sharehouse .hm-filter-panel.open { display: block; }
       #search-content-sharehouse .hm-results-panel { padding: 14px; }
       #search-content-sharehouse .hm-result-list { grid-template-columns: 1fr; }
     }
@@ -1532,7 +1497,6 @@
     .bnav-badge { top: 8px; right: 14px; }
 
     .screen-header,
-    .search-top-bar,
     .mypage-sub-header,
     .chat-header {
       padding-left: 32px;
@@ -1553,7 +1517,6 @@
     }
 
     .search-body { padding-bottom: 48px; }
-    .search-top-bar .search-pill { max-width: 720px; margin: 0 auto; }
 
     .card-slider {
       display: grid;
@@ -1927,24 +1890,12 @@
     }
 
     .screen-header,
-    .search-top-bar,
     .mypage-sub-header,
     .chat-header,
     .onboard-header {
       padding: 22px clamp(36px, 5vw, 72px);
       background: rgba(255,255,255,.96);
       backdrop-filter: blur(14px);
-    }
-
-    .search-top-bar {
-      display: flex;
-      justify-content: center;
-    }
-
-    .search-top-bar .search-pill {
-      width: min(960px, 100%);
-      max-width: none;
-      padding: 14px 20px;
     }
 
     .hm-filter-shell {
@@ -2623,7 +2574,6 @@
     }
 
     .screen-header,
-    .search-top-bar,
     .mypage-sub-header,
     .chat-header,
     .onboard-header {
@@ -2631,7 +2581,6 @@
     }
 
     body:has(#bottom-nav[style*="flex"]) .screen.active .screen-header,
-    body:has(#bottom-nav[style*="flex"]) .screen.active .search-top-bar,
     body:has(#host-bottom-nav[style*="flex"]) .screen.active .screen-header,
     body:has(#host-bottom-nav[style*="flex"]) .screen.active .mypage-sub-header {
       top: 76px;
@@ -2665,18 +2614,6 @@
 
 <!-- ==================== ① 検索画面 ==================== -->
 <div id="screen-search" class="screen">
-
-  <!-- 最上部：検索ピル -->
-  <div class="search-top-bar">
-    <div class="search-pill" onclick="openSearchModal()">
-      <svg class="search-pill-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <div class="search-pill-texts">
-        <div class="search-pill-main" id="pill-main">検索を開始</div>
-        <div class="search-pill-sub" id="pill-sub">目的地・日付・条件を選ぶ</div>
-      </div>
-      <div class="search-pill-filter">⚙️</div>
-    </div>
-  </div>
   <div class="search-body">
 
   <!-- ホームステイコンテンツ（シンプルな物件一覧） -->
@@ -2796,8 +2733,7 @@
           </div>
         </div>
 
-        <details class="hm-filter-details">
-          <summary>生活スタイルで絞り込む</summary>
+        <div class="hm-filter-section-title">生活スタイルで絞り込む</div>
           <div class="hm-filter-group">
             <div class="hm-filter-label">⑬ 起床時間</div>
             <div class="hm-filter-row" id="hmf-wake">
@@ -2815,10 +2751,8 @@
               <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">23時〜</button>
             </div>
           </div>
-        </details>
 
-        <details class="hm-filter-details">
-          <summary>ハウスルールで絞り込む</summary>
+        <div class="hm-filter-section-title">ハウスルールで絞り込む</div>
           <div class="hm-filter-group">
             <div class="hm-filter-label">⑮ 門限</div>
             <div class="hm-filter-row" id="hmf-curfew">
@@ -2840,7 +2774,6 @@
               <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">制限ありでもOK</button>
             </div>
           </div>
-        </details>
 
         <div class="hm-filter-actions">
           <button type="button" class="hm-btn-secondary" onclick="resetHomestayFilters()">条件をリセット</button>
@@ -2962,7 +2895,6 @@
   <!-- シェアハウスコンテンツ -->
   <div id="search-content-sharehouse" style="display:none;">
     <div class="sh-search-wrap">
-    <button class="sh-filter-toggle-btn" type="button" onclick="toggleSharehouseFilterPanel()">絞り込み</button>
     <div class="hm-filter-shell sh-filter-shell">
       <div class="hm-filter-panel">
         <div class="hm-filter-title">条件比較検索</div>
@@ -3103,8 +3035,7 @@
           </div>
         </div>
 
-        <details class="hm-filter-details">
-          <summary>生活スタイルで絞り込む</summary>
+        <div class="hm-filter-section-title">生活スタイルで絞り込む</div>
           <div class="hm-filter-group">
             <div class="hm-filter-label">起床時間</div>
             <div class="hm-filter-row" id="shf-wake">
@@ -3179,7 +3110,6 @@
               <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">あまり気にしない</button>
             </div>
           </div>
-        </details>
 
         <div class="hm-filter-actions">
           <button type="button" onclick="resetSharehouseFilters()">条件をリセット</button>
@@ -9515,11 +9445,13 @@
     const pMin = document.getElementById('price-min').value;
     const pMax = document.getElementById('price-max').value;
 
-    document.getElementById('pill-main').textContent = dest || 'どこでも';
+    const pillMain = document.getElementById('pill-main');
+    if (pillMain) pillMain.textContent = dest || 'どこでも';
     const parts = [];
     if (from !== '日付を追加') parts.push(from + (to !== '日付を追加' ? ' – ' + to : ''));
     if (pMin || pMax) parts.push('$' + (pMin||'0') + '–$' + (pMax||'∞'));
-    document.getElementById('pill-sub').textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
+    const pillSub = document.getElementById('pill-sub');
+    if (pillSub) pillSub.textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
 
     const label = (dest || 'アメリカ全土') + ' · 124件';
     document.querySelector('.map-search-chip').textContent = '📍 ' + label;
@@ -9542,8 +9474,10 @@
     document.getElementById('price-max').value = '';
     ['t1','t2','t3','t5','t6','t7'].forEach(id => document.getElementById(id).classList.remove('on'));
     document.getElementById('t4').classList.add('on');
-    document.getElementById('pill-main').textContent = '検索を開始';
-    document.getElementById('pill-sub').textContent = '目的地・日付・条件を選ぶ';
+    const pillMain = document.getElementById('pill-main');
+    const pillSub = document.getElementById('pill-sub');
+    if (pillMain) pillMain.textContent = '検索を開始';
+    if (pillSub) pillSub.textContent = '目的地・日付・条件を選ぶ';
   }
 
   const HOMESTAY_FILTER_HOST_META = {
@@ -10199,10 +10133,6 @@
     const budget = Number(document.getElementById('shf-budget')?.value || 2000);
     const label = document.getElementById('shf-budget-label');
     if (label) label.textContent = budget >= 2000 ? 'C$2,000+' : `C$${budget.toLocaleString()}`;
-  }
-
-  function toggleSharehouseFilterPanel() {
-    document.querySelector('#search-content-sharehouse .hm-filter-panel')?.classList.toggle('open');
   }
 
   function scrollToSharehouseResults() {
@@ -15175,7 +15105,7 @@
 
   function localizeHomestayFilterUi() {
     document.querySelectorAll('.hm-filter-shell').forEach(root => {
-      root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-label,.hm-filter-chip,summary,.hm-filter-actions button,.price-input-label').forEach(el => {
+      root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
         if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
         const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
         if (el.textContent.trim() !== nextText) el.textContent = nextText;
