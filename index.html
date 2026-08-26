@@ -2726,10 +2726,11 @@
         <div class="hm-filter-group">
           <div class="hm-filter-label">⑫ ホストの家族構成</div>
           <div class="hm-filter-row" id="hmf-family">
-            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">一人暮らし</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">一人暮らし（女性）</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">一人暮らし（男性）</button>
             <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">カップル</button>
             <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">子どものいる家庭</button>
-            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">子どものいない家庭</button>
+            <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">その他</button>
           </div>
         </div>
 
@@ -4090,12 +4091,12 @@
       <div class="form-group">
         <div class="form-label">ホスト家族構成</div>
         <div class="form-chip-row" id="hs-lifestyle-family">
-          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
-          <div class="form-chip" onclick="toggleChip(this)">女性のみ</div>
-          <div class="form-chip" onclick="toggleChip(this)">男性のみ</div>
+          <div class="form-chip" onclick="toggleChip(this)">一人暮らし（女性）</div>
+          <div class="form-chip" onclick="toggleChip(this)">一人暮らし（男性）</div>
           <div class="form-chip" onclick="toggleChip(this)">カップル</div>
-          <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
-          <div class="form-chip" onclick="toggleChip(this)">子供のいない家庭</div>
+          <div class="form-chip" onclick="toggleChip(this)">子どものいる家庭</div>
+          <div class="form-chip" onclick="toggleChip(this)">その他</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
         </div>
       </div>
       <div class="form-group">
@@ -4484,12 +4485,12 @@
         <div class="form-group">
           <div class="form-label">ホスト家族構成</div>
           <div class="form-chip-row" id="hs-onboard-family">
-            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
-            <div class="form-chip" onclick="toggleChip(this)">女性のみ</div>
-            <div class="form-chip" onclick="toggleChip(this)">男性のみ</div>
+            <div class="form-chip" onclick="toggleChip(this)">一人暮らし（女性）</div>
+            <div class="form-chip" onclick="toggleChip(this)">一人暮らし（男性）</div>
             <div class="form-chip" onclick="toggleChip(this)">カップル</div>
-            <div class="form-chip" onclick="toggleChip(this)">ファミリー</div>
-            <div class="form-chip" onclick="toggleChip(this)">子供のいない家庭</div>
+            <div class="form-chip" onclick="toggleChip(this)">子どものいる家庭</div>
+            <div class="form-chip" onclick="toggleChip(this)">その他</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
           </div>
         </div>
         <div class="form-group">
@@ -9615,9 +9616,9 @@
   const HOMESTAY_FILTER_HOST_META = {
     sarah: { area: 'バンクーバー', meal: '朝食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','アレルギー対応'], pets: 'あり', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '食事の時など時々', wake: '6〜8時', sleep: '22〜23時', curfew: 'allowed', curfewTime: '22:30', visitor: 'notice_required', shower: 'five_to_ten', kitchen: 'restricted', kitchenTime: '〜21:00', cleaning: 'weekly', overnight: 'ng' },
     michael: { area: 'バンクーバー', meal: '3食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','ハラール'], pets: 'あり', smoking: '完全禁煙', students: 'いる', family: 'カップル', talk: '毎日会話したい', frequency: '家族の一員のように交流したい', wake: '6〜8時', sleep: '21〜22時', curfew: 'none', visitor: 'ok', shower: 'unlimited', kitchen: 'ok', cleaning: 'weekly', overnight: 'notice_required' },
-    emily: { area: 'トロント', meal: '朝食あり', dining: 'たまに一緒', diet: ['グルテンフリー'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '一人暮らし', talk: '適度に話したい', frequency: '食事の時など時々', wake: '8〜9時', sleep: '23時〜', curfew: 'none', visitor: 'notice_required', shower: 'ten_to_fifteen', kitchen: 'restricted', kitchenTime: '7:00〜22:00', cleaning: 'monthly', overnight: 'notice_required' },
-    thompson: { area: 'トロント', meal: '朝食あり', dining: '別々でOK', diet: ['アレルギー対応'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '子どものいない家庭', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '6〜8時', sleep: '22〜23時', curfew: 'none', visitor: 'ok', shower: 'unlimited', kitchen: 'ok', cleaning: 'none', overnight: 'ok' },
-    jennifer: { area: 'バンクーバー', meal: '食事なし', dining: '別々でOK', diet: [], pets: 'なし', smoking: '屋外喫煙ならOK', students: 'いる', family: '一人暮らし', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '8〜9時', sleep: '23時〜', curfew: 'allowed', curfewTime: '23:00', visitor: 'ng', shower: 'under_5', kitchen: 'ng', cleaning: 'monthly', overnight: 'ng' },
+    emily: { area: 'トロント', meal: '朝食あり', dining: 'たまに一緒', diet: ['グルテンフリー'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '一人暮らし（女性）', talk: '適度に話したい', frequency: '食事の時など時々', wake: '8〜9時', sleep: '23時〜', curfew: 'none', visitor: 'notice_required', shower: 'ten_to_fifteen', kitchen: 'restricted', kitchenTime: '7:00〜22:00', cleaning: 'monthly', overnight: 'notice_required' },
+    thompson: { area: 'トロント', meal: '朝食あり', dining: '別々でOK', diet: ['アレルギー対応'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: 'カップル＋子ども', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '6〜8時', sleep: '22〜23時', curfew: 'none', visitor: 'ok', shower: 'unlimited', kitchen: 'ok', cleaning: 'none', overnight: 'ok' },
+    jennifer: { area: 'バンクーバー', meal: '食事なし', dining: '別々でOK', diet: [], pets: 'なし', smoking: '屋外喫煙ならOK', students: 'いる', family: '一人暮らし（女性）', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '8〜9時', sleep: '23時〜', curfew: 'allowed', curfewTime: '23:00', visitor: 'ng', shower: 'under_5', kitchen: 'ng', cleaning: 'monthly', overnight: 'ng' },
     robert: { area: 'トロント', meal: '朝・夕食あり', dining: 'たまに一緒', diet: ['Vegetarian','Halal'].map(v => v === 'Vegetarian' ? 'ベジタリアン' : 'ハラール'), pets: 'なし', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '休日もたまに一緒に過ごしたい', wake: '〜6時', sleep: '21〜22時', curfew: 'none', visitor: 'notice_required', shower: 'unlimited', kitchen: 'ok', cleaning: 'weekly', overnight: 'notice_required' }
   };
 
@@ -9723,18 +9724,14 @@
       "I'd like to interact as part of the family": '家族の一員のように交流したい'
     },
     'hmf-family': {
-      'ファミリー': '子どものいる家庭',
-      '子供あり': '子どものいる家庭',
-      'カップル＋子ども': '子どものいる家庭',
-      'ひとり親＋子ども': '子どものいる家庭',
-      '子供のいる家庭': '子どものいる家庭',
+      'Living Alone (Female)': '一人暮らし（女性）',
+      'Living Alone (Male)': '一人暮らし（男性）',
+      'Couple': 'カップル',
       'Household with Children': '子どものいる家庭',
-      '子供のいない家庭': '子どものいない家庭',
-      '一人暮らし（女性）': '一人暮らし',
-      '一人暮らし（男性）': '一人暮らし',
-      'Household without children': '子どものいない家庭',
-      'Living Alone': '一人暮らし',
-      'Couple': 'カップル'
+      'その他': 'その他',
+      'Other': 'その他',
+      'こだわらない': '',
+      'No preference': ''
     },
     'hmf-wake': {
       '6時以前': '〜6時',
@@ -9988,11 +9985,18 @@
 
   function hmFamilyCompatible(guestValue, hostFamilyValue) {
     if (!guestValue) return true;
-    if (guestValue === '一人暮らし') return ['single_female', 'single_male'].includes(hostFamilyValue);
+    if (guestValue === '一人暮らし（女性）') return hostFamilyValue === 'single_female';
+    if (guestValue === '一人暮らし（男性）') return hostFamilyValue === 'single_male';
     if (guestValue === 'カップル') return hostFamilyValue === 'couple';
     if (guestValue === '子どものいる家庭') return ['couple_with_children', 'single_parent_with_children'].includes(hostFamilyValue);
-    if (guestValue === '子どものいない家庭') return ['single_female', 'single_male', 'couple'].includes(hostFamilyValue);
+    if (guestValue === 'その他') return hostFamilyValue === 'other';
     return false;
+  }
+
+  function hmNormalizeGuestFamilyPreference(value) {
+    const text = String(value || '').trim();
+    if (!text || text === 'こだわらない' || ['女性のみ','男性のみ','ファミリー','子供のいない家庭','子どものいない家庭','一人暮らし'].includes(text)) return '';
+    return canonicalFilterValue('hmf-family', text);
   }
 
   const HM_RULE_LABELS = {
@@ -10285,6 +10289,7 @@
     };
     next.curfew = canonicalFilterValue('hmf-curfew', next.curfew);
     next.dining = canonicalFilterValue('hmf-dining', next.dining);
+    next.family = hmNormalizeGuestFamilyPreference(next.family);
     next.visitor = canonicalFilterValue('hmf-visitor', next.visitor);
     next.shower = canonicalFilterValue('hmf-shower', next.shower);
     next.kitchen = canonicalFilterValue('hmf-kitchen', next.kitchen);
@@ -10433,9 +10438,7 @@
       frequency: selectedChipTextFromRow('hs-onboard-frequency', ''),
       family: (() => {
         const family = selectedChipTextFromRow('hs-onboard-family', '');
-        if (family === 'ファミリー') return '子どものいる家庭';
-        if (family === '子供のいない家庭') return '子どものいない家庭';
-        return ['一人暮らし','カップル','子どものいる家庭','子どものいない家庭'].includes(family) ? family : '';
+        return hmNormalizeGuestFamilyPreference(family);
       })(),
       wake: selectedChipTextFromRow('hs-onboard-wake', '').replace('6時以前', '〜6時').replace('9時以降', '9時〜'),
       sleep: selectedChipTextFromRow('hs-onboard-sleep', '').replace('23時以降', '23時〜'),
@@ -10487,7 +10490,7 @@
       next.students = students === 'いない家庭を希望' ? '他の留学生なし希望' : students ? '他の留学生がいてもOK' : next.students;
       next.talk = talk === '毎日話したい' ? '毎日会話したい' : (talk || next.talk);
       next.frequency = selectedChipTextFromRow('hs-lifestyle-frequency', next.frequency);
-      next.family = family === 'ファミリー' ? '子どものいる家庭' : family === '子供のいない家庭' ? '子どものいない家庭' : ['一人暮らし','カップル','子どものいる家庭','子どものいない家庭'].includes(family) ? family : '';
+      next.family = hmNormalizeGuestFamilyPreference(family);
       next.wake = selectedChipTextFromRow('hs-lifestyle-wake', next.wake).replace('6時以前', '〜6時').replace('9時以降', '9時〜');
       next.sleep = selectedChipTextFromRow('hs-lifestyle-sleep', next.sleep).replace('23時以降', '23時〜');
       next.curfew = homestayRulePreferenceFromOnboarding('hs-lifestyle-curfew', 'hmf-curfew') || '';
@@ -14024,9 +14027,7 @@
     'たくさん話したい':'A lot',
     'ホストの家族構成':'Host Family Type',
     'こだわらない':'No preference',
-    '女性のみ':'Women only',
     'カップル':'Couple',
-    'ファミリー':'Family',
     '食事':'Meals',
     '不要':'Not needed',
     '朝食のみ':'Breakfast Only',
@@ -15091,9 +15092,7 @@
     '基本それぞれで過ごしたい':'I prefer to mostly spend time independently',
     '休日もたまに一緒に過ごしたい':'I would like to occasionally spend time together on days off',
     '⑫ ホストの家族構成':'⑫ Host Household Type',
-    '一人暮らし':'Living alone',
     '子どものいる家庭':'Household with children',
-    '子どものいない家庭':'Household without children',
     '生活スタイルで絞り込む':'Lifestyle Filters',
     '⑬ 起床時間':'⑬ Wake-up Time',
     '〜6時':'Before 6 AM',
@@ -15209,13 +15208,7 @@
     'ホストの家族構成':'Host Family Type',
     'ホスト家族構成':'Host Family Type',
     'こだわらない':'No preference',
-    '女性のみ':'Female-only household',
-    '男性のみ':'Male-only household',
     'カップル':'Couple',
-    'ファミリー':'Family',
-    '子供のいない家庭':'Household without children',
-    'ファミリー、子供のいない家庭':'Family, household without children',
-    '女性のみ、ファミリー':'Female-only household, family',
     'その他のNG条件':'Other No-go Conditions',
     '門限NG':'No curfew',
     '来客NG':'No visitors',
@@ -15912,7 +15905,7 @@
 	      petCondition: 'ペットOK',
 	      otherStudents: 'いてもOK',
 	      smokingCondition: '喫煙NG',
-	      familyType: 'ファミリー、子供のいない家庭',
+	      familyType: '子どものいる家庭',
 	      hostTalk: '家族のように過ごしたい',
 	      mealPlan: '朝夕食',
 	      diningStyle: '一緒に食べたい',
@@ -15999,7 +15992,7 @@
 	      petCondition: 'ペットOK',
 	      otherStudents: 'いてもOK',
 	      smokingCondition: '屋外ならOK',
-	      familyType: '女性のみ、ファミリー',
+	      familyType: '子どものいる家庭',
 	      hostTalk: '毎日話したい',
 	      mealPlan: '3食',
 	      diningStyle: 'たまに一緒',
