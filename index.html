@@ -4967,6 +4967,10 @@
   <div class="detail-scroll">
 	    <div class="detail-section" style="padding-top:14px;">
 	      <div class="blocked-notice" id="sharehouse-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
+	      <div id="sharehouse-preview-banner" style="display:none;background:#FFF8E6;border:1px solid #FFE1A6;border-radius:14px;padding:12px 14px;color:#856404;font-weight:800;line-height:1.45;">
+	        <div data-i18n="preview_mode">プレビューモード</div>
+	        <div style="font-size:12px;font-weight:600;margin-top:2px;" data-i18n="preview_actions_disabled">これはプレビューです。操作はできません。</div>
+	      </div>
 	    </div>
 	    <div class="detail-host-row">
 	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">👩</div>
@@ -6111,7 +6115,7 @@
       <div id="applicant-detail-meta" style="font-size:13px;color:var(--light);margin-top:4px;"></div>
     </div>
 
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div id="applicant-detail-bio-card" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
       <div style="font-size:14px;font-weight:800;margin-bottom:8px;">自己紹介</div>
       <div id="applicant-detail-bio" style="font-size:14px;color:var(--mid);line-height:1.7;"></div>
     </div>
@@ -6138,7 +6142,7 @@
       </div>
     </div>
 
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div id="applicant-homestay-condition-card" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
       <div style="font-size:14px;font-weight:800;margin-bottom:12px;">希望条件</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">生活リズム</span><strong id="applicant-detail-lifestyle" style="text-align:right;"></strong></div>
@@ -6173,7 +6177,7 @@
       </div>
     </div>
 
-    <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
+    <div id="applicant-homestay-fit-card" style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;">
       <div style="font-size:14px;font-weight:800;margin-bottom:12px;">ホストファミリーとの相性条件</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         <div style="display:flex;justify-content:space-between;gap:12px;font-size:14px;"><span style="color:var(--light);">ホストファミリーとの会話希望</span><strong id="applicant-detail-host-talk" style="text-align:right;"></strong></div>
@@ -7305,7 +7309,7 @@
       window._serviceType = 'sharehouse';
       to = 'search';
     }
-    if (to !== 'detail') hostPreviewMode = false;
+    if (to !== 'detail' && to !== 'sharehouse-detail') hostPreviewMode = false;
     if (to === 'support') supportBackScreen = from || 'mypage';
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-' + to).classList.add('active');
@@ -7321,7 +7325,8 @@
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
     if (to === 'favorites') renderFavorites();
-	    if (to === 'search') {
+    if (to === 'host-messages') renderHostMessagesForService();
+    if (to === 'search') {
 	      switchSearchCat(currentSearchCat, true);
 	      if (currentSearchCat === 'homestay') {
 	        applyHomestayRegisteredFiltersToSearch();
@@ -7397,6 +7402,10 @@
 
   function previewHostListing() {
     hostPreviewMode = true;
+    if (serviceModeForCurrentContext() === 'sharehouse') {
+      openSharehouseDetail('sh1', 'host-dashboard');
+      return;
+    }
     openDetail('sarah', 'host-dashboard');
   }
 
@@ -7452,7 +7461,7 @@
   }
 
   function backToHomestaySearch() {
-    syncGuestServiceContext('homestay');
+    if (!hostPreviewMode) syncGuestServiceContext('homestay');
     navigate(currentScreen, 'search');
     switchSearchCat('homestay');
   }
@@ -7718,9 +7727,10 @@
       const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
       return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse', avatar: '🏢' };
     }
-    if ((chatDetailMode === 'applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
-      const applicant = APPLICANTS[currentChatApplicant];
-      return { id: `guest:${currentChatApplicant}`, name: applicant?.name || currentChatApplicant, type: 'guest', avatar: applicant?.avatar || '👤' };
+    if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
+      const service = chatDetailMode === 'sharehouse-applicant' ? 'sharehouse' : chatDetailMode === 'homestay-applicant' ? 'homestay' : hostApplicantServiceMode;
+      const applicant = getApplicantForService(currentChatApplicant, service);
+      return { id: `guest:${service}:${currentChatApplicant}`, name: applicant?.name || currentChatApplicant, type: `${service}-guest`, avatar: applicant?.avatar || '👤' };
     }
     const hostId = currentHost || currentListing?.id || 'sarah';
     const host = HOSTS[hostId] || HOSTS.sarah;
@@ -7834,16 +7844,16 @@
     const sharehouseAction = document.getElementById('sharehouse-action-btn');
     const sharehouseMessage = document.getElementById('sharehouse-message-btn');
     if (sharehouseAction && currentListing?.type === 'sharehouse') {
-      sharehouseAction.disabled = blocked;
-      sharehouseAction.onclick = blocked ? (event => event.preventDefault()) : requestSharehouseInterview;
-      sharehouseAction.style.opacity = blocked ? '.45' : '';
-      sharehouseAction.style.cursor = blocked ? 'not-allowed' : 'pointer';
+      sharehouseAction.disabled = hostPreviewMode || blocked;
+      sharehouseAction.onclick = (hostPreviewMode || blocked) ? (event => event.preventDefault()) : requestSharehouseInterview;
+      sharehouseAction.style.opacity = hostPreviewMode ? '.65' : (blocked ? '.45' : '');
+      sharehouseAction.style.cursor = (hostPreviewMode || blocked) ? 'not-allowed' : 'pointer';
     }
     if (sharehouseMessage) {
-      sharehouseMessage.disabled = blocked;
-      sharehouseMessage.onclick = blocked ? (event => event.preventDefault()) : (() => openSharehouseChat(currentListing?.id));
-      sharehouseMessage.style.opacity = blocked ? '.45' : '';
-      sharehouseMessage.style.cursor = blocked ? 'not-allowed' : 'pointer';
+      sharehouseMessage.disabled = hostPreviewMode || blocked;
+      sharehouseMessage.onclick = (hostPreviewMode || blocked) ? (event => event.preventDefault()) : (() => openSharehouseChat(currentListing?.id));
+      sharehouseMessage.style.opacity = hostPreviewMode ? '.65' : (blocked ? '.45' : '');
+      sharehouseMessage.style.cursor = (hostPreviewMode || blocked) ? 'not-allowed' : 'pointer';
     }
     const chatApply = document.querySelector('.chat-banner-btn-apply');
     if (chatApply) {
@@ -8684,7 +8694,7 @@
 	    syncGuestServiceContext(guestMessageService);
 	  }
 
-	  function renderGuestMessages() {
+  function renderGuestMessages() {
 	    const list = document.getElementById('guest-message-list');
 	    if (!list) return;
 	    if (guestMessageService === 'sharehouse') {
@@ -8732,6 +8742,34 @@
 	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Robert & Mary Davis</div><div class="msg-time">4/5</div></div><div class="msg-preview">We usually have dinner together on weekdays 🍽️</div></div>
 	      </div>
 	    `;
+	  }
+
+	  function renderHostMessagesForService() {
+	    const body = document.querySelector('#screen-host-messages .mypage-sub-body');
+	    if (!body) return;
+	    const service = serviceModeForCurrentContext();
+	    const ids = ['sakura', 'minjun', 'emma'];
+	    body.innerHTML = ids.map((id, index) => {
+	      const applicant = getApplicantForService(id, service);
+	      const preview = service === 'sharehouse'
+	        ? (currentLang === 'ja' ? 'シェアハウスの入居条件について相談したいです。' : 'I would like to ask about the sharehouse move-in conditions.')
+	        : (applicant.chatMessages?.[0]?.text || '入居日について確認したいのですが...');
+	      const time = index === 0 ? '14:32' : index === 1 ? localizeText('昨日') : '4/5';
+	      return `
+	        <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('${id}')">
+	          <div style="width:46px;height:46px;border-radius:50%;background:${applicant.avatarBg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${applicant.avatar}</div>
+	          <div style="flex:1;min-width:0;">
+	            <div style="display:flex;justify-content:space-between;gap:8px;">
+	              <div style="font-size:14px;font-weight:800;">${escapeHtml(localizeText(applicant.name))}</div>
+	              <div style="font-size:11px;color:var(--light);">${time}</div>
+	            </div>
+	            <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${escapeHtml(localizeText(preview))}</div>
+	          </div>
+	          <button onclick="event.stopPropagation();openApplicantDetail('${id}','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${localizeText('詳細を見る')}</button>
+	          ${index === 0 ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' : ''}
+	        </div>
+	      `;
+	    }).join('');
 	  }
 
 	  function openChat(hostId) {
@@ -8786,7 +8824,7 @@
 	      navigate(currentScreen, 'messages');
 	      return;
 	    }
-	    if (chatDetailMode === 'applicant') {
+	    if (chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') {
 	      chatBackScreen = 'host-messages';
 	      navigate(currentScreen, 'host-messages');
 	      return;
@@ -8855,11 +8893,13 @@
 	  }
 
   function openHostApplicantChat(applicantId) {
-    const applicant = APPLICANTS[applicantId];
+    const service = serviceModeForCurrentContext();
+    const applicant = getApplicantForService(applicantId, service);
     if (!applicant) return;
     currentChatApplicant = applicantId;
+    hostApplicantServiceMode = service;
     chatBackScreen = 'host-messages';
-    chatDetailMode = 'applicant';
+    chatDetailMode = service === 'sharehouse' ? 'sharehouse-applicant' : 'homestay-applicant';
 
     const header = document.querySelector('.chat-header');
     const avatar = header.querySelector('.chat-avatar');
@@ -8870,7 +8910,7 @@
     header.querySelector('.chat-subtitle').textContent = applicant.age + ' · ' + applicant.nationality;
 
     document.getElementById('chat-banner-name').textContent = applicant.name;
-    document.querySelector('.chat-banner-sub').textContent = '応募者詳細はこちら';
+    document.querySelector('.chat-banner-sub').textContent = service === 'sharehouse' ? localizeText('シェアハウスゲスト詳細はこちら') : '応募者詳細はこちら';
     document.querySelector('.chat-banner-btn-apply').style.display = 'none';
 
     const messages = applicant.chatMessages || [
@@ -8885,7 +8925,7 @@
           <div class="bubble-time">${m.time}</div>
         </div>
       `).join('');
-    const hostReq = getLatestHostInterviewRequest();
+    const hostReq = getLatestHostInterviewRequest(service);
     if (hostReq) area.insertAdjacentHTML('beforeend', renderInterviewRequestCard(hostReq, 'host'));
 
     navigate(currentScreen, 'chat');
@@ -8894,7 +8934,7 @@
   }
 
 	  function openChatDetail() {
-	    if (chatDetailMode === 'applicant' && currentChatApplicant) {
+	    if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') && currentChatApplicant) {
 	      openApplicantDetail(currentChatApplicant, 'host-messages');
 	      return;
 	    }
@@ -9009,15 +9049,17 @@
 	      openSharehouseChat(currentListing.id);
 	      return;
 	    }
-	    if (chatDetailMode === 'applicant') {
+	    if (chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') {
 	      openHostApplicantChat(currentChatApplicant || 'sakura');
 	    }
 	  }
 
-	  function getLatestHostInterviewRequest() {
-	    return Array.from(interviewRequests.values()).find(req => req.status === 'pending')
-	      || Array.from(interviewRequests.values()).find(req => req.status === 'accepted')
-	      || Array.from(interviewRequests.values())[0];
+	  function getLatestHostInterviewRequest(service = serviceModeForCurrentContext()) {
+	    const type = service === 'sharehouse' ? 'sharehouse' : 'homestay';
+	    const requests = Array.from(interviewRequests.values()).filter(req => req.listing?.type === type);
+	    return requests.find(req => req.status === 'pending')
+	      || requests.find(req => req.status === 'accepted')
+	      || requests[0];
 	  }
 
 	  function setInterviewRequestStatus(key, status) {
@@ -9028,7 +9070,7 @@
 	    interviewRequests.set(key, req);
 	    contactHistory.set(key, { listing: req.listing, status: status === 'accepted' ? 'interview_accepted' : 'interview_declined' });
 	    showToast(status === 'accepted' ? localizeText('面談リクエストを承諾しました') : localizeText('面談リクエストを不可にしました'));
-	    if (chatDetailMode === 'applicant') openHostApplicantChat(currentChatApplicant || 'sakura');
+	    if (chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') openHostApplicantChat(currentChatApplicant || 'sakura');
 	  }
 
 	  async function openVideoCall(key) {
@@ -9039,7 +9081,7 @@
 	      showToast(windowState.phase === 'ended' ? localizeText('この面談の通話時間は終了しました') : localizeText('面談時間になると通話できます'));
 	      return;
 	    }
-	    document.getElementById('video-peer-name').textContent = chatDetailMode === 'applicant'
+	    document.getElementById('video-peer-name').textContent = (chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant')
 	      ? localizeText(req.guestName || '中村 さくら')
 	      : localizeText(req.listing.name);
 	    currentVideoBack = currentScreen === 'chat' ? 'chat' : 'messages';
@@ -11045,10 +11087,12 @@
 	    return sharehouseGuestDemoProfile;
 	  }
 
-	  function defaultSharehouseGuestProfile(applicant) {
-	    const stored = readStoredJson(SHAREHOUSE_GUEST_PROFILE_STORAGE_KEY);
-	    if (stored) sharehouseGuestDemoProfile = stored;
-	    return sharehouseGuestDemoProfile || applicant?.sharehouseGuestProfile || {
+	  function defaultSharehouseGuestProfile(applicant, useStored = true) {
+	    if (useStored) {
+	      const stored = readStoredJson(SHAREHOUSE_GUEST_PROFILE_STORAGE_KEY);
+	      if (stored) sharehouseGuestDemoProfile = stored;
+	    }
+	    return (useStored ? sharehouseGuestDemoProfile : null) || applicant?.sharehouseGuestProfile || {
 	      basic: {
 	        name: applicant?.name || '中村 さくら',
 	        age: String(applicant?.age || '23歳').replace('歳', ''),
@@ -11739,10 +11783,10 @@
 	  function renderSharehouseApplicantProfile(applicant) {
 	    const card = document.getElementById('applicant-sharehouse-guest-profile-card');
 	    if (!card) return;
-	    const show = isSharehouseHostEditing();
+	    const show = applicant?.service === 'sharehouse' || serviceModeForCurrentContext() === 'sharehouse';
 	    card.style.display = show ? 'block' : 'none';
 	    if (!show) return;
-	    const profile = defaultSharehouseGuestProfile(applicant);
+	    const profile = defaultSharehouseGuestProfile(applicant, currentChatApplicant === 'sakura');
 	    renderDetailInfoGrid('applicant-shg-basic-info', [
 	      { label: '名前', value: profile.basic.name },
 	      { label: '年齢', value: profile.basic.age },
@@ -14997,6 +15041,8 @@
   Object.assign(autoTextTranslations, {
     'あなた・同居メンバーについて':'You & Household Members',
     '家・入居情報':'Home & Move-in Information',
+    'シェアハウスゲスト詳細':'Sharehouse Guest Details',
+    'シェアハウスゲスト詳細はこちら':'Sharehouse guest details',
     '現在の立場':'Current Status',
     'その他の立場':'Other status',
     '名前':'Name',
@@ -15637,12 +15683,70 @@
   };
 
   let applicantDetailBackScreen = 'host-applicants';
+  let hostApplicantServiceMode = 'homestay';
+
+  function serviceModeForCurrentContext() {
+    if (currentRole === 'resident') return 'sharehouse';
+    if (currentRole === 'host') return 'homestay';
+    if (currentListing?.type === 'sharehouse' || chatDetailMode === 'sharehouse' || currentSearchCat === 'sharehouse' || window._serviceType === 'sharehouse') return 'sharehouse';
+    return 'homestay';
+  }
+
+  function getApplicantForService(id, service = serviceModeForCurrentContext()) {
+    const base = APPLICANTS[id] || APPLICANTS.sakura;
+    if (service !== 'sharehouse') return { ...base, service: 'homestay' };
+    const profile = defaultSharehouseGuestProfile(base, id === 'sakura');
+    return {
+      ...base,
+      service: 'sharehouse',
+      name: profile.basic.name || base.name,
+      age: String(profile.basic.age || base.age).includes('歳') ? String(profile.basic.age || base.age) : `${profile.basic.age || base.age}歳`,
+      nationality: profile.basic.nationality || base.nationality,
+      gender: profile.basic.gender || base.gender,
+      bio: profile.basic.intro || base.bio,
+      hobbies: Array.isArray(profile.basic.hobbies) ? profile.basic.hobbies.join('、') : profile.basic.hobbies || base.hobbies,
+      stay: `${profile.stay.moveIn || '未設定'}〜${profile.stay.moveOut || '未設定'}`,
+      area: profile.stay.area || base.area,
+      budget: profile.stay.budget || base.budget,
+      religion: profile.basic.religion || base.religion,
+      englishLevel: profile.basic.englishLevel || base.englishLevel,
+      languages: Array.isArray(profile.basic.languages) ? profile.basic.languages.join('、') : profile.basic.languages || base.languages,
+      purpose: profile.basic.purpose || base.purpose,
+      sharehouseGuestProfile: profile,
+      chatMessages: [
+        { from: 'them', text: 'シェアハウスの入居条件について相談したいです。', time: '14:32' },
+        { from: 'me', text: 'ご連絡ありがとうございます。希望入居日とお部屋の希望を確認させてください。', time: '14:40' },
+        { from: 'them', text: '個室希望で、生活音は静かな方が安心です。', time: '14:46' }
+      ]
+    };
+  }
+
+  const homestayGuestDemoData = APPLICANTS;
+  const sharehouseGuestDemoData = {
+    sakura: () => getApplicantForService('sakura', 'sharehouse'),
+    minjun: () => getApplicantForService('minjun', 'sharehouse'),
+    emma: () => getApplicantForService('emma', 'sharehouse')
+  };
 
   function openApplicantDetail(id, backScreen = 'host-applicants') {
-    const applicant = APPLICANTS[id];
+    const service = serviceModeForCurrentContext();
+    const applicant = getApplicantForService(id, service);
     if (!applicant) return;
     currentChatApplicant = id;
+    hostApplicantServiceMode = service;
     applicantDetailBackScreen = backScreen;
+    const title = document.querySelector('#screen-host-applicant-detail .mypage-sub-title');
+    if (title) title.textContent = service === 'sharehouse' ? localizeText('シェアハウスゲスト詳細') : localizeText('応募者詳細');
+    const bioCard = document.getElementById('applicant-detail-bio-card');
+    const homestayConditionCard = document.getElementById('applicant-homestay-condition-card');
+    const homestayFitCard = document.getElementById('applicant-homestay-fit-card');
+    const sharehouseProfileCard = document.getElementById('applicant-sharehouse-guest-profile-card');
+    const oldSharehouseCard = document.getElementById('applicant-sharehouse-lifestyle-card');
+    if (bioCard) bioCard.style.display = service === 'sharehouse' ? 'none' : 'block';
+    if (homestayConditionCard) homestayConditionCard.style.display = service === 'sharehouse' ? 'none' : 'block';
+    if (homestayFitCard) homestayFitCard.style.display = service === 'sharehouse' ? 'none' : 'block';
+    if (sharehouseProfileCard) sharehouseProfileCard.style.display = service === 'sharehouse' ? 'block' : 'none';
+    if (oldSharehouseCard) oldSharehouseCard.style.display = 'none';
     const avatar = document.getElementById('applicant-detail-avatar');
     avatar.textContent = applicant.avatar;
     avatar.style.background = applicant.avatarBg;
@@ -15664,17 +15768,7 @@
     document.getElementById('applicant-detail-other-students').textContent = localizeText(applicant.otherStudents || 'いてもOK');
     document.getElementById('applicant-detail-smoking-condition').textContent = localizeText(applicant.smokingCondition || '喫煙NG');
     document.getElementById('applicant-detail-family-type').textContent = localizeText(applicant.familyType || 'こだわらない');
-    const shCard = document.getElementById('applicant-sharehouse-lifestyle-card');
-    const showSharehouseCard = isSharehouseHostEditing();
     renderSharehouseApplicantProfile(applicant);
-    if (shCard) shCard.style.display = 'none';
-    if (showSharehouseCard) {
-      document.getElementById('applicant-detail-sh-noise').textContent = localizeText(applicant.shareNoise || '静かにしたい');
-      document.getElementById('applicant-detail-sh-cooking').textContent = localizeText(applicant.cookingFrequency || '未設定');
-      document.getElementById('applicant-detail-sh-smoking').textContent = localizeText(applicant.smoking || '喫煙未設定');
-      document.getElementById('applicant-detail-sh-alcohol').textContent = localizeText(applicant.alcohol || '未設定');
-      document.getElementById('applicant-detail-sh-mbti').textContent = localizeText(applicant.mbti || '選択しない');
-    }
     document.getElementById('applicant-detail-ng').textContent = localizeText(applicant.ng || '未設定');
     document.getElementById('applicant-detail-note').textContent = localizeText(applicant.note || applicant.bio);
     document.getElementById('applicant-detail-values').textContent = localizeText(applicant.values || '安心して暮らせる環境');
@@ -15730,13 +15824,16 @@
 
   function openSharehouseDetail(id, backScreen = currentScreen) {
     currentListing = SHAREHOUSE_LISTINGS[id] || SHAREHOUSE_LISTINGS.sh1;
-    syncGuestServiceContext('sharehouse');
+    if (!hostPreviewMode) syncGuestServiceContext('sharehouse');
     sharehouseDetailBackScreen = backScreen || 'search';
     currentApplicationId = currentListing.type + ':' + currentListing.id;
     interviewBackScreen = currentListing.detailScreen;
     navigate(currentScreen, 'sharehouse-detail');
-	    renderGuestPreferenceSummary('sharehouse');
+	    const previewBanner = document.getElementById('sharehouse-preview-banner');
+	    if (previewBanner) previewBanner.style.display = hostPreviewMode ? 'block' : 'none';
 	    const saveBtn = document.getElementById('sharehouse-detail-save');
+	    if (saveBtn) saveBtn.style.display = hostPreviewMode ? 'none' : 'block';
+	    renderGuestPreferenceSummary('sharehouse');
 	    if (saveBtn) saveBtn.textContent = favorites.has('sh:' + currentListing.id) ? '❤️' : '🤍';
 	    updateListingActionButtons();
     updateBlockedUi();
