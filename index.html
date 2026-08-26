@@ -5213,8 +5213,11 @@
 	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">一人暮らし（女性）</div>
 	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">一人暮らし（男性）</div>
 	          <div class="form-chip selected" onclick="toggleHostHouseholdFields(this,'ob')">カップル</div>
-	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">子供あり</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">カップル＋子ども</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">ひとり親＋子ども</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'ob')">その他</div>
 	        </div>
+	        <div id="host-ob-household-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-household-other" type="text" placeholder="家族構成を入力してください" /></div>
 	      </div>
 	      <div id="host-ob-partner-fields" style="display:block;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
 	        <div class="form-group"><div class="form-label">パートナー情報</div><input class="form-input" id="host-ob-partner-age" type="number" min="0" inputmode="numeric" value="45" placeholder="年齢を入力してください" /></div>
@@ -5303,6 +5306,7 @@
       <div class="form-group"><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-max-stay" type="number" min="1" inputmode="numeric" value="12" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
       <div class="form-group"><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-ob-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
       <div class="form-group"><div class="form-label">ゲストに提供できる食事</div><div class="form-chip-row" id="host-ob-meal-plan"><div class="form-chip" onclick="toggleChip(this)">食事提供なし</div><div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div><div class="form-chip" onclick="toggleChip(this)">朝・夕食</div><div class="form-chip" onclick="toggleChip(this)">3食</div></div></div>
+      <div class="form-group"><div class="form-label">ゲストとは普段どのように食事をしますか？</div><div class="form-chip-row" id="host-ob-dining-style"><div class="form-chip selected" onclick="toggleChip(this)">家族と一緒に食べることが多い</div><div class="form-chip" onclick="toggleChip(this)">時々一緒に食べる</div><div class="form-chip" onclick="toggleChip(this)">基本別々</div><div class="form-chip" onclick="toggleChip(this)">作り置き・各自で食べることが多い</div></div></div>
       <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-ob-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /></div>
       <input type="hidden" id="host-ob-nightly-price" value="50" />
       <div class="form-section-title">🖼️ 部屋情報</div>
@@ -6464,8 +6468,11 @@
 	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">一人暮らし（女性）</div>
 	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">一人暮らし（男性）</div>
 	          <div class="form-chip selected" onclick="toggleHostHouseholdFields(this,'profile')">カップル</div>
-	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">子供あり</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">カップル＋子ども</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">ひとり親＋子ども</div>
+	          <div class="form-chip" onclick="toggleHostHouseholdFields(this,'profile')">その他</div>
 	        </div>
+	        <div id="host-profile-household-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-profile-household-other" type="text" placeholder="家族構成を入力してください" /></div>
 	      </div>
 	      <div class="homestay-profile-only" id="host-profile-partner-fields" style="margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
 	        <div class="form-group"><div class="form-label">パートナー情報</div><input class="form-input" id="host-profile-partner-age" type="number" min="0" inputmode="numeric" value="45" placeholder="年齢を入力してください" /></div>
@@ -6562,6 +6569,7 @@
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
 	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
 	          <div><div class="form-label">ゲストに提供できる食事</div><div class="form-chip-row" id="host-profile-meal-plan"><div class="form-chip" onclick="toggleChip(this)">食事提供なし</div><div class="form-chip selected" onclick="toggleChip(this)">朝食のみ</div><div class="form-chip" onclick="toggleChip(this)">朝・夕食</div><div class="form-chip" onclick="toggleChip(this)">3食</div></div></div>
+	          <div><div class="form-label">ゲストとは普段どのように食事をしますか？</div><div class="form-chip-row" id="host-profile-dining-style"><div class="form-chip selected" onclick="toggleChip(this)">家族と一緒に食べることが多い</div><div class="form-chip" onclick="toggleChip(this)">時々一緒に食べる</div><div class="form-chip" onclick="toggleChip(this)">基本別々</div><div class="form-chip" onclick="toggleChip(this)">作り置き・各自で食べることが多い</div></div></div>
 	          <div><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-profile-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /><input type="hidden" id="host-profile-nightly-price" value="50" /></div>
 	        </div>
 	      </div>
@@ -8482,7 +8490,7 @@
       ...(!['なし', '不要', '食事なし', '食事提供なし'].includes(mealPlan) && mealInfo.breakfastDetails ? [{ label: '朝食の内容', value: mealInfo.breakfastDetails }] : []),
       ...(mealPlan === '3食' && mealInfo.lunchDetails ? [{ label: '昼食の内容', value: mealInfo.lunchDetails }] : []),
       ...(['朝夕食', '朝・夕食', '朝・夕食あり', '3食'].includes(mealPlan) && mealInfo.dinnerDetails ? [{ label: '夕食の内容', value: mealInfo.dinnerDetails }] : []),
-      { label: '理想の食事スタイル', value: mealInfo.diningStyle || meta.dining || 'たまに一緒' },
+      { label: 'ゲストとの食事スタイル', value: hmHostMealStyleLabel(hmNormalizeMealStyle(mealInfo.diningStyle || meta.dining || 'sometimes')) },
       { label: '対応できる食事制限', value: (mealInfo.dietSupport && mealInfo.dietSupport.length) ? mealInfo.dietSupport : (meta.diet || ['特になし']) },
       ...(mealInfo.allergySupported ? [{ label: '対応できるアレルギー内容', value: mealInfo.allergySupported }] : []),
       { label: 'ゲストとの会話頻度', value: mealInfo.guestTalk || meta.talk || '適度に話したい' },
@@ -9654,9 +9662,16 @@
       'Three Meals a Day': '3食あり'
     },
     'hmf-dining': {
-      "I'd like to eat together": '一緒に食べたい',
-      'Sometimes together': 'たまに一緒',
-      'Eating separately is fine': '別々でOK'
+      '一緒に食べたい': 'together',
+      "I'd like to eat together": 'together',
+      '家族と一緒に食べることが多い': 'together',
+      'たまに一緒': 'sometimes',
+      'Sometimes together': 'sometimes',
+      '時々一緒に食べる': 'sometimes',
+      '別々でOK': 'separate',
+      'Eating separately is fine': 'separate',
+      '基本別々': 'separate',
+      '作り置き・各自で食べることが多い': 'self_serve'
     },
     'hmf-diet': {
       'Vegetarian': 'ベジタリアン',
@@ -9710,9 +9725,13 @@
     'hmf-family': {
       'ファミリー': '子どものいる家庭',
       '子供あり': '子どものいる家庭',
+      'カップル＋子ども': '子どものいる家庭',
+      'ひとり親＋子ども': '子どものいる家庭',
       '子供のいる家庭': '子どものいる家庭',
       'Household with Children': '子どものいる家庭',
       '子供のいない家庭': '子どものいない家庭',
+      '一人暮らし（女性）': '一人暮らし',
+      '一人暮らし（男性）': '一人暮らし',
       'Household without children': '子どものいない家庭',
       'Living Alone': '一人暮らし',
       'Couple': 'カップル'
@@ -9930,6 +9949,52 @@
     return map[value] || value;
   }
 
+  function hmNormalizeMealStyle(value) {
+    return canonicalFilterValue('hmf-dining', value);
+  }
+
+  function hmMealStyleLabel(value) {
+    return ({ together: '一緒に食べたい', sometimes: 'たまに一緒', separate: '別々でOK', self_serve: '作り置き・各自で食べることが多い' })[value] || value || '';
+  }
+
+  function hmHostMealStyleLabel(value) {
+    return ({ together: '家族と一緒に食べることが多い', sometimes: '時々一緒に食べる', separate: '基本別々', self_serve: '作り置き・各自で食べることが多い' })[value] || value || '';
+  }
+
+  function hmMealStyleCompatible(guestValue, hostValue) {
+    if (!guestValue) return true;
+    if (guestValue === 'separate') return ['separate', 'self_serve'].includes(hostValue);
+    return guestValue === hostValue;
+  }
+
+  function hmMealStyleComparisonLabel(guestValue, hostValue) {
+    const guestText = hmMealStyleLabel(guestValue);
+    const hostText = hmHostMealStyleLabel(hostValue);
+    if (currentLang !== 'ja') return `${translateFreeText(guestText)} / ${translateFreeText(hostText)}`;
+    return `${guestText} / ${hostText}`;
+  }
+
+  function hmHostFamilyValue(type) {
+    const text = String(type || '');
+    if (text.includes('一人暮らし（女性）')) return 'single_female';
+    if (text.includes('一人暮らし（男性）')) return 'single_male';
+    if (text.includes('カップル') && (text.includes('子ども') || text.includes('子供'))) return 'couple_with_children';
+    if (text.includes('ひとり親') && (text.includes('子ども') || text.includes('子供'))) return 'single_parent_with_children';
+    if (text.includes('カップル')) return 'couple';
+    if (text.includes('子ども') || text.includes('子供')) return 'couple_with_children';
+    if (text.includes('その他')) return 'other';
+    return '';
+  }
+
+  function hmFamilyCompatible(guestValue, hostFamilyValue) {
+    if (!guestValue) return true;
+    if (guestValue === '一人暮らし') return ['single_female', 'single_male'].includes(hostFamilyValue);
+    if (guestValue === 'カップル') return hostFamilyValue === 'couple';
+    if (guestValue === '子どものいる家庭') return ['couple_with_children', 'single_parent_with_children'].includes(hostFamilyValue);
+    if (guestValue === '子どものいない家庭') return ['single_female', 'single_male', 'couple'].includes(hostFamilyValue);
+    return false;
+  }
+
   const HM_RULE_LABELS = {
     curfew: { none: '門限なし希望', allowed: '門限ありでもOK' },
     visitor: { ok: '来客OKの家庭を希望', notice_required: '事前連絡が必要でもOK', ng: '来客NGでもOK' },
@@ -9999,9 +10064,12 @@
     if (stayInfo.area) base.area = stayInfo.area;
     if (household.smokingStatus) base.smoking = household.smokingStatus === '吸わない' ? '完全禁煙' : '屋外喫煙ならOK';
     if (household.students) base.students = household.students.length ? 'いる' : 'いない';
-    if (household.type) base.family = household.type.includes('子供') ? '子どものいる家庭' : household.type.includes('カップル') ? 'カップル' : household.type.includes('一人暮らし') ? '一人暮らし' : base.family;
+    if (household.type) {
+      base.familyType = hmHostFamilyValue(household.type);
+      base.family = base.familyType || base.family;
+    }
     if (compat.mealPlan) base.meal = hmNormalizeMeal(compat.mealPlan);
-    if (compat.diningStyle) base.dining = compat.diningStyle;
+    if (compat.diningStyle) base.dining = hmNormalizeMealStyle(compat.diningStyle);
     if (compat.dietSupport?.length) base.diet = compat.dietSupport.map(d => d === 'アレルギー対応可' ? 'アレルギー対応' : d);
     if (compat.guestTalk) base.talk = compat.guestTalk === '毎日話したい' ? '毎日会話したい' : compat.guestTalk;
     if (compat.guestFrequency) base.frequency = compat.guestFrequency === '休日に一緒に出かける' ? '休日もたまに一緒に過ごしたい' : compat.guestFrequency;
@@ -10017,6 +10085,8 @@
       if (text.includes('門限')) base.curfewTime = hmExtractRuleTime(text) || base.curfewTime;
       if (text.includes('キッチン')) base.kitchenTime = hmExtractRuleTime(text) || base.kitchenTime;
     });
+    base.dining = hmNormalizeMealStyle(base.dining);
+    base.familyType = base.familyType || hmHostFamilyValue(base.family);
     return base;
   }
 
@@ -10152,12 +10222,12 @@
     }
     hard(filters.budgetOnly, '予算内', (h.price || 0) <= filters.budget);
     pref(filters.meal, filters.meal, meta.meal === filters.meal);
-    pref(filters.dining, filters.dining, meta.dining === filters.dining);
+    pref(filters.dining, hmMealStyleComparisonLabel(filters.dining, meta.dining), hmMealStyleCompatible(filters.dining, meta.dining));
     filters.diet.forEach(d => pref(true, d, (meta.diet || []).includes(d)));
     pref(filters.pets, filters.pets, filters.pets === 'ペットOK' ? true : meta.pets === 'なし');
     pref(filters.smoking, filters.smoking, filters.smoking === '完全禁煙' ? meta.smoking === '完全禁煙' : ['完全禁煙','屋外喫煙ならOK'].includes(meta.smoking));
     pref(filters.students, filters.students, filters.students.includes('いてもOK') ? true : meta.students === 'いない');
-    pref(filters.family, filters.family, filters.family === '子どものいない家庭' ? meta.family !== '子どものいる家庭' : meta.family === filters.family);
+    pref(filters.family, filters.family, hmFamilyCompatible(filters.family, meta.familyType || hmHostFamilyValue(meta.family)));
     pref(filters.curfew, hmRuleComparisonLabel('curfew', filters.curfew, meta), hmRuleCompatible('curfew', filters.curfew, meta.curfew));
     pref(filters.visitor, hmRuleComparisonLabel('visitor', filters.visitor, meta), hmRuleCompatible('visitor', filters.visitor, meta.visitor));
     pref(filters.shower, hmRuleComparisonLabel('shower', filters.shower, meta), hmRuleCompatible('shower', filters.shower, meta.shower));
@@ -10214,6 +10284,7 @@
       diet: Array.isArray(filters.diet) ? filters.diet : (filters.diet ? [filters.diet] : [])
     };
     next.curfew = canonicalFilterValue('hmf-curfew', next.curfew);
+    next.dining = canonicalFilterValue('hmf-dining', next.dining);
     next.visitor = canonicalFilterValue('hmf-visitor', next.visitor);
     next.shower = canonicalFilterValue('hmf-shower', next.shower);
     next.kitchen = canonicalFilterValue('hmf-kitchen', next.kitchen);
@@ -10959,8 +11030,13 @@
 	    const selected = el.textContent.trim();
 	    const partner = document.getElementById(prefix + '-partner-fields');
 	    const children = document.getElementById(prefix + '-children-fields');
-	    if (partner) partner.style.display = selected.includes('カップル') || selected.includes('Couple') ? 'block' : 'none';
-	    if (children) children.style.display = selected.includes('子供') || selected.includes('Children') ? 'block' : 'none';
+	    const other = document.getElementById(prefix + '-household-other-wrap');
+	    const hasPartner = selected.includes('カップル') || selected.includes('Couple');
+	    const hasChildren = selected.includes('子ども') || selected.includes('子供') || selected.includes('Children');
+	    const isOther = selected.includes('その他') || selected.includes('Other');
+	    if (partner) partner.style.display = hasPartner ? 'block' : 'none';
+	    if (children) children.style.display = (hasChildren || isOther) ? 'block' : 'none';
+	    if (other) other.style.display = isOther ? 'block' : 'none';
 	  }
 
 	  function toggleHostStudentFields(el, scope) {
@@ -12150,14 +12226,16 @@
 	    const hobbies = selectedChipTexts('#' + prefix + '-hobbies');
 	    const hobbyOther = formValue(prefix + '-hobby-other');
 	    if (hobbyOther) hobbies.push(hobbyOther);
-	    const householdType = selectedChipText(prefix + '-household-type', 'カップル');
+	    const selectedHouseholdType = selectedChipText(prefix + '-household-type', 'カップル');
+	    const householdOther = formValue(prefix + '-household-other', '');
+	    const householdType = selectedHouseholdType === 'その他' && householdOther ? `その他：${householdOther}` : selectedHouseholdType;
 	    const smokingStatus = selectedChipText(prefix + '-smoking-status', '吸わない');
 	    const guestTalk = selectedChipText(prefix + '-guest-talk', '適度に話したい');
 	    const mealPlan = selectedChipText(prefix + '-meal-plan', '朝食のみ');
 	    const breakfastDetails = formValue(prefix + '-breakfast-details', '');
 	    const lunchDetails = formValue(prefix + '-lunch-details', '');
 	    const dinnerDetails = formValue(prefix + '-dinner-details', '');
-	    const diningStyle = selectedChipText(prefix + '-dining-style', '一緒に食べたい');
+	    const diningStyle = hmNormalizeMealStyle(selectedChipText(prefix + '-dining-style', '家族と一緒に食べることが多い'));
 	    const dietSupport = selectedChipTexts('#' + prefix + '-diet-support');
 	    const allergySupported = formValue(prefix + '-allergy-supported', '');
 	    const guestFrequency = selectedChipText(prefix + '-guest-frequency', '食事の時など時々');
@@ -15287,6 +15365,16 @@
     '調整中':'Coordinating'
   });
   Object.assign(autoTextTranslations, {
+    'ゲストとの食事スタイル':'Dining Style with Guest',
+    'ゲストとは普段どのように食事をしますか？':'How do you usually have meals with your guest?',
+    '家族と一緒に食べることが多い':'Usually eat together with the family',
+    '時々一緒に食べる':'Sometimes eat together',
+    '基本別々':'Mostly eat separately',
+    '作り置き・各自で食べることが多い':'Often self-serve or eat separately',
+    'カップル＋子ども':'Couple with Children',
+    'ひとり親＋子ども':'Single Parent with Children',
+    '家族構成を入力してください':'Enter household type',
+    'その他：':'Other: ',
     'あなた・同居メンバーについて':'You & Household Members',
     '家・入居情報':'Home & Move-in Information',
     'シェアハウスゲスト詳細':'Sharehouse Guest Details',
