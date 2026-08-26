@@ -3797,13 +3797,12 @@
     <div class="mypage-section-title" data-i18n="settings">設定</div>
     <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="notifications">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
-    <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="support">サポート</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
     <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></a>
-    <div class="mypage-item" onclick="openTermsPrivacy()"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
     <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
@@ -6692,9 +6691,8 @@
     <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div class="mypage-item" onclick="navigate(currentScreen,'host-profile')"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="edit_listing">掲載を編集</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
-      <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="privacy_security">プライバシー・セキュリティ</span><span class="mypage-item-arrow">›</span></div>
+      <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
-      <div class="mypage-item" onclick="openTermsPrivacy()"><span class="mypage-item-icon">📋</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
       <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
@@ -6704,15 +6702,15 @@
   </div>
 </div>
 
-<!-- ==================== プライバシー・セキュリティ ==================== -->
+<!-- ==================== 利用規約・プライバシーポリシー ==================== -->
 <div class="screen" id="screen-privacy-security">
   <div class="mypage-sub-header">
     <div class="mypage-sub-back" onclick="navigate(currentScreen,privacyBackScreen)">←</div>
-    <div class="mypage-sub-title" data-i18n="privacy_security">プライバシー・セキュリティ</div>
+    <div class="mypage-sub-title" data-i18n="terms_privacy">利用規約・プライバシーポリシー</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
-      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="privacy_security">プライバシー・セキュリティ</div>
+      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_privacy">利用規約・プライバシーポリシー</div>
       <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="privacy_intro">HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。</div>
     </div>
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
@@ -6738,32 +6736,6 @@
     <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
       <div style="font-size:15px;font-weight:900;margin-bottom:8px;" data-i18n="privacy_sensitive_title">大切な個人情報を守るために</div>
       <div style="font-size:13px;color:var(--mid);line-height:1.75;" data-i18n="privacy_sensitive_body">パスポートや身分証明書の画像、銀行口座情報、クレジットカード情報などを、メッセージ上で安易に送らないようご注意ください。</div>
-    </div>
-  </div>
-</div>
-
-<!-- ==================== 利用規約・プライバシーポリシー ==================== -->
-<div class="screen" id="screen-terms-privacy">
-  <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,termsBackScreen)">←</div>
-    <div class="mypage-sub-title" data-i18n="terms_privacy">利用規約・プライバシーポリシー</div>
-  </div>
-  <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
-      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_service_model_title">HostMatchのサービス範囲</div>
-      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_service_model_body">HostMatchは、ホームステイ先やシェアハウス相手を掲載・検索・比較し、メッセージや面談を通じて直接つながるためのプラットフォームです。</div>
-    </div>
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
-      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_no_transaction_title">契約・支払いについて</div>
-      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_no_transaction_body">HostMatchは、予約、契約、入居申込、家賃回収、デポジット、決済、返金、成約確認には関与しません。契約条件や支払い方法は、ユーザー同士で直接ご確認ください。</div>
-    </div>
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
-      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_user_responsibility_title">ユーザー間の確認</div>
-      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_user_responsibility_body">掲載内容、住居条件、生活ルール、費用、滞在期間、本人確認、契約条件などは、メッセージや面談を通じて当事者間で十分に確認してください。</div>
-    </div>
-    <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;">
-      <div style="font-size:15px;font-weight:900;margin-bottom:8px;color:var(--dark);" data-i18n="terms_privacy_link_title">プライバシーについて</div>
-      <div style="line-height:1.75;color:var(--mid);font-size:13px;" data-i18n="terms_privacy_link_body">個人情報、住所、メッセージ、安全な利用に関する方針は、プライバシー・セキュリティ画面で確認できます。ホームステイとシェアハウスのすべてのユーザーに同じ方針を適用します。</div>
     </div>
   </div>
 </div>
@@ -7256,7 +7228,6 @@
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
   let blockedUsersBackScreen = 'mypage';
-  let termsBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let sharehouseDetailMap = null;
@@ -7313,7 +7284,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','terms-privacy','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','pending-hosts','stay-history','write-review','notification-settings','interview','complete','video-call','map','login','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -7703,11 +7674,6 @@
   function openPrivacySecurity() {
     privacyBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
     navigate(currentScreen, 'privacy-security');
-  }
-
-  function openTermsPrivacy() {
-    termsBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
-    navigate(currentScreen, 'terms-privacy');
   }
 
   function openBlockedUsers() {
