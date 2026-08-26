@@ -229,6 +229,7 @@
       padding: 9px 12px; font-size: 13px; font-weight: 800; cursor: pointer; user-select: none;
     }
     .hm-filter-chip.selected { border-color: var(--primary); background: #FFF3F3; color: var(--primary); }
+    .hm-filter-chip.selected::after { content: " ✓"; font-weight: 900; }
     .hm-filter-date-grid, .hm-filter-two-col { display: grid; grid-template-columns: 1fr; gap: 10px; }
     .hm-filter-input {
       width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 12px;
@@ -2693,7 +2694,6 @@
             <div><div class="price-input-label">入居希望日</div><input class="hm-filter-input" id="hmf-start" type="date" onchange="autoApplyActiveFilters()" /></div>
             <div><div class="price-input-label">退去希望日</div><input class="hm-filter-input" id="hmf-end" type="date" onchange="autoApplyActiveFilters()" /></div>
           </div>
-          <label class="hm-filter-toggle"><input id="hmf-full-period" type="checkbox" onchange="autoApplyActiveFilters()" />この期間すべて受け入れ可能なホストのみ表示</label>
         </div>
 
         <div class="hm-filter-group">
@@ -2845,7 +2845,7 @@
         <div class="hm-filter-title">条件比較結果</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 12px;flex-wrap:wrap;">
           <label style="font-size:12px;font-weight:800;color:var(--light);">並び替え</label>
-          <select id="hm-sort" class="hm-filter-input" style="width:auto;min-width:180px;padding:9px 12px;" onchange="applyHomestayFilters()">
+          <select id="hm-sort" class="hm-filter-input" style="width:auto;min-width:180px;padding:9px 12px;" onchange="rerenderHomestayFilterResults()">
             <option value="newest">新着順</option>
             <option value="conditions">条件一致が多い順</option>
             <option value="price">料金が安い順</option>
@@ -2975,7 +2975,6 @@
             <div><div class="price-input-label">希望入居日</div><input class="hm-filter-input" id="shf-start" type="date" onchange="autoApplyActiveFilters()" /></div>
             <div><div class="price-input-label">希望退去日</div><input class="hm-filter-input" id="shf-end" type="date" onchange="autoApplyActiveFilters()" /></div>
           </div>
-          <label class="hm-filter-toggle"><input id="shf-full-period" type="checkbox" onchange="autoApplyActiveFilters()" />この期間すべて入居可能な掲載のみ表示</label>
         </div>
 
         <div class="hm-filter-group">
@@ -3184,7 +3183,7 @@
         <div class="hm-filter-title">条件に合う掲載</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 12px;flex-wrap:wrap;">
           <label style="font-size:12px;font-weight:800;color:var(--light);">並び替え</label>
-          <select id="sh-sort" class="hm-filter-input" style="width:auto;min-width:180px;padding:9px 12px;" onchange="applySharehouseFilters()">
+          <select id="sh-sort" class="hm-filter-input" style="width:auto;min-width:180px;padding:9px 12px;" onchange="rerenderSharehouseFilterResults()">
             <option value="newest">新着順</option>
             <option value="conditions">条件一致が多い順</option>
             <option value="price">料金が安い順</option>
@@ -7322,22 +7321,14 @@
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
     if (to === 'favorites') renderFavorites();
 	    if (to === 'search') {
-	      switchSearchCat(currentSearchCat);
+	      switchSearchCat(currentSearchCat, true);
 	      if (currentSearchCat === 'homestay') {
-	        if (shouldApplyRegisteredFilters.homestay) {
-	          applyHomestayRegisteredFiltersToSearch();
-	          shouldApplyRegisteredFilters.homestay = false;
-	        } else {
-	          applyHomestayFilters();
-	        }
+	        applyHomestayRegisteredFiltersToSearch();
+	        shouldApplyRegisteredFilters.homestay = false;
 	      }
 	      if (currentSearchCat === 'sharehouse') {
-	        if (shouldApplyRegisteredFilters.sharehouse) {
-	          applySharehouseRegisteredFiltersToSearch();
-	          shouldApplyRegisteredFilters.sharehouse = false;
-	        } else {
-	          applySharehouseFilters();
-	        }
+	        applySharehouseRegisteredFiltersToSearch();
+	        shouldApplyRegisteredFilters.sharehouse = false;
 	      }
 	      window.scrollTo(0, 0);
 	    }
@@ -9589,12 +9580,10 @@
     const wasSelected = el.classList.contains('selected');
     el.parentElement.querySelectorAll('.hm-filter-chip').forEach(chip => chip.classList.remove('selected'));
     if (!wasSelected) el.classList.add('selected');
-    setTimeout(autoApplyActiveFilters, 0);
   }
 
   function hmToggleChip(el) {
     el.classList.toggle('selected');
-    setTimeout(autoApplyActiveFilters, 0);
   }
 
   function hmSelected(id) {
@@ -9621,36 +9610,210 @@
     });
   }
 
+  const FILTER_VALUE_ALIASES = {
+    'hmf-area': { 'Vancouver': 'バンクーバー', 'Toronto': 'トロント' },
+    'hmf-meal': {
+      '不要': '食事なし',
+      'なし': '食事なし',
+      '食事提供なし': '食事なし',
+      'No Meals': '食事なし',
+      '朝食のみ': '朝食あり',
+      'Breakfast Only': '朝食あり',
+      '朝夕食': '朝・夕食あり',
+      '朝・夕食': '朝・夕食あり',
+      'Breakfast & Dinner': '朝・夕食あり',
+      '3食': '3食あり',
+      'Three Meals a Day': '3食あり'
+    },
+    'hmf-dining': {
+      "I'd like to eat together": '一緒に食べたい',
+      'Sometimes together': 'たまに一緒',
+      'Eating separately is fine': '別々でOK'
+    },
+    'hmf-diet': {
+      'Vegetarian': 'ベジタリアン',
+      'Vegan': 'ヴィーガン',
+      'Halal': 'ハラール',
+      'Gluten-free': 'グルテンフリー',
+      'Allergy': 'アレルギー対応',
+      'アレルギー': 'アレルギー対応',
+      'アレルギー対応可': 'アレルギー対応',
+      'Allergy support': 'アレルギー対応'
+    },
+    'hmf-pets': {
+      'ペットNG': 'ペットなし希望',
+      'ペットなし': 'ペットなし希望',
+      'できればいない方がいい': 'ペットなし希望',
+      'No pets preferred': 'ペットなし希望',
+      'Pets OK': 'ペットOK'
+    },
+    'hmf-smoking': {
+      '喫煙NG': '完全禁煙',
+      '吸わない': '完全禁煙',
+      'No smoking': '完全禁煙',
+      'Completely non-smoking': '完全禁煙',
+      '屋外ならOK': '屋外喫煙ならOK',
+      '屋外で吸う': '屋外喫煙ならOK',
+      'Outdoor smoking is OK': '屋外喫煙ならOK'
+    },
+    'hmf-students': {
+      'いてもOK': '他の留学生がいてもOK',
+      'OK with other international students': '他の留学生がいてもOK',
+      'できればいない方がいい': '他の留学生なし希望',
+      'いない家庭を希望': '他の留学生なし希望',
+      'Prefer no other international students': '他の留学生なし希望',
+      'I prefer a household without other international students': '他の留学生なし希望'
+    },
+    'hmf-talk': {
+      'Minimal interaction': '必要最低限',
+      'Occasional conversations': '適度に話したい',
+      '毎日話したい': '毎日会話したい',
+      "I'd like to talk every day": '毎日会話したい',
+      "I'd like to spend time like a family member": '家族のように過ごしたい',
+      "I'd like to spend time like family": '家族のように過ごしたい'
+    },
+    'hmf-frequency': {
+      '休日にたまに一緒に過ごしたい': '休日もたまに一緒に過ごしたい',
+      "I'd like to occasionally spend time together on days off": '休日もたまに一緒に過ごしたい',
+      'I prefer to mostly spend time independently': '基本それぞれで過ごしたい',
+      'Occasionally, such as during meals': '食事の時など時々',
+      "I'd like to interact as part of the family": '家族の一員のように交流したい'
+    },
+    'hmf-family': {
+      'ファミリー': '子どものいる家庭',
+      '子供あり': '子どものいる家庭',
+      '子供のいる家庭': '子どものいる家庭',
+      'Household with Children': '子どものいる家庭',
+      '子供のいない家庭': '子どものいない家庭',
+      'Household without children': '子どものいない家庭',
+      'Living Alone': '一人暮らし',
+      'Couple': 'カップル'
+    },
+    'hmf-wake': {
+      '6時以前': '〜6時',
+      'Before 6:00': '〜6時',
+      '6〜8時': '6〜8時',
+      '8〜9時': '8〜9時',
+      '9時以降': '9時〜',
+      'After 9:00': '9時〜'
+    },
+    'hmf-sleep': {
+      '21〜22時': '21〜22時',
+      '22〜23時': '22〜23時',
+      '23時以降': '23時〜',
+      'After 23:00': '23時〜'
+    },
+    'shf-area': { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' },
+    'shf-room': { 'Private room preferred': '個室希望', 'Shared room is OK': '相部屋でもOK', 'Either is OK': 'どちらでもOK' },
+    'shf-furniture': { 'Furnished preferred': '家具付き希望', 'Unfurnished is OK': '家具なしでもOK', 'Either is OK': 'どちらでもOK' },
+    'shf-bathroom': { 'Private bathroom preferred': '専用バスルーム希望', 'Shared bathroom is OK': '共用でもOK', 'Either is OK': 'どちらでもOK' },
+    'shf-pets': { 'ペットなし希望': 'ペットNG', 'No pets': 'ペットNG', 'Pets OK': 'ペットOK' },
+    'shf-smoking': { '完全禁煙': 'NG', '喫煙NG': 'NG', 'No smoking': 'NG', '屋外喫煙ならOK': '屋外のみならOK', 'Outdoor only is OK': '屋外のみならOK' },
+    'shf-roommate-interaction': {
+      'Mostly spend time independently': '基本それぞれで過ごしたい',
+      'Just a short chat when we see each other': '会った時に少し話すくらい',
+      "I'd like to sometimes share meals or conversations": '時々一緒に食事や会話をしたい',
+      "I'd also like to go out together on days off": '休日などに一緒に出かけることもしたい',
+      "I'd like to become friends": '友達のような関係になりたい'
+    },
+    'shf-alcohol': { "I don't mind": '気にしない', 'Depends on the amount': '程度による', 'I would prefer less drinking': 'あまり好まない' },
+    'shf-visitors': {
+      "I don't mind": '気にしない',
+      'OK if they tell me in advance': '事前に教えてくれればOK',
+      'OK if not frequent': '頻繁でなければOK',
+      'I prefer fewer visitors': 'できれば来客は少ない方がいい',
+      'Prefer no visitors': '来客NG希望'
+    },
+    'shf-overnight-guests': { 'No problem': '問題ない', 'Occasionally is OK': 'たまにならOK', 'OK with prior discussion': '事前相談があればOK' },
+    'shf-housemate-count': { 'Prefer sharing with one person': '1人とのシェア希望', '2-3 people': '2〜3人', '4 or more is OK': '4人以上でもOK', "I don't mind": '特に気にしない' },
+    'shf-kitchen': {
+      'I cook often and want flexible kitchen access': 'キッチンをよく使うので自由に使いたい',
+      'Shared use is fine': '共用で問題ない',
+      'Some time rules are OK': '使用時間に多少ルールがあってもOK',
+      "I don't use it much": 'あまり使わない'
+    },
+    'shf-wake': { 'Before 6:00': '6時以前', 'After 9:00': '9時以降' },
+    'shf-sleep': { 'Before 22:00': '22時以前', 'After 1:00': '1時以降' },
+    'shf-home-time': {
+      "I'm often home during the day": '日中も家にいることが多い',
+      "I'm usually out during the day for school or work": '学校・仕事で日中はいないことが多い',
+      "I'm mostly home at night": '夜を中心に家にいる',
+      'It depends on the day': '日によって異なる'
+    },
+    'shf-cooking': { 'Almost every day': 'ほぼ毎日', 'A few times a week': '週に数回', 'Occasionally': 'たまに', 'Rarely': 'ほとんどしない' },
+    'shf-cleanliness': {
+      "I don't mind much": 'あまり気にしない',
+      'Minimum cleanliness is OK': '最低限綺麗ならOK',
+      'I prefer reasonably clean spaces': 'ある程度綺麗にしたい',
+      'I want to keep it always clean': '常に綺麗に保ちたい'
+    },
+    'shf-cleaning-frequency': { 'Light cleaning every day': '毎日軽く', 'A few times a week': '週に数回', 'Once a week': '週1回', 'When it gets dirty': '汚れたら', 'No strong preference': '特にこだわらない' },
+    'shf-life-noise': {
+      'I definitely want a quiet environment': '静かな環境が絶対いい',
+      'I prefer a relatively quiet place': '比較的静かな方がいい',
+      'Normal noise is fine': '普通なら問題ない',
+      "It doesn't bother me much": 'あまり気にならない'
+    },
+    'shf-quiet-hours': { 'I want to follow them strictly': '厳しく守りたい', 'Some quiet is enough': 'ある程度静かならOK', "I don't mind much": 'あまり気にしない' }
+  };
+
+  function filterValueVariants(rowId, value) {
+    const rawValues = Array.isArray(value) ? value : [value];
+    const aliases = FILTER_VALUE_ALIASES[rowId] || {};
+    const variants = new Set();
+    rawValues.forEach(rawValue => {
+      const text = String(rawValue || '').trim();
+      if (!text) return;
+      variants.add(text);
+      variants.add(localizeText(text));
+      if (aliases[text]) {
+        variants.add(aliases[text]);
+        variants.add(localizeText(aliases[text]));
+      }
+      Object.entries(aliases).forEach(([from, to]) => {
+        if (to === text || localizeText(to) === text || localizeText(from) === text) {
+          variants.add(from);
+          variants.add(to);
+          variants.add(localizeText(from));
+          variants.add(localizeText(to));
+        }
+      });
+    });
+    return variants;
+  }
+
+  function chipTextVariants(chip) {
+    const original = (chip.dataset.hmfOriginalText || chip.textContent || '').trim();
+    const visible = (chip.textContent || '').trim();
+    return [original, visible, localizeText(original), localizeText(visible)].filter(Boolean);
+  }
+
   function setFilterChip(rowId, value) {
     const row = document.getElementById(rowId);
     if (!row) return;
+    const expected = filterValueVariants(rowId, value);
     row.querySelectorAll('.hm-filter-chip').forEach(chip => {
-      const original = chip.dataset.hmfOriginalText || chip.textContent.trim();
-      chip.classList.toggle('selected', !!value && original === value);
+      chip.classList.toggle('selected', !!value && chipTextVariants(chip).some(text => expected.has(text)));
     });
   }
 
   function setFilterChips(rowId, values = []) {
-    const selected = Array.isArray(values) ? values : [values];
     const row = document.getElementById(rowId);
     if (!row) return;
+    const expected = filterValueVariants(rowId, values);
     row.querySelectorAll('.hm-filter-chip').forEach(chip => {
-      const original = chip.dataset.hmfOriginalText || chip.textContent.trim();
-      chip.classList.toggle('selected', selected.includes(original));
+      chip.classList.toggle('selected', chipTextVariants(chip).some(text => expected.has(text)));
     });
   }
 
   function autoApplyActiveFilters() {
-    if (suppressFilterAutoApply || currentScreen !== 'search') return;
-    if (currentSearchCat === 'homestay') applyHomestayFilters();
-    if (currentSearchCat === 'sharehouse') applySharehouseFilters();
+    return;
   }
 
   function hmUpdateBudgetLabel() {
     const budget = Number(document.getElementById('hmf-budget')?.value || 2000);
     const label = document.getElementById('hmf-budget-label');
     if (label) label.textContent = budget >= 2000 ? 'C$2,000+' : `C$${budget.toLocaleString()}`;
-    autoApplyActiveFilters();
   }
 
   function hmNormalizeMeal(value) {
@@ -9705,7 +9868,6 @@
       area: hmSelected('hmf-area'),
       start: document.getElementById('hmf-start')?.value || '',
       end: document.getElementById('hmf-end')?.value || '',
-      fullPeriod: !!document.getElementById('hmf-full-period')?.checked,
       budget: Number(document.getElementById('hmf-budget')?.value || 2000),
       budgetOnly: !!document.getElementById('hmf-budget-only')?.checked,
       meal: hmSelected('hmf-meal'),
@@ -9728,9 +9890,13 @@
   function activeHomestayFilterCount(filters) {
     return Object.entries(filters).filter(([key, value]) => {
       if (key === 'budget') return false;
-      if (key === 'fullPeriod' || key === 'budgetOnly') return !!value;
+      if (key === 'budgetOnly') return !!value;
       return Array.isArray(value) ? value.length : !!value;
     }).length;
+  }
+
+  function cloneFilterState(filters) {
+    return JSON.parse(JSON.stringify(filters || {}));
   }
 
   function hmAddCondition(items, filters, active, label, ok, near = false) {
@@ -9765,7 +9931,17 @@
     hard(filters.area, filters.area, meta.area === filters.area);
     if (filters.start && filters.end) {
       const range = getHostAvailability(hostId);
-      hard(true, '希望期間すべて受け入れ可能', isDateRangeCovered({ start: filters.start, end: filters.end }, range));
+      const guestRange = { start: filters.start, end: filters.end };
+      activeHard++;
+      if (!isDateRangeOverlapping(guestRange, range)) {
+        hardPass = false;
+        hmAddCondition(items, filters, true, '期間重複なし', false);
+      } else if (isDateRangeCovered(guestRange, range)) {
+        matchedHard++;
+        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), true);
+      } else {
+        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), false, true);
+      }
     } else if (filters.start || filters.end) {
       near(true, '滞在期間を確認', true);
     }
@@ -9796,7 +9972,6 @@
       area: 'バンクーバー',
       start: stay.start,
       end: stay.end,
-      fullPeriod: true,
       budget: 2000,
       budgetOnly: false,
       meal: '',
@@ -9814,6 +9989,73 @@
       visitor: '',
       shower: ''
     };
+  }
+
+  function emptyHomestayFilters() {
+    return {
+      area: '',
+      start: '',
+      end: '',
+      budget: 2000,
+      budgetOnly: false,
+      meal: '',
+      dining: '',
+      diet: [],
+      pets: '',
+      smoking: '',
+      students: '',
+      talk: '',
+      frequency: '',
+      family: '',
+      wake: '',
+      sleep: '',
+      curfew: '',
+      visitor: '',
+      shower: ''
+    };
+  }
+
+  function normalizeHomestayFilterState(filters = {}) {
+    return {
+      ...emptyHomestayFilters(),
+      ...filters,
+      budget: Number(filters.budget || 2000),
+      budgetOnly: !!filters.budgetOnly,
+      diet: Array.isArray(filters.diet) ? filters.diet : (filters.diet ? [filters.diet] : [])
+    };
+  }
+
+  function renderHomestaySearchFormFromFilters(filters) {
+    const next = normalizeHomestayFilterState(filters);
+    suppressFilterAutoApply = true;
+    localizeHomestayFilterUi();
+    document.querySelectorAll('#search-content-homestay .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
+    setFilterChip('hmf-area', next.area);
+    const start = document.getElementById('hmf-start');
+    const end = document.getElementById('hmf-end');
+    if (start) start.value = next.start || '';
+    if (end) end.value = next.end || '';
+    const budget = document.getElementById('hmf-budget');
+    if (budget) budget.value = Math.min(2000, Math.max(800, next.budget || 2000));
+    const budgetOnly = document.getElementById('hmf-budget-only');
+    if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
+    setFilterChip('hmf-meal', next.meal);
+    setFilterChip('hmf-dining', next.dining);
+    setFilterChips('hmf-diet', next.diet);
+    setFilterChip('hmf-pets', next.pets);
+    setFilterChip('hmf-smoking', next.smoking);
+    setFilterChip('hmf-students', next.students);
+    setFilterChip('hmf-talk', next.talk);
+    setFilterChip('hmf-frequency', next.frequency);
+    setFilterChip('hmf-family', next.family);
+    setFilterChip('hmf-wake', next.wake);
+    setFilterChip('hmf-sleep', next.sleep);
+    setFilterChip('hmf-curfew', next.curfew);
+    setFilterChip('hmf-visitor', next.visitor);
+    setFilterChip('hmf-shower', next.shower);
+    hmUpdateBudgetLabel();
+    suppressFilterAutoApply = false;
+    return hmFilters();
   }
 
   function homestayInitialComparisonResults() {
@@ -9851,9 +10093,8 @@
     `;
   }
 
-  function applyHomestayFilters() {
+  function renderHomestayFilterResults(filters) {
     syncGuestServiceContext('homestay');
-    const filters = hmFilters();
     const sortMode = document.getElementById('hm-sort')?.value || 'newest';
     const results = ['sarah','michael','emily','thompson','jennifer','robert']
       .map(id => hmEvaluateHost(id, filters))
@@ -9867,24 +10108,28 @@
     if (summary) {
       const hasFilters = activeHomestayFilterCount(filters) > 0;
       summary.textContent = hasFilters
-        ? (currentLang === 'ja' ? `基本条件に合うホストが${results.length}件あります` : `${results.length} homes match your basic requirements`)
+        ? (currentLang === 'ja' ? `${results.length}件のホストが見つかりました` : `${results.length} hosts found`)
         : localizeText('すべてのホスト');
     }
     const list = document.getElementById('hm-filter-results');
     if (!list) return;
     list.innerHTML = results.length
       ? results.map(renderHomestayFilterCard).join('')
-      : `<div class="hm-empty-result">${localizeText('条件に一致するホストが見つかりませんでした。条件を減らして再検索してください。')}</div>`;
+      : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No hosts match your selected conditions.<br>Try adjusting your filters and search again.'}</div>`;
+  }
+
+  function applyHomestayFilters() {
+    committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(hmFilters()));
+    renderHomestayFilterResults(committedHomestayFilters);
+  }
+
+  function rerenderHomestayFilterResults() {
+    renderHomestayFilterResults(committedHomestayFilters || hmFilters());
   }
 
   function resetHomestayFilters() {
-    document.querySelectorAll('#search-content-homestay .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
-    ['hmf-start','hmf-end'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    ['hmf-full-period','hmf-budget-only'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
-    const budget = document.getElementById('hmf-budget');
-    if (budget) budget.value = 2000;
-    hmUpdateBudgetLabel();
-    applyHomestayFilters();
+    committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(emptyHomestayFilters()));
+    renderHomestayFilterResults(committedHomestayFilters);
   }
 
   function homestayFilterProfileFromOnboarding() {
@@ -9921,6 +10166,8 @@
   }
 
   function homestayRegisteredFilterProfile() {
+    const stored = readStoredJson(HOMESTAY_GUEST_FILTERS_STORAGE_KEY);
+    if (stored) homestayGuestDemoFilters = stored;
     return homestayGuestDemoFilters || homestayFilterProfileFromOnboarding();
   }
 
@@ -9953,48 +10200,26 @@
       next.wake = selectedChipTextFromRow('hs-lifestyle-wake', next.wake).replace('6時以前', '〜6時').replace('9時以降', '9時〜');
       next.sleep = selectedChipTextFromRow('hs-lifestyle-sleep', next.sleep).replace('23時以降', '23時〜');
     }
-    homestayGuestDemoFilters = next;
+    saveHomestayGuestFilterProfile(next);
     return next;
   }
 
   function applyHomestayRegisteredFiltersToSearch() {
-    const profile = homestayRegisteredFilterProfile();
-    suppressFilterAutoApply = true;
-    document.querySelectorAll('#search-content-homestay .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
-    setFilterChip('hmf-area', profile.area);
-    const start = document.getElementById('hmf-start');
-    const end = document.getElementById('hmf-end');
-    if (start) start.value = profile.start;
-    if (end) end.value = profile.end;
-    const fullPeriod = document.getElementById('hmf-full-period');
-    if (fullPeriod) fullPeriod.checked = !!(profile.start && profile.end);
-    const budget = document.getElementById('hmf-budget');
-    if (budget) budget.value = Math.min(2000, Math.max(800, profile.budget || 1300));
-    const budgetOnly = document.getElementById('hmf-budget-only');
-    if (budgetOnly) budgetOnly.checked = !!profile.budget;
-    setFilterChip('hmf-meal', profile.meal);
-    setFilterChip('hmf-dining', profile.dining);
-    setFilterChips('hmf-diet', profile.diet);
-    setFilterChip('hmf-pets', profile.pets);
-    setFilterChip('hmf-smoking', profile.smoking);
-    setFilterChip('hmf-students', profile.students);
-    setFilterChip('hmf-talk', profile.talk);
-    setFilterChip('hmf-frequency', profile.frequency);
-    setFilterChip('hmf-family', profile.family);
-    setFilterChip('hmf-wake', profile.wake);
-    setFilterChip('hmf-sleep', profile.sleep);
+    const registeredProfile = homestayRegisteredFilterProfile();
+    const profile = normalizeHomestayFilterState({
+      ...registeredProfile,
+      budgetOnly: !!registeredProfile.budget
+    });
     const sort = document.getElementById('hm-sort');
     if (sort) sort.value = 'newest';
-    hmUpdateBudgetLabel();
-    suppressFilterAutoApply = false;
-    applyHomestayFilters();
+    committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(profile));
+    renderHomestayFilterResults(committedHomestayFilters);
   }
 
   function shUpdateBudgetLabel() {
     const budget = Number(document.getElementById('shf-budget')?.value || 2000);
     const label = document.getElementById('shf-budget-label');
     if (label) label.textContent = budget >= 2000 ? 'C$2,000+' : `C$${budget.toLocaleString()}`;
-    autoApplyActiveFilters();
   }
 
   function toggleSharehouseFilterPanel() {
@@ -10030,13 +10255,13 @@
   function sharehouseInitialComparisonResults() {
     const guest = sharehouseGuestPreferenceForMatch();
     const budget = Number(String(guest.stay.budget || '').replace(/[^0-9]/g, '')) || 2000;
-    const hardLabel = currentLang === 'ja' ? '希望期間すべて入居可能' : 'Available for your preferred dates';
     const results = ['sh1','sh2','sh3'].map(id => {
       const profile = sharehouseListingProfile(id);
       const matched = [];
       const near = [];
       const out = [];
-      const basicPass = guest.stay.area === profile.stay.area && isDateRangeCovered({ start: guest.stay.moveIn, end: guest.stay.moveOut }, profile.available);
+      const guestRange = { start: guest.stay.moveIn, end: guest.stay.moveOut };
+      const basicPass = guest.stay.area === profile.stay.area && isDateRangeOverlapping(guestRange, profile.available);
       const addHard = (label, ok) => (ok ? matched : out).push(label);
       const addNear = (label, ok) => (ok ? matched : near).push(label);
 
@@ -10044,7 +10269,9 @@
       addHard(currentLang === 'ja' ? '月額予算内' : 'Within monthly budget', profile.stay.rentNumber <= budget);
       addHard(profile.stay.room, shCompatible(guest.stay.room, profile.stay.room));
       addHard(profile.stay.furniture, shCompatible(guest.stay.furniture, profile.stay.furniture));
-      addHard(hardLabel, isDateRangeCovered({ start: guest.stay.moveIn, end: guest.stay.moveOut }, profile.available));
+      if (isDateRangeCovered(guestRange, profile.available)) addHard(availabilityMatchLabel(guestRange, profile.available), true);
+      else if (isDateRangeOverlapping(guestRange, profile.available)) addNear(availabilityMatchLabel(guestRange, profile.available), false);
+      else addHard('期間重複なし', false);
       addHard(currentLang === 'ja' ? 'ペット条件一致' : 'Pet preference matches', guest.ideal.pets === profile.ideal.pets);
       addHard(currentLang === 'ja' ? '喫煙条件一致' : 'Smoking preference matches', shCompatible(guest.ideal.roommateSmoking, profile.ideal.roommateSmoking));
       addHard(currentLang === 'ja' ? '飲酒条件一致' : 'Alcohol preference matches', shCompatible(guest.ideal.roommateAlcohol, profile.ideal.roommateAlcohol));
@@ -10109,7 +10336,6 @@
       area: hmSelected('shf-area'),
       start: document.getElementById('shf-start')?.value || '',
       end: document.getElementById('shf-end')?.value || '',
-      fullPeriod: !!document.getElementById('shf-full-period')?.checked,
       budget: Number(document.getElementById('shf-budget')?.value || 2000),
       budgetOnly: !!document.getElementById('shf-budget-only')?.checked,
       room: hmSelected('shf-room'),
@@ -10172,7 +10398,17 @@
 
     hard(filters.area, filters.area, profile.stay.area === filters.area);
     if (filters.start && filters.end) {
-      hard(true, '希望期間すべて入居可能', isDateRangeCovered({ start: filters.start, end: filters.end }, profile.available));
+      const guestRange = { start: filters.start, end: filters.end };
+      activeHard++;
+      if (!isDateRangeOverlapping(guestRange, profile.available)) {
+        hardPass = false;
+        items.push({ label: '期間重複なし', status: 'out' });
+      } else if (isDateRangeCovered(guestRange, profile.available)) {
+        matchedHard++;
+        items.push({ label: availabilityMatchLabel(guestRange, profile.available), status: 'ok' });
+      } else {
+        items.push({ label: availabilityMatchLabel(guestRange, profile.available), status: 'near' });
+      }
     } else if (filters.start || filters.end) {
       near(true, '入居時期を確認', true);
     }
@@ -10234,59 +10470,127 @@
   function activeSharehouseFilterCount(filters) {
     return Object.entries(filters).filter(([key, value]) => {
       if (key === 'budget') return false;
-      if (key === 'fullPeriod' || key === 'budgetOnly') return !!value;
+      if (key === 'budgetOnly') return !!value;
       return Array.isArray(value) ? value.length : !!value;
     }).length;
+  }
+
+  function emptySharehouseFilters() {
+    return {
+      area: '',
+      start: '',
+      end: '',
+      budget: 2000,
+      budgetOnly: false,
+      room: '',
+      furniture: '',
+      bathroom: '',
+      pets: '',
+      smoking: '',
+      roommateInteraction: '',
+      alcohol: '',
+      visitors: '',
+      overnightGuests: '',
+      housemateCount: '',
+      kitchen: '',
+      mbti: '',
+      wake: '',
+      sleep: '',
+      homeTime: '',
+      cooking: '',
+      cleanliness: '',
+      cleaningFrequency: '',
+      lifeNoise: '',
+      quietHours: ''
+    };
+  }
+
+  function normalizeSharehouseFilterState(filters = {}) {
+    return {
+      ...emptySharehouseFilters(),
+      ...filters,
+      budget: Number(filters.budget || 2000),
+      budgetOnly: !!filters.budgetOnly
+    };
+  }
+
+  function renderSharehouseSearchFormFromFilters(filters) {
+    const next = normalizeSharehouseFilterState(filters);
+    suppressFilterAutoApply = true;
+    localizeHomestayFilterUi();
+    document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
+    setFilterChip('shf-area', next.area);
+    const start = document.getElementById('shf-start');
+    const end = document.getElementById('shf-end');
+    if (start) start.value = next.start || '';
+    if (end) end.value = next.end || '';
+    const budget = document.getElementById('shf-budget');
+    if (budget) budget.value = Math.min(2000, Math.max(800, next.budget || 2000));
+    const budgetOnly = document.getElementById('shf-budget-only');
+    if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
+    setFilterChip('shf-room', next.room);
+    setFilterChip('shf-furniture', next.furniture);
+    setFilterChip('shf-bathroom', next.bathroom);
+    setFilterChip('shf-pets', next.pets);
+    setFilterChip('shf-smoking', next.smoking);
+    setFilterChip('shf-roommate-interaction', next.roommateInteraction);
+    setFilterChip('shf-alcohol', next.alcohol);
+    setFilterChip('shf-visitors', next.visitors);
+    setFilterChip('shf-overnight-guests', next.overnightGuests);
+    setFilterChip('shf-housemate-count', next.housemateCount);
+    setFilterChip('shf-kitchen', next.kitchen);
+    setFilterChip('shf-mbti', next.mbti);
+    setFilterChip('shf-wake', next.wake);
+    setFilterChip('shf-sleep', next.sleep);
+    setFilterChip('shf-home-time', next.homeTime);
+    setFilterChip('shf-cooking', next.cooking);
+    setFilterChip('shf-cleanliness', next.cleanliness);
+    setFilterChip('shf-cleaning-frequency', next.cleaningFrequency);
+    setFilterChip('shf-life-noise', next.lifeNoise);
+    setFilterChip('shf-quiet-hours', next.quietHours);
+    shUpdateBudgetLabel();
+    suppressFilterAutoApply = false;
+    return shFilters();
   }
 
   function applySharehouseRegisteredFiltersToSearch() {
     const profile = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
     const budgetNumber = Number(String(profile.stay?.budget || '').replace(/[^0-9]/g, '')) || 1200;
-    suppressFilterAutoApply = true;
-    document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
-    setFilterChip('shf-area', profile.stay?.area || '');
-    const start = document.getElementById('shf-start');
-    const end = document.getElementById('shf-end');
-    if (start) start.value = profile.stay?.moveIn || '';
-    if (end) end.value = profile.stay?.moveOut || '';
-    const fullPeriod = document.getElementById('shf-full-period');
-    if (fullPeriod) fullPeriod.checked = !!(profile.stay?.moveIn && profile.stay?.moveOut);
-    const budget = document.getElementById('shf-budget');
-    if (budget) budget.value = Math.min(2000, Math.max(800, budgetNumber));
-    const budgetOnly = document.getElementById('shf-budget-only');
-    if (budgetOnly) budgetOnly.checked = !!budgetNumber;
-    setFilterChip('shf-room', profile.stay?.room || '');
-    setFilterChip('shf-furniture', profile.stay?.furniture || '');
-    setFilterChip('shf-bathroom', profile.ideal?.bathroom || '');
-    setFilterChip('shf-pets', profile.ideal?.pets || '');
-    setFilterChip('shf-smoking', profile.ideal?.roommateSmoking || '');
-    setFilterChip('shf-roommate-interaction', profile.ideal?.roommateInteraction || '');
-    setFilterChip('shf-alcohol', profile.ideal?.roommateAlcohol || '');
-    setFilterChip('shf-visitors', profile.ideal?.visitors || '');
-    setFilterChip('shf-overnight-guests', profile.ideal?.overnightGuests || '');
-    setFilterChip('shf-housemate-count', profile.ideal?.housemateCount || '');
-    setFilterChip('shf-kitchen', profile.ideal?.kitchen || '');
-    if (!['回答しない','わからない / 未診断','Prefer not to say'].includes(profile.ideal?.mbti || '')) {
-      setFilterChip('shf-mbti', profile.ideal?.mbti || '');
-    }
-    setFilterChip('shf-wake', profile.lifestyle?.wakeTime || '');
-    setFilterChip('shf-sleep', profile.lifestyle?.bedtime || '');
-    setFilterChip('shf-home-time', profile.lifestyle?.homeTime || '');
-    setFilterChip('shf-cooking', profile.lifestyle?.cookingFrequency || '');
-    setFilterChip('shf-cleanliness', profile.ideal?.cleanliness || '');
-    setFilterChip('shf-cleaning-frequency', profile.ideal?.cleaningFrequency || '');
-    setFilterChip('shf-life-noise', profile.ideal?.lifeNoise || '');
-    setFilterChip('shf-quiet-hours', profile.ideal?.quietHours || '');
+    const filters = normalizeSharehouseFilterState({
+      area: profile.stay?.area || '',
+      start: profile.stay?.moveIn || '',
+      end: profile.stay?.moveOut || '',
+      budget: budgetNumber,
+      budgetOnly: !!budgetNumber,
+      room: profile.stay?.room || '',
+      furniture: profile.stay?.furniture || '',
+      bathroom: profile.ideal?.bathroom || '',
+      pets: profile.ideal?.pets || '',
+      smoking: profile.ideal?.roommateSmoking || '',
+      roommateInteraction: profile.ideal?.roommateInteraction || '',
+      alcohol: profile.ideal?.roommateAlcohol || '',
+      visitors: profile.ideal?.visitors || '',
+      overnightGuests: profile.ideal?.overnightGuests || '',
+      housemateCount: profile.ideal?.housemateCount || '',
+      kitchen: profile.ideal?.kitchen || '',
+      mbti: ['回答しない','わからない / 未診断','Prefer not to say'].includes(profile.ideal?.mbti || '') ? '' : (profile.ideal?.mbti || ''),
+      wake: profile.lifestyle?.wakeTime || '',
+      sleep: profile.lifestyle?.bedtime || '',
+      homeTime: profile.lifestyle?.homeTime || '',
+      cooking: profile.lifestyle?.cookingFrequency || '',
+      cleanliness: profile.ideal?.cleanliness || '',
+      cleaningFrequency: profile.ideal?.cleaningFrequency || '',
+      lifeNoise: profile.ideal?.lifeNoise || '',
+      quietHours: profile.ideal?.quietHours || ''
+    });
     const sort = document.getElementById('sh-sort');
     if (sort) sort.value = 'newest';
-    shUpdateBudgetLabel();
-    suppressFilterAutoApply = false;
-    applySharehouseFilters();
+    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(filters));
+    renderSharehouseFilterResults(committedSharehouseFilters);
   }
 
-  function applySharehouseFilters(showStatusBanner) {
+  function renderSharehouseFilterResults(filters) {
     syncGuestServiceContext('sharehouse');
-    const filters = shFilters();
     const sortMode = document.getElementById('sh-sort')?.value || 'newest';
     const results = ['sh1','sh2','sh3']
       .map(id => shEvaluateListing(id, filters))
@@ -10301,24 +10605,28 @@
       summary.style.display = 'block';
       const hasFilters = activeSharehouseFilterCount(filters) > 0;
       summary.textContent = hasFilters
-        ? (currentLang === 'ja' ? `基本条件に合う掲載が${results.length}件あります` : `${results.length} listings match your basic requirements`)
+        ? (currentLang === 'ja' ? `${results.length}件の掲載が見つかりました` : `${results.length} listings found`)
         : localizeText('すべての掲載');
     }
     const list = document.getElementById('sh-filter-results');
     if (!list) return;
     list.innerHTML = results.length
       ? results.map(renderSharehouseFilterCard).join('')
-      : `<div class="hm-empty-result">${localizeText('条件に一致する掲載が見つかりませんでした。条件を減らして再検索してください。')}</div>`;
+      : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合う掲載が見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No listings match your selected conditions.<br>Try adjusting your filters and search again.'}</div>`;
+  }
+
+  function applySharehouseFilters() {
+    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(shFilters()));
+    renderSharehouseFilterResults(committedSharehouseFilters);
+  }
+
+  function rerenderSharehouseFilterResults() {
+    renderSharehouseFilterResults(committedSharehouseFilters || shFilters());
   }
 
   function resetSharehouseFilters() {
-    document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
-    ['shf-start','shf-end'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    ['shf-full-period','shf-budget-only'].forEach(id => { const el = document.getElementById(id); if (el) el.checked = false; });
-    const budget = document.getElementById('shf-budget');
-    if (budget) budget.value = 2000;
-    shUpdateBudgetLabel();
-    applySharehouseFilters();
+    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(emptySharehouseFilters()));
+    renderSharehouseFilterResults(committedSharehouseFilters);
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
@@ -10612,8 +10920,44 @@
 
   let homestayGuestDemoFilters = null;
   let sharehouseGuestDemoProfile = null;
+  const HOMESTAY_GUEST_FILTERS_STORAGE_KEY = 'hostmatch.homestayGuestFilters';
+  const SHAREHOUSE_GUEST_PROFILE_STORAGE_KEY = 'hostmatch.sharehouseGuestProfile';
   const shouldApplyRegisteredFilters = { homestay: false, sharehouse: false };
   let suppressFilterAutoApply = false;
+  let committedHomestayFilters = null;
+  let committedSharehouseFilters = null;
+
+  function readStoredJson(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function writeStoredJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      // Demo storage can be unavailable in private or restricted browser contexts.
+    }
+  }
+
+  function saveHomestayGuestFilterProfile(profile) {
+    if (!profile) return;
+    homestayGuestDemoFilters = profile;
+    writeStoredJson(HOMESTAY_GUEST_FILTERS_STORAGE_KEY, profile);
+  }
+
+  function saveSharehouseGuestProfile(profile) {
+    if (!profile) return;
+    sharehouseGuestDemoProfile = profile;
+    writeStoredJson(SHAREHOUSE_GUEST_PROFILE_STORAGE_KEY, profile);
+    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) {
+      APPLICANTS.sakura.sharehouseGuestProfile = profile;
+    }
+  }
 
 	  function toggleSharehouseGuestOther(kind, el) {
 	    if (kind === 'purpose') {
@@ -10636,7 +10980,7 @@
 	    const hobbyOther = formValue('shg-hobby-other', '');
 	    const hobbies = selectedChipTexts('#shg-hobbies').filter(v => !['その他', 'Other'].includes(v));
 	    if (hobbyOther) hobbies.push(hobbyOther);
-	    sharehouseGuestDemoProfile = {
+	    const nextProfile = {
 	      basic: {
 	        name: formValue('shg-name', '中村 さくら'),
 	        age: formValue('shg-age', '23'),
@@ -10682,6 +11026,7 @@
 	        mbti: selectedChipText('shg-mbti', 'INFP')
 	      }
 	    };
+	    saveSharehouseGuestProfile(nextProfile);
 	    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) {
 	      APPLICANTS.sakura.name = sharehouseGuestDemoProfile.basic.name;
 	      APPLICANTS.sakura.age = sharehouseGuestDemoProfile.basic.age + (String(sharehouseGuestDemoProfile.basic.age).includes('歳') ? '' : '歳');
@@ -10698,7 +11043,9 @@
 	  }
 
 	  function defaultSharehouseGuestProfile(applicant) {
-	    return applicant?.sharehouseGuestProfile || sharehouseGuestDemoProfile || {
+	    const stored = readStoredJson(SHAREHOUSE_GUEST_PROFILE_STORAGE_KEY);
+	    if (stored) sharehouseGuestDemoProfile = stored;
+	    return sharehouseGuestDemoProfile || applicant?.sharehouseGuestProfile || {
 	      basic: {
 	        name: applicant?.name || '中村 さくら',
 	        age: String(applicant?.age || '23歳').replace('歳', ''),
@@ -10765,7 +11112,7 @@
 	    const handler = onClick || (multi ? 'toggleMultiChip(this)' : 'toggleChip(this)');
 	    return `
 	      <div class="form-chip-row" id="${prefix}-${key}">
-	        ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" onclick="${handler}">${localizeText(option)}</div>`).join('')}
+	        ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(option)}" onclick="${handler}">${localizeText(option)}</div>`).join('')}
 	      </div>
 	    `;
 	  }
@@ -10841,7 +11188,7 @@
 	  function collectSharehouseGuestProfileFromEdit() {
 	    const existing = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
 	    const hobbies = shSelectedChipTexts('shge', 'hobbies').filter(v => !['その他', 'Other'].includes(v));
-	    sharehouseGuestDemoProfile = {
+	    const nextProfile = {
 	      basic: {
 	        name: formValue('shge-name', existing.basic.name),
 	        age: formValue('shge-age', existing.basic.age),
@@ -10887,7 +11234,7 @@
 	        mbti: shSelectedChipText('shge', 'mbti', existing.ideal.mbti)
 	      }
 	    };
-	    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) APPLICANTS.sakura.sharehouseGuestProfile = sharehouseGuestDemoProfile;
+	    saveSharehouseGuestProfile(nextProfile);
 	    return sharehouseGuestDemoProfile;
 	  }
 
@@ -11516,7 +11863,7 @@
         collectSharehouseGuestProfile();
         shouldApplyRegisteredFilters.sharehouse = true;
       } else {
-        homestayGuestDemoFilters = homestayFilterProfileFromOnboarding();
+        saveHomestayGuestFilterProfile(homestayFilterProfileFromOnboarding());
         shouldApplyRegisteredFilters.homestay = true;
       }
       navigate('onboarding', 'search');
@@ -13888,7 +14235,6 @@
     '② 滞在期間':'② Stay Period',
     '入居希望日':'Desired Move-in Date',
     '退去希望日':'Desired Move-out Date',
-    'この期間すべて受け入れ可能なホストのみ表示':'Show only hosts available for the entire period',
     '③ 月額予算':'③ Monthly Budget',
     '予算内のみ表示':'Show only hosts within budget',
     '④ 食事':'④ Meals',
@@ -14296,11 +14642,13 @@
     if (currentScreen === 'homestay-host-list') renderHomestayHostList();
     if (currentScreen === 'search' && currentSearchCat === 'homestay') {
       localizeHomestayFilterUi();
-      applyHomestayFilters();
+      if (committedHomestayFilters) renderHomestaySearchFormFromFilters(committedHomestayFilters);
+      rerenderHomestayFilterResults();
     }
     if (currentScreen === 'search' && currentSearchCat === 'sharehouse') {
       localizeHomestayFilterUi();
-      applySharehouseFilters();
+      if (committedSharehouseFilters) renderSharehouseSearchFormFromFilters(committedSharehouseFilters);
+      rerenderSharehouseFilterResults();
     }
     if (currentScreen === 'pending-hosts') renderGuestRequestList();
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
@@ -14419,7 +14767,7 @@
   /* ===== 検索カテゴリ切り替え ===== */
   let currentSearchCat = 'homestay';
 
-	  function switchSearchCat(cat) {
+	  function switchSearchCat(cat, skipApply = false) {
 	    currentSearchCat = cat;
 	    window._serviceType = cat;
 	    ['homestay','sharehouse'].forEach(k => {
@@ -14431,8 +14779,9 @@
 	    if (homestayContent) homestayContent.style.display = cat === 'homestay' ? 'block' : 'none';
 	    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
 	    updateSearchHeaderForCat(cat);
-	    if (cat === 'homestay') applyHomestayFilters();
-	    if (cat === 'sharehouse') applySharehouseFilters();
+	    if (skipApply) return;
+	    if (cat === 'homestay') applyHomestayRegisteredFiltersToSearch();
+	    if (cat === 'sharehouse') applySharehouseRegisteredFiltersToSearch();
 	  }
 
 	  function updateSearchHeaderForCat(cat) {
@@ -15119,6 +15468,19 @@
 
 	  function isDateRangeCovered(guestRange, hostRange) {
 	    return guestRange.start >= hostRange.start && guestRange.end <= hostRange.end;
+	  }
+
+	  function isDateRangeOverlapping(guestRange, hostRange) {
+	    if (!guestRange?.start || !guestRange?.end || !hostRange?.start || !hostRange?.end) return true;
+	    return hostRange.start <= guestRange.end && hostRange.end >= guestRange.start;
+	  }
+
+	  function availabilityMatchLabel(guestRange, hostRange) {
+	    const full = isDateRangeCovered(guestRange, hostRange);
+	    if (full) return currentLang === 'ja' ? '希望期間すべて対応可能' : 'Available for your full preferred stay';
+	    return currentLang === 'ja'
+	      ? `希望期間の一部に対応（${formatDateRange(hostRange)} 受け入れ可能）`
+	      : `Partially available for your preferred dates (${formatDateRange(hostRange)})`;
 	  }
 
 	  function formatDateRange(range) {
