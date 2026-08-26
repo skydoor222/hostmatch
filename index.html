@@ -2754,24 +2754,52 @@
 
         <div class="hm-filter-section-title">ハウスルールで絞り込む</div>
           <div class="hm-filter-group">
-            <div class="hm-filter-label">⑮ 門限</div>
+            <div class="hm-filter-label">⑮ 門限について</div>
             <div class="hm-filter-row" id="hmf-curfew">
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">門限なし</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">門限なし希望</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">門限ありでもOK</button>
             </div>
           </div>
           <div class="hm-filter-group">
-            <div class="hm-filter-label">⑯ 来客</div>
+            <div class="hm-filter-label">⑯ 友人などの来客について</div>
             <div class="hm-filter-row" id="hmf-visitor">
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">友人の来客OK</button>
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前確認ならOK</button>
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">来客不可でもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">来客OKの家庭を希望</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前連絡が必要でもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">来客NGでもOK</button>
             </div>
           </div>
           <div class="hm-filter-group">
-            <div class="hm-filter-label">⑰ シャワー</div>
+            <div class="hm-filter-label">⑰ シャワーの利用時間について</div>
             <div class="hm-filter-row" id="hmf-shower">
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">時間制限なし</button>
-              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">制限ありでもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">時間制限なし希望</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">10〜15分程度ならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">5〜10分程度でもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">5分以内でもOK</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑱ キッチン利用について</div>
+            <div class="hm-filter-row" id="hmf-kitchen">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">自由に使える家庭を希望</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">時間制限があってもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">キッチンを使えなくてもOK</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑲ 共有スペースの掃除について</div>
+            <div class="hm-filter-row" id="hmf-cleaning">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">毎日でもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">週1回程度ならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">月1回程度ならOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">掃除当番なし希望</button>
+            </div>
+          </div>
+          <div class="hm-filter-group">
+            <div class="hm-filter-label">⑳ 友人・パートナーなどの宿泊について</div>
+            <div class="hm-filter-row" id="hmf-overnight">
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">宿泊OKの家庭を希望</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">事前相談が必要でもOK</button>
+              <button type="button" class="hm-filter-chip" onclick="hmSelectChip(this)">宿泊NGでもOK</button>
             </div>
           </div>
 
@@ -4105,12 +4133,60 @@
     </div>
 
     <div class="form-section">
-      <div class="form-section-title">🚫 その他のNG条件</div>
+      <div class="form-section-title">ハウスルールの希望</div>
       <div class="form-group">
-        <div class="form-label">その他のNG条件</div>
-        <div class="form-chip-row">
-          <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限NG</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
+        <div class="form-label">門限について</div>
+        <div class="form-chip-row" id="hs-lifestyle-curfew">
+          <div class="form-chip" onclick="toggleChip(this)">門限なし希望</div>
+          <div class="form-chip" onclick="toggleChip(this)">門限ありでもOK</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">友人などの来客について</div>
+        <div class="form-chip-row" id="hs-lifestyle-visitor">
+          <div class="form-chip" onclick="toggleChip(this)">来客OKの家庭を希望</div>
+          <div class="form-chip" onclick="toggleChip(this)">事前連絡が必要でもOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">来客NGでもOK</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">シャワーの利用時間について</div>
+        <div class="form-chip-row" id="hs-lifestyle-shower">
+          <div class="form-chip" onclick="toggleChip(this)">時間制限なし希望</div>
+          <div class="form-chip" onclick="toggleChip(this)">10〜15分程度ならOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">5〜10分程度でもOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">5分以内でもOK</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">キッチン利用について</div>
+        <div class="form-chip-row" id="hs-lifestyle-kitchen">
+          <div class="form-chip" onclick="toggleChip(this)">自由に使える家庭を希望</div>
+          <div class="form-chip" onclick="toggleChip(this)">時間制限があってもOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">キッチンを使えなくてもOK</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">共有スペースの掃除について</div>
+        <div class="form-chip-row" id="hs-lifestyle-cleaning">
+          <div class="form-chip" onclick="toggleChip(this)">毎日でもOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">週1回程度ならOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">月1回程度ならOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">掃除当番なし希望</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">友人・パートナーなどの宿泊について</div>
+        <div class="form-chip-row" id="hs-lifestyle-overnight">
+          <div class="form-chip" onclick="toggleChip(this)">宿泊OKの家庭を希望</div>
+          <div class="form-chip" onclick="toggleChip(this)">事前相談が必要でもOK</div>
+          <div class="form-chip" onclick="toggleChip(this)">宿泊NGでもOK</div>
+          <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
         </div>
       </div>
     </div>
@@ -4278,7 +4354,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">性別</div>
-          <div class="form-chip-row" id="hs-onboard-area">
+          <div class="form-chip-row" id="hs-onboard-gender">
             <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
             <div class="form-chip" onclick="toggleChip(this)">男性</div>
             <div class="form-chip" onclick="toggleChip(this)">選択しない</div>
@@ -4336,7 +4412,7 @@
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
           <div class="form-label">希望エリア（複数可）</div>
-          <div class="form-chip-row">
+          <div class="form-chip-row" id="hs-onboard-area">
             <div class="form-chip selected" onclick="toggleMultiChip(this)">バンクーバー</div>
             <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
           </div>
@@ -4378,7 +4454,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">趣味・興味（複数可）</div>
-          <div class="form-chip-row" id="hs-onboard-family">
+          <div class="form-chip-row" id="hs-onboard-hobbies">
             <div class="form-chip" onclick="toggleGuestHobbyChip(this,'onboard')">🎵 音楽</div>
             <div class="form-chip selected" onclick="toggleGuestHobbyChip(this,'onboard')">🎬 映画</div>
             <div class="form-chip" onclick="toggleGuestHobbyChip(this,'onboard')">📚 読書</div>
@@ -4407,7 +4483,7 @@
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
           <div class="form-label">ホスト家族構成</div>
-          <div class="form-chip-row" id="hs-onboard-frequency">
+          <div class="form-chip-row" id="hs-onboard-family">
             <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
             <div class="form-chip" onclick="toggleChip(this)">女性のみ</div>
             <div class="form-chip" onclick="toggleChip(this)">男性のみ</div>
@@ -4418,7 +4494,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">ホストファミリーとどのくらい一緒に過ごしたいですか？</div>
-          <div class="form-chip-row" id="hs-onboard-talk">
+          <div class="form-chip-row" id="hs-onboard-frequency">
             <div class="form-chip" onclick="toggleChip(this)">基本それぞれで過ごしたい</div>
             <div class="form-chip selected" onclick="toggleChip(this)">食事の時など時々</div>
             <div class="form-chip" onclick="toggleChip(this)">休日にたまに一緒に過ごしたい</div>
@@ -4427,7 +4503,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">あなたはどのくらいホストファミリーと会話したいですか？</div>
-          <div class="form-chip-row" id="hs-onboard-meal">
+          <div class="form-chip-row" id="hs-onboard-talk">
             <div class="form-chip" onclick="toggleChip(this)">必要最低限</div>
             <div class="form-chip selected" onclick="toggleChip(this)">適度に話したい</div>
             <div class="form-chip" onclick="toggleChip(this)">毎日話したい</div>
@@ -4436,7 +4512,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">食事</div>
-          <div class="form-chip-row">
+          <div class="form-chip-row" id="hs-onboard-meal">
             <div class="form-chip" onclick="toggleMealChip(this,'onboard')">不要</div>
             <div class="form-chip selected" onclick="toggleMealChip(this,'onboard')">朝食のみ</div>
             <div class="form-chip" onclick="toggleMealChip(this,'onboard')">朝夕食</div>
@@ -4491,10 +4567,58 @@
           </div>
         </div>
         <div class="form-group">
-          <div class="form-label">その他のNG条件</div>
-          <div class="form-chip-row">
-            <div class="form-chip" onclick="toggleMultiChip(this)">🔒 門限NG</div>
-            <div class="form-chip" onclick="toggleMultiChip(this)">🚫 来客NG</div>
+          <div class="form-label">門限について</div>
+          <div class="form-chip-row" id="hs-onboard-curfew">
+            <div class="form-chip" onclick="toggleChip(this)">門限なし希望</div>
+            <div class="form-chip" onclick="toggleChip(this)">門限ありでもOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">友人などの来客について</div>
+          <div class="form-chip-row" id="hs-onboard-visitor">
+            <div class="form-chip" onclick="toggleChip(this)">来客OKの家庭を希望</div>
+            <div class="form-chip" onclick="toggleChip(this)">事前連絡が必要でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">来客NGでもOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">シャワーの利用時間について</div>
+          <div class="form-chip-row" id="hs-onboard-shower">
+            <div class="form-chip" onclick="toggleChip(this)">時間制限なし希望</div>
+            <div class="form-chip" onclick="toggleChip(this)">10〜15分程度ならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">5〜10分程度でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">5分以内でもOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">キッチン利用について</div>
+          <div class="form-chip-row" id="hs-onboard-kitchen">
+            <div class="form-chip" onclick="toggleChip(this)">自由に使える家庭を希望</div>
+            <div class="form-chip" onclick="toggleChip(this)">時間制限があってもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">キッチンを使えなくてもOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">共有スペースの掃除について</div>
+          <div class="form-chip-row" id="hs-onboard-cleaning">
+            <div class="form-chip" onclick="toggleChip(this)">毎日でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">週1回程度ならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">月1回程度ならOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">掃除当番なし希望</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">友人・パートナーなどの宿泊について</div>
+          <div class="form-chip-row" id="hs-onboard-overnight">
+            <div class="form-chip" onclick="toggleChip(this)">宿泊OKの家庭を希望</div>
+            <div class="form-chip" onclick="toggleChip(this)">事前相談が必要でもOK</div>
+            <div class="form-chip" onclick="toggleChip(this)">宿泊NGでもOK</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">こだわらない</div>
           </div>
         </div>
       </div>
@@ -9481,12 +9605,12 @@
   }
 
   const HOMESTAY_FILTER_HOST_META = {
-    sarah: { area: 'バンクーバー', meal: '朝食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','アレルギー対応'], pets: 'あり', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '食事の時など時々', wake: '6〜8時', sleep: '22〜23時', curfew: '門限あり', visitor: '事前確認ならOK', shower: '時間制限なし' },
-    michael: { area: 'バンクーバー', meal: '3食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','ハラール'], pets: 'あり', smoking: '完全禁煙', students: 'いる', family: 'カップル', talk: '毎日会話したい', frequency: '家族の一員のように交流したい', wake: '6〜8時', sleep: '21〜22時', curfew: '門限なし', visitor: '友人の来客OK', shower: '時間制限なし' },
-    emily: { area: 'トロント', meal: '朝食あり', dining: 'たまに一緒', diet: ['グルテンフリー'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '一人暮らし', talk: '適度に話したい', frequency: '食事の時など時々', wake: '8〜9時', sleep: '23時〜', curfew: '門限なし', visitor: '事前確認ならOK', shower: '制限ありでもOK' },
-    thompson: { area: 'トロント', meal: '朝食あり', dining: '別々でOK', diet: ['アレルギー対応'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '子どものいない家庭', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '6〜8時', sleep: '22〜23時', curfew: '門限なし', visitor: '友人の来客OK', shower: '時間制限なし' },
-    jennifer: { area: 'バンクーバー', meal: '食事なし', dining: '別々でOK', diet: [], pets: 'なし', smoking: '屋外喫煙ならOK', students: 'いる', family: '一人暮らし', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '8〜9時', sleep: '23時〜', curfew: '門限あり', visitor: '来客不可でもOK', shower: '制限ありでもOK' },
-    robert: { area: 'トロント', meal: '朝・夕食あり', dining: 'たまに一緒', diet: ['Vegetarian','Halal'].map(v => v === 'Vegetarian' ? 'ベジタリアン' : 'ハラール'), pets: 'なし', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '休日もたまに一緒に過ごしたい', wake: '〜6時', sleep: '21〜22時', curfew: '門限なし', visitor: '事前確認ならOK', shower: '時間制限なし' }
+    sarah: { area: 'バンクーバー', meal: '朝食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','アレルギー対応'], pets: 'あり', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '食事の時など時々', wake: '6〜8時', sleep: '22〜23時', curfew: 'allowed', curfewTime: '22:30', visitor: 'notice_required', shower: 'five_to_ten', kitchen: 'restricted', kitchenTime: '〜21:00', cleaning: 'weekly', overnight: 'ng' },
+    michael: { area: 'バンクーバー', meal: '3食あり', dining: '一緒に食べたい', diet: ['ベジタリアン','ハラール'], pets: 'あり', smoking: '完全禁煙', students: 'いる', family: 'カップル', talk: '毎日会話したい', frequency: '家族の一員のように交流したい', wake: '6〜8時', sleep: '21〜22時', curfew: 'none', visitor: 'ok', shower: 'unlimited', kitchen: 'ok', cleaning: 'weekly', overnight: 'notice_required' },
+    emily: { area: 'トロント', meal: '朝食あり', dining: 'たまに一緒', diet: ['グルテンフリー'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '一人暮らし', talk: '適度に話したい', frequency: '食事の時など時々', wake: '8〜9時', sleep: '23時〜', curfew: 'none', visitor: 'notice_required', shower: 'ten_to_fifteen', kitchen: 'restricted', kitchenTime: '7:00〜22:00', cleaning: 'monthly', overnight: 'notice_required' },
+    thompson: { area: 'トロント', meal: '朝食あり', dining: '別々でOK', diet: ['アレルギー対応'], pets: 'なし', smoking: '完全禁煙', students: 'いない', family: '子どものいない家庭', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '6〜8時', sleep: '22〜23時', curfew: 'none', visitor: 'ok', shower: 'unlimited', kitchen: 'ok', cleaning: 'none', overnight: 'ok' },
+    jennifer: { area: 'バンクーバー', meal: '食事なし', dining: '別々でOK', diet: [], pets: 'なし', smoking: '屋外喫煙ならOK', students: 'いる', family: '一人暮らし', talk: '必要最低限', frequency: '基本それぞれで過ごしたい', wake: '8〜9時', sleep: '23時〜', curfew: 'allowed', curfewTime: '23:00', visitor: 'ng', shower: 'under_5', kitchen: 'ng', cleaning: 'monthly', overnight: 'ng' },
+    robert: { area: 'トロント', meal: '朝・夕食あり', dining: 'たまに一緒', diet: ['Vegetarian','Halal'].map(v => v === 'Vegetarian' ? 'ベジタリアン' : 'ハラール'), pets: 'なし', smoking: '完全禁煙', students: 'いない', family: 'カップル', talk: '適度に話したい', frequency: '休日もたまに一緒に過ごしたい', wake: '〜6時', sleep: '21〜22時', curfew: 'none', visitor: 'notice_required', shower: 'unlimited', kitchen: 'ok', cleaning: 'weekly', overnight: 'notice_required' }
   };
 
   function hmSelectChip(el) {
@@ -9497,15 +9621,6 @@
 
   function hmToggleChip(el) {
     el.classList.toggle('selected');
-  }
-
-  function hmSelected(id) {
-    const chip = document.querySelector('#' + id + ' .hm-filter-chip.selected');
-    return chip ? (chip.dataset.hmfOriginalText || chip.textContent.trim()) : '';
-  }
-
-  function hmSelectedMany(id) {
-    return Array.from(document.querySelectorAll('#' + id + ' .hm-filter-chip.selected')).map(el => el.dataset.hmfOriginalText || el.textContent.trim());
   }
 
   function selectedChipTextFromRow(rowId, fallback = '') {
@@ -9616,6 +9731,62 @@
       '23時以降': '23時〜',
       'After 23:00': '23時〜'
     },
+    'hmf-curfew': {
+      '門限なし希望': 'none',
+      '門限なし': 'none',
+      'Prefer no curfew': 'none',
+      '門限ありでもOK': 'allowed',
+      'Curfew is OK': 'allowed'
+    },
+    'hmf-visitor': {
+      '来客OKの家庭を希望': 'ok',
+      '友人の来客OK': 'ok',
+      'Prefer households where visitors are OK': 'ok',
+      '事前連絡が必要でもOK': 'notice_required',
+      '事前確認ならOK': 'notice_required',
+      'Prior notice is OK': 'notice_required',
+      '来客NGでもOK': 'ng',
+      '来客不可でもOK': 'ng',
+      'No visitors is OK': 'ng'
+    },
+    'hmf-shower': {
+      '時間制限なし希望': 'unlimited',
+      '時間制限なし': 'unlimited',
+      'Prefer no time limit': 'unlimited',
+      '10〜15分程度ならOK': 'ten_to_fifteen',
+      '10-15 minutes is OK': 'ten_to_fifteen',
+      '5〜10分程度でもOK': 'five_to_ten',
+      '制限ありでもOK': 'five_to_ten',
+      '5-10 minutes is OK': 'five_to_ten',
+      '5分以内でもOK': 'under_5',
+      'Within 5 minutes is OK': 'under_5'
+    },
+    'hmf-kitchen': {
+      '自由に使える家庭を希望': 'ok',
+      'Prefer free kitchen access': 'ok',
+      '時間制限があってもOK': 'restricted',
+      'Time limits are OK': 'restricted',
+      'キッチンを使えなくてもOK': 'ng',
+      'No kitchen access is OK': 'ng'
+    },
+    'hmf-cleaning': {
+      '毎日でもOK': 'daily',
+      'Daily cleaning is OK': 'daily',
+      '週1回程度ならOK': 'weekly',
+      'About once a week is OK': 'weekly',
+      '月1回程度ならOK': 'monthly',
+      'About once a month is OK': 'monthly',
+      '掃除当番なし希望': 'none',
+      'Prefer no cleaning duty': 'none'
+    },
+    'hmf-overnight': {
+      '宿泊OKの家庭を希望': 'ok',
+      'Prefer households where overnight guests are OK': 'ok',
+      '事前相談が必要でもOK': 'notice_required',
+      'Prior discussion is OK': 'notice_required',
+      '宿泊NGでもOK': 'ng',
+      'No overnight guests is OK': 'ng'
+    },
     'shf-area': { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' },
     'shf-room': { 'Private room preferred': '個室希望', 'Shared room is OK': '相部屋でもOK', 'Either is OK': 'どちらでもOK' },
     'shf-furniture': { 'Furnished preferred': '家具付き希望', 'Unfurnished is OK': '家具なしでもOK', 'Either is OK': 'どちらでもOK' },
@@ -9669,6 +9840,31 @@
     },
     'shf-quiet-hours': { 'I want to follow them strictly': '厳しく守りたい', 'Some quiet is enough': 'ある程度静かならOK', "I don't mind much": 'あまり気にしない' }
   };
+
+  function canonicalFilterValue(rowId, value) {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const aliases = FILTER_VALUE_ALIASES[rowId] || {};
+    if (aliases[text]) return aliases[text];
+    const localizedText = localizeText(text);
+    for (const [from, to] of Object.entries(aliases)) {
+      if (from === text || to === text || localizeText(from) === text || localizeText(to) === text || localizeText(from) === localizedText || localizeText(to) === localizedText) {
+        return to;
+      }
+    }
+    return text;
+  }
+
+  function hmSelected(id) {
+    const chip = document.querySelector('#' + id + ' .hm-filter-chip.selected');
+    return chip ? canonicalFilterValue(id, chip.dataset.hmfOriginalText || chip.textContent.trim()) : '';
+  }
+
+  function hmSelectedMany(id) {
+    return Array.from(document.querySelectorAll('#' + id + ' .hm-filter-chip.selected'))
+      .map(el => canonicalFilterValue(id, el.dataset.hmfOriginalText || el.textContent.trim()))
+      .filter(Boolean);
+  }
 
   function filterValueVariants(rowId, value) {
     const rawValues = Array.isArray(value) ? value : [value];
@@ -9734,6 +9930,66 @@
     return map[value] || value;
   }
 
+  const HM_RULE_LABELS = {
+    curfew: { none: '門限なし希望', allowed: '門限ありでもOK' },
+    visitor: { ok: '来客OKの家庭を希望', notice_required: '事前連絡が必要でもOK', ng: '来客NGでもOK' },
+    shower: { unlimited: '時間制限なし希望', ten_to_fifteen: '10〜15分程度ならOK', five_to_ten: '5〜10分程度でもOK', under_5: '5分以内でもOK' },
+    kitchen: { ok: '自由に使える家庭を希望', restricted: '時間制限があってもOK', ng: 'キッチンを使えなくてもOK' },
+    cleaning: { daily: '毎日でもOK', weekly: '週1回程度ならOK', monthly: '月1回程度ならOK', none: '掃除当番なし希望' },
+    overnight: { ok: '宿泊OKの家庭を希望', notice_required: '事前相談が必要でもOK', ng: '宿泊NGでもOK' }
+  };
+
+  function hmRuleLabel(type, value) {
+    return HM_RULE_LABELS[type]?.[value] || value || '';
+  }
+
+  function hmHostRuleLabel(type, meta) {
+    if (currentLang !== 'ja') {
+      if (type === 'curfew') return meta.curfew === 'none' ? 'No curfew' : `Curfew${meta.curfewTime ? ` (${meta.curfewTime})` : ''}`;
+      if (type === 'visitor') return ({ ok: 'Visitors OK', notice_required: 'Visitors: prior notice required', ng: 'No visitors' })[meta.visitor] || '';
+      if (type === 'shower') return ({ unlimited: 'Shower: no time limit', ten_to_fifteen: 'Shower: 10-15 minutes', five_to_ten: 'Shower: 5-10 minutes', under_5: 'Shower: within 5 minutes' })[meta.shower] || '';
+      if (type === 'kitchen') return meta.kitchen === 'restricted' ? `Kitchen use: time restrictions${meta.kitchenTime ? ` (${meta.kitchenTime})` : ''}` : ({ ok: 'Kitchen use OK', ng: 'Kitchen use not available' })[meta.kitchen] || '';
+      if (type === 'cleaning') return ({ daily: 'Shared space cleaning: daily', weekly: 'Shared space cleaning: weekly', monthly: 'Shared space cleaning: monthly', none: 'Shared space cleaning: no duty' })[meta.cleaning] || '';
+      if (type === 'overnight') return ({ ok: 'Overnight guests OK', notice_required: 'Overnight guests: prior discussion required', ng: 'No overnight guests' })[meta.overnight] || '';
+      return '';
+    }
+    if (type === 'curfew') return meta.curfew === 'none' ? '門限なし' : `門限あり${meta.curfewTime ? `（${meta.curfewTime}）` : ''}`;
+    if (type === 'visitor') return ({ ok: '来客OK', notice_required: '来客：事前連絡必須', ng: '来客NG' })[meta.visitor] || '';
+    if (type === 'shower') return ({ unlimited: 'シャワー：制限なし', ten_to_fifteen: 'シャワー：10〜15分', five_to_ten: 'シャワー：5〜10分', under_5: 'シャワー：5分以内' })[meta.shower] || '';
+    if (type === 'kitchen') return meta.kitchen === 'restricted' ? `キッチン利用：制限あり${meta.kitchenTime ? `（${meta.kitchenTime}）` : ''}` : ({ ok: 'キッチン利用OK', ng: 'キッチン利用NG' })[meta.kitchen] || '';
+    if (type === 'cleaning') return ({ daily: '共有スペース掃除：毎日', weekly: '共有スペース掃除：週1回', monthly: '共有スペース掃除：月1回', none: '共有スペース掃除：掃除当番なし' })[meta.cleaning] || '';
+    if (type === 'overnight') return ({ ok: '宿泊OK', notice_required: '宿泊：事前相談必須', ng: '宿泊NG' })[meta.overnight] || '';
+    return '';
+  }
+
+  function hmNormalizeHostRuleFromText(type, text) {
+    const value = String(text || '');
+    if (type === 'curfew') return value.includes('門限なし') ? 'none' : value.includes('門限') ? 'allowed' : '';
+    if (type === 'visitor') return value.includes('来客NG') || value.includes('来客宿泊不可') ? 'ng' : value.includes('来客') && value.includes('事前') ? 'notice_required' : value.includes('来客OK') ? 'ok' : '';
+    if (type === 'overnight') return value.includes('宿泊NG') || value.includes('来客宿泊不可') ? 'ng' : value.includes('宿泊') && value.includes('事前') ? 'notice_required' : value.includes('宿泊OK') ? 'ok' : '';
+    if (type === 'kitchen') return value.includes('キッチン利用NG') ? 'ng' : value.includes('キッチン') && (value.includes('制限') || value.includes('〜')) ? 'restricted' : value.includes('キッチン') && value.includes('OK') ? 'ok' : '';
+    if (type === 'shower') {
+      if (!value.includes('シャワー')) return '';
+      if (value.includes('制限なし')) return 'unlimited';
+      if (value.includes('5分以内')) return 'under_5';
+      if (value.includes('5〜10') || value.includes('5-10')) return 'five_to_ten';
+      if (value.includes('10〜15') || value.includes('10-15')) return 'ten_to_fifteen';
+      return 'five_to_ten';
+    }
+    if (type === 'cleaning') {
+      if (!value.includes('共有スペース掃除') && !value.includes('掃除当番')) return '';
+      if (value.includes('毎日')) return 'daily';
+      if (value.includes('週1')) return 'weekly';
+      if (value.includes('月1')) return 'monthly';
+      if (value.includes('しなくて良い') || value.includes('決まりなし') || value.includes('掃除当番なし')) return 'none';
+    }
+    return '';
+  }
+
+  function hmExtractRuleTime(text) {
+    return String(text || '').match(/(\d{1,2}:\d{2}|〜\d{1,2}:\d{2}|\d{1,2}:\d{2}〜\d{1,2}:\d{2})/)?.[1] || '';
+  }
+
   function hmHostMeta(hostId) {
     const h = HOSTS[hostId];
     const base = { ...(HOMESTAY_FILTER_HOST_META[hostId] || {}) };
@@ -9752,10 +10008,15 @@
     if (h.pets) base.pets = h.pets.hasPets ? 'あり' : 'なし';
     if (h.lifestyle?.wake) base.wake = hmNormalizeWake(h.lifestyle.wake);
     if (h.lifestyle?.sleep) base.sleep = hmNormalizeSleep(h.lifestyle.sleep);
-    if (h.rules?.some(r => r.text.includes('門限なし'))) base.curfew = '門限なし';
-    if (h.rules?.some(r => r.text.includes('来客OK'))) base.visitor = '友人の来客OK';
-    if (h.rules?.some(r => r.text.includes('来客') && r.text.includes('事前'))) base.visitor = '事前確認ならOK';
-    if (h.rules?.some(r => r.text.includes('シャワー') && r.text.includes('制限なし'))) base.shower = '時間制限なし';
+    (h.rules || []).forEach(rule => {
+      const text = rule.text || '';
+      ['curfew','visitor','shower','kitchen','cleaning','overnight'].forEach(type => {
+        const normalized = hmNormalizeHostRuleFromText(type, text);
+        if (normalized) base[type] = normalized;
+      });
+      if (text.includes('門限')) base.curfewTime = hmExtractRuleTime(text) || base.curfewTime;
+      if (text.includes('キッチン')) base.kitchenTime = hmExtractRuleTime(text) || base.kitchenTime;
+    });
     return base;
   }
 
@@ -9796,7 +10057,10 @@
       sleep: hmSelected('hmf-sleep'),
       curfew: hmSelected('hmf-curfew'),
       visitor: hmSelected('hmf-visitor'),
-      shower: hmSelected('hmf-shower')
+      shower: hmSelected('hmf-shower'),
+      kitchen: hmSelected('hmf-kitchen'),
+      cleaning: hmSelected('hmf-cleaning'),
+      overnight: hmSelected('hmf-overnight')
     };
   }
 
@@ -9816,6 +10080,34 @@
     if (!active) return true;
     items.push({ label, status: ok ? 'ok' : near ? 'near' : 'out' });
     return ok || near;
+  }
+
+  function hmRuleCompatible(type, guestValue, hostValue) {
+    if (!guestValue) return true;
+    if (type === 'curfew') return guestValue === 'allowed' ? ['none','allowed'].includes(hostValue) : hostValue === 'none';
+    if (type === 'visitor') return guestValue === 'ng' ? ['ok','notice_required','ng'].includes(hostValue) : guestValue === 'notice_required' ? ['ok','notice_required'].includes(hostValue) : hostValue === 'ok';
+    if (type === 'overnight') return guestValue === 'ng' ? ['ok','notice_required','ng'].includes(hostValue) : guestValue === 'notice_required' ? ['ok','notice_required'].includes(hostValue) : hostValue === 'ok';
+    if (type === 'shower') {
+      const hostRank = { unlimited: 3, ten_to_fifteen: 2, five_to_ten: 1, under_5: 0 };
+      const guestRank = { unlimited: 3, ten_to_fifteen: 2, five_to_ten: 1, under_5: 0 };
+      return (hostRank[hostValue] ?? -1) >= (guestRank[guestValue] ?? 99);
+    }
+    if (type === 'kitchen') return guestValue === 'ng' ? ['ok','restricted','ng'].includes(hostValue) : guestValue === 'restricted' ? ['ok','restricted'].includes(hostValue) : hostValue === 'ok';
+    if (type === 'cleaning') {
+      const burden = { none: 0, monthly: 1, weekly: 2, daily: 3 };
+      const tolerance = { none: 0, monthly: 1, weekly: 2, daily: 3 };
+      return (burden[hostValue] ?? 99) <= (tolerance[guestValue] ?? -1);
+    }
+    return guestValue === hostValue;
+  }
+
+  function hmRuleComparisonLabel(type, guestValue, meta) {
+    const hostText = hmHostRuleLabel(type, meta);
+    const guestText = hmRuleLabel(type, guestValue);
+    if (currentLang !== 'ja') {
+      return hostText ? `${translateFreeText(guestText)} / ${translateFreeText(hostText)}` : translateFreeText(guestText);
+    }
+    return hostText ? `${guestText} / ${hostText}` : guestText;
   }
 
   function hmEvaluateHost(hostId, filters) {
@@ -9866,9 +10158,12 @@
     pref(filters.smoking, filters.smoking, filters.smoking === '完全禁煙' ? meta.smoking === '完全禁煙' : ['完全禁煙','屋外喫煙ならOK'].includes(meta.smoking));
     pref(filters.students, filters.students, filters.students.includes('いてもOK') ? true : meta.students === 'いない');
     pref(filters.family, filters.family, filters.family === '子どものいない家庭' ? meta.family !== '子どものいる家庭' : meta.family === filters.family);
-    hard(filters.curfew, filters.curfew, meta.curfew === '門限なし');
-    pref(filters.visitor, filters.visitor, filters.visitor === '来客不可でもOK' ? true : meta.visitor === filters.visitor || (filters.visitor === '事前確認ならOK' && meta.visitor === '友人の来客OK'));
-    pref(filters.shower, filters.shower, filters.shower === '制限ありでもOK' ? true : meta.shower === '時間制限なし');
+    pref(filters.curfew, hmRuleComparisonLabel('curfew', filters.curfew, meta), hmRuleCompatible('curfew', filters.curfew, meta.curfew));
+    pref(filters.visitor, hmRuleComparisonLabel('visitor', filters.visitor, meta), hmRuleCompatible('visitor', filters.visitor, meta.visitor));
+    pref(filters.shower, hmRuleComparisonLabel('shower', filters.shower, meta), hmRuleCompatible('shower', filters.shower, meta.shower));
+    pref(filters.kitchen, hmRuleComparisonLabel('kitchen', filters.kitchen, meta), hmRuleCompatible('kitchen', filters.kitchen, meta.kitchen));
+    pref(filters.cleaning, hmRuleComparisonLabel('cleaning', filters.cleaning, meta), hmRuleCompatible('cleaning', filters.cleaning, meta.cleaning));
+    pref(filters.overnight, hmRuleComparisonLabel('overnight', filters.overnight, meta), hmRuleCompatible('overnight', filters.overnight, meta.overnight));
     pref(filters.talk, '会話量が近い', meta.talk === filters.talk || (filters.talk === '毎日会話したい' && meta.talk === '家族のように過ごしたい'));
     pref(filters.frequency, '交流頻度が近い', meta.frequency === filters.frequency);
     pref(filters.wake, '起床時間が近い', meta.wake === filters.wake);
@@ -9880,28 +10175,7 @@
   }
 
   function homestayInitialFilters() {
-    const stay = getGuestStayRange();
-    return {
-      area: 'バンクーバー',
-      start: stay.start,
-      end: stay.end,
-      budget: 2000,
-      budgetOnly: false,
-      meal: '',
-      dining: '',
-      diet: [],
-      pets: '',
-      smoking: '',
-      students: '',
-      talk: '',
-      frequency: '',
-      family: '',
-      wake: '',
-      sleep: '',
-      curfew: '',
-      visitor: '',
-      shower: ''
-    };
+    return homestayRegisteredSearchFilters();
   }
 
   function emptyHomestayFilters() {
@@ -9924,18 +10198,28 @@
       sleep: '',
       curfew: '',
       visitor: '',
-      shower: ''
+      shower: '',
+      kitchen: '',
+      cleaning: '',
+      overnight: ''
     };
   }
 
   function normalizeHomestayFilterState(filters = {}) {
-    return {
+    const next = {
       ...emptyHomestayFilters(),
       ...filters,
       budget: Number(filters.budget || 2000),
       budgetOnly: !!filters.budgetOnly,
       diet: Array.isArray(filters.diet) ? filters.diet : (filters.diet ? [filters.diet] : [])
     };
+    next.curfew = canonicalFilterValue('hmf-curfew', next.curfew);
+    next.visitor = canonicalFilterValue('hmf-visitor', next.visitor);
+    next.shower = canonicalFilterValue('hmf-shower', next.shower);
+    next.kitchen = canonicalFilterValue('hmf-kitchen', next.kitchen);
+    next.cleaning = canonicalFilterValue('hmf-cleaning', next.cleaning);
+    next.overnight = canonicalFilterValue('hmf-overnight', next.overnight);
+    return next;
   }
 
   function renderHomestaySearchFormFromFilters(filters) {
@@ -9966,6 +10250,9 @@
     setFilterChip('hmf-curfew', next.curfew);
     setFilterChip('hmf-visitor', next.visitor);
     setFilterChip('hmf-shower', next.shower);
+    setFilterChip('hmf-kitchen', next.kitchen);
+    setFilterChip('hmf-cleaning', next.cleaning);
+    setFilterChip('hmf-overnight', next.overnight);
     hmUpdateBudgetLabel();
     suppressFilterAutoApply = false;
     return hmFilters();
@@ -10045,6 +10332,12 @@
     renderHomestayFilterResults(committedHomestayFilters);
   }
 
+  function homestayRulePreferenceFromOnboarding(rowId, filterRowId) {
+    const value = selectedChipTextFromRow(rowId, '');
+    if (!value || value === 'こだわらない' || value === 'No preference') return '';
+    return canonicalFilterValue(filterRowId, value);
+  }
+
   function homestayFilterProfileFromOnboarding() {
     const meal = selectedChipTextFromRow('hs-onboard-meal', '朝食のみ');
     const mealMap = { '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
@@ -10074,7 +10367,13 @@
         return ['一人暮らし','カップル','子どものいる家庭','子どものいない家庭'].includes(family) ? family : '';
       })(),
       wake: selectedChipTextFromRow('hs-onboard-wake', '').replace('6時以前', '〜6時').replace('9時以降', '9時〜'),
-      sleep: selectedChipTextFromRow('hs-onboard-sleep', '').replace('23時以降', '23時〜')
+      sleep: selectedChipTextFromRow('hs-onboard-sleep', '').replace('23時以降', '23時〜'),
+      curfew: homestayRulePreferenceFromOnboarding('hs-onboard-curfew', 'hmf-curfew'),
+      visitor: homestayRulePreferenceFromOnboarding('hs-onboard-visitor', 'hmf-visitor'),
+      shower: homestayRulePreferenceFromOnboarding('hs-onboard-shower', 'hmf-shower'),
+      kitchen: homestayRulePreferenceFromOnboarding('hs-onboard-kitchen', 'hmf-kitchen'),
+      cleaning: homestayRulePreferenceFromOnboarding('hs-onboard-cleaning', 'hmf-cleaning'),
+      overnight: homestayRulePreferenceFromOnboarding('hs-onboard-overnight', 'hmf-overnight')
     };
   }
 
@@ -10082,6 +10381,14 @@
     const stored = readStoredJson(HOMESTAY_GUEST_FILTERS_STORAGE_KEY);
     if (stored) homestayGuestDemoFilters = stored;
     return homestayGuestDemoFilters || homestayFilterProfileFromOnboarding();
+  }
+
+  function homestayRegisteredSearchFilters() {
+    const registeredProfile = homestayRegisteredFilterProfile();
+    return normalizeHomestayFilterState({
+      ...registeredProfile,
+      budgetOnly: !!registeredProfile.budget
+    });
   }
 
   function collectHomestayGuestFiltersFromEdit(name) {
@@ -10112,17 +10419,19 @@
       next.family = family === 'ファミリー' ? '子どものいる家庭' : family === '子供のいない家庭' ? '子どものいない家庭' : ['一人暮らし','カップル','子どものいる家庭','子どものいない家庭'].includes(family) ? family : '';
       next.wake = selectedChipTextFromRow('hs-lifestyle-wake', next.wake).replace('6時以前', '〜6時').replace('9時以降', '9時〜');
       next.sleep = selectedChipTextFromRow('hs-lifestyle-sleep', next.sleep).replace('23時以降', '23時〜');
+      next.curfew = homestayRulePreferenceFromOnboarding('hs-lifestyle-curfew', 'hmf-curfew') || '';
+      next.visitor = homestayRulePreferenceFromOnboarding('hs-lifestyle-visitor', 'hmf-visitor') || '';
+      next.shower = homestayRulePreferenceFromOnboarding('hs-lifestyle-shower', 'hmf-shower') || '';
+      next.kitchen = homestayRulePreferenceFromOnboarding('hs-lifestyle-kitchen', 'hmf-kitchen') || '';
+      next.cleaning = homestayRulePreferenceFromOnboarding('hs-lifestyle-cleaning', 'hmf-cleaning') || '';
+      next.overnight = homestayRulePreferenceFromOnboarding('hs-lifestyle-overnight', 'hmf-overnight') || '';
     }
     saveHomestayGuestFilterProfile(next);
     return next;
   }
 
   function applyHomestayRegisteredFiltersToSearch() {
-    const registeredProfile = homestayRegisteredFilterProfile();
-    const profile = normalizeHomestayFilterState({
-      ...registeredProfile,
-      budgetOnly: !!registeredProfile.budget
-    });
+    const profile = homestayRegisteredSearchFilters();
     const sort = document.getElementById('hm-sort');
     if (sort) sort.value = 'newest';
     committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(profile));
@@ -10463,9 +10772,17 @@
   }
 
   function applySharehouseRegisteredFiltersToSearch() {
+    const filters = sharehouseRegisteredSearchFilters();
+    const sort = document.getElementById('sh-sort');
+    if (sort) sort.value = 'newest';
+    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(filters));
+    renderSharehouseFilterResults(committedSharehouseFilters);
+  }
+
+  function sharehouseRegisteredSearchFilters() {
     const profile = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
     const budgetNumber = Number(String(profile.stay?.budget || '').replace(/[^0-9]/g, '')) || 1200;
-    const filters = normalizeSharehouseFilterState({
+    return normalizeSharehouseFilterState({
       area: profile.stay?.area || '',
       start: profile.stay?.moveIn || '',
       end: profile.stay?.moveOut || '',
@@ -10492,10 +10809,6 @@
       lifeNoise: profile.ideal?.lifeNoise || '',
       quietHours: profile.ideal?.quietHours || ''
     });
-    const sort = document.getElementById('sh-sort');
-    if (sort) sort.value = 'newest';
-    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(filters));
-    renderSharehouseFilterResults(committedSharehouseFilters);
   }
 
   function renderSharehouseFilterResults(filters) {
@@ -12344,6 +12657,7 @@
         }
         window._serviceType = 'homestay';
         currentSearchCat = 'homestay';
+        saveHomestayGuestFilterProfile(homestayFilterProfileFromOnboarding());
         shouldApplyRegisteredFilters.homestay = true;
         navigate('matching', 'search');
       }, 600);
@@ -14827,6 +15141,49 @@
     'その他のNG条件':'Other No-go Conditions',
     '門限NG':'No curfew',
     '来客NG':'No visitors',
+    '門限について':'Curfew',
+    '門限なし希望':'Prefer no curfew',
+    '門限ありでもOK':'Curfew is OK',
+    '友人などの来客について':'Visitors',
+    '来客OKの家庭を希望':'Prefer households where visitors are OK',
+    '事前連絡が必要でもOK':'Prior notice is OK',
+    '来客NGでもOK':'No visitors is OK',
+    'シャワーの利用時間について':'Shower Time Limit',
+    '時間制限なし希望':'Prefer no time limit',
+    '10〜15分程度ならOK':'10-15 minutes is OK',
+    '5〜10分程度でもOK':'5-10 minutes is OK',
+    '5分以内でもOK':'Within 5 minutes is OK',
+    'キッチン利用について':'Kitchen Use',
+    '自由に使える家庭を希望':'Prefer free kitchen access',
+    '時間制限があってもOK':'Time limits are OK',
+    'キッチンを使えなくてもOK':'No kitchen access is OK',
+    '共有スペースの掃除について':'Shared Space Cleaning',
+    '毎日でもOK':'Daily cleaning is OK',
+    '週1回程度ならOK':'About once a week is OK',
+    '月1回程度ならOK':'About once a month is OK',
+    '掃除当番なし希望':'Prefer no cleaning duty',
+    '友人・パートナーなどの宿泊について':'Friends or Partners Staying Overnight',
+    '宿泊OKの家庭を希望':'Prefer households where overnight guests are OK',
+    '事前相談が必要でもOK':'Prior discussion is OK',
+    '宿泊NGでもOK':'No overnight guests is OK',
+    '門限なし':'No curfew',
+    '門限あり':'Curfew',
+    '来客OK':'Visitors OK',
+    '来客：事前連絡必須':'Visitors: prior notice required',
+    '来客NG':'No visitors',
+    'シャワー：制限なし':'Shower: no time limit',
+    'シャワー：10〜15分':'Shower: 10-15 minutes',
+    'シャワー：5〜10分':'Shower: 5-10 minutes',
+    'シャワー：5分以内':'Shower: within 5 minutes',
+    'キッチン利用OK':'Kitchen use OK',
+    'キッチン利用NG':'Kitchen use not available',
+    '共有スペース掃除：毎日':'Shared space cleaning: daily',
+    '共有スペース掃除：週1回':'Shared space cleaning: weekly',
+    '共有スペース掃除：月1回':'Shared space cleaning: monthly',
+    '共有スペース掃除：掃除当番なし':'Shared space cleaning: no duty',
+    '宿泊OK':'Overnight guests OK',
+    '宿泊：事前相談必須':'Overnight guests: prior discussion required',
+    '宿泊NG':'No overnight guests',
     'ボストン、ニューヨーク':'Boston, New York',
     'シカゴ、トロント':'Chicago, Toronto',
     'ニューヨーク':'New York',
