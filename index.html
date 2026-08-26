@@ -5040,10 +5040,10 @@
 
 	    <div class="detail-section" style="padding-bottom:16px;">
 	      <div class="detail-section-title">📍 ロケーション</div>
-	      <div class="match-card-map" style="border-radius:14px;height:160px;border:1px solid var(--border);">
-	        <div class="match-map-pin" id="sharehouse-map-pin">📍 新宿区</div>
-	      </div>
-	      <div id="sharehouse-map-note" style="font-size:12px;color:var(--light);margin-top:8px;">最寄り駅：Central Station 徒歩8分</div>
+	      <div id="sharehouse-leaflet-map" class="detail-osm-map" aria-label="おおよその位置"></div>
+	      <div id="sharehouse-map-pin" style="font-size:12px;color:var(--mid);font-weight:800;margin-top:8px;">おおよその位置</div>
+	      <div id="sharehouse-map-note" style="font-size:12px;color:var(--light);margin-top:4px;">最寄り駅：Central Station 徒歩8分</div>
+	      <div id="sharehouse-map-privacy" style="font-size:11px;color:var(--light);margin-top:4px;">正確な住所はプライバシー保護のため表示していません</div>
 	    </div>
   </div>
 
@@ -7261,6 +7261,7 @@
   let termsBackScreen = 'mypage';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
+  let sharehouseDetailMap = null;
   let hostPreviewMode = false;
   const blockedUsers = new Map();
   let currentBlockTarget = null;
@@ -7423,6 +7424,7 @@
     document.querySelectorAll('#screen-host-profile .sharehouse-profile-section').forEach(el => {
       el.style.display = isSharehouse ? 'block' : 'none';
     });
+    if (isSharehouse) renderSharehouseHostProfileEdit();
   }
 
   function updateGuestLifestyleMode() {
@@ -8137,7 +8139,7 @@
 	      const shAvatar = document.getElementById('sharehouse-match-avatar');
 	      const reviewScore = (match.review.match(/★\d(?:\.\d)?/) || ['★4.8'])[0];
 	      if (shName) shName.textContent = profile.name;
-	      if (shAvatar) shAvatar.textContent = match.gender === '男性' ? '👨' : '👩';
+	      if (shAvatar) shAvatar.textContent = profile.basic.gender === '男性' ? '👨' : profile.basic.gender === '女性' ? '👩' : '🧑';
 	      const shCurrentComparison = shEvaluateListing(listing.id, shFilters());
 	      const shInitialComparison = sharehouseInitialComparisonResults().find(result => result.id === listing.id);
 	      const shBadgeTotal = shCurrentComparison.activeTotal || (shInitialComparison ? shInitialComparison.matched.length + shInitialComparison.near.length + shInitialComparison.out.length : 0);
@@ -8330,6 +8332,7 @@
 		      if (mapPin) mapPin.textContent = `📍 ${localizeText(profile.mapPin || profile.stay.area)}`;
 		      const mapNote = document.getElementById('sharehouse-map-note');
 		      if (mapNote) mapNote.textContent = localizeText(profile.mapNote || '最寄り駅：Central Station 徒歩8分');
+		      setTimeout(() => renderSharehouseLocationMap(profile), 80);
 	      return;
 	    }
 
@@ -11242,19 +11245,427 @@
 	    return currentRole === 'guest' && (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse');
 	  }
 
-	  function updateGuestProfileMode() {
-	    const body = document.querySelector('#screen-profile .mypage-sub-body');
-	    if (!body) return;
-	    if (homestayProfileBodyHtml === null) homestayProfileBodyHtml = body.innerHTML;
+  function updateGuestProfileMode() {
+    const body = document.querySelector('#screen-profile .mypage-sub-body');
+    if (!body) return;
+    if (homestayProfileBodyHtml === null) homestayProfileBodyHtml = body.innerHTML;
 	    if (isSharehouseGuestContext()) {
 	      body.innerHTML = sharehouseGuestEditProfileHtml(defaultSharehouseGuestProfile(APPLICANTS?.sakura));
 	    } else if (body.innerHTML !== homestayProfileBodyHtml) {
-	      body.innerHTML = homestayProfileBodyHtml;
+      body.innerHTML = homestayProfileBodyHtml;
+    }
+  }
+
+	  const SH_HOST_LANGUAGE_OPTIONS = ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語'];
+	  const SH_HOST_RELIGION_OPTIONS = ['仏教','キリスト教','イスラム教','ヒンドゥー教','ユダヤ教','無宗教','その他','回答しない'];
+	  const SH_HOST_ENGLISH_OPTIONS = ['初心者','日常会話','ビジネスレベル','ネイティブレベル','回答しない'];
+	  const SH_HOST_GENDER_OPTIONS = ['女性','男性','選択しない'];
+	  const SH_HOST_SMOKING_OPTIONS = ['吸わない','屋外で吸う','室内でも吸う'];
+	  const SH_HOST_ALCOHOL_OPTIONS = ['よく飲む','たまに飲む','飲まない'];
+	  const SH_HOST_HOBBY_OPTIONS = ['🎵 音楽','🎬 映画','📚 読書','🍳 料理','🏃 スポーツ','🎮 ゲーム','🌿 アウトドア','🎨 アート','🐾 動物好き','その他'];
+	  const SH_HOST_WAKE_OPTIONS = ['6時以前','6〜7時','7〜8時','8〜9時','9時以降'];
+	  const SH_HOST_SLEEP_OPTIONS = ['22時以前','22〜23時','23〜24時','0〜1時','1時以降'];
+	  const SH_HOST_HOME_TIME_OPTIONS = ['日中も家にいることが多い','学校・仕事で日中はいないことが多い','夜を中心に家にいる','日によって異なる'];
+	  const SH_HOST_COOKING_OPTIONS = ['ほぼ毎日','週に数回','たまに','ほとんどしない'];
+	  const SH_HOST_MBTI_OPTIONS = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP','わからない / 未診断','回答しない'];
+
+	  function sharehouseHostDefaults() {
+	    const match = sharehouseMatchProfiles.sh1 || {};
+	    const hp = match.hostProfile || {};
+	    return {
+	      basic: {
+	        name: hp.basic?.name || match.name || '田中 あおい',
+	        age: hp.basic?.age || '24',
+	        nationality: hp.basic?.nationality || match.nationality || '日本',
+	        gender: hp.basic?.gender || match.gender || '女性',
+	        religion: hp.basic?.religion || match.religion || '無宗教',
+	        languages: hp.basic?.languages || ['日本語','英語'],
+	        englishLevel: hp.basic?.englishLevel || match.englishLevel || '日常会話',
+	        position: hp.basic?.position || '会社員',
+	        personalSmoking: hp.basic?.personalSmoking || '吸わない',
+	        personalAlcohol: hp.basic?.personalAlcohol || 'たまに飲む',
+	        hobbies: hp.basic?.hobbies || ['🍳 料理','🎬 映画'],
+	        intro: hp.basic?.intro || match.note || '生活ルールを大切にしながら、程よく交流できるシェア生活を作っています。'
+	      },
+	      lifestyle: {
+	        wakeTime: hp.lifestyle?.wakeTime || '7〜8時',
+	        bedtime: hp.lifestyle?.bedtime || '22〜23時',
+	        homeTime: hp.lifestyle?.homeTime || '夜を中心に家にいる',
+	        cookingFrequency: hp.lifestyle?.cookingFrequency || '週に数回'
+	      },
+	      shareStyle: {
+	        roommateInteraction: hp.shareStyle?.roommateInteraction || '時々一緒に食事や会話をする',
+	        cleanliness: hp.shareStyle?.cleanliness || 'ある程度綺麗にしている',
+	        cleaningFrequency: hp.shareStyle?.cleaningFrequency || '週1回',
+	        lifeNoise: hp.shareStyle?.lifeNoise || '比較的静か',
+	        smokingEnvironment: hp.shareStyle?.smokingEnvironment || '完全禁煙',
+	        alcoholEnvironment: hp.shareStyle?.alcoholEnvironment || 'たまに飲む',
+	        pets: hp.shareStyle?.pets || 'ペットなし',
+	        petType: hp.shareStyle?.petType || '',
+	        petCount: hp.shareStyle?.petCount || '',
+	        visitors: hp.shareStyle?.visitors || '事前に共有すればOK',
+	        overnightGuests: hp.shareStyle?.overnightGuests || '事前相談があればOK',
+	        quietHours: hp.shareStyle?.quietHours || 'ある程度静かにしている',
+	        mbti: hp.shareStyle?.mbti || '回答しない'
+	      },
+	      stay: {
+	        area: hp.stay?.area || 'Vancouver',
+	        address: hp.stay?.address || 'Vancouver, BC',
+	        station: hp.stay?.station || 'Commercial-Broadway Station',
+	        walkMin: hp.stay?.walkMin || '8',
+	        availableStart: hp.stay?.availableStart || match.available?.start || '2026-09-01',
+	        availableEnd: hp.stay?.availableEnd || match.available?.end || '2027-02-28',
+	        minStay: hp.stay?.minStay || '1',
+	        maxStay: hp.stay?.maxStay || '12',
+	        longStay: hp.stay?.longStay || '可能',
+	        monthlyRent: hp.stay?.monthlyRent || '1200',
+	        roomType: hp.stay?.roomType || '個室',
+	        furniture: hp.stay?.furniture || '家具付き',
+	        floor: hp.stay?.floor || '2階',
+	        bathroom: hp.stay?.bathroom || '他の入居者と共有',
+	        amenities: hp.stay?.amenities || ['Wi-Fi','洗濯機','キッチン','冷蔵庫'],
+	        amenityOther: hp.stay?.amenityOther || '',
+	        kitchenRule: hp.stay?.kitchenRule || '共用',
+	        kitchenHours: hp.stay?.kitchenHours || '',
+	        residentsCount: hp.stay?.residentsCount || '2〜3人'
+	      },
+	      rules: {
+	        visitors: hp.rules?.visitors || '事前共有必須',
+	        overnightGuests: hp.rules?.overnightGuests || '事前相談必須',
+	        smoking: hp.rules?.smoking || 'NG',
+	        alcohol: hp.rules?.alcohol || '節度を守る',
+	        quietHours: hp.rules?.quietHours || 'ある程度静かにする',
+	        cleaning: hp.rules?.cleaning || '週1回',
+	        other: hp.rules?.other || ''
+	      },
+	      members: hp.members || resRoommates || []
+	    };
+	  }
+
+	  function shHostChipRow(prefix, key, options, selected, multi = false, extra = '') {
+	    const selectedValues = Array.isArray(selected) ? selected : [selected];
+	    const handler = multi ? 'toggleMultiChip(this)' : 'toggleChip(this)';
+	    return `<div class="form-chip-row" id="${prefix}-${key}">
+	      ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(option)}" onclick="${handler};${extra}">${localizeText(option)}</div>`).join('')}
+	    </div>`;
+	  }
+
+	  function shHostTextInput(id, value = '', placeholder = '', type = 'text') {
+	    return `<input class="form-input" id="${id}" type="${type}" value="${escapeHtml(value)}" placeholder="${escapeHtml(localizeText(placeholder))}" />`;
+	  }
+
+	  function shHostUpload(label, note, multiple = false) {
+	    return `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	      <span style="font-size:32px;">${multiple ? '🖼️' : '👤'}</span>
+	      <span style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText(label)}</span>
+	      <span style="font-size:12px;color:var(--light);">${localizeText(note)}</span>
+	      <input type="file" accept="image/*" ${multiple ? 'multiple' : ''} style="display:none;" />
+	    </label>`;
+	  }
+
+	  function shHostSection(title, html) {
+	    return `<div class="form-section"><div class="form-section-title">${localizeText(title)}</div>${html}</div>`;
+	  }
+
+	  function shHostField(label, html, note = '') {
+	    return `<div class="form-group"><div class="form-label">${localizeText(label)}</div>${html}${note ? `<div style="font-size:12px;color:var(--light);margin-top:6px;">${localizeText(note)}</div>` : ''}</div>`;
+	  }
+
+	  function sharehouseHostPageOneHtml(prefix, profile = sharehouseHostDefaults()) {
+	    return [
+	      shHostSection('基本情報', [
+	        shHostField('プロフィール写真', shHostUpload('顔写真をアップロード', '画像保存は行わないデモUIです')),
+	        shHostField('名前', shHostTextInput(`${prefix}-name`, profile.basic.name, '名前')),
+	        shHostField('年齢', shHostTextInput(`${prefix}-age`, profile.basic.age, '年齢', 'number')),
+	        shHostField('国籍', shHostTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')),
+	        shHostField('性別', shHostChipRow(prefix, 'gender', SH_HOST_GENDER_OPTIONS, profile.basic.gender)),
+	        shHostField('宗教', shHostChipRow(prefix, 'religion', SH_HOST_RELIGION_OPTIONS, profile.basic.religion)),
+	        shHostField('使用言語', shHostChipRow(prefix, 'languages', SH_HOST_LANGUAGE_OPTIONS, profile.basic.languages, true)),
+	        shHostField('英語レベル', shHostChipRow(prefix, 'english-level', SH_HOST_ENGLISH_OPTIONS, profile.basic.englishLevel)),
+	        shHostField('現在の立場', `${shHostChipRow(prefix, 'position', ['学生','ワーホリ','会社員','フリーランス','その他'], profile.basic.position, false, `shHostToggleSelectedField('${prefix}-position','${prefix}-position-other-wrap','その他')`)}<div id="${prefix}-position-other-wrap" style="display:${profile.basic.position === 'その他' ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-position-other`, '', 'その他の立場')}</div>`),
+	        shHostField('喫煙', shHostChipRow(prefix, 'personal-smoking', SH_HOST_SMOKING_OPTIONS, profile.basic.personalSmoking)),
+	        shHostField('飲酒', shHostChipRow(prefix, 'personal-alcohol', SH_HOST_ALCOHOL_OPTIONS, profile.basic.personalAlcohol)),
+	        shHostField('趣味', shHostChipRow(prefix, 'hobbies', SH_HOST_HOBBY_OPTIONS, profile.basic.hobbies, true)),
+	        shHostField('一言 / 自己紹介', `<textarea class="form-textarea" id="${prefix}-intro" rows="4" placeholder="${localizeText('一言 / 自己紹介')}">${escapeHtml(profile.basic.intro)}</textarea>`)
+	      ].join('')),
+	      shHostSection('同居メンバー', `
+	        <div id="${prefix}-roommate-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;"></div>
+	        <button type="button" onclick="resAddRoommate()" id="${prefix}-add-roommate-btn" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:800;color:var(--mid);cursor:pointer;">＋ ${localizeText('同居メンバーを追加')}</button>
+	        ${sharehouseHostRoommateFormHtml(prefix)}
+	      `),
+	      shHostSection('あなたの生活スタイル', [
+	        shHostField('起床時間', shHostChipRow(prefix, 'wake-time', SH_HOST_WAKE_OPTIONS, profile.lifestyle.wakeTime)),
+	        shHostField('就寝時間', shHostChipRow(prefix, 'bedtime', SH_HOST_SLEEP_OPTIONS, profile.lifestyle.bedtime)),
+	        shHostField('普段どのくらい家にいますか？', shHostChipRow(prefix, 'home-time', SH_HOST_HOME_TIME_OPTIONS, profile.lifestyle.homeTime)),
+	        shHostField('どのくらい料理をしますか？', shHostChipRow(prefix, 'cooking-frequency', SH_HOST_COOKING_OPTIONS, profile.lifestyle.cookingFrequency))
+	      ].join('')),
+	      shHostSection('シェア生活のスタイル', [
+	        shHostField('一緒に住む人とは普段どのくらい交流しますか？', shHostChipRow(prefix, 'roommate-interaction', ['基本それぞれで過ごす','会った時に少し話すくらい','時々一緒に食事や会話をする','休日などに一緒に出かけることもある','友達のように交流する'], profile.shareStyle.roommateInteraction)),
+	        shHostField('共用スペースをどのくらい綺麗に保っていますか？', shHostChipRow(prefix, 'cleanliness', ['あまり気にしない','最低限綺麗にしている','ある程度綺麗にしている','常に綺麗に保っている'], profile.shareStyle.cleanliness)),
+	        shHostField('共用部分の掃除頻度', shHostChipRow(prefix, 'cleaning-frequency', ['毎日軽く','週に数回','週1回','汚れたら','特に決まりなし'], profile.shareStyle.cleaningFrequency)),
+	        shHostField('家の中の生活音', shHostChipRow(prefix, 'life-noise', ['かなり静か','比較的静か','普通','あまり気にしない'], profile.shareStyle.lifeNoise)),
+	        shHostField('喫煙環境', shHostChipRow(prefix, 'smoking-environment', ['室内喫煙OK','屋外のみ','完全禁煙'], profile.shareStyle.smokingEnvironment)),
+	        shHostField('家での飲酒について', shHostChipRow(prefix, 'alcohol-environment', ['よく飲む','たまに飲む','ほとんど飲まない'], profile.shareStyle.alcoholEnvironment)),
+	        shHostField('ペット', `${shHostChipRow(prefix, 'pets', ['ペットなし','ペットあり'], profile.shareStyle.pets, false, `shHostTogglePetFields('${prefix}')`)}<div id="${prefix}-pet-detail-wrap" style="display:${profile.shareStyle.pets === 'ペットあり' ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">${shHostTextInput(`${prefix}-pet-type`, profile.shareStyle.petType, '動物の種類')}${shHostTextInput(`${prefix}-pet-count`, profile.shareStyle.petCount, '頭数', 'number')}</div>`),
+	        shHostField('友人などの来客について', shHostChipRow(prefix, 'visitors', ['自由にOK','事前に共有すればOK','頻繁でなければOK','できれば少ない','来客NG'], profile.shareStyle.visitors)),
+	        shHostField('パートナーなどの宿泊について', shHostChipRow(prefix, 'overnight-guests', ['問題ない','たまにならOK','事前相談があればOK','NG'], profile.shareStyle.overnightGuests)),
+	        shHostField('夜の静かな時間について', shHostChipRow(prefix, 'quiet-hours', ['厳しく静かにしている','ある程度静かにしている','特に決まりなし'], profile.shareStyle.quietHours)),
+	        shHostField('MBTI', shHostChipRow(prefix, 'mbti', SH_HOST_MBTI_OPTIONS, profile.shareStyle.mbti))
+	      ].join(''))
+	    ].join('');
+	  }
+
+	  function sharehouseHostPageTwoHtml(prefix, profile = sharehouseHostDefaults()) {
+	    return [
+	      shHostSection('家・入居情報', [
+	        shHostField('エリア', shHostChipRow(prefix, 'area', ['Vancouver','Toronto'], profile.stay.area)),
+	        shHostField('住所', shHostTextInput(`${prefix}-address`, profile.stay.address, '住所'), '正確な住所は一般公開されません'),
+	        shHostField('最寄り駅', shHostTextInput(`${prefix}-station`, profile.stay.station, '最寄り駅')),
+	        shHostField('最寄り駅まで徒歩何分', shHostTextInput(`${prefix}-walk-min`, profile.stay.walkMin, '8', 'number')),
+	        shHostField('入居可能期間', `<div class="form-range-row">${shHostTextInput(`${prefix}-available-start`, profile.stay.availableStart, '', 'date')}${shHostTextInput(`${prefix}-available-end`, profile.stay.availableEnd, '', 'date')}</div>`),
+	        shHostField('最短滞在期間', `<div style="display:flex;align-items:center;gap:8px;">${shHostTextInput(`${prefix}-min-stay`, profile.stay.minStay, '1', 'number')}<span style="font-size:13px;font-weight:800;color:var(--light);">${localizeText('ヶ月')}</span></div>`),
+	        shHostField('最長滞在期間', `<div style="display:flex;align-items:center;gap:8px;">${shHostTextInput(`${prefix}-max-stay`, profile.stay.maxStay, '12', 'number')}<span style="font-size:13px;font-weight:800;color:var(--light);">${localizeText('ヶ月')}</span></div>`),
+	        shHostField('長期滞在', shHostChipRow(prefix, 'long-stay', ['可能','不可'], profile.stay.longStay)),
+	        shHostField('月額料金 CAD', shHostTextInput(`${prefix}-monthly-rent`, profile.stay.monthlyRent, '1200', 'number')),
+	        shHostField('部屋の写真', shHostUpload('部屋写真をアップロード', '部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ', true)),
+	        shHostField('部屋タイプ', shHostChipRow(prefix, 'room-type', ['個室','相部屋'], profile.stay.roomType)),
+	        shHostField('家具', shHostChipRow(prefix, 'furniture', ['家具付き','家具なし'], profile.stay.furniture)),
+	        shHostField('階', shHostChipRow(prefix, 'floor', ['ベースメント','1階','2階','3階以上'], profile.stay.floor)),
+	        shHostField('バスルーム', shHostChipRow(prefix, 'bathroom', ['専用','他の入居者と共有','オーナー / ホストと共有'], profile.stay.bathroom)),
+	        shHostField('現在一緒に住んでいる人数', `<div class="detail-info-item" style="background:var(--bg);">${localizeText('登録済み同居メンバー数')}: <strong id="${prefix}-resident-count">${(resRoommates.length || profile.members?.length || 0) + 1}</strong></div>${shHostChipRow(prefix, 'residents-count', ['1人','2〜3人','4人以上'], profile.stay.residentsCount)}`),
+	        shHostField('設備', `${shHostChipRow(prefix, 'amenities', ['Wi-Fi','洗濯機','乾燥機','キッチン','冷蔵庫','エアコン','その他'], profile.stay.amenities, true, `shHostToggleSelectedField('${prefix}-amenities','${prefix}-amenity-other-wrap','その他')`)}<div id="${prefix}-amenity-other-wrap" style="display:${profile.stay.amenities?.includes('その他') ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-amenity-other`, profile.stay.amenityOther, 'その他の設備')}</div>`)
+	      ].join('')),
+	      shHostSection('キッチン利用', [
+	        shHostField('キッチン利用', `${shHostChipRow(prefix, 'kitchen-rule', ['自由に利用可能','共用','利用時間のルールあり','利用制限あり'], profile.stay.kitchenRule, false, `shHostToggleKitchenFields('${prefix}')`)}<div id="${prefix}-kitchen-hours-wrap" style="display:${profile.stay.kitchenRule === '利用時間のルールあり' ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-kitchen-hours`, profile.stay.kitchenHours, '例：7:00〜22:00')}</div>`)
+	      ].join('')),
+	      shHostSection('ハウスルール', [
+	        shHostField('来客', shHostChipRow(prefix, 'rule-visitors', ['OK','事前共有必須','頻度制限あり','NG'], profile.rules.visitors)),
+	        shHostField('宿泊客', shHostChipRow(prefix, 'rule-overnight-guests', ['OK','事前相談必須','たまにならOK','NG'], profile.rules.overnightGuests)),
+	        shHostField('喫煙', shHostChipRow(prefix, 'rule-smoking', ['OK','屋外のみ','NG'], profile.rules.smoking)),
+	        shHostField('飲酒', shHostChipRow(prefix, 'rule-alcohol', ['OK','節度を守る','NG'], profile.rules.alcohol)),
+	        shHostField('夜間の静かな時間', shHostChipRow(prefix, 'rule-quiet-hours', ['特に制限なし','ある程度静かにする','厳しく静かにする'], profile.rules.quietHours)),
+	        shHostField('共有スペース掃除', shHostChipRow(prefix, 'rule-cleaning', ['毎日','週に数回','週1回','汚れたら','特に決まりなし'], profile.rules.cleaning)),
+	        shHostField('その他ルール', `<textarea class="form-textarea" id="${prefix}-rule-other" rows="4" placeholder="${localizeText('その他ルール')}">${escapeHtml(profile.rules.other)}</textarea>`)
+	      ].join(''))
+	    ].join('');
+	  }
+
+	  function sharehouseHostRoommateFormHtml(prefix) {
+	    return `<div id="${prefix}-roommate-form" style="display:none;margin-top:14px;background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+	      <div style="padding:14px 16px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+	        <div style="font-size:14px;font-weight:900;">${localizeText('同居メンバー情報を入力')}</div>
+	        <button type="button" onclick="resCancelRoommate()" style="background:none;border:none;color:var(--light);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+	      </div>
+	      <div style="padding:14px 16px;">
+	        ${shHostField('名前またはニックネーム', shHostTextInput('rm-name', '', '名前またはニックネーム'))}
+	        ${shHostField('年齢', shHostTextInput('rm-age', '', '年齢', 'number'))}
+	        ${shHostField('性別', shHostChipRow('rm', 'gender', SH_HOST_GENDER_OPTIONS, '選択しない'))}
+	        ${shHostField('国籍', shHostTextInput('rm-nationality', '', '国籍'))}
+	        ${shHostField('宗教', shHostChipRow('rm', 'religion', SH_HOST_RELIGION_OPTIONS, '回答しない'))}
+	        ${shHostField('使用言語', shHostChipRow('rm', 'languages', SH_HOST_LANGUAGE_OPTIONS, ['日本語'], true))}
+	        ${shHostField('英語レベル', shHostChipRow('rm', 'english-level', SH_HOST_ENGLISH_OPTIONS, '日常会話'))}
+	        ${shHostField('喫煙', shHostChipRow('rm', 'smoking', SH_HOST_SMOKING_OPTIONS, '吸わない'))}
+	        ${shHostField('飲酒', shHostChipRow('rm', 'alcohol', SH_HOST_ALCOHOL_OPTIONS, 'たまに飲む'))}
+	        ${shHostField('趣味', shHostTextInput('rm-hobbies', '', '趣味'))}
+	        ${shHostField('一言', `<textarea class="form-textarea" id="rm-note" rows="3" placeholder="${localizeText('一言')}"></textarea>`)}
+	        ${shHostField('起床時間', shHostChipRow('rm', 'wake', SH_HOST_WAKE_OPTIONS, '7〜8時'))}
+	        ${shHostField('就寝時間', shHostChipRow('rm', 'sleep', SH_HOST_SLEEP_OPTIONS, '22〜23時'))}
+	        ${shHostField('普段どのくらい家にいますか？', shHostChipRow('rm', 'home-time', SH_HOST_HOME_TIME_OPTIONS, '夜を中心に家にいる'))}
+	        ${shHostField('どのくらい料理をしますか？', shHostChipRow('rm', 'cooking-frequency', SH_HOST_COOKING_OPTIONS, '週に数回'))}
+	        <button type="button" onclick="resSaveRoommate()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--primary);color:white;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;">${localizeText('この同居メンバーを追加')} ✓</button>
+	      </div>
+	    </div>`;
+	  }
+
+	  function shHostToggleSelectedField(rowId, wrapId, triggerText) {
+	    const values = selectedChipTexts('#' + rowId);
+	    const wrap = document.getElementById(wrapId);
+	    if (wrap) wrap.style.display = values.includes(triggerText) ? 'block' : 'none';
+	  }
+
+	  function shHostTogglePetFields(prefix) {
+	    const selected = selectedChipText(prefix + '-pets', 'ペットなし');
+	    const wrap = document.getElementById(prefix + '-pet-detail-wrap');
+	    if (wrap) wrap.style.display = selected === 'ペットあり' ? 'grid' : 'none';
+	  }
+
+	  function shHostToggleKitchenFields(prefix) {
+	    const selected = selectedChipText(prefix + '-kitchen-rule', '共用');
+	    const wrap = document.getElementById(prefix + '-kitchen-hours-wrap');
+	    if (wrap) wrap.style.display = selected === '利用時間のルールあり' ? 'block' : 'none';
+	  }
+
+	  function ensureSharehouseHostRegistrationUi() {
+	    const body = document.querySelector('#screen-resident-onboarding .onboard-body');
+	    if (!body || body.dataset.sharehouseHostRedesign === '20260827') return;
+	    const profile = sharehouseHostDefaults();
+	    body.innerHTML = `
+	      <div class="onboard-step-panel active" id="res-panel-1">${sharehouseHostPageOneHtml('res', profile)}</div>
+	      <div class="onboard-step-panel" id="res-panel-2">${sharehouseHostPageTwoHtml('res', profile)}</div>
+	    `;
+	    body.dataset.sharehouseHostRedesign = '20260827';
+	    resRenderRoommateList();
+	  }
+
+	  function renderSharehouseHostProfileEdit() {
+	    const section = document.querySelector('#screen-host-profile .sharehouse-profile-section');
+	    if (!section) return;
+	    section.innerHTML = `
+	      <div style="font-size:17px;font-weight:900;color:var(--dark);margin-bottom:14px;">${localizeText('掲載を編集')}</div>
+	      ${sharehouseHostPageOneHtml('share-profile', sharehouseHostDefaults())}
+	      ${sharehouseHostPageTwoHtml('share-profile', sharehouseHostDefaults())}
+	    `;
+	    resRenderRoommateList();
+	  }
+
+	  function shHostValueMap(value, map, fallback = value) {
+	    return map[value] || fallback;
+	  }
+
+	  function sharehouseHostProfileToComparable(profile) {
+	    const membersCount = Math.max(1, (profile.members || []).length + 1);
+	    return {
+	      basic: { ...profile.basic },
+	      stay: {
+	        area: profile.stay.area,
+	        moveIn: profile.stay.availableStart,
+	        moveOut: profile.stay.availableEnd,
+	        budget: `C$${profile.stay.monthlyRent}`,
+	        rentNumber: Number(profile.stay.monthlyRent) || 0,
+	        room: shHostValueMap(profile.stay.roomType, { '個室': '個室希望', '相部屋': '相部屋でもOK' }),
+	        furniture: shHostValueMap(profile.stay.furniture, { '家具付き': '家具付き希望', '家具なし': '家具なしでもOK' })
+	      },
+	      lifestyle: {
+	        wakeTime: profile.lifestyle.wakeTime,
+	        bedtime: profile.lifestyle.bedtime,
+	        homeTime: profile.lifestyle.homeTime,
+	        cookingFrequency: profile.lifestyle.cookingFrequency
+	      },
+	      ideal: {
+	        roommateInteraction: shHostValueMap(profile.shareStyle.roommateInteraction, {
+	          '基本それぞれで過ごす': '基本それぞれで過ごしたい',
+	          '会った時に少し話すくらい': '会った時に少し話すくらい',
+	          '時々一緒に食事や会話をする': '時々一緒に食事や会話をしたい',
+	          '休日などに一緒に出かけることもある': '休日などに一緒に出かけることもしたい',
+	          '友達のように交流する': '友達のような関係になりたい'
+	        }),
+	        cleanliness: shHostValueMap(profile.shareStyle.cleanliness, {
+	          'あまり気にしない': 'あまり気にしない',
+	          '最低限綺麗にしている': '最低限綺麗ならOK',
+	          'ある程度綺麗にしている': 'ある程度綺麗にしたい',
+	          '常に綺麗に保っている': '常に綺麗に保ちたい'
+	        }),
+	        cleaningFrequency: shHostValueMap(profile.shareStyle.cleaningFrequency, { '特に決まりなし': '特にこだわらない' }),
+	        lifeNoise: shHostValueMap(profile.shareStyle.lifeNoise, {
+	          'かなり静か': '静かな環境が絶対いい',
+	          '比較的静か': '比較的静かな方がいい',
+	          '普通': '普通なら問題ない',
+	          'あまり気にしない': 'あまり気にならない'
+	        }),
+	        roommateSmoking: shHostValueMap(profile.shareStyle.smokingEnvironment, {
+	          '室内喫煙OK': 'OK',
+	          '屋外のみ': '屋外のみならOK',
+	          '完全禁煙': 'NG'
+	        }),
+	        roommateAlcohol: shHostValueMap(profile.shareStyle.alcoholEnvironment, {
+	          'よく飲む': '気にしない',
+	          'たまに飲む': '程度による',
+	          'ほとんど飲まない': 'あまり好まない'
+	        }),
+	        pets: profile.shareStyle.pets === 'ペットあり' ? 'ペットOK' : 'ペットNG',
+	        visitors: shHostValueMap(profile.shareStyle.visitors, {
+	          '自由にOK': '気にしない',
+	          '事前に共有すればOK': '事前に教えてくれればOK',
+	          '頻繁でなければOK': '頻繁でなければOK',
+	          'できれば少ない': 'できれば来客は少ない方がいい',
+	          '来客NG': '来客NG希望'
+	        }),
+	        overnightGuests: profile.shareStyle.overnightGuests,
+	        bathroom: profile.stay.bathroom === '専用' ? '専用バスルーム希望' : '共用でもOK',
+	        housemateCount: membersCount <= 1 ? '1人とのシェア希望' : membersCount <= 3 ? '2〜3人' : '4人以上でもOK',
+	        kitchen: shHostValueMap(profile.stay.kitchenRule, {
+	          '自由に利用可能': 'キッチンをよく使うので自由に使いたい',
+	          '共用': '共用で問題ない',
+	          '利用時間のルールあり': '使用時間に多少ルールがあってもOK',
+	          '利用制限あり': 'あまり使わない'
+	        }),
+	        quietHours: shHostValueMap(profile.shareStyle.quietHours, {
+	          '厳しく静かにしている': '厳しく守りたい',
+	          'ある程度静かにしている': 'ある程度静かならOK',
+	          '特に決まりなし': 'あまり気にしない'
+	        }),
+	        mbti: profile.shareStyle.mbti
+	      }
+	    };
+	  }
+
+	  function sharehouseHostRulesForDetail(profile) {
+	    const rules = [
+	      { ok: profile.rules.visitors === 'OK', warn: profile.rules.visitors !== 'OK' && profile.rules.visitors !== 'NG', text: `来客：${profile.rules.visitors}` },
+	      { ok: profile.rules.overnightGuests === 'OK', warn: profile.rules.overnightGuests !== 'OK' && profile.rules.overnightGuests !== 'NG', text: `宿泊客：${profile.rules.overnightGuests}` },
+	      { ok: profile.rules.smoking === 'OK', warn: profile.rules.smoking === '屋外のみ', text: `喫煙：${profile.rules.smoking}` },
+	      { ok: profile.rules.alcohol === 'OK', warn: profile.rules.alcohol === '節度を守る', text: `飲酒：${profile.rules.alcohol}` },
+	      { warn: profile.rules.quietHours !== '特に制限なし', ok: profile.rules.quietHours === '特に制限なし', text: `夜間の静かな時間：${profile.rules.quietHours}` },
+	      { warn: profile.rules.cleaning !== '特に決まりなし', ok: profile.rules.cleaning === '特に決まりなし', text: `共有スペース掃除：${profile.rules.cleaning}` }
+	    ];
+	    if (profile.stay.kitchenRule === '利用時間のルールあり') {
+	      rules.push({ warn: true, text: `キッチン利用：${profile.stay.kitchenHours || '利用時間のルールあり'}` });
+	    } else {
+	      rules.push({ ok: profile.stay.kitchenRule === '自由に利用可能' || profile.stay.kitchenRule === '共用', warn: profile.stay.kitchenRule === '利用制限あり', text: `キッチン利用：${profile.stay.kitchenRule}` });
 	    }
+	    if (profile.rules.other) rules.push({ warn: true, text: `その他ルール：${profile.rules.other}` });
+	    return rules;
 	  }
 
 	  function sharehouseListingProfile(id) {
 	    const match = sharehouseMatchProfiles[id] || sharehouseMatchProfiles.sh1;
+	    if (match.hostProfile) {
+	      const profile = match.hostProfile;
+	      const comparable = sharehouseHostProfileToComparable(profile);
+	      const rentNumber = Number(profile.stay.monthlyRent) || Number(String(match.rent || '').replace(/[^0-9]/g, '')) || 1200;
+	      const amenities = [...(profile.stay.amenities || [])];
+	      if (profile.stay.amenityOther) amenities.push(profile.stay.amenityOther);
+	      const petText = profile.shareStyle.pets === 'ペットあり'
+	        ? `ペットあり${profile.shareStyle.petType ? `（${profile.shareStyle.petType}${profile.shareStyle.petCount ? ` ${profile.shareStyle.petCount}匹` : ''}）` : ''}`
+	        : 'ペットなし';
+	      return {
+	        id,
+	        name: profile.basic.name,
+	        match: match.match || 88,
+	        photo: getSharehouseRoomPhotos(match)[0]?.src || '',
+	        basic: comparable.basic,
+	        stay: { ...comparable.stay, budget: `C$${rentNumber}`, rentNumber },
+	        lifestyle: comparable.lifestyle,
+	        ideal: comparable.ideal,
+	        members: profile.members || [],
+	        roomInfo: [
+	          { label: 'エリア', value: profile.stay.area },
+	          { label: '最寄り駅', value: profile.stay.station },
+	          { label: '最寄り駅まで徒歩何分', value: `${profile.stay.walkMin}分` },
+	          { label: '入居可能期間', value: `${profile.stay.availableStart}〜${profile.stay.availableEnd}` },
+	          { label: '最短滞在期間', value: `${profile.stay.minStay}ヶ月` },
+	          { label: '最長滞在期間', value: `${profile.stay.maxStay}ヶ月` },
+	          { label: '長期滞在', value: profile.stay.longStay },
+	          { label: '月額料金 CAD', value: `C$${rentNumber} / month` },
+	          { label: '部屋タイプ', value: profile.stay.roomType },
+	          { label: '家具', value: profile.stay.furniture },
+	          { label: '階', value: profile.stay.floor },
+	          { label: 'バスルーム', value: profile.stay.bathroom },
+	          { label: '現在一緒に住んでいる人数', value: profile.stay.residentsCount },
+	          { label: '設備', value: amenities.join('、') || '未設定' },
+	          { label: 'キッチン利用', value: profile.stay.kitchenRule === '利用時間のルールあり' ? `${profile.stay.kitchenRule}（${profile.stay.kitchenHours || '時間未設定'}）` : profile.stay.kitchenRule },
+	          { label: 'ペット', value: petText }
+	        ],
+	        houseRules: sharehouseHostRulesForDetail(profile),
+	        review: match.review,
+	        available: { start: profile.stay.availableStart, end: profile.stay.availableEnd },
+	        mapPin: profile.stay.area,
+	        mapNote: currentLang === 'en'
+	          ? `${profile.stay.walkMin} min walk from ${profile.stay.station}`
+	          : `${profile.stay.station} 徒歩${profile.stay.walkMin}分`,
+	        raw: match
+	      };
+	    }
 	    const demoRentCad = { sh1: 1200, sh2: 1450, sh3: 980 };
 	    const rentNumber = demoRentCad[id] || Number(String(match.rent || '').replace(/[^0-9]/g, '')) || 1200;
 	    const isToronto = ['sh2'].includes(id);
@@ -11603,52 +12014,141 @@
 	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
 	  }
 
+	  function collectSharehouseHostProfile(prefix) {
+	    const defaults = sharehouseHostDefaults();
+	    const amenities = selectedChipTexts('#' + prefix + '-amenities');
+	    const amenityOther = formValue(prefix + '-amenity-other', '');
+	    if (amenityOther && !amenities.includes(amenityOther)) amenities.push(amenityOther);
+	    const position = selectedChipText(prefix + '-position', defaults.basic.position);
+	    const positionOther = formValue(prefix + '-position-other', '');
+	    const membersCount = Math.max(1, resRoommates.length + 1);
+	    return {
+	      basic: {
+	        name: formValue(prefix + '-name', defaults.basic.name),
+	        age: formValue(prefix + '-age', defaults.basic.age),
+	        nationality: formValue(prefix + '-nationality', defaults.basic.nationality),
+	        gender: selectedChipText(prefix + '-gender', defaults.basic.gender),
+	        religion: selectedChipText(prefix + '-religion', defaults.basic.religion),
+	        languages: selectedChipTexts('#' + prefix + '-languages'),
+	        englishLevel: selectedChipText(prefix + '-english-level', defaults.basic.englishLevel),
+	        position: position === 'その他' && positionOther ? positionOther : position,
+	        personalSmoking: selectedChipText(prefix + '-personal-smoking', defaults.basic.personalSmoking),
+	        personalAlcohol: selectedChipText(prefix + '-personal-alcohol', defaults.basic.personalAlcohol),
+	        hobbies: selectedChipTexts('#' + prefix + '-hobbies'),
+	        intro: formValue(prefix + '-intro', defaults.basic.intro)
+	      },
+	      members: resRoommates.slice(),
+	      lifestyle: {
+	        wakeTime: selectedChipText(prefix + '-wake-time', defaults.lifestyle.wakeTime),
+	        bedtime: selectedChipText(prefix + '-bedtime', defaults.lifestyle.bedtime),
+	        homeTime: selectedChipText(prefix + '-home-time', defaults.lifestyle.homeTime),
+	        cookingFrequency: selectedChipText(prefix + '-cooking-frequency', defaults.lifestyle.cookingFrequency)
+	      },
+	      shareStyle: {
+	        roommateInteraction: selectedChipText(prefix + '-roommate-interaction', defaults.shareStyle.roommateInteraction),
+	        cleanliness: selectedChipText(prefix + '-cleanliness', defaults.shareStyle.cleanliness),
+	        cleaningFrequency: selectedChipText(prefix + '-cleaning-frequency', defaults.shareStyle.cleaningFrequency),
+	        lifeNoise: selectedChipText(prefix + '-life-noise', defaults.shareStyle.lifeNoise),
+	        smokingEnvironment: selectedChipText(prefix + '-smoking-environment', defaults.shareStyle.smokingEnvironment),
+	        alcoholEnvironment: selectedChipText(prefix + '-alcohol-environment', defaults.shareStyle.alcoholEnvironment),
+	        pets: selectedChipText(prefix + '-pets', defaults.shareStyle.pets),
+	        petType: formValue(prefix + '-pet-type', ''),
+	        petCount: formValue(prefix + '-pet-count', ''),
+	        visitors: selectedChipText(prefix + '-visitors', defaults.shareStyle.visitors),
+	        overnightGuests: selectedChipText(prefix + '-overnight-guests', defaults.shareStyle.overnightGuests),
+	        quietHours: selectedChipText(prefix + '-quiet-hours', defaults.shareStyle.quietHours),
+	        mbti: selectedChipText(prefix + '-mbti', defaults.shareStyle.mbti)
+	      },
+	      stay: {
+	        area: selectedChipText(prefix + '-area', defaults.stay.area),
+	        address: formValue(prefix + '-address', defaults.stay.address),
+	        station: formValue(prefix + '-station', defaults.stay.station),
+	        walkMin: formValue(prefix + '-walk-min', defaults.stay.walkMin),
+	        availableStart: formValue(prefix + '-available-start', defaults.stay.availableStart),
+	        availableEnd: formValue(prefix + '-available-end', defaults.stay.availableEnd),
+	        minStay: formValue(prefix + '-min-stay', defaults.stay.minStay),
+	        maxStay: formValue(prefix + '-max-stay', defaults.stay.maxStay),
+	        longStay: selectedChipText(prefix + '-long-stay', defaults.stay.longStay),
+	        monthlyRent: formValue(prefix + '-monthly-rent', defaults.stay.monthlyRent),
+	        roomType: selectedChipText(prefix + '-room-type', defaults.stay.roomType),
+	        furniture: selectedChipText(prefix + '-furniture', defaults.stay.furniture),
+	        floor: selectedChipText(prefix + '-floor', defaults.stay.floor),
+	        bathroom: selectedChipText(prefix + '-bathroom', defaults.stay.bathroom),
+	        residentsCount: selectedChipText(prefix + '-residents-count', membersCount <= 1 ? '1人' : membersCount <= 3 ? '2〜3人' : '4人以上'),
+	        amenities,
+	        amenityOther,
+	        kitchenRule: selectedChipText(prefix + '-kitchen-rule', defaults.stay.kitchenRule),
+	        kitchenHours: formValue(prefix + '-kitchen-hours', defaults.stay.kitchenHours)
+	      },
+	      rules: {
+	        visitors: selectedChipText(prefix + '-rule-visitors', defaults.rules.visitors),
+	        overnightGuests: selectedChipText(prefix + '-rule-overnight-guests', defaults.rules.overnightGuests),
+	        smoking: selectedChipText(prefix + '-rule-smoking', defaults.rules.smoking),
+	        alcohol: selectedChipText(prefix + '-rule-alcohol', defaults.rules.alcohol),
+	        quietHours: selectedChipText(prefix + '-rule-quiet-hours', defaults.rules.quietHours),
+	        cleaning: selectedChipText(prefix + '-rule-cleaning', defaults.rules.cleaning),
+	        other: formValue(prefix + '-rule-other', defaults.rules.other)
+	      }
+	    };
+	  }
+
 	  function saveSharehouseSettings(scope = 'res') {
 	    const prefix = scope === 'profile' ? 'share-profile' : 'res';
 	    const listing = SHAREHOUSE_LISTINGS.sh1;
 	    const match = sharehouseMatchProfiles.sh1;
 	    if (!listing || !match) return;
 
-	    const rent = Number(formValue(prefix + '-monthly-rent', listing.price));
-	    const area = selectedChipText(prefix + '-area', match.mapPin || 'ボストン');
-	    const address = formValue(prefix + '-address', '新宿区 1-2-3');
-	    const station = formValue(prefix + '-station', 'Central Station');
-	    const walkMin = formValue(prefix + '-walk-min', '8');
-	    const start = formValue(prefix + '-available-start', match.available?.start || '2026-07-01');
-	    const end = formValue(prefix + '-available-end', match.available?.end || '2026-12-31');
-	    const roomType = scope === 'profile'
-	      ? formValue(prefix + '-room-type', '個室')
-	      : selectedChipText('res-room-type', '個室');
-	    const furnished = formValue(prefix + '-furnished', '家具付き');
-
-	    if (Number.isFinite(rent) && rent > 0) {
-	      listing.price = rent;
-	      match.rent = `¥${rent.toLocaleString()} /月`;
-	    }
-	    match.available = { start, end };
-	    match.area = `${area} · ${station} 徒歩${walkMin}分`;
-	    match.mapPin = area;
-	    match.mapNote = `最寄り駅：${station} 徒歩${walkMin}分`;
-	    match.roomType = `${roomType} · ${furnished} · Wi-Fi完備`;
-	    match.shareLifestyle = {
-	      noise: selectedChipText(prefix + '-noise', match.shareLifestyle?.noise || '静かにしたい'),
-	      cooking: selectedChipText(prefix + '-cooking', match.shareLifestyle?.cooking || '毎日'),
-	      smoking: selectedChipText(prefix + '-smoking', match.shareLifestyle?.smoking || '🚭 吸わない'),
-	      alcohol: selectedChipText(prefix + '-alcohol', match.shareLifestyle?.alcohol || 'たまに飲む'),
-	      mbti: selectedChipText(prefix + '-mbti', match.shareLifestyle?.mbti || '選択しない')
+	    const profile = collectSharehouseHostProfile(prefix);
+	    const rent = Number(profile.stay.monthlyRent) || listing.price || 1200;
+	    listing.name = profile.basic.name;
+	    listing.price = rent;
+	    listing.pricePrefix = 'C$';
+	    match.name = profile.basic.name;
+	    match.nationality = profile.basic.nationality;
+	    match.gender = profile.basic.gender;
+	    match.religion = profile.basic.religion;
+	    match.englishLevel = profile.basic.englishLevel;
+	    match.hobbies = (profile.basic.hobbies || []).join('、');
+	    match.note = profile.basic.intro;
+	    match.hostProfile = profile;
+	    match.available = { start: profile.stay.availableStart, end: profile.stay.availableEnd };
+	    match.rent = `C$${rent.toLocaleString()} / month`;
+	    match.area = `${profile.stay.area} · ${profile.stay.station} 徒歩${profile.stay.walkMin}分`;
+	    match.mapPin = profile.stay.area;
+	    match.mapNote = currentLang === 'en'
+	      ? `${profile.stay.walkMin} min walk from ${profile.stay.station}`
+	      : `${profile.stay.station} 徒歩${profile.stay.walkMin}分`;
+	    match.roomType = `${profile.stay.roomType} · ${profile.stay.furniture} · ${(profile.stay.amenities || []).slice(0, 3).join('・')}`;
+	    match.lifestyleCards = {
+	      wake: profile.lifestyle.wakeTime,
+	      sleep: profile.lifestyle.bedtime,
+	      clean: profile.shareStyle.cleanliness
 	    };
-	    match.rules = buildHostRulesFromFields(prefix);
+	    match.shareLifestyle = {
+	      noise: profile.shareStyle.lifeNoise,
+	      cooking: profile.lifestyle.cookingFrequency,
+	      smoking: profile.shareStyle.smokingEnvironment,
+	      alcohol: profile.shareStyle.alcoholEnvironment,
+	      mbti: profile.shareStyle.mbti
+	    };
+	    match.roommates = profile.members;
+	    match.rules = sharehouseHostRulesForDetail(profile);
 	    match.roomInfo = [
-	      { label: '住所', value: address },
-	      { label: '住所/エリア', value: area },
-	      { label: '部屋タイプ', value: roomType },
-	      { label: '家具付きかどうか', value: furnished },
-	      { label: '部屋サイズ', value: formValue(prefix + '-room-size', '10㎡（約6畳）') },
-	      { label: 'バス・トイレ', value: formValue(prefix + '-bath', '共用（2人でシェア）') },
-	      { label: '日当たり', value: formValue(prefix + '-sunlight', '南向き・良好') },
-	      { label: 'Wi-Fi', value: formValue(prefix + '-wifi', '光回線・無制限') },
-	      { label: '最寄駅', value: station },
-	      { label: '徒歩分数', value: `${walkMin}分` }
+	      { label: 'エリア', value: profile.stay.area },
+	      { label: '最寄り駅', value: profile.stay.station },
+	      { label: '最寄り駅まで徒歩何分', value: `${profile.stay.walkMin}分` },
+	      { label: '入居可能期間', value: `${profile.stay.availableStart}〜${profile.stay.availableEnd}` },
+	      { label: '最短滞在期間', value: `${profile.stay.minStay}ヶ月` },
+	      { label: '最長滞在期間', value: `${profile.stay.maxStay}ヶ月` },
+	      { label: '長期滞在', value: profile.stay.longStay },
+	      { label: '月額料金 CAD', value: `C$${rent} / month` },
+	      { label: '部屋タイプ', value: profile.stay.roomType },
+	      { label: '家具', value: profile.stay.furniture },
+	      { label: '階', value: profile.stay.floor },
+	      { label: 'バスルーム', value: profile.stay.bathroom },
+	      { label: '現在一緒に住んでいる人数', value: profile.stay.residentsCount },
+	      { label: '設備', value: (profile.stay.amenities || []).join('、') },
+	      { label: 'キッチン利用', value: profile.stay.kitchenRule }
 	    ];
 	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
 	  }
@@ -14494,6 +14994,90 @@
     '予約済み':'Coordinating',
     '調整中':'Coordinating'
   });
+  Object.assign(autoTextTranslations, {
+    'あなた・同居メンバーについて':'You & Household Members',
+    '家・入居情報':'Home & Move-in Information',
+    '現在の立場':'Current Status',
+    'その他の立場':'Other status',
+    '名前':'Name',
+    '顔写真をアップロード':'Upload profile photo',
+    '同居メンバー':'Household Members',
+    '同居メンバーを追加':'Add Household Member',
+    '同居メンバー情報を入力':'Enter Household Member Information',
+    '名前またはニックネーム':'Name or Nickname',
+    'この同居メンバーを追加':'Add this household member',
+    'まだ同居メンバーが追加されていません':'No household members have been added yet',
+    'フリーランス':'Freelance',
+    '一言 / 自己紹介':'Short Introduction',
+    'シェア生活のスタイル':'Shared Living Style',
+    '一緒に住む人とは普段どのくらい交流しますか？':'How much do people in this home usually interact?',
+    '基本それぞれで過ごす':'Mostly spend time independently',
+    '時々一緒に食事や会話をする':'Sometimes share meals or conversations',
+    '休日などに一緒に出かけることもある':'Sometimes go out together on days off',
+    '友達のように交流する':'Interact like friends',
+    '共用スペースをどのくらい綺麗に保っていますか？':'How clean are shared spaces kept?',
+    '最低限綺麗にしている':'Basic cleanliness is maintained',
+    'ある程度綺麗にしている':'Fairly clean',
+    '常に綺麗に保っている':'Always kept clean',
+    '共用部分の掃除頻度':'Shared area cleaning frequency',
+    '特に決まりなし':'No specific rule',
+    '家の中の生活音':'Noise level at home',
+    'かなり静か':'Very quiet',
+    '比較的静か':'Relatively quiet',
+    '喫煙環境':'Smoking Environment',
+    '室内喫煙OK':'Indoor smoking OK',
+    '屋外のみ':'Outdoor only',
+    '家での飲酒について':'Alcohol at Home',
+    'ほとんど飲まない':'Rarely drinks',
+    'ペットなし':'No pets',
+    'ペットあり':'Has pets',
+    '動物の種類':'Animal type',
+    '頭数':'Number of pets',
+    '友人などの来客について':'Friends and visitors',
+    '自由にOK':'Freely allowed',
+    '事前に共有すればOK':'OK if shared in advance',
+    'できれば少ない':'Prefer fewer visitors',
+    'パートナーなどの宿泊について':'Partners or overnight guests',
+    '厳しく静かにしている':'Strict quiet hours',
+    'ある程度静かにしている':'Reasonably quiet',
+    '入居可能期間':'Available Move-in Period',
+    '入居可能開始日':'Available From',
+    '入居可能終了日':'Available Until',
+    '正確な住所は一般公開されません':'Exact address is not publicly displayed.',
+    'Exact address is not publicly displayed.':'Exact address is not publicly displayed.',
+    '月額料金 CAD':'Monthly Rent CAD',
+    '可能':'Available',
+    '不可':'Not available',
+    '他の入居者と共有':'Shared with other residents',
+    'オーナー / ホストと共有':'Shared with owner / host',
+    '現在一緒に住んでいる人数':'Number of current residents',
+    '登録済み同居メンバー数':'Registered household members',
+    'キッチン利用':'Kitchen Use',
+    '自由に利用可能':'Freely available',
+    '共用':'Shared',
+    '利用時間のルールあり':'Usage hours apply',
+    '利用制限あり':'Limited use',
+    '例：7:00〜22:00':'Example: 7:00–22:00',
+    'ハウスルール':'House Rules',
+    '宿泊客':'Overnight Guests',
+    'OK':'OK',
+    '事前共有必須':'Must be shared in advance',
+    '頻度制限あり':'Frequency limits apply',
+    '事前相談必須':'Prior discussion required',
+    '節度を守る':'Moderate drinking only',
+    '特に制限なし':'No specific restrictions',
+    '夜間の静かな時間':'Quiet Hours at Night',
+    '来客：':'Visitors: ',
+    '宿泊客：':'Overnight guests: ',
+    '喫煙：':'Smoking: ',
+    '飲酒：':'Alcohol: ',
+    '夜間の静かな時間：':'Quiet hours at night: ',
+    '共有スペース掃除：':'Shared space cleaning: ',
+    'キッチン利用：':'Kitchen use: ',
+    'その他ルール：':'Other rules: ',
+    '入居・部屋情報':'Move-in & Room Information',
+    '家・入居情報':'Home & Move-in Information'
+  });
   let currentLang = localStorage.getItem('hostmatch_lang') || 'ja';
   let autoTranslating = false;
   let autoTranslateTimer = null;
@@ -15210,31 +15794,31 @@
 
   /* ===== 入居者オンボーディング ===== */
   let resStep = 1;
-  const resTotal = 4;
-  const resTitles = ['プロフィールを教えてください','あなたの生活スタイルは？','ルームメイトを追加','物件情報を入力してください'];
-  const resSubs = ['入居希望者があなたの情報を見て判断します','正直に入力するほど相性の良い人が集まります','他の入居者の情報を追加するとマッチ精度が上がります（任意）','あなたの家の基本情報です（任意項目）'];
+  const resTotal = 2;
+  const resTitles = ['あなた・同居メンバーについて','家・入居情報'];
+  const resSubs = ['', ''];
 
   function renderResStep() {
+    ensureSharehouseHostRegistrationUi();
     document.getElementById('res-step-label').textContent = `STEP ${resStep} / ${resTotal}`;
     document.getElementById('res-progress').style.width = (resStep / resTotal * 100) + '%';
-    document.getElementById('res-title').textContent = resTitles[resStep - 1];
-    document.getElementById('res-sub').textContent = resSubs[resStep - 1];
+    document.getElementById('res-title').textContent = localizeText(resTitles[resStep - 1]);
+    const subEl = document.getElementById('res-sub');
+    subEl.textContent = resSubs[resStep - 1];
+    subEl.style.display = resSubs[resStep - 1] ? '' : 'none';
     document.querySelectorAll('.onboard-step-panel[id^="res-panel"]').forEach((p, i) => {
       p.classList.toggle('active', i + 1 === resStep);
     });
     document.getElementById('res-back-btn').style.display = resStep > 1 ? 'block' : 'none';
-    document.getElementById('res-next-btn').textContent = resStep === resTotal ? '登録完了 ✓' : '次へ →';
+    document.getElementById('res-next-btn').textContent = resStep === resTotal
+      ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
+      : (currentLang === 'en' ? 'Next →' : '次へ →');
   }
 
   function resOnboardNext() {
     if (resStep < resTotal) {
       resStep++;
       renderResStep();
-      // STEP3: ルームメイト追加画面に来たときフォームを閉じてリスト更新
-      if (resStep === 3) {
-        document.getElementById('res-roommate-form').style.display = 'none';
-        resRenderRoommateList();
-      }
     } else {
       saveSharehouseSettings('res');
       navigate('resident-onboarding', 'host-dashboard');
@@ -15246,26 +15830,36 @@
   }
 
   /* ===== ルームメイト追加ロジック ===== */
-  let resRoommates = []; // [{name, age, gender, job, wake, sleep, home, clean, smoke, noise, social}]
+  let resRoommates = []; // [{name, age, gender, nationality, languages, wake, sleep, home, cooking, smoke, alcohol}]
   let _rmSelections = {}; // 入力中の一時選択
+
+  function currentSharehouseHostPrefix() {
+    return currentScreen === 'host-profile' ? 'share-profile' : 'res';
+  }
 
   function resAddRoommate() {
     // フォームを展開、ボタンを隠す
     _rmSelections = {};
-    document.getElementById('res-roommate-form').style.display = 'block';
-    document.getElementById('res-add-roommate-btn').style.display = 'none';
-    document.getElementById('rm-name').value = '';
-    // チップ全リセット
-    ['rm-age-chips','rm-gender-chips','rm-job-chips','rm-wake-chips','rm-sleep-chips','rm-home-chips','rm-clean-chips','rm-smoke-chips','rm-noise-chips','rm-social-chips'].forEach(id => {
-      document.getElementById(id).querySelectorAll('.form-chip').forEach(c => c.classList.remove('selected'));
+    const prefix = currentSharehouseHostPrefix();
+    const form = document.getElementById(prefix + '-roommate-form');
+    const addBtn = document.getElementById(prefix + '-add-roommate-btn');
+    if (!form || !addBtn) return;
+    form.style.display = 'block';
+    addBtn.style.display = 'none';
+    ['rm-name','rm-age','rm-nationality','rm-hobbies','rm-note'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
     });
     // スクロール
-    setTimeout(() => document.getElementById('res-roommate-form').scrollIntoView({behavior:'smooth', block:'start'}), 100);
+    setTimeout(() => form.scrollIntoView({behavior:'smooth', block:'start'}), 100);
   }
 
   function resCancelRoommate() {
-    document.getElementById('res-roommate-form').style.display = 'none';
-    document.getElementById('res-add-roommate-btn').style.display = 'flex';
+    const prefix = currentSharehouseHostPrefix();
+    const form = document.getElementById(prefix + '-roommate-form');
+    const addBtn = document.getElementById(prefix + '-add-roommate-btn');
+    if (form) form.style.display = 'none';
+    if (addBtn) addBtn.style.display = 'block';
   }
 
   function rmChip(el, key) {
@@ -15279,20 +15873,27 @@
     const name = document.getElementById('rm-name').value.trim() || 'ルームメイト';
     const rm = {
       name,
-      age: _rmSelections.age || '年齢未回答',
-      gender: _rmSelections.gender || '未回答',
-      job: _rmSelections.job || '未回答',
-      wake: _rmSelections.wake || '未設定',
-      sleep: _rmSelections.sleep || '未設定',
-      home: _rmSelections.home || '未設定',
-      clean: _rmSelections.clean || '未設定',
-      smoke: _rmSelections.smoke || '未設定',
-      noise: _rmSelections.noise || '未設定',
-      social: _rmSelections.social || '未設定',
+      age: formValue('rm-age', '年齢未回答'),
+      gender: selectedChipText('rm-gender', '未回答'),
+      nationality: formValue('rm-nationality', '未回答'),
+      religion: selectedChipText('rm-religion', '回答しない'),
+      languages: selectedChipTexts('#rm-languages'),
+      englishLevel: selectedChipText('rm-english-level', '日常会話'),
+      smoke: selectedChipText('rm-smoking', '吸わない'),
+      alcohol: selectedChipText('rm-alcohol', 'たまに飲む'),
+      hobbies: formValue('rm-hobbies', '未入力'),
+      note: formValue('rm-note', ''),
+      wake: selectedChipText('rm-wake', '7〜8時'),
+      sleep: selectedChipText('rm-sleep', '22〜23時'),
+      home: selectedChipText('rm-home-time', '夜を中心に家にいる'),
+      cooking: selectedChipText('rm-cooking-frequency', '週に数回')
     };
     resRoommates.push(rm);
-    document.getElementById('res-roommate-form').style.display = 'none';
-    document.getElementById('res-add-roommate-btn').style.display = 'flex';
+    const prefix = currentSharehouseHostPrefix();
+    const form = document.getElementById(prefix + '-roommate-form');
+    const addBtn = document.getElementById(prefix + '-add-roommate-btn');
+    if (form) form.style.display = 'none';
+    if (addBtn) addBtn.style.display = 'block';
     resRenderRoommateList();
   }
 
@@ -15311,30 +15912,36 @@
   ];
 
 	  function resRenderRoommateList() {
-    const list = document.getElementById('res-roommate-list');
-    if (!list) return;
-    if (resRoommates.length === 0) {
-      list.innerHTML = '<div style="text-align:center;color:var(--light);font-size:13px;padding:10px 0;">まだルームメイトが追加されていません</div>';
-      return;
-    }
-    list.innerHTML = resRoommates.map((rm, i) => `
+    const lists = ['res-roommate-list', 'share-profile-roommate-list']
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+    if (!lists.length) return;
+    const empty = `<div style="text-align:center;color:var(--light);font-size:13px;padding:10px 0;">${localizeText('まだ同居メンバーが追加されていません')}</div>`;
+    const html = resRoommates.length === 0 ? empty : resRoommates.map((rm, i) => `
       <div style="background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden;">
         <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;">
           <div style="width:48px;height:48px;border-radius:50%;background:${_rmGrads[i % _rmGrads.length]};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${_rmAvatars[i % _rmAvatars.length]}</div>
           <div style="flex:1;">
-            <div style="font-size:15px;font-weight:800;">${rm.name}</div>
-            <div style="font-size:12px;color:var(--light);margin-top:2px;">${rm.age} · ${rm.gender} · ${rm.job}</div>
+            <div style="font-size:15px;font-weight:800;">${escapeHtml(rm.name)}</div>
+            <div style="font-size:12px;color:var(--light);margin-top:2px;">${escapeHtml([rm.age, rm.gender, rm.nationality].filter(Boolean).join(' · '))}</div>
           </div>
           <button onclick="resRemoveRoommate(${i})" style="background:none;border:none;color:var(--light);font-size:16px;cursor:pointer;padding:4px;">✕</button>
         </div>
         <div style="padding:10px 16px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="ctag">${rm.wake === '未設定' ? '' : '起床 '}${rm.wake === '未設定' ? '時間未設定' : rm.wake}</span>
-          <span class="ctag">${rm.sleep === '未設定' ? '' : '就寝 '}${rm.sleep === '未設定' ? '' : rm.sleep}</span>
-          <span class="ctag ${rm.smoke === '🚭 吸わない' ? 'ok' : ''}">${rm.smoke === '未設定' ? '喫煙未設定' : rm.smoke}</span>
-          <span class="ctag">${rm.social === '未設定' ? '交流未設定' : rm.social}</span>
+          <span class="ctag">${localizeText('起床時間')} ${localizeText(rm.wake || '未設定')}</span>
+          <span class="ctag">${localizeText('就寝時間')} ${localizeText(rm.sleep || '未設定')}</span>
+          <span class="ctag">${localizeText(rm.home || '未設定')}</span>
+          <span class="ctag">${localizeText(rm.cooking || '未設定')}</span>
+          <span class="ctag ${rm.smoke === '吸わない' ? 'ok' : ''}">${localizeText(rm.smoke || '喫煙未設定')}</span>
+          <span class="ctag">${localizeText(rm.alcohol || '飲酒未設定')}</span>
         </div>
       </div>
     `).join('');
+    lists.forEach(list => { list.innerHTML = html; });
+    ['res-resident-count', 'share-profile-resident-count'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(resRoommates.length + 1);
+    });
 	  }
 
 	  const HOST_AVAILABILITY = {
@@ -15420,6 +16027,65 @@
 	    }).openTooltip();
 
 	    setTimeout(() => homestayDetailMap?.invalidateSize(), 120);
+	  }
+
+	  function getSharehouseApproxLocation(profile) {
+	    const area = profile?.stay?.area || profile?.mapPin || 'Vancouver';
+	    if (String(area).toLowerCase().includes('toronto') || String(area).includes('トロント')) {
+	      return { center: [43.6538, -79.3839], radius: 850, label: 'Toronto' };
+	    }
+	    return { center: [49.2626, -123.1042], radius: 850, label: 'Vancouver' };
+	  }
+
+	  function renderSharehouseLocationMap(profile) {
+	    const mapEl = document.getElementById('sharehouse-leaflet-map');
+	    const areaNote = document.getElementById('sharehouse-map-pin');
+	    const stationNote = document.getElementById('sharehouse-map-note');
+	    const privacyNote = document.getElementById('sharehouse-map-privacy');
+	    if (!mapEl) return;
+	    const loc = getSharehouseApproxLocation(profile);
+	    if (areaNote) areaNote.textContent = currentLang === 'ja' ? `おおよその位置：${loc.label}` : `Approximate location: ${loc.label}`;
+	    if (stationNote) stationNote.textContent = localizeText(profile?.mapNote || '最寄り駅：Central Station 徒歩8分');
+	    if (privacyNote) privacyNote.textContent = localizeText('正確な住所はプライバシー保護のため表示していません');
+	    mapEl.setAttribute('aria-label', localizeText('おおよその位置'));
+
+	    if (sharehouseDetailMap) {
+	      sharehouseDetailMap.remove();
+	      sharehouseDetailMap = null;
+	    }
+
+	    if (!window.L) {
+	      mapEl.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--light);font-size:13px;font-weight:800;">${localizeText('おおよその位置')}</div>`;
+	      return;
+	    }
+
+	    mapEl.innerHTML = '';
+	    sharehouseDetailMap = L.map(mapEl, {
+	      zoomControl: true,
+	      scrollWheelZoom: true,
+	      dragging: true,
+	      touchZoom: true,
+	      tap: true
+	    }).setView(loc.center, 13);
+
+	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	      maxZoom: 19,
+	      attribution: '&copy; OpenStreetMap contributors'
+	    }).addTo(sharehouseDetailMap);
+
+	    L.circle(loc.center, {
+	      radius: loc.radius,
+	      color: '#FF5A5F',
+	      weight: 2,
+	      fillColor: '#FF5A5F',
+	      fillOpacity: 0.16
+	    }).addTo(sharehouseDetailMap).bindTooltip(localizeText('おおよその位置'), {
+	      permanent: true,
+	      direction: 'center',
+	      className: 'approx-location-label'
+	    }).openTooltip();
+
+	    setTimeout(() => sharehouseDetailMap?.invalidateSize(), 120);
 	  }
 
 	  function getGuestStayRange() {
