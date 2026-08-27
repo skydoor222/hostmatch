@@ -1092,6 +1092,30 @@
       opacity: .45;
       cursor: not-allowed;
     }
+    .login-secondary-btn {
+      width: 100%; padding: 14px 16px; border-radius: 14px; font-size: 15px; font-weight: 800;
+      cursor: pointer; border: 1.5px solid var(--border); background: white; color: var(--dark);
+    }
+    .forgot-password-link {
+      align-self: flex-end;
+      margin-top: -6px;
+      border: none;
+      background: transparent;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      padding: 0;
+    }
+    .auth-message {
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+      margin: -4px 0 8px;
+      min-height: 18px;
+      color: #FF5A5F;
+    }
+    .auth-message.success { color: #00875A; }
     .signup-consent-box {
       display: none;
       text-align: left;
@@ -4222,6 +4246,7 @@
       <div class="form-group" style="text-align:left;">
         <div class="form-label" data-i18n="password_label">パスワード</div>
         <input class="form-input" id="login-password" type="password" placeholder="6文字以上" data-i18n-placeholder="password_placeholder" />
+        <button type="button" class="forgot-password-link" onclick="openPasswordResetRequest()" data-i18n="forgot_password">パスワードを忘れた方</button>
       </div>
       <div class="signup-consent-box" id="signup-consent-box">
         <label class="signup-consent-row">
@@ -4233,7 +4258,7 @@
           <span id="signup-privacy-label"></span>
         </label>
       </div>
-      <div id="login-error" style="color:#FF5A5F; font-size:13px; text-align:center; margin:-4px 0 8px; min-height:18px;"></div>
+      <div id="login-error" class="auth-message"></div>
       <button class="login-btn" id="login-submit-btn" onclick="doLogin()" data-i18n="login">ログイン</button>
       <div class="login-or" data-i18n="or">または</div>
       <button class="login-social-btn" onclick="doGoogleLogin()">
@@ -4244,6 +4269,47 @@
     <div class="login-switch">
       <span id="login-switch-text">アカウントをお持ちでない方は</span>
       <button type="button" id="login-switch-link" onclick="toggleLoginMode(event)" style="background:none;border:none;padding:0;color:var(--primary);font-weight:700;cursor:pointer;font:inherit;pointer-events:auto;"> 新規登録</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== パスワード再設定メール送信画面 ==================== -->
+<div class="screen" id="screen-password-reset-request">
+  <div class="login-screen" style="position:relative;">
+    <div class="login-logo">🏠</div>
+    <div class="login-brand" data-i18n="password_reset_title">パスワード再設定</div>
+    <div class="login-tagline" data-i18n="password_reset_sub">登録済みのメールアドレスを入力してください</div>
+
+    <div class="login-form">
+      <div class="form-group" style="text-align:left;">
+        <div class="form-label" data-i18n="email_label">メールアドレス</div>
+        <input class="form-input" id="password-reset-email" type="email" placeholder="example@email.com" />
+      </div>
+      <div id="password-reset-message" class="auth-message"></div>
+      <button class="login-btn" id="password-reset-submit-btn" onclick="sendPasswordResetEmail()" data-i18n="send_reset_email">再設定メールを送信</button>
+      <button type="button" class="login-secondary-btn" onclick="backToLoginFromPasswordReset()" data-i18n="back_to_login">ログイン画面へ戻る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 新しいパスワード設定画面 ==================== -->
+<div class="screen" id="screen-password-update">
+  <div class="login-screen" style="position:relative;">
+    <div class="login-logo">🏠</div>
+    <div class="login-brand" data-i18n="new_password_title">新しいパスワード</div>
+    <div class="login-tagline" data-i18n="new_password_sub">新しいパスワードを入力してください</div>
+
+    <div class="login-form">
+      <div class="form-group" style="text-align:left;">
+        <div class="form-label" data-i18n="new_password_label">新しいパスワード</div>
+        <input class="form-input" id="new-password" type="password" placeholder="6文字以上" data-i18n-placeholder="password_placeholder" />
+      </div>
+      <div class="form-group" style="text-align:left;">
+        <div class="form-label" data-i18n="confirm_password_label">確認用パスワード</div>
+        <input class="form-input" id="new-password-confirm" type="password" placeholder="6文字以上" data-i18n-placeholder="password_placeholder" />
+      </div>
+      <div id="password-update-message" class="auth-message"></div>
+      <button class="login-btn" id="password-update-submit-btn" onclick="submitNewPassword()" data-i18n="update_password">パスワードを変更</button>
     </div>
   </div>
 </div>
@@ -6696,11 +6762,20 @@
     }
   }
 
+  function isPasswordRecoveryUrl() {
+    return window.location.hash.includes('type=recovery') || window.location.search.includes('type=recovery');
+  }
+
   async function restoreSupabaseSession() {
     const { data } = await supabase.auth.getSession();
     window._currentSession = data.session;
     window._currentUser = data.session?.user || null;
     document.getElementById('app-loading').style.display = 'none';
+    if (isPasswordRecoveryUrl()) {
+      if (typeof window.openPasswordUpdateScreen === 'function') window.openPasswordUpdateScreen();
+      else window._pendingPasswordRecovery = true;
+      return;
+    }
     if (data.session?.user) showLoggedInEntry(data.session.user);
     else showLoggedOutScreen();
   }
@@ -6709,6 +6784,11 @@
     window._currentSession = session;
     window._currentUser = session?.user || null;
     document.getElementById('app-loading').style.display = 'none';
+    if (event === 'PASSWORD_RECOVERY') {
+      if (typeof window.openPasswordUpdateScreen === 'function') window.openPasswordUpdateScreen();
+      else window._pendingPasswordRecovery = true;
+      return;
+    }
     if (event === 'SIGNED_IN' && session?.user) showLoggedInEntry(session.user);
     if (event === 'SIGNED_OUT') showLoggedOutScreen();
   });
@@ -7110,7 +7190,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','notification-settings','map','login','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','notification-settings','map','login','password-reset-request','password-update','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -12342,7 +12422,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       if (consentBox) consentBox.style.display = 'none';
       submitBtn.disabled = false;
     }
-    if (!keepError) document.getElementById('login-error').textContent = '';
+    if (!keepError) {
+      const loginMessage = document.getElementById('login-error');
+      loginMessage.classList.remove('success');
+      loginMessage.textContent = '';
+    }
   }
 
   function toggleLoginMode(event) {
@@ -12354,8 +12438,120 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   window.toggleLoginMode = toggleLoginMode;
 
   function showLoginError(msg) {
-    document.getElementById('login-error').textContent = msg;
+    const el = document.getElementById('login-error');
+    el.classList.remove('success');
+    el.textContent = msg;
   }
+
+  function showLoginSuccess(msg) {
+    const el = document.getElementById('login-error');
+    el.classList.add('success');
+    el.textContent = msg;
+  }
+
+  function setAuthMessage(id, msg, isSuccess = false) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('success', isSuccess);
+    el.textContent = msg;
+  }
+
+  function openPasswordResetRequest() {
+    const resetEmail = document.getElementById('password-reset-email');
+    const loginEmail = document.getElementById('login-email');
+    if (resetEmail && loginEmail) resetEmail.value = loginEmail.value.trim();
+    setAuthMessage('password-reset-message', '');
+    navigate(currentScreen || 'login', 'password-reset-request');
+  }
+
+  function backToLoginFromPasswordReset() {
+    setAuthMessage('password-reset-message', '');
+    navigate('password-reset-request', 'login');
+  }
+
+  async function sendPasswordResetEmail() {
+    const email = document.getElementById('password-reset-email').value.trim();
+    setAuthMessage('password-reset-message', '');
+    if (!email) {
+      setAuthMessage('password-reset-message', t('password_reset_missing_email'));
+      return;
+    }
+
+    const btn = document.getElementById('password-reset-submit-btn');
+    btn.disabled = true;
+    btn.textContent = t('processing');
+
+    try {
+      if (!window._supabase?.auth) throw new Error('Supabase client is not initialized');
+      const { error } = await window._supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://skydoor222.github.io/hostmatch/'
+      });
+      if (error) throw error;
+      setAuthMessage('password-reset-message', t('password_reset_sent'), true);
+    } catch (e) {
+      setAuthMessage('password-reset-message', supabaseAuthErrorMessage(e, 'login'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('send_reset_email');
+    }
+  }
+
+  function openPasswordUpdateScreen() {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-password-update').classList.add('active');
+    currentScreen = 'password-update';
+    window.currentScreen = 'password-update';
+    const bottomNav = document.getElementById('bottom-nav');
+    const hostNav = document.getElementById('host-bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    if (hostNav) hostNav.style.display = 'none';
+    const newPassword = document.getElementById('new-password');
+    const confirmPassword = document.getElementById('new-password-confirm');
+    if (newPassword) newPassword.value = '';
+    if (confirmPassword) confirmPassword.value = '';
+    setAuthMessage('password-update-message', '');
+    if (typeof applyLang === 'function') applyLang();
+  }
+
+  async function submitNewPassword() {
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('new-password-confirm').value;
+    setAuthMessage('password-update-message', '');
+
+    if (newPassword.length < 6) {
+      setAuthMessage('password-update-message', t('password_update_short'));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setAuthMessage('password-update-message', t('password_update_mismatch'));
+      return;
+    }
+
+    const btn = document.getElementById('password-update-submit-btn');
+    btn.disabled = true;
+    btn.textContent = t('processing');
+
+    try {
+      if (!window._supabase?.auth) throw new Error('Supabase client is not initialized');
+      const { error } = await window._supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      await window._supabase.auth.signOut();
+      navigate('password-update', 'login');
+      showLoginSuccess(t('password_update_success'));
+    } catch (e) {
+      setAuthMessage('password-update-message', t('password_update_failed'));
+    } finally {
+      btn.disabled = false;
+      btn.textContent = t('update_password');
+    }
+  }
+
+  window.openPasswordResetRequest = openPasswordResetRequest;
+  window.backToLoginFromPasswordReset = backToLoginFromPasswordReset;
+  window.sendPasswordResetEmail = sendPasswordResetEmail;
+  window.openPasswordUpdateScreen = openPasswordUpdateScreen;
+  window.submitNewPassword = submitNewPassword;
+  if (window._pendingPasswordRecovery) openPasswordUpdateScreen();
 
   async function afterLoginSuccess(user) {
     window._currentUser = user;
@@ -12392,7 +12588,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   async function doLogin() {
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
-    document.getElementById('login-error').textContent = '';
+    const loginMessage = document.getElementById('login-error');
+    loginMessage.classList.remove('success');
+    loginMessage.textContent = '';
 
     if (isSignupMode) {
       updateSignupConsentState();
@@ -12460,7 +12658,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     // フォームリセット
     document.getElementById('login-email').value = '';
     document.getElementById('login-password').value = '';
-    document.getElementById('login-error').textContent = '';
+    const loginMessage = document.getElementById('login-error');
+    loginMessage.classList.remove('success');
+    loginMessage.textContent = '';
   }
 
   async function doGoogleLogin() {
@@ -12808,6 +13008,22 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     privacy_policy_label:'プライバシーポリシー',
     legal_must_accept:'利用規約とプライバシーポリシーの両方に同意してください。',
     legal_english_pending:'利用規約・プライバシーポリシーの英語正文は未整備です。現在は日本語全文を正式版として表示しています。',
+    forgot_password:'パスワードを忘れた方',
+    password_reset_title:'パスワード再設定',
+    password_reset_sub:'登録済みのメールアドレスを入力してください',
+    send_reset_email:'再設定メールを送信',
+    back_to_login:'ログイン画面へ戻る',
+    password_reset_sent:'パスワード再設定用のメールを送信しました。メール内のリンクを開いてください。',
+    password_reset_missing_email:'メールアドレスを入力してください。',
+    new_password_title:'新しいパスワード',
+    new_password_sub:'新しいパスワードを入力してください',
+    new_password_label:'新しいパスワード',
+    confirm_password_label:'確認用パスワード',
+    update_password:'パスワードを変更',
+    password_update_short:'パスワードは6文字以上で入力してください。',
+    password_update_mismatch:'パスワードが一致しません。',
+    password_update_success:'パスワードを変更しました。新しいパスワードでログインしてください。',
+    password_update_failed:'パスワード変更に失敗しました。再設定メールのリンクを開き直してください。',
     religion_sensitive_title:'宗教・信仰に関する情報について',
     religion_sensitive_body:'この項目は任意です。入力した情報は、共同生活における相互理解のために利用され、プロフィール上で他の登録ユーザーに表示されます。',
     ai_search:'条件一致で探す',
@@ -13147,6 +13363,22 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     privacy_policy_label:'Privacy Policy',
     legal_must_accept:'Please agree to both the Terms of Use and the Privacy Policy.',
     legal_english_pending:'The official English Terms and Privacy Policy are not yet prepared. The full Japanese text is currently displayed as the official version.',
+    forgot_password:'Forgot password?',
+    password_reset_title:'Reset Password',
+    password_reset_sub:'Enter the email address registered with HostMatch',
+    send_reset_email:'Send reset email',
+    back_to_login:'Back to login',
+    password_reset_sent:'A password reset email has been sent. Please open the link in the email.',
+    password_reset_missing_email:'Please enter your email address.',
+    new_password_title:'New Password',
+    new_password_sub:'Enter your new password',
+    new_password_label:'New password',
+    confirm_password_label:'Confirm password',
+    update_password:'Update password',
+    password_update_short:'Please enter a password with at least 6 characters.',
+    password_update_mismatch:'The passwords do not match.',
+    password_update_success:'Your password has been changed. Please log in with your new password.',
+    password_update_failed:'Could not update your password. Please reopen the reset link from the email.',
     religion_sensitive_title:'About Religion and Faith Information',
     religion_sensitive_body:'This field is optional. If entered, the information is used to support mutual understanding in shared living and will be shown on your profile to other registered users.',
     ai_search:'Search by Condition Match',
