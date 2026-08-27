@@ -6742,7 +6742,49 @@
   window._fbDoc = doc;
   window._fbServerTimestamp = serverTimestamp;
 
+  function fallbackAuthDisplayName(user) {
+    return user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
+  }
+
+  function applyCurrentUserProfile(user, profile) {
+    const displayName = profile?.display_name || fallbackAuthDisplayName(user);
+    const email = user?.email || '';
+    window._currentProfile = profile || null;
+
+    const nameEl = document.getElementById('mypage-username');
+    if (nameEl) nameEl.textContent = displayName;
+    const emailEl = document.getElementById('mypage-useremail');
+    if (emailEl) emailEl.textContent = email;
+    const nameInput = document.getElementById('prof-name');
+    if (nameInput) nameInput.value = displayName;
+    const emailInput = document.getElementById('prof-email');
+    if (emailInput) emailInput.value = email;
+  }
+
+  async function loadCurrentUserProfile(user) {
+    if (!user?.id) return null;
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url, preferred_language')
+        .eq('id', user.id)
+        .single();
+      if (error) throw error;
+      window._currentProfile = data;
+      applyCurrentUserProfile(user, data);
+      return data;
+    } catch (error) {
+      console.warn('Supabase profiles fetch error:', error);
+      applyCurrentUserProfile(user, null);
+      return null;
+    }
+  }
+
+  window.loadCurrentUserProfile = loadCurrentUserProfile;
+  window.applyCurrentUserProfile = applyCurrentUserProfile;
+
   function showLoggedOutScreen() {
+    window._currentProfile = null;
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-login').classList.add('active');
     window.currentScreen = 'login';
@@ -6752,6 +6794,8 @@
 
   function showLoggedInEntry(user) {
     window._currentUser = user;
+    applyCurrentUserProfile(user, window._currentProfile);
+    loadCurrentUserProfile(user);
     document.getElementById('app-loading').style.display = 'none';
     if (!window.currentScreen || window.currentScreen === 'login') {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -12555,7 +12599,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   async function afterLoginSuccess(user) {
     window._currentUser = user;
-    const name = user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
+    const profile = window.loadCurrentUserProfile ? await window.loadCurrentUserProfile(user) : null;
+    const name = profile?.display_name || user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
     const email = user?.email || '';
     const el = document.getElementById('mypage-username');
     if (el) el.textContent = name;
@@ -12634,12 +12679,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           return;
         }
         window._currentSession = data.session;
-        afterLoginSuccess(data.user);
+        await afterLoginSuccess(data.user);
       } else {
         const { data, error } = await window._supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         window._currentSession = data.session;
-        afterLoginSuccess(data.user);
+        await afterLoginSuccess(data.user);
       }
     } catch(e) {
       showLoginError(supabaseAuthErrorMessage(e, isSignupMode ? 'signup' : 'login'));
