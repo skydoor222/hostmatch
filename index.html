@@ -6641,11 +6641,16 @@
   </div>
 </nav>
 
-<!-- Firebase SDK -->
+<!-- Supabase Auth + Firebase Firestore SDK -->
 <script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+  const SUPABASE_URL = 'https://rceszxyfcvzuveqtjgfm.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
+  const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
   const firebaseConfig = {
     apiKey: "AIzaSyAstdZhTnegb8zkxfPmTv_zMP9Hj2wJ5Zg",
@@ -6658,41 +6663,60 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
   const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider();
 
-  // Firebaseのインスタンスをグローバルに公開
-  window._fbAuth = auth;
+  // Supabase Authを認証の基準として公開
+  window._supabase = supabase;
+  window._supabaseAuthRedirectTo = SUPABASE_AUTH_REDIRECT_TO;
+
+  // Firestoreのインスタンスは今回対象外の既存機能用に残す
   window._fbDb = db;
-  window._fbCreateUser = createUserWithEmailAndPassword;
-  window._fbSignIn = signInWithEmailAndPassword;
-  window._fbGoogleSignIn = () => signInWithPopup(auth, googleProvider);
-  window._fbSignOut = () => signOut(auth);
   window._fbSetDoc = setDoc;
   window._fbGetDoc = getDoc;
   window._fbDoc = doc;
   window._fbServerTimestamp = serverTimestamp;
 
-  // 認証状態監視
-  onAuthStateChanged(auth, (user) => {
+  function showLoggedOutScreen() {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-login').classList.add('active');
+    window.currentScreen = 'login';
+    if (typeof currentScreen !== 'undefined') currentScreen = 'login';
+    if (typeof applyLang === 'function') applyLang();
+  }
+
+  function showLoggedInEntry(user) {
     window._currentUser = user;
     document.getElementById('app-loading').style.display = 'none';
-    if (user) {
-      console.log('ログイン済み:', user.email);
-      if (!window.currentScreen || window.currentScreen === 'login') {
-        // ログイン後はサービス選択へ（初回のみ）
-        document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-        document.getElementById('screen-type-select').classList.add('active');
-        window.currentScreen = 'type-select';
-        applyLang();
-      }
-    } else {
+    if (!window.currentScreen || window.currentScreen === 'login') {
       document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      document.getElementById('screen-login').classList.add('active');
-      window.currentScreen = 'login';
-      applyLang();
+      document.getElementById('screen-type-select').classList.add('active');
+      window.currentScreen = 'type-select';
+      if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
+      if (typeof applyLang === 'function') applyLang();
     }
+  }
+
+  async function restoreSupabaseSession() {
+    const { data } = await supabase.auth.getSession();
+    window._currentSession = data.session;
+    window._currentUser = data.session?.user || null;
+    document.getElementById('app-loading').style.display = 'none';
+    if (data.session?.user) showLoggedInEntry(data.session.user);
+    else showLoggedOutScreen();
+  }
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    window._currentSession = session;
+    window._currentUser = session?.user || null;
+    document.getElementById('app-loading').style.display = 'none';
+    if (event === 'SIGNED_IN' && session?.user) showLoggedInEntry(session.user);
+    if (event === 'SIGNED_OUT') showLoggedOutScreen();
+  });
+
+  restoreSupabaseSession().catch(error => {
+    console.warn('Supabase session restore error:', error);
+    document.getElementById('app-loading').style.display = 'none';
+    showLoggedOutScreen();
   });
 </script>
 
@@ -12334,32 +12358,35 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   async function afterLoginSuccess(user) {
-    // Firestoreからユーザー情報取得してマイページ更新
-    try {
-      if (window._fbDb && window._fbDoc && window._fbGetDoc) {
-        const snap = await window._fbGetDoc(window._fbDoc(window._fbDb, 'users', user.uid));
-        const data = snap.exists() ? snap.data() : {};
-        const name = data.name || user.displayName || user.email?.split('@')[0] || 'ゲスト';
-        const email = user.email || '';
-        // マイページ表示更新
-        const el = document.getElementById('mypage-username');
-        if (el) el.textContent = name;
-        const el2 = document.getElementById('mypage-useremail');
-        if (el2) el2.textContent = email;
-        const el3 = document.getElementById('mypage-joindate');
-        if (el3) {
-          const d = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
-          el3.textContent = 'メンバー登録日：' + d.getFullYear() + '年' + (d.getMonth()+1) + '月';
-        }
-        // プロフィール編集画面の初期値
-        const pn = document.getElementById('prof-name');
-        if (pn) pn.value = name;
-        const pe = document.getElementById('prof-email');
-        if (pe) pe.value = email;
-      }
-    } catch(e) { console.warn('Firestore取得エラー:', e); }
+    window._currentUser = user;
+    const name = user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
+    const email = user?.email || '';
+    const el = document.getElementById('mypage-username');
+    if (el) el.textContent = name;
+    const el2 = document.getElementById('mypage-useremail');
+    if (el2) el2.textContent = email;
+    const el3 = document.getElementById('mypage-joindate');
+    if (el3) {
+      const d = user?.created_at ? new Date(user.created_at) : new Date();
+      el3.textContent = 'メンバー登録日：' + d.getFullYear() + '年' + (d.getMonth()+1) + '月';
+    }
+    const pn = document.getElementById('prof-name');
+    if (pn) pn.value = name;
+    const pe = document.getElementById('prof-email');
+    if (pe) pe.value = email;
 
     navigate('login', 'type-select');
+  }
+
+  function supabaseAuthErrorMessage(error, mode) {
+    const message = String(error?.message || '');
+    if (message.includes('Invalid login credentials')) return currentLang === 'ja' ? 'メールアドレスまたはパスワードが間違っています' : 'The email address or password is incorrect.';
+    if (message.includes('Email not confirmed')) return currentLang === 'ja' ? 'メール確認が完了していません。確認メール内のリンクを開いて登録を完了してください。' : 'Your email has not been confirmed. Please open the link in the confirmation email.';
+    if (message.includes('User already registered') || message.includes('already registered')) return currentLang === 'ja' ? 'このメールアドレスはすでに登録されています' : 'This email address is already registered.';
+    if (message.includes('Password should be')) return currentLang === 'ja' ? 'パスワードは6文字以上で入力してください' : 'Please enter a password with at least 6 characters.';
+    if (message.includes('Invalid email')) return currentLang === 'ja' ? '正しいメールアドレスを入力してください' : 'Please enter a valid email address.';
+    if (message.includes('Failed to fetch')) return currentLang === 'ja' ? 'Supabaseに接続できません。Project URLとanon keyを確認してください。' : 'Could not connect to Supabase. Please check the Project URL and anon key.';
+    return currentLang === 'ja' ? `${mode === 'signup' ? '新規登録' : 'ログイン'}に失敗しました。入力内容を確認してください。` : `${mode === 'signup' ? 'Sign up' : 'Login'} failed. Please check your details.`;
   }
 
   async function doLogin() {
@@ -12385,40 +12412,39 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     btn.textContent = t('processing');
 
     try {
+      if (!window._supabase?.auth) throw new Error('Supabase client is not initialized');
       if (isSignupMode) {
-        // 新規登録
         recordSignupConsent();
-        const cred = await window._fbCreateUser(window._fbAuth, email, password);
         const name = document.getElementById('login-name').value.trim() || 'ゲスト';
-        // Firestoreにユーザー情報を保存
-        await window._fbSetDoc(window._fbDoc(window._fbDb, 'users', cred.user.uid), {
-          name: name,
-          email: email,
-          createdAt: window._fbServerTimestamp(),
-          termsAccepted: signupConsentState.termsAccepted,
-          privacyAccepted: signupConsentState.privacyAccepted,
-          termsVersion: signupConsentState.termsVersion,
-          privacyVersion: signupConsentState.privacyVersion,
-          consentAcceptedAt: signupConsentState.acceptedAt
+        const { data, error } = await window._supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: window._supabaseAuthRedirectTo,
+            data: {
+              display_name: name,
+              terms_accepted: true,
+              privacy_accepted: true
+            }
+          }
         });
-        afterLoginSuccess(cred.user);
+        if (error) throw error;
+        if (!data.session) {
+          showLoginError(currentLang === 'ja'
+            ? '確認メールを送信しました。メール内のリンクを開いて登録を完了してください。'
+            : 'A confirmation email has been sent. Please open the link in the email to complete registration.');
+          return;
+        }
+        window._currentSession = data.session;
+        afterLoginSuccess(data.user);
       } else {
-        // ログイン
-        const cred = await window._fbSignIn(window._fbAuth, email, password);
-        afterLoginSuccess(cred.user);
+        const { data, error } = await window._supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        window._currentSession = data.session;
+        afterLoginSuccess(data.user);
       }
     } catch(e) {
-      let msg = 'エラーが発生しました';
-      if (e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        msg = 'メールアドレスまたはパスワードが間違っています';
-      } else if (e.code === 'auth/email-already-in-use') {
-        msg = 'このメールアドレスはすでに使用されています';
-      } else if (e.code === 'auth/weak-password') {
-        msg = 'パスワードは6文字以上で入力してください';
-      } else if (e.code === 'auth/invalid-email') {
-        msg = '正しいメールアドレスを入力してください';
-      }
-      showLoginError(msg);
+      showLoginError(supabaseAuthErrorMessage(e, isSignupMode ? 'signup' : 'login'));
     } finally {
       btn.disabled = false;
       btn.textContent = isSignupMode ? t('signup') : t('login');
@@ -12428,7 +12454,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   async function doLogout() {
     try {
-      if (window._fbSignOut) await window._fbSignOut();
+      if (window._supabase?.auth) await window._supabase.auth.signOut();
     } catch(e) {}
     navigate(currentScreen, 'login');
     // フォームリセット
@@ -16607,7 +16633,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   applyLang();
   setLoginMode(isSignupMode, true);
   updateFavIcons();
-  // 初期画面はonAuthStateChangedで制御（Firebase認証確定後に表示）
+  // 初期画面はSupabase AuthのgetSession / onAuthStateChangeで制御
 </script>
 
 </body>
