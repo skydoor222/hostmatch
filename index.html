@@ -6780,8 +6780,52 @@
     }
   }
 
+  async function loadCurrentUserModes(user) {
+    if (!user?.id) return [];
+    try {
+      const { data, error } = await supabase
+        .from('user_modes')
+        .select('housing_type, role')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return Array.isArray(data) ? data : [];
+    } catch (error) {
+      console.warn('Supabase user_modes fetch error:', error);
+      return null;
+    }
+  }
+
+  function showTypeSelectScreen() {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById('screen-type-select').classList.add('active');
+    window.currentScreen = 'type-select';
+    if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
+    if (typeof applyLang === 'function') applyLang();
+  }
+
+  async function restoreGuestModeFromUserModes(user) {
+    const modes = await loadCurrentUserModes(user);
+    if (!modes || modes.length !== 1) {
+      showTypeSelectScreen();
+      return false;
+    }
+
+    const mode = modes[0];
+    if (mode.role !== 'guest' || !['homestay', 'sharehouse'].includes(mode.housing_type)) {
+      showTypeSelectScreen();
+      return false;
+    }
+
+    window._pendingGuestModeRestore = mode.housing_type;
+    if (typeof window.applyPendingGuestModeRestore === 'function') window.applyPendingGuestModeRestore();
+    else showTypeSelectScreen();
+    return true;
+  }
+
   window.loadCurrentUserProfile = loadCurrentUserProfile;
   window.applyCurrentUserProfile = applyCurrentUserProfile;
+  window.loadCurrentUserModes = loadCurrentUserModes;
+  window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
 
   function showLoggedOutScreen() {
     window._currentProfile = null;
@@ -6792,17 +6836,13 @@
     if (typeof applyLang === 'function') applyLang();
   }
 
-  function showLoggedInEntry(user) {
+  async function showLoggedInEntry(user) {
     window._currentUser = user;
     applyCurrentUserProfile(user, window._currentProfile);
     loadCurrentUserProfile(user);
     document.getElementById('app-loading').style.display = 'none';
     if (!window.currentScreen || window.currentScreen === 'login') {
-      document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-      document.getElementById('screen-type-select').classList.add('active');
-      window.currentScreen = 'type-select';
-      if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
-      if (typeof applyLang === 'function') applyLang();
+      await restoreGuestModeFromUserModes(user);
     }
   }
 
@@ -6820,11 +6860,11 @@
       else window._pendingPasswordRecovery = true;
       return;
     }
-    if (data.session?.user) showLoggedInEntry(data.session.user);
+    if (data.session?.user) await showLoggedInEntry(data.session.user);
     else showLoggedOutScreen();
   }
 
-  supabase.auth.onAuthStateChange((event, session) => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
     window._currentSession = session;
     window._currentUser = session?.user || null;
     document.getElementById('app-loading').style.display = 'none';
@@ -6833,7 +6873,7 @@
       else window._pendingPasswordRecovery = true;
       return;
     }
-    if (event === 'SIGNED_IN' && session?.user) showLoggedInEntry(session.user);
+    if (event === 'SIGNED_IN' && session?.user) await showLoggedInEntry(session.user);
     if (event === 'SIGNED_OUT') showLoggedOutScreen();
   });
 
@@ -15875,6 +15915,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   /* ===== 検索カテゴリ切り替え ===== */
   let currentSearchCat = 'homestay';
+
+  function applyPendingGuestModeRestore() {
+    const housingType = window._pendingGuestModeRestore;
+    if (!['homestay', 'sharehouse'].includes(housingType)) return false;
+    window._pendingGuestModeRestore = null;
+    currentRole = 'guest';
+    currentSearchCat = housingType;
+    window._serviceType = housingType;
+    navigate('type-select', 'search');
+    return true;
+  }
+
+  window.applyPendingGuestModeRestore = applyPendingGuestModeRestore;
+  applyPendingGuestModeRestore();
 
 	  function switchSearchCat(cat, skipApply = false) {
 	    currentSearchCat = cat;
