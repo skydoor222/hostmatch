@@ -12753,6 +12753,37 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
   }
 
+  async function saveGuestUserModeToSupabase(housingType) {
+    const userId = window._currentUser?.id;
+    const normalizedHousingType = housingType === 'sharehouse' ? 'sharehouse' : 'homestay';
+    if (!userId || !window._supabase?.from) return;
+
+    try {
+      const { data: existingMode, error: selectError } = await window._supabase
+        .from('user_modes')
+        .select('user_id, housing_type, role')
+        .eq('user_id', userId)
+        .eq('housing_type', normalizedHousingType)
+        .eq('role', 'guest')
+        .maybeSingle();
+
+      if (selectError) throw selectError;
+      if (existingMode) return;
+
+      const { error: insertError } = await window._supabase
+        .from('user_modes')
+        .insert({
+          user_id: userId,
+          housing_type: normalizedHousingType,
+          role: 'guest'
+        });
+
+      if (insertError) throw insertError;
+    } catch (error) {
+      console.warn('Supabase user_modes save error:', error);
+    }
+  }
+
 	  function onboardNext() {
 	    const onboardTotal = (window._serviceType || 'homestay') === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
 	    if (onboardStep < onboardTotal) {
@@ -12770,6 +12801,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         saveHomestayGuestFilterProfile(homestayFilterProfileFromOnboarding());
         shouldApplyRegisteredFilters.homestay = true;
       }
+      saveGuestUserModeToSupabase(currentSearchCat);
       navigate('onboarding', 'search');
     }
   }
