@@ -7456,8 +7456,24 @@
     return currentRole === 'resident' || window._serviceType === 'sharehouse';
   }
 
+  let originalHostProfileBodyHtml = null;
+
   function updateHostProfileMode() {
+    const body = document.querySelector('#screen-host-profile .mypage-sub-body');
+    if (body && originalHostProfileBodyHtml === null) originalHostProfileBodyHtml = body.innerHTML;
     const isSharehouse = isSharehouseHostEditing();
+    const title = document.querySelector('#screen-host-profile .mypage-sub-title');
+    if (title) title.textContent = isSharehouse ? localizeText('プロフィール編集') : localizeText('掲載情報を編集');
+    if (!isSharehouse && body) {
+      body.innerHTML = homestayHostProfileEditBodyHtml();
+      renderHostFamilyEditors();
+      renderHostStudentEditors();
+      applyCurrentHomestayHostDataToHostProfileScreen();
+      return;
+    }
+    if (isSharehouse && body && originalHostProfileBodyHtml !== null && !body.querySelector('.sharehouse-profile-section')) {
+      body.innerHTML = originalHostProfileBodyHtml;
+    }
     document.querySelectorAll('#screen-host-profile .homestay-profile-only').forEach(el => {
       el.style.display = isSharehouse ? 'none' : '';
     });
@@ -11474,96 +11490,130 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return householdCode === 'couple' || householdCode === 'couple_with_children';
 	  }
 
-	  function homestayHostProfilePayloadFromOnboarding(userId) {
-	    const spokenLanguages = selectedHostOnboardingChipTexts('host-ob-spoken-languages');
-	    const spokenOther = hostOnboardingTextInput('host-ob-spoken-language-other');
-	    if (spokenOther && !spokenLanguages.includes(spokenOther)) spokenLanguages.push(spokenOther);
-	    const homeLanguages = selectedHostOnboardingChipTexts('host-ob-home-languages');
-	    const homeOther = hostOnboardingTextInput('host-ob-home-language-other');
-	    if (homeOther && !homeLanguages.includes(homeOther)) homeLanguages.push(homeOther);
-	    const hobbies = selectedHostOnboardingChipTexts('host-ob-hobbies');
-	    const hobbyOther = hostOnboardingTextInput('host-ob-hobby-other');
-	    if (hobbyOther && !hobbies.includes(hobbyOther)) hobbies.push(hobbyOther);
+	  function hostFormPrefix(scope) {
+	    return scope === 'profile' ? 'host-profile' : 'host-ob';
+	  }
 
-	    const householdTypeUi = selectedHostOnboardingChipText('host-ob-household-type', '');
+	  function hostFormAvailableStartId(scope) {
+	    return scope === 'profile' ? 'host-profile-available-start' : 'host-available-start';
+	  }
+
+	  function hostFormAvailableEndId(scope) {
+	    return scope === 'profile' ? 'host-profile-available-end' : 'host-available-end';
+	  }
+
+	  function selectedHostFormChipText(scope, suffix, fallback = '') {
+	    return selectedChipText(`${hostFormPrefix(scope)}-${suffix}`, fallback);
+	  }
+
+	  function selectedHostFormChipTexts(scope, suffix) {
+	    return selectedChipTexts(`#${hostFormPrefix(scope)}-${suffix}`);
+	  }
+
+	  function hostFormTextInput(scope, suffix) {
+	    return nullableText(document.getElementById(`${hostFormPrefix(scope)}-${suffix}`)?.value);
+	  }
+
+	  function hostFormIntegerInput(scope, suffix) {
+	    return nullableInteger(document.getElementById(`${hostFormPrefix(scope)}-${suffix}`)?.value);
+	  }
+
+	  function hostFormListWithOther(scope, suffix, otherSuffix) {
+	    const values = selectedHostFormChipTexts(scope, suffix).filter(value => value !== 'その他');
+	    const other = hostFormTextInput(scope, otherSuffix);
+	    if (other && !values.includes(other)) values.push(other);
+	    return values;
+	  }
+
+	  function homestayHostProfilePayloadFromForm(scope, userId) {
+	    const householdTypeUi = selectedHostFormChipText(scope, 'household-type', '');
 	    const householdType = toHostProfileDbValue('household_type', householdTypeUi);
 	    const hasPartner = hostOnboardingHasPartner(householdTypeUi);
-
 	    return {
 	      user_id: userId,
-	      age: hostOnboardingIntegerInput('host-ob-age'),
-	      nationality: hostOnboardingTextInput('host-ob-nationality'),
-	      spoken_languages: spokenLanguages,
-	      home_languages: homeLanguages,
-	      gender: toHostProfileDbValue('gender', selectedHostOnboardingChipText('host-ob-gender', '')),
-	      religion: toHostProfileDbValue('religion', selectedHostOnboardingChipText('host-ob-religion', '')),
-	      english_level: toHostProfileDbValue('english_level', selectedHostOnboardingChipText('host-ob-english-level', '')),
+	      age: hostFormIntegerInput(scope, 'age'),
+	      nationality: hostFormTextInput(scope, 'nationality'),
+	      spoken_languages: hostFormListWithOther(scope, 'spoken-languages', 'spoken-language-other'),
+	      home_languages: hostFormListWithOther(scope, 'home-languages', 'home-language-other'),
+	      gender: toHostProfileDbValue('gender', selectedHostFormChipText(scope, 'gender', '')),
+	      religion: toHostProfileDbValue('religion', selectedHostFormChipText(scope, 'religion', '')),
+	      english_level: toHostProfileDbValue('english_level', selectedHostFormChipText(scope, 'english-level', '')),
 	      household_type: householdType,
-	      partner_age: hasPartner ? hostOnboardingIntegerInput('host-ob-partner-age') : null,
-	      partner_gender: hasPartner ? toHostProfileDbValue('partner_gender', selectedHostOnboardingChipText('host-ob-partner-gender', '')) : null,
-	      partner_nationality: hasPartner ? hostOnboardingTextInput('host-ob-partner-nationality') : null,
-	      partner_wake_time: hasPartner ? toHostProfileDbValue('partner_wake_time', selectedHostOnboardingChipText('host-ob-partner-wake', '')) : null,
-	      partner_bedtime: hasPartner ? toHostProfileDbValue('partner_bedtime', selectedHostOnboardingChipText('host-ob-partner-sleep', '')) : null,
-	      partner_hobbies: hasPartner ? splitFreeTextList(document.getElementById('host-ob-partner-hobbies')?.value) : [],
-	      other_students_present: booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-student-presence', ''), ['いる'], ['いない']),
-	      smoking_environment: toHostProfileDbValue('smoking_environment', selectedHostOnboardingChipText('host-ob-smoking-status', '')),
-	      wake_time: toHostProfileDbValue('wake_time', selectedHostOnboardingChipText('host-ob-wake', '')),
-	      bedtime: toHostProfileDbValue('bedtime', selectedHostOnboardingChipText('host-ob-sleep', '')),
-	      conversation_level: toHostProfileDbValue('conversation_level', selectedHostOnboardingChipText('host-ob-guest-talk', '')),
-	      interaction_level: toHostProfileDbValue('interaction_level', selectedHostOnboardingChipText('host-ob-guest-frequency', '')),
-	      hobbies,
-	      bio: hostOnboardingTextInput('host-ob-note')
+	      partner_age: hasPartner ? hostFormIntegerInput(scope, 'partner-age') : null,
+	      partner_gender: hasPartner ? toHostProfileDbValue('partner_gender', selectedHostFormChipText(scope, 'partner-gender', '')) : null,
+	      partner_nationality: hasPartner ? hostFormTextInput(scope, 'partner-nationality') : null,
+	      partner_wake_time: hasPartner ? toHostProfileDbValue('partner_wake_time', selectedHostFormChipText(scope, 'partner-wake', '')) : null,
+	      partner_bedtime: hasPartner ? toHostProfileDbValue('partner_bedtime', selectedHostFormChipText(scope, 'partner-sleep', '')) : null,
+	      partner_hobbies: hasPartner ? splitFreeTextList(document.getElementById(`${hostFormPrefix(scope)}-partner-hobbies`)?.value) : [],
+	      other_students_present: booleanFromSelectedText(selectedHostFormChipText(scope, 'student-presence', ''), ['いる'], ['いない']),
+	      smoking_environment: toHostProfileDbValue('smoking_environment', selectedHostFormChipText(scope, 'smoking-status', '')),
+	      wake_time: toHostProfileDbValue('wake_time', selectedHostFormChipText(scope, 'wake', '')),
+	      bedtime: toHostProfileDbValue('bedtime', selectedHostFormChipText(scope, 'sleep', '')),
+	      conversation_level: toHostProfileDbValue('conversation_level', selectedHostFormChipText(scope, 'guest-talk', '')),
+	      interaction_level: toHostProfileDbValue('interaction_level', selectedHostFormChipText(scope, 'guest-frequency', '')),
+	      hobbies: hostFormListWithOther(scope, 'hobbies', 'hobby-other'),
+	      bio: hostFormTextInput(scope, 'note')
 	    };
 	  }
 
-	  function homestayListingPayloadFromOnboarding(userId) {
-	    const longStay = booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-long-stay', ''), ['長期滞在可能'], ['長期滞在不可']);
+	  function homestayListingPayloadFromForm(scope, userId, options = {}) {
+	    const prefix = hostFormPrefix(scope);
 	    return {
 	      owner_id: userId,
 	      listing_type: 'homestay',
-	      city: selectedHostOnboardingChipText('host-ob-area', '') || null,
-	      nearest_station: hostOnboardingTextInput('host-ob-station'),
-	      station_walk_minutes: hostOnboardingIntegerInput('host-ob-walk-min'),
-	      available_from: hostOnboardingTextInput('host-available-start'),
-	      available_until: hostOnboardingTextInput('host-available-end'),
-	      minimum_stay_months: hostOnboardingIntegerInput('host-ob-min-stay'),
-	      maximum_stay_months: hostOnboardingIntegerInput('host-ob-max-stay'),
-	      long_stay_allowed: longStay,
-	      monthly_price: hostOnboardingIntegerInput('host-ob-monthly-rent'),
-	      status: 'published'
+	      city: selectedHostFormChipText(scope, 'area', '') || null,
+	      nearest_station: hostFormTextInput(scope, 'station'),
+	      station_walk_minutes: hostFormIntegerInput(scope, 'walk-min'),
+	      available_from: nullableText(document.getElementById(hostFormAvailableStartId(scope))?.value),
+	      available_until: nullableText(document.getElementById(hostFormAvailableEndId(scope))?.value),
+	      minimum_stay_months: hostFormIntegerInput(scope, 'min-stay'),
+	      maximum_stay_months: hostFormIntegerInput(scope, 'max-stay'),
+	      long_stay_allowed: booleanFromSelectedText(selectedHostFormChipText(scope, 'long-stay', ''), ['長期滞在可能'], ['長期滞在不可']),
+	      monthly_price: hostFormIntegerInput(scope, 'monthly-rent'),
+	      status: options.status || (scope === 'ob' ? 'published' : currentHomestayListing?.status || undefined)
 	    };
 	  }
 
-	  function homestayListingDetailsPayloadFromOnboarding() {
-	    const amenities = selectedHostOnboardingChipTexts('host-ob-amenities');
-	    const amenityOther = hostOnboardingTextInput('host-ob-amenity-other');
-	    if (amenityOther && !amenities.includes(amenityOther)) amenities.push(amenityOther);
-	    const petsPresent = formValue('host-ob-has-pets', '') === 'いる' ? true : formValue('host-ob-has-pets', '') === 'いない' ? false : null;
-	    const curfewType = toHomestayListingDetailDbValue('curfew_type', formValue('host-ob-rule-curfew', ''));
-	    const kitchenRule = toHomestayListingDetailDbValue('kitchen_rule', formValue('host-ob-rule-kitchen', ''));
-
+	  function homestayListingDetailsPayloadFromForm(scope) {
+	    const prefix = hostFormPrefix(scope);
+	    const petsValue = formValue(`${prefix}-has-pets`, '');
+	    const petsPresent = petsValue === 'いる' ? true : petsValue === 'いない' ? false : null;
+	    const curfewType = toHomestayListingDetailDbValue('curfew_type', formValue(`${prefix}-rule-curfew`, ''));
+	    const kitchenRule = toHomestayListingDetailDbValue('kitchen_rule', formValue(`${prefix}-rule-kitchen`, ''));
 	    return {
-	      meal_plan: toHomestayListingDetailDbValue('meal_plan', selectedHostOnboardingChipText('host-ob-meal-plan', '')),
-	      meal_style: toHomestayListingDetailDbValue('meal_style', selectedHostOnboardingChipText('host-ob-dining-style', '')),
-	      room_type: toHomestayListingDetailDbValue('room_type', selectedHostOnboardingChipText('host-ob-room-type', '')),
-	      furnished: booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-furniture', ''), ['家具付き'], ['家具なし']),
-	      floor_type: toHomestayListingDetailDbValue('floor_type', selectedHostOnboardingChipText('host-ob-room-floor', '')),
-	      bathroom_type: toHomestayListingDetailDbValue('bathroom_type', selectedHostOnboardingChipText('host-ob-bathroom', '')),
-	      amenities,
+	      meal_plan: toHomestayListingDetailDbValue('meal_plan', selectedHostFormChipText(scope, 'meal-plan', '')),
+	      meal_style: toHomestayListingDetailDbValue('meal_style', selectedHostFormChipText(scope, 'dining-style', '')),
+	      room_type: toHomestayListingDetailDbValue('room_type', selectedHostFormChipText(scope, 'room-type', '')),
+	      furnished: booleanFromSelectedText(selectedHostFormChipText(scope, 'furniture', ''), ['家具付き'], ['家具なし']),
+	      floor_type: toHomestayListingDetailDbValue('floor_type', selectedHostFormChipText(scope, 'room-floor', '')),
+	      bathroom_type: toHomestayListingDetailDbValue('bathroom_type', selectedHostFormChipText(scope, 'bathroom', '')),
+	      amenities: hostFormListWithOther(scope, 'amenities', 'amenity-other'),
 	      pets_present: petsPresent,
-	      pet_details: petsPresent ? hostOnboardingTextInput('host-ob-pet-type') : null,
+	      pet_details: petsPresent ? hostFormTextInput(scope, 'pet-type') : null,
 	      curfew_type: curfewType,
-	      curfew_time: curfewType === 'has_curfew' ? hostOnboardingTextInput('host-ob-rule-curfew-time') : null,
+	      curfew_time: curfewType === 'has_curfew' ? hostFormTextInput(scope, 'rule-curfew-time') : null,
 	      kitchen_rule: kitchenRule,
-	      kitchen_restriction_details: kitchenRule === 'restricted' ? hostOnboardingTextInput('host-ob-rule-kitchen-time') : null,
-	      shower_limit: toHomestayListingDetailDbValue('shower_limit', formValue('host-ob-rule-shower', '')),
-	      cleaning_rule: toHomestayListingDetailDbValue('cleaning_rule', formValue('host-ob-rule-cleaning', '')),
-	      visitor_rule: toHomestayListingDetailDbValue('visitor_rule', formValue('host-ob-rule-visitor', '')),
-	      overnight_guest_rule: toHomestayListingDetailDbValue('overnight_guest_rule', formValue('host-ob-rule-overnight', '')),
-	      drinking_rule: toHomestayListingDetailDbValue('drinking_rule', formValue('host-ob-rule-alcohol', '')),
-	      instrument_rule: toHomestayListingDetailDbValue('instrument_rule', formValue('host-ob-rule-instrument', '')),
-	      other_house_rules: hostOnboardingTextInput('host-ob-rule-other')
+	      kitchen_restriction_details: kitchenRule === 'restricted' ? hostFormTextInput(scope, 'rule-kitchen-time') : null,
+	      shower_limit: toHomestayListingDetailDbValue('shower_limit', formValue(`${prefix}-rule-shower`, '')),
+	      cleaning_rule: toHomestayListingDetailDbValue('cleaning_rule', formValue(`${prefix}-rule-cleaning`, '')),
+	      visitor_rule: toHomestayListingDetailDbValue('visitor_rule', formValue(`${prefix}-rule-visitor`, '')),
+	      overnight_guest_rule: toHomestayListingDetailDbValue('overnight_guest_rule', formValue(`${prefix}-rule-overnight`, '')),
+	      drinking_rule: toHomestayListingDetailDbValue('drinking_rule', formValue(`${prefix}-rule-alcohol`, '')),
+	      instrument_rule: toHomestayListingDetailDbValue('instrument_rule', formValue(`${prefix}-rule-instrument`, '')),
+	      other_house_rules: hostFormTextInput(scope, 'rule-other')
 	    };
+	  }
+
+	  function homestayHostProfilePayloadFromOnboarding(userId) {
+	    return homestayHostProfilePayloadFromForm('ob', userId);
+	  }
+
+	  function homestayListingPayloadFromOnboarding(userId) {
+	    return homestayListingPayloadFromForm('ob', userId, { status: 'published' });
+	  }
+
+	  function homestayListingDetailsPayloadFromOnboarding() {
+	    return homestayListingDetailsPayloadFromForm('ob');
 	  }
 
 	  function validateHomestayHostListingPayload(payload) {
@@ -11575,6 +11625,188 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (payload.monthly_price !== null && payload.monthly_price < 0) errors.push('月額料金は0以上で入力してください。');
 	    if (payload.available_from && payload.available_until && payload.available_from > payload.available_until) errors.push('受け入れ可能開始日は終了日以前にしてください。');
 	    return errors;
+	  }
+
+	  function omitUndefinedFields(payload = {}) {
+	    return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined));
+	  }
+
+	  function formChipHtml(text, onclick = 'toggleChip(this)') {
+	    return `<div class="form-chip" onclick="${onclick}">${text}</div>`;
+	  }
+
+	  function hostChipRowHtml(id, values, onclick = 'toggleChip(this)') {
+	    return `<div class="form-chip-row" id="${id}">${values.map(value => formChipHtml(value, onclick)).join('')}</div>`;
+	  }
+
+	  function hostPhotoUploadBoxHtml(label, mainText, subText, multiple = false) {
+	    return `
+	      <div class="form-group">
+	        <div class="form-label">${label}</div>
+	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	          <span style="font-size:${multiple ? 28 : 34}px;">${multiple ? '📷' : '👤'}</span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">${mainText}</span>
+	          <span style="font-size:12px;color:var(--light);">${subText}</span>
+	          <input type="file" accept="image/*"${multiple ? ' multiple' : ''} style="display:none;" />
+	        </label>
+	      </div>
+	    `;
+	  }
+
+	  function homestayHostStepOneHtml(scope) {
+	    const prefix = hostFormPrefix(scope);
+	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
+	    return `
+	      <div class="form-section-title">👥 ホスト・家族について</div>
+	      ${hostPhotoUploadBoxHtml('プロフィール写真', '顔写真をアップロード', '画像保存は次のSTEPで対応します')}
+	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" placeholder="山田ファミリー" /></div>
+	      <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	      <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	      <div class="form-group">
+	        <div class="form-label">話せる言語</div>
+	        ${hostChipRowHtml(`${prefix}-spoken-languages`, ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語','その他'], otherClick('spoken-language-other'))}
+	        <div id="${prefix}-spoken-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="${prefix}-spoken-language-other" type="text" placeholder="その他の言語" /></div>
+	      </div>
+	      <div class="form-group">
+	        <div class="form-label">家で使用する言語</div>
+	        ${hostChipRowHtml(`${prefix}-home-languages`, ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語','その他'], otherClick('home-language-other'))}
+	        <div id="${prefix}-home-language-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="${prefix}-home-language-other" type="text" placeholder="その他の言語" /></div>
+	      </div>
+	      <div class="form-group"><div class="form-label">性別</div>${hostChipRowHtml(`${prefix}-gender`, ['女性','男性','選択しない'])}</div>
+	      <div class="form-group">
+	        <div class="form-label">宗教</div>
+	        <div class="sensitive-info-note"><strong data-i18n="religion_sensitive_title">宗教・信仰に関する情報について</strong><span data-i18n="religion_sensitive_body">この項目は任意です。入力した情報は、共同生活における相互理解のために利用され、プロフィール上で他の登録ユーザーに表示されます。</span></div>
+	        ${hostChipRowHtml(`${prefix}-religion`, ['仏教','キリスト教','イスラム教','ヒンドゥー教','ユダヤ教','無宗教','その他','回答しない'])}
+	      </div>
+	      <div class="form-group"><div class="form-label">英語レベル</div>${hostChipRowHtml(`${prefix}-english-level`, ['初心者','日常会話','ビジネスレベル','ネイティブレベル','回答しない'])}</div>
+	      <div class="form-group">
+	        <div class="form-label">現在一緒に住んでいる家族</div>
+	        ${hostChipRowHtml(`${prefix}-household-type`, ['一人暮らし（女性）','一人暮らし（男性）','カップル','カップル＋子ども','ひとり親＋子ども','その他'], `toggleHostHouseholdFields(this,'${scope}')`)}
+	        <div id="${prefix}-household-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="${prefix}-household-other" type="text" placeholder="家族構成を入力してください" /></div>
+	      </div>
+	      <div id="${prefix}-partner-fields" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	        <div class="form-group"><div class="form-label">パートナー情報</div><input class="form-input" id="${prefix}-partner-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">性別</div>${hostChipRowHtml(`${prefix}-partner-gender`, ['女性','男性','選択しない'])}</div>
+	        <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-partner-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	        <div class="form-group"><div class="form-label">起床時間</div>${hostChipRowHtml(`${prefix}-partner-wake`, ['6時以前','6〜8時','8〜9時','9時以降'])}</div>
+	        <div class="form-group"><div class="form-label">就寝時間</div>${hostChipRowHtml(`${prefix}-partner-sleep`, ['21〜22時','22〜23時','23時以降'])}</div>
+	        <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="${prefix}-partner-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	      </div>
+	      <div id="${prefix}-children-fields" style="display:none;">
+	        <div class="form-group">
+	          <div class="form-label">子供の情報</div>
+	          <div id="${prefix}-family-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	          <button type="button" onclick="showHostFamilyForm('${scope}')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 家族を追加</button>
+	          <div id="${prefix}-family-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	            <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-member-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">性別</div>${hostChipRowHtml(`${prefix}-member-gender`, ['女性','男性','選択しない'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-member-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">起床時間</div>${hostChipRowHtml(`${prefix}-member-wake`, ['6時以前','6〜8時','8〜9時','9時以降'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">就寝時間</div>${hostChipRowHtml(`${prefix}-member-sleep`, ['21〜22時','22〜23時','23時以降'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="${prefix}-member-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	            <input id="${prefix}-member-name" type="hidden" value="子供" />
+	            <textarea id="${prefix}-member-note" style="display:none;"></textarea>
+	            <div style="display:flex;gap:8px;"><button type="button" onclick="addHostFamilyMember('${scope}')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostFamilyForm('${scope}')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="form-group"><div class="form-label">同居している留学生の有無</div>${hostChipRowHtml(`${prefix}-student-presence`, ['いる','いない'], `toggleHostStudentFields(this,'${scope}')`)}</div>
+	      <div id="${prefix}-student-fields" style="display:none;">
+	        <div class="form-group">
+	          <div class="form-label">同居している留学生</div>
+	          <div id="${prefix}-student-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:10px;"></div>
+	          <button type="button" onclick="showHostStudentForm('${scope}')" style="width:100%;padding:14px;border:2px dashed var(--border);border-radius:12px;background:white;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;">＋ 留学生を追加</button>
+	          <div id="${prefix}-student-form" style="display:none;margin-top:12px;background:white;border:1px solid var(--border);border-radius:14px;padding:14px;">
+	            <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-student-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">性別</div>${hostChipRowHtml(`${prefix}-student-gender`, ['女性','男性','選択しない'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-student-nationality" type="text" placeholder="国籍を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">起床時間</div>${hostChipRowHtml(`${prefix}-student-wake`, ['6時以前','6〜8時','8〜9時','9時以降'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">就寝時間</div>${hostChipRowHtml(`${prefix}-student-sleep`, ['21〜22時','22〜23時','23時以降'], 'hostMemberChip(this)')}</div>
+	            <div class="form-group"><div class="form-label">趣味</div><input class="form-input" id="${prefix}-student-hobbies" type="text" placeholder="趣味を入力してください" /></div>
+	            <div class="form-group"><div class="form-label">滞在期間</div><input class="form-input" id="${prefix}-student-stay" type="text" placeholder="3ヶ月" /></div>
+	            <div style="display:flex;gap:8px;"><button type="button" onclick="addHostStudent('${scope}')" style="flex:1;background:var(--primary);color:white;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;">追加する</button><button type="button" onclick="hideHostStudentForm('${scope}')" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-weight:700;cursor:pointer;">キャンセル</button></div>
+	          </div>
+	        </div>
+	      </div>
+	      <div class="form-group"><div class="form-label">喫煙者かどうか</div>${hostChipRowHtml(`${prefix}-smoking-status`, ['吸わない','屋外で吸う','室内でも吸う'])}</div>
+	      <div class="form-section-title">🌙 ホストの生活スタイル</div>
+	      <div class="form-group"><div class="form-label">起床時間</div>${hostChipRowHtml(`${prefix}-wake`, ['6時以前','6〜8時','8〜9時','9時以降'])}</div>
+	      <div class="form-group"><div class="form-label">就寝時間</div>${hostChipRowHtml(`${prefix}-sleep`, ['21〜22時','22〜23時','23時以降'])}</div>
+	      <div class="form-group"><div class="form-label">ゲストとどのくらい会話したいですか？</div>${hostChipRowHtml(`${prefix}-guest-talk`, ['必要最低限','適度に話したい','毎日話したい','家族のように過ごしたい'])}</div>
+	      <div class="form-group"><div class="form-label">ゲストとどのくらい一緒に過ごしたいですか？</div>${hostChipRowHtml(`${prefix}-guest-frequency`, ['基本それぞれで過ごす','食事の時など時々','休日に一緒に出かける','家族の一員のように交流する'])}</div>
+	      <div class="form-group">
+	        <div class="form-label">趣味</div>
+	        ${hostChipRowHtml(`${prefix}-hobbies`, ['🎵 音楽','🎬 映画','📚 読書','🍳 料理','🏃 スポーツ','🌿 アウトドア','その他'], otherClick('hobby-other'))}
+	        <div id="${prefix}-hobby-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="${prefix}-hobby-other" type="text" placeholder="その他の趣味" /></div>
+	      </div>
+	      <input type="hidden" id="${prefix}-ng" value="" />
+	      <input type="hidden" id="${prefix}-values" value="" />
+	      <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="${prefix}-note" placeholder="一言"></textarea></div>
+	    `;
+	  }
+
+	  function homestayHostStepTwoHtml(scope) {
+	    const prefix = hostFormPrefix(scope);
+	    const startId = hostFormAvailableStartId(scope);
+	    const endId = hostFormAvailableEndId(scope);
+	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
+	    return `
+	      <div class="form-section-title">🏠 家・滞在情報</div>
+	      <div class="form-group"><div class="form-label">エリア</div>${hostChipRowHtml(`${prefix}-area`, ['バンクーバー','トロント'])}</div>
+	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
+	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
+	      <div class="form-group"><div class="form-label">住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
+	      <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="${startId}" type="date" /></div>
+	      <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="${endId}" type="date" /></div>
+	      <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="${prefix}-min-stay" type="number" min="1" inputmode="numeric" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
+	      <div class="form-group"><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="${prefix}-max-stay" type="number" min="1" inputmode="numeric" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
+	      <div class="form-group"><div class="form-label">長期滞在</div>${hostChipRowHtml(`${prefix}-long-stay`, ['長期滞在可能','長期滞在不可'])}</div>
+	      <div class="form-group"><div class="form-label">ゲストに提供できる食事</div>${hostChipRowHtml(`${prefix}-meal-plan`, ['食事提供なし','朝食のみ','朝・夕食','3食'])}</div>
+	      <div class="form-group"><div class="form-label">ゲストとは普段どのように食事をしますか？</div>${hostChipRowHtml(`${prefix}-dining-style`, ['家族と一緒に食べることが多い','時々一緒に食べる','基本別々','作り置き・各自で食べることが多い'])}</div>
+	      <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="${prefix}-monthly-rent" type="number" min="0" inputmode="numeric" placeholder="1500 CAD / month" /></div>
+	      <input type="hidden" id="${prefix}-nightly-price" value="" />
+	      <div class="form-section-title">🖼️ 部屋情報</div>
+	      ${hostPhotoUploadBoxHtml('部屋の写真', '部屋や外観の写真をアップロード', '複数枚選択できます。保存は次のSTEPで対応します', true)}
+	      <div class="form-group"><div class="form-label">部屋タイプ</div>${hostChipRowHtml(`${prefix}-room-type`, ['個室','相部屋'])}</div>
+	      <div class="form-group"><div class="form-label">家具</div>${hostChipRowHtml(`${prefix}-furniture`, ['家具付き','家具なし'])}</div>
+	      <div class="form-group"><div class="form-label">部屋の階</div>${hostChipRowHtml(`${prefix}-room-floor`, ['ベースメント','1階','2階','3階以上'])}</div>
+	      <div class="form-group"><div class="form-label">バスルーム</div>${hostChipRowHtml(`${prefix}-bathroom`, ['専用','家族と共有','他の留学生と共有'])}</div>
+	      <div class="form-group">
+	        <div class="form-label">設備</div>
+	        ${hostChipRowHtml(`${prefix}-amenities`, ['Wi-Fi','洗濯機','乾燥機','キッチン','冷蔵庫','エアコン','その他'], otherClick('amenity-other'))}
+	        <div id="${prefix}-amenity-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="${prefix}-amenity-other" type="text" placeholder="その他の設備" /></div>
+	      </div>
+	      <input type="hidden" id="${prefix}-room-size" value="" /><input type="hidden" id="${prefix}-bath" value="" /><input type="hidden" id="${prefix}-sunlight" value="" /><input type="hidden" id="${prefix}-wifi" value="" />
+	      <div class="form-section-title">📋 ハウスルール</div>
+	      <div class="form-group"><div class="form-label">門限</div><select class="form-input" id="${prefix}-rule-curfew" onchange="updateHostConditionalFields('${prefix}')"><option value=""></option><option>門限なし</option><option>門限あり</option></select><input class="form-input" id="${prefix}-rule-curfew-time" type="text" placeholder="22:00" style="margin-top:8px;" /></div>
+	      <div class="form-group"><div class="form-label">キッチン利用</div><select class="form-input" id="${prefix}-rule-kitchen" onchange="updateHostConditionalFields('${prefix}')"><option value=""></option><option>OK</option><option>制限あり</option><option>NG</option></select><input class="form-input" id="${prefix}-rule-kitchen-time" type="text" placeholder="利用可能時間" style="margin-top:8px;" /></div>
+	      <div class="form-group"><div class="form-label">シャワーの利用時間</div><select class="form-input" id="${prefix}-rule-shower"><option value=""></option><option>制限なし</option><option>5分以内</option><option>5〜10分</option><option>10〜15分</option></select></div>
+	      <div class="form-group"><div class="form-label">共有スペース掃除</div><select class="form-input" id="${prefix}-rule-cleaning"><option value=""></option><option>毎日</option><option>週1回</option><option>月1回</option><option>掃除はしなくて良い</option></select></div>
+	      <div class="form-group"><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><select class="form-input" id="${prefix}-rule-visitor"><option value=""></option><option>来客 OK</option><option>来客 事前連絡必須</option><option>来客 NG</option></select><select class="form-input" id="${prefix}-rule-overnight"><option value=""></option><option>宿泊 OK</option><option>宿泊 事前連絡必須</option><option>宿泊 NG</option></select><select class="form-input" id="${prefix}-rule-alcohol"><option value=""></option><option>飲酒 OK</option><option>飲酒 節度を守る</option><option>飲酒 NG</option></select><select class="form-input" id="${prefix}-rule-instrument"><option value=""></option><option>楽器演奏 OK</option><option>楽器演奏 時間制限あり</option><option>楽器演奏 NG</option></select></div><textarea class="form-textarea" id="${prefix}-rule-other" placeholder="その他ルール" style="margin-top:10px;"></textarea></div>
+	      <div class="form-group"><div class="form-label">ペットの有無</div><select class="form-input" id="${prefix}-has-pets" onchange="toggleHostPetFields('${scope}')"><option value=""></option><option>いる</option><option>いない</option></select><div id="${prefix}-pet-type-wrap" style="display:none;margin-top:10px;"><div class="form-label">動物の種類</div><input class="form-input" id="${prefix}-pet-type" type="text" placeholder="犬、猫、鳥、うさぎ、その他" /></div></div>
+	      <input type="hidden" id="${prefix}-rule-smoking" value="" />
+	    `;
+	  }
+
+	  function homestayHostProfileEditBodyHtml() {
+	    return `
+	      <div style="background:white;border-radius:16px;border:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:14px;">
+	        ${homestayHostStepOneHtml('profile')}
+	        ${homestayHostStepTwoHtml('profile')}
+	        <button onclick="saveHostProfileScreen()" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
+	      </div>
+	      <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+	        <div onclick="chooseRole('guest')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border);">
+	          <span style="font-size:20px;width:28px;text-align:center;">🔄</span>
+	          <span style="font-size:15px;font-weight:600;flex:1;">ゲストモードに切り替える</span>
+	          <span style="color:var(--light);">›</span>
+	        </div>
+	        <div onclick="doLogout()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;color:var(--primary);">
+	          <span style="font-size:20px;width:28px;text-align:center;">🚪</span>
+	          <span style="font-size:15px;font-weight:600;flex:1;">ログアウト</span>
+	        </div>
+	      </div>
+	    `;
 	  }
 
   function calculateAgeFromBirthDate(birthDateValue) {
@@ -11662,6 +11894,21 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       chip.classList.toggle('selected', selectedValues.has(chipStoredText(chip)));
     });
   }
+
+	  function setMultiFormChipsWithOther(rowId, values = [], otherInputId = '', otherWrapId = '') {
+	    const row = document.getElementById(rowId);
+	    if (!row) return;
+	    const valueList = Array.isArray(values) ? values.filter(Boolean) : [];
+	    const known = new Set(Array.from(row.querySelectorAll('.form-chip')).map(chipStoredText));
+	    const customValues = valueList.filter(value => !known.has(value));
+	    setMultiFormChips(rowId, valueList);
+	    const otherChip = Array.from(row.querySelectorAll('.form-chip')).find(chip => chipStoredText(chip) === 'その他');
+	    if (otherChip) otherChip.classList.toggle('selected', customValues.length > 0 || otherChip.classList.contains('selected'));
+	    const otherInput = document.getElementById(otherInputId);
+	    if (otherInput) otherInput.value = customValues.join('、');
+	    const otherWrap = document.getElementById(otherWrapId);
+	    if (otherWrap) otherWrap.style.display = customValues.length > 0 || otherChip?.classList.contains('selected') ? 'block' : 'none';
+	  }
 
 	  function applyGuestProfileDataToProfileScreen(data) {
 	    const profile = data || {};
@@ -12191,6 +12438,30 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  }
 
+	  async function updateExistingHomestayHostProfileToSupabase(userId, payload) {
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('homestay_host_profiles')
+	        .select('user_id')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      if (!existing?.user_id) throw new Error('No existing homestay_host_profiles row');
+
+	      const { user_id, ...editablePayload } = payload || {};
+	      const { error: updateError } = await window._supabase
+	        .from('homestay_host_profiles')
+	        .update(omitUndefinedFields(editablePayload))
+	        .eq('user_id', userId);
+	      if (updateError) throw updateError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_host_profiles update error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveHomestayListingToSupabase(payload) {
 	    const userId = payload?.owner_id;
 	    if (!userId || !window._supabase?.from) return null;
@@ -12228,6 +12499,25 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  }
 
+	  async function updateExistingHomestayListingToSupabase(listingId, userId, payload) {
+	    if (!listingId || !userId || !window._supabase?.from) return false;
+	    try {
+	      const { owner_id, listing_type, ...editablePayload } = payload || {};
+	      const updatePayload = omitUndefinedFields(editablePayload);
+	      const { error } = await window._supabase
+	        .from('listings')
+	        .update(updatePayload)
+	        .eq('id', listingId)
+	        .eq('owner_id', userId)
+	        .eq('listing_type', 'homestay');
+	      if (error) throw error;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay listing update error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveHomestayListingDetailsToSupabase(listingId, payload) {
 	    if (!listingId || !window._supabase?.from) return false;
 	    try {
@@ -12249,6 +12539,29 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  }
 
+	  async function updateExistingHomestayListingDetailsToSupabase(listingId, payload) {
+	    if (!listingId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('homestay_listing_details')
+	        .select('listing_id')
+	        .eq('listing_id', listingId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      if (!existing?.listing_id) throw new Error('No existing homestay_listing_details row');
+
+	      const { error: updateError } = await window._supabase
+	        .from('homestay_listing_details')
+	        .update(omitUndefinedFields(payload || {}))
+	        .eq('listing_id', listingId);
+	      if (updateError) throw updateError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_listing_details update error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveListingPrivateDetailsToSupabase(listingId, payload) {
 	    if (!listingId || !window._supabase?.from) return false;
 	    try {
@@ -12266,6 +12579,29 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return true;
 	    } catch (error) {
 	      console.error('Supabase listing_private_details save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function updateExistingListingPrivateDetailsToSupabase(listingId, payload) {
+	    if (!listingId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('listing_private_details')
+	        .select('listing_id')
+	        .eq('listing_id', listingId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      if (!existing?.listing_id) throw new Error('No existing listing_private_details row');
+
+	      const { error: updateError } = await window._supabase
+	        .from('listing_private_details')
+	        .update(omitUndefinedFields(payload || {}))
+	        .eq('listing_id', listingId);
+	      if (updateError) throw updateError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase listing_private_details update error:', error);
 	      return false;
 	    }
 	  }
@@ -12351,6 +12687,73 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode. Please try again.' : 'ホスト登録状態を保存できませんでした。もう一度お試しください。' };
 	    }
 
+	    return { ok: true, listingId };
+	  }
+
+	  async function saveHomestayHostProfileEditToSupabase() {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) {
+	      console.error('Supabase homestay host profile edit save error:', new Error('No logged-in Supabase user'));
+	      return { ok: false, message: currentLang === 'en' ? 'Please log in again before saving.' : '保存するには再度ログインしてください。' };
+	    }
+	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') {
+	      return { ok: false, message: currentLang === 'en' ? 'This listing can only be saved in Homestay Host mode.' : 'ホームステイホストモードでのみ保存できます。' };
+	    }
+
+	    if (!currentHomestayListing?.id) {
+	      await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+	    }
+	    const listingId = currentHomestayListing?.id;
+	    if (!listingId) {
+	      console.error('Supabase homestay host profile edit save error:', new Error('No current homestay listing id'));
+	      return { ok: false, message: currentLang === 'en' ? 'Could not find your saved listing. Please complete host registration again.' : '保存済みの掲載情報が見つかりません。ホスト登録を完了してから編集してください。' };
+	    }
+
+	    const displayName = hostFormTextInput('profile', 'name');
+	    if (!displayName) {
+	      return { ok: false, message: currentLang === 'en' ? 'Please enter a host name.' : 'ホスト名を入力してください。' };
+	    }
+
+	    const listingPayload = homestayListingPayloadFromForm('profile', userId, {
+	      status: currentHomestayListing?.status || undefined
+	    });
+	    const validationErrors = validateHomestayHostListingPayload(listingPayload);
+	    if (validationErrors.length) {
+	      return { ok: false, message: validationErrors[0] };
+	    }
+
+	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
+	    if (!savedDisplayName) {
+	      console.error('Supabase profiles display_name edit save error:', new Error('profiles.display_name update returned false'));
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host name. Please try again.' : 'ホスト名を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedHostProfile = await updateExistingHomestayHostProfileToSupabase(userId, homestayHostProfilePayloadFromForm('profile', userId));
+	    if (!savedHostProfile) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host profile. Please try again.' : 'ホスト情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedListing = await updateExistingHomestayListingToSupabase(listingId, userId, listingPayload);
+	    if (!savedListing) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your listing. Please try again.' : '掲載情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedListingDetails = await updateExistingHomestayListingDetailsToSupabase(listingId, homestayListingDetailsPayloadFromForm('profile'));
+	    if (!savedListingDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save listing details. Please try again.' : '掲載詳細を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedPrivateDetails = await updateExistingListingPrivateDetailsToSupabase(listingId, {
+	      full_address: hostFormTextInput('profile', 'address')
+	    });
+	    if (!savedPrivateDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details. Please try again.' : '住所情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const reloaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+	    if (!reloaded) {
+	      return { ok: false, message: currentLang === 'en' ? 'Saved, but could not reload your listing information.' : '保存しましたが、登録情報の再読み込みに失敗しました。' };
+	    }
 	    return { ok: true, listingId };
 	  }
 
@@ -12588,8 +12991,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setInputValueById('host-profile-name', profile.display_name || '');
 	    setInputValueById('host-profile-age', hostProfile.age ?? '');
 	    setInputValueById('host-profile-nationality', hostProfile.nationality || '');
-	    setMultiFormChips('host-profile-spoken-languages', hostProfile.spoken_languages || []);
-	    setMultiFormChips('host-profile-home-languages', hostProfile.home_languages || []);
+	    setMultiFormChipsWithOther('host-profile-spoken-languages', hostProfile.spoken_languages || [], 'host-profile-spoken-language-other', 'host-profile-spoken-language-other-wrap');
+	    setMultiFormChipsWithOther('host-profile-home-languages', hostProfile.home_languages || [], 'host-profile-home-language-other', 'host-profile-home-language-other-wrap');
 	    setSingleFormChip('host-profile-gender', fromHostProfileDbValue('gender', hostProfile.gender));
 	    setSingleFormChip('host-profile-religion', fromHostProfileDbValue('religion', hostProfile.religion));
 	    setSingleFormChip('host-profile-english-level', fromHostProfileDbValue('english_level', hostProfile.english_level));
@@ -12611,7 +13014,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setSingleFormChip('host-profile-sleep', fromHostProfileDbValue('bedtime', hostProfile.bedtime));
 	    setSingleFormChip('host-profile-guest-talk', fromHostProfileDbValue('conversation_level', hostProfile.conversation_level));
 	    setSingleFormChip('host-profile-guest-frequency', fromHostProfileDbValue('interaction_level', hostProfile.interaction_level));
-	    setMultiFormChips('host-profile-hobbies', hostProfile.hobbies || []);
+	    setMultiFormChipsWithOther('host-profile-hobbies', hostProfile.hobbies || [], 'host-profile-hobby-other', 'host-profile-hobby-other-wrap');
 	    setInputValueById('host-profile-note', hostProfile.bio || '');
 
 	    setSingleFormChip('host-profile-area', listing.city || '');
@@ -12631,7 +13034,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setSingleFormChip('host-profile-furniture', hostBooleanLabel(details.furnished, '家具付き', '家具なし', ''));
 	    setSingleFormChip('host-profile-room-floor', fromHomestayListingDetailDbValue('floor_type', details.floor_type));
 	    setSingleFormChip('host-profile-bathroom', fromHomestayListingDetailDbValue('bathroom_type', details.bathroom_type));
-	    setMultiFormChips('host-profile-amenities', details.amenities || []);
+	    setMultiFormChipsWithOther('host-profile-amenities', details.amenities || [], 'host-profile-amenity-other', 'host-profile-amenity-other-wrap');
 	    setSelectValueById('host-profile-rule-curfew', fromHomestayListingDetailDbValue('curfew_type', details.curfew_type));
 	    setInputValueById('host-profile-rule-curfew-time', details.curfew_time || '');
 	    setSelectValueById('host-profile-rule-kitchen', fromHomestayListingDetailDbValue('kitchen_rule', details.kitchen_rule));
@@ -12904,10 +13307,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (kitchenTime) kitchenTime.style.display = kitchen.includes('制限') ? 'block' : 'none';
 	  }
 
-	  const hostFamilyMembers = [
-	    { name: 'Michael', age: '45', gender: '男性', nationality: 'アメリカ', hobbies: '料理、映画', lifestyle: '朝型・会話多め', note: '家族での食事と会話を大切にしています。' },
-	    { name: 'Emma', age: '12', gender: '女性', nationality: 'アメリカ', hobbies: '読書、音楽', lifestyle: '学校中心・早寝早起き', note: '週末は家族で公園に行くことが多いです。' }
-	  ];
+	  const hostFamilyMembers = [];
 	  const hostInternationalStudents = [];
 
 	  function hostMemberChip(el) {
@@ -14343,12 +14743,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
 	  }
 
-	  function saveHostProfileScreen() {
+	  async function saveHostProfileScreen() {
 	    if (isSharehouseHostEditing()) {
 	      saveSharehouseSettings('profile');
 	      return;
 	    }
-	    saveHostProfileEdits('profile');
+	    const result = await saveHomestayHostProfileEditToSupabase();
+	    if (!result.ok) {
+	      console.error('Supabase homestay host profile edit failed:', result);
+	      showToast(result.message || (currentLang === 'en' ? 'Could not save. Please try again.' : '保存できませんでした。もう一度お試しください。'));
+	      return;
+	    }
+	    updateHostDashboardListing();
+	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	    navigate(currentScreen, 'host-dashboard');
 	  }
 
   /* ===== LOGIN ===== */
