@@ -10452,11 +10452,174 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     renderHomestayFilterResults(committedHomestayFilters);
   }
 
-  function homestayRulePreferenceFromOnboarding(rowId, filterRowId) {
-    const value = selectedChipTextFromRow(rowId, '');
-    if (!value || value === 'こだわらない' || value === 'No preference') return '';
-    return canonicalFilterValue(filterRowId, value);
-  }
+	  function homestayRulePreferenceFromOnboarding(rowId, filterRowId) {
+	    const value = selectedChipTextFromRow(rowId, '');
+	    if (!value || value === 'こだわらない' || value === 'No preference') return '';
+	    return canonicalFilterValue(filterRowId, value);
+	  }
+
+	  const GUEST_PROFILE_DB_VALUE_MAPS = {
+	    gender: {
+	      '女性': 'female',
+	      '男性': 'male',
+	      '選択しない': 'prefer_not_to_say'
+	    },
+	    religion: {
+	      '仏教': 'buddhist',
+	      'キリスト教': 'christian',
+	      'イスラム教': 'muslim',
+	      'ヒンドゥー教': 'hindu',
+	      'ユダヤ教': 'jewish',
+	      '無宗教': 'none',
+	      'その他': 'other',
+	      '回答しない': 'prefer_not_to_say'
+	    },
+	    english_level: {
+	      '初心者': 'beginner',
+	      '日常会話': 'daily_conversation',
+	      'ビジネスレベル': 'business',
+	      'ネイティブレベル': 'native',
+	      '回答しない': 'prefer_not_to_say'
+	    },
+	    stay_status: {
+	      '学生': 'student',
+	      'ワーホリ': 'working_holiday',
+	      '社会人': 'professional'
+	    },
+	    wake_time: {
+	      '6時以前': 'before_6',
+	      '6〜8時': '6_to_8',
+	      '8〜9時': '8_to_9',
+	      '9時以降': 'after_9'
+	    },
+	    bedtime: {
+	      '21〜22時': '21_to_22',
+	      '22〜23時': '22_to_23',
+	      '23時以降': 'after_23'
+	    }
+	  };
+
+	  const HOMESTAY_PREFERENCE_DB_VALUE_MAPS = {
+	    host_household_preference: {
+	      '一人暮らし（女性）': 'single_female',
+	      '一人暮らし（男性）': 'single_male',
+	      'カップル': 'couple',
+	      '子どものいる家庭': 'household_with_children',
+	      'その他': 'other',
+	      'こだわらない': 'no_preference'
+	    },
+	    interaction_preference: {
+	      '基本それぞれで過ごしたい': 'mostly_separate',
+	      '食事の時など時々': 'meals_sometimes',
+	      '休日にたまに一緒に過ごしたい': 'weekends_sometimes',
+	      '家族の一員のように交流したい': 'family_like'
+	    },
+	    conversation_preference: {
+	      '必要最低限': 'minimum',
+	      '適度に話したい': 'moderate',
+	      '毎日話したい': 'daily',
+	      '家族のように過ごしたい': 'family_like'
+	    },
+	    meal_plan_preference: {
+	      '不要': 'none',
+	      '朝食のみ': 'breakfast_only',
+	      '朝夕食': 'breakfast_dinner',
+	      '3食': 'three_meals'
+	    },
+	    meal_style_preference: {
+	      '一緒に食べたい': 'eat_together',
+	      'たまに一緒': 'sometimes_together',
+	      '別々でOK': 'separate_ok'
+	    },
+	    dietary_restriction: {
+	      'なし': 'none',
+	      'ベジタリアン': 'vegetarian',
+	      'ハラール': 'halal',
+	      'アレルギー': 'allergy'
+	    },
+	    pet_preference: {
+	      'ペットOK': 'pets_ok',
+	      'できればいない方がいい': 'prefer_no_pets',
+	      'ペットNG': 'no_pets'
+	    },
+	    other_students_preference: {
+	      'いてもOK': 'ok',
+	      'できればいない方がいい': 'prefer_none',
+	      'いない家庭を希望': 'none_required'
+	    },
+	    smoking_preference: {
+	      '喫煙OK': 'smoking_ok',
+	      '屋外ならOK': 'outdoor_only',
+	      '喫煙NG': 'no_smoking'
+	    },
+	    curfew_preference: {
+	      '門限なし希望': 'no_curfew_preferred',
+	      '門限ありでもOK': 'curfew_ok',
+	      'こだわらない': 'no_preference'
+	    },
+	    visitor_preference: {
+	      '来客OKの家庭を希望': 'visitors_allowed_preferred',
+	      '事前連絡が必要でもOK': 'prior_notice_ok',
+	      '来客NGでもOK': 'visitors_not_allowed_ok',
+	      'こだわらない': 'no_preference'
+	    },
+	    shower_limit_preference: {
+	      '時間制限なし希望': 'no_limit_preferred',
+	      '10〜15分程度ならOK': '10_15_minutes_ok',
+	      '5〜10分程度でもOK': '5_10_minutes_ok',
+	      '5分以内でもOK': '5_minutes_or_less_ok',
+	      'こだわらない': 'no_preference'
+	    },
+	    kitchen_preference: {
+	      '自由に使える家庭を希望': 'unrestricted_preferred',
+	      '時間制限があってもOK': 'time_limit_ok',
+	      'キッチンを使えなくてもOK': 'no_kitchen_ok',
+	      'こだわらない': 'no_preference'
+	    },
+	    cleaning_preference: {
+	      '毎日でもOK': 'daily_ok',
+	      '週1回程度ならOK': 'weekly_ok',
+	      '月1回程度ならOK': 'monthly_ok',
+	      '掃除当番なし希望': 'no_cleaning_roster_preferred',
+	      'こだわらない': 'no_preference'
+	    },
+	    overnight_guest_preference: {
+	      '宿泊OKの家庭を希望': 'overnight_allowed_preferred',
+	      '事前相談が必要でもOK': 'prior_consultation_ok',
+	      '宿泊NGでもOK': 'overnight_not_allowed_ok',
+	      'こだわらない': 'no_preference'
+	    }
+	  };
+
+	  function mapUiValueToDb(field, uiValue, maps) {
+	    const text = String(uiValue || '').trim();
+	    if (!text) return null;
+	    return maps[field]?.[text] || text;
+	  }
+
+	  function mapDbValueToUi(field, dbValue, maps) {
+	    const text = String(dbValue || '').trim();
+	    if (!text) return '';
+	    const map = maps[field] || {};
+	    const found = Object.entries(map).find(([, value]) => value === text);
+	    return found ? found[0] : text;
+	  }
+
+	  function toGuestProfileDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, GUEST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function fromGuestProfileDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, GUEST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function toHomestayPreferenceDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, HOMESTAY_PREFERENCE_DB_VALUE_MAPS);
+	  }
+
+	  function fromHomestayPreferenceDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, HOMESTAY_PREFERENCE_DB_VALUE_MAPS);
+	  }
 
 	  function homestayFilterProfileFromOnboarding() {
 	    const meal = selectedChipTextFromRow('hs-onboard-meal', '朝食のみ');
@@ -10500,13 +10663,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      birth_date: null,
 	      age: nullableNumber(document.getElementById('hs-onboard-age')?.value),
 	      nationality: nullableText(document.getElementById('hs-onboard-nationality')?.value),
-	      gender: nullableText(selectedChipTextFromRow('hs-onboard-gender', '')),
-	      religion: nullableText(selectedChipTextFromRow('hs-onboard-religion', '')),
-	      english_level: nullableText(selectedChipTextFromRow('hs-onboard-english-level', '')),
+	      gender: toGuestProfileDbValue('gender', selectedChipTextFromRow('hs-onboard-gender', '')),
+	      religion: toGuestProfileDbValue('religion', selectedChipTextFromRow('hs-onboard-religion', '')),
+	      english_level: toGuestProfileDbValue('english_level', selectedChipTextFromRow('hs-onboard-english-level', '')),
 	      languages: selectedChipTextsFromRow('hs-onboard-languages'),
-	      stay_status: nullableText(selectedChipTextFromRow('hs-onboard-stay-status', '')),
-	      wake_time: nullableText(selectedChipTextFromRow('hs-onboard-wake', '')),
-	      bedtime: nullableText(selectedChipTextFromRow('hs-onboard-sleep', '')),
+	      stay_status: toGuestProfileDbValue('stay_status', selectedChipTextFromRow('hs-onboard-stay-status', '')),
+	      wake_time: toGuestProfileDbValue('wake_time', selectedChipTextFromRow('hs-onboard-wake', '')),
+	      bedtime: toGuestProfileDbValue('bedtime', selectedChipTextFromRow('hs-onboard-sleep', '')),
 	      hobbies: selectedChipTextsFromRow('hs-onboard-hobbies'),
 	      bio: nullableText(document.getElementById('hs-onboard-bio')?.value)
 	    };
@@ -10519,21 +10682,21 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      stay_end_date: nullableText(document.getElementById('guest-stay-end')?.value),
 	      budget_min: nullableNumber(document.getElementById('hs-onboard-budget-min')?.value),
 	      budget_max: nullableNumber(document.getElementById('hs-onboard-budget-max')?.value),
-	      host_household_preference: nullableText(selectedChipTextFromRow('hs-onboard-family', '')),
-	      interaction_preference: nullableText(selectedChipTextFromRow('hs-onboard-frequency', '')),
-	      conversation_preference: nullableText(selectedChipTextFromRow('hs-onboard-talk', '')),
-	      meal_plan_preference: nullableText(selectedChipTextFromRow('hs-onboard-meal', '')),
-	      meal_style_preference: nullableText(selectedChipTextFromRow('hs-onboard-dining', '')),
-	      dietary_restriction: selectedChipTextsFromRow('hs-onboard-diet'),
-	      pet_preference: nullableText(selectedChipTextFromRow('hs-onboard-pets', '')),
-	      other_students_preference: nullableText(selectedChipTextFromRow('hs-onboard-students', '')),
-	      smoking_preference: nullableText(selectedChipTextFromRow('hs-onboard-smoking', '')),
-	      curfew_preference: nullableText(selectedChipTextFromRow('hs-onboard-curfew', '')),
-	      visitor_preference: nullableText(selectedChipTextFromRow('hs-onboard-visitor', '')),
-	      shower_limit_preference: nullableText(selectedChipTextFromRow('hs-onboard-shower', '')),
-	      kitchen_preference: nullableText(selectedChipTextFromRow('hs-onboard-kitchen', '')),
-	      cleaning_preference: nullableText(selectedChipTextFromRow('hs-onboard-cleaning', '')),
-	      overnight_guest_preference: nullableText(selectedChipTextFromRow('hs-onboard-overnight', '')),
+	      host_household_preference: toHomestayPreferenceDbValue('host_household_preference', selectedChipTextFromRow('hs-onboard-family', '')),
+	      interaction_preference: toHomestayPreferenceDbValue('interaction_preference', selectedChipTextFromRow('hs-onboard-frequency', '')),
+	      conversation_preference: toHomestayPreferenceDbValue('conversation_preference', selectedChipTextFromRow('hs-onboard-talk', '')),
+	      meal_plan_preference: toHomestayPreferenceDbValue('meal_plan_preference', selectedChipTextFromRow('hs-onboard-meal', '')),
+	      meal_style_preference: toHomestayPreferenceDbValue('meal_style_preference', selectedChipTextFromRow('hs-onboard-dining', '')),
+	      dietary_restriction: toHomestayPreferenceDbValue('dietary_restriction', selectedChipTextFromRow('hs-onboard-diet', '')),
+	      pet_preference: toHomestayPreferenceDbValue('pet_preference', selectedChipTextFromRow('hs-onboard-pets', '')),
+	      other_students_preference: toHomestayPreferenceDbValue('other_students_preference', selectedChipTextFromRow('hs-onboard-students', '')),
+	      smoking_preference: toHomestayPreferenceDbValue('smoking_preference', selectedChipTextFromRow('hs-onboard-smoking', '')),
+	      curfew_preference: toHomestayPreferenceDbValue('curfew_preference', selectedChipTextFromRow('hs-onboard-curfew', '')),
+	      visitor_preference: toHomestayPreferenceDbValue('visitor_preference', selectedChipTextFromRow('hs-onboard-visitor', '')),
+	      shower_limit_preference: toHomestayPreferenceDbValue('shower_limit_preference', selectedChipTextFromRow('hs-onboard-shower', '')),
+	      kitchen_preference: toHomestayPreferenceDbValue('kitchen_preference', selectedChipTextFromRow('hs-onboard-kitchen', '')),
+	      cleaning_preference: toHomestayPreferenceDbValue('cleaning_preference', selectedChipTextFromRow('hs-onboard-cleaning', '')),
+	      overnight_guest_preference: toHomestayPreferenceDbValue('overnight_guest_preference', selectedChipTextFromRow('hs-onboard-overnight', '')),
 	      other_dealbreakers: null
 	    };
 	  }
@@ -11103,16 +11266,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const profile = data || {};
 	    setInputValueById('prof-birth-date', profile.birth_date || '');
 	    updateProfileAgeFromBirthDate();
-	    if (!profile.birth_date && profile.age !== null && profile.age !== undefined) {
-	      setInputValueById('prof-age', profile.age);
-	    }
+		    if (!profile.birth_date && profile.age !== null && profile.age !== undefined) {
+		      setInputValueById('prof-age', profile.age);
+		    }
 	    setInputValueById('prof-nationality', profile.nationality || '');
-	    setSingleFormChip('prof-gender', profile.gender || '');
-	    setSingleFormChip('prof-religion', profile.religion || '');
-	    setSingleFormChip('prof-english-level', profile.english_level || '');
-    setMultiFormChips('prof-languages', profile.languages || []);
-    setSingleFormChip('prof-stay-status', profile.stay_status || '');
-  }
+	    setSingleFormChip('prof-gender', fromGuestProfileDbValue('gender', profile.gender));
+	    setSingleFormChip('prof-religion', fromGuestProfileDbValue('religion', profile.religion));
+	    setSingleFormChip('prof-english-level', fromGuestProfileDbValue('english_level', profile.english_level));
+	    setMultiFormChips('prof-languages', profile.languages || []);
+	    setSingleFormChip('prof-stay-status', fromGuestProfileDbValue('stay_status', profile.stay_status));
+	  }
 
   function applyHomestayGuestPreferencesToProfileScreen(data) {
     const prefs = data || {};
@@ -11311,17 +11474,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   function guestProfilePayloadFromProfileScreen() {
     const birthDate = nullableText(document.getElementById('prof-birth-date')?.value);
     const age = birthDate ? calculateAgeFromBirthDate(birthDate) : null;
-    return {
-      birth_date: birthDate,
-      age,
-      nationality: nullableText(document.getElementById('prof-nationality')?.value),
-      gender: nullableText(selectedChipText('prof-gender', '')),
-      religion: nullableText(selectedChipText('prof-religion', '')),
-      english_level: nullableText(selectedChipText('prof-english-level', '')),
-      languages: selectedChipTexts('#prof-languages'),
-      stay_status: nullableText(selectedChipText('prof-stay-status', ''))
-    };
-  }
+	    return {
+	      birth_date: birthDate,
+	      age,
+	      nationality: nullableText(document.getElementById('prof-nationality')?.value),
+	      gender: toGuestProfileDbValue('gender', selectedChipText('prof-gender', '')),
+	      religion: toGuestProfileDbValue('religion', selectedChipText('prof-religion', '')),
+	      english_level: toGuestProfileDbValue('english_level', selectedChipText('prof-english-level', '')),
+	      languages: selectedChipTexts('#prof-languages'),
+	      stay_status: toGuestProfileDbValue('stay_status', selectedChipText('prof-stay-status', ''))
+	    };
+	  }
 
   function homestayGuestPreferencesPayloadFromProfileScreen() {
     return {
