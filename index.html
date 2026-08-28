@@ -11434,6 +11434,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let currentHomestayListing = null;
 	  let currentHomestayListingDetails = null;
 	  let currentHomestayListingPrivateDetails = null;
+	  let currentHomestayHostStudents = [];
 	  let currentHomestayHostDataLoaded = false;
   const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
@@ -11614,6 +11615,47 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  function homestayListingDetailsPayloadFromOnboarding() {
 	    return homestayListingDetailsPayloadFromForm('ob');
+	  }
+
+	  function hostStudentHobbiesArray(value) {
+	    if (Array.isArray(value)) return value.map(item => String(item || '').trim()).filter(Boolean);
+	    return splitFreeTextList(value);
+	  }
+
+	  function homestayHostStudentUiFromDbRow(row = {}) {
+	    const wake = fromHostProfileDbValue('wake_time', row.wake_time);
+	    const sleep = fromHostProfileDbValue('bedtime', row.bedtime);
+	    return {
+	      id: row.id || null,
+	      age: row.age ?? '',
+	      gender: fromHostProfileDbValue('gender', row.gender) || '選択しない',
+	      nationality: row.nationality || '',
+	      wake: wake || '',
+	      sleep: sleep || '',
+	      lifestyle: `起床時間：${wake || '未設定'} / 就寝時間：${sleep || '未設定'}`,
+	      hobbies: hostStudentHobbiesArray(row.hobbies).join('、'),
+	      stay: row.stay_period || ''
+	    };
+	  }
+
+	  function replaceHostInternationalStudentsFromDb(rows = []) {
+	    hostInternationalStudents.splice(0, hostInternationalStudents.length);
+	    rows.forEach(row => hostInternationalStudents.push(homestayHostStudentUiFromDbRow(row)));
+	    renderHostStudentEditors();
+	  }
+
+	  function homestayHostStudentPayloadsFromUi(userId) {
+	    return hostInternationalStudents.map((student, index) => ({
+	      host_user_id: userId,
+	      age: nullableInteger(student.age),
+	      gender: toHostProfileDbValue('gender', student.gender),
+	      nationality: nullableText(student.nationality),
+	      wake_time: toHostProfileDbValue('wake_time', student.wake),
+	      bedtime: toHostProfileDbValue('bedtime', student.sleep),
+	      hobbies: hostStudentHobbiesArray(student.hobbies),
+	      stay_period: nullableText(student.stay),
+	      sort_order: index
+	    }));
 	  }
 
 	  function validateHomestayHostListingPayload(payload) {
@@ -12606,6 +12648,47 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  }
 
+	  async function syncHomestayHostStudentsToSupabase(userId, hasStudents) {
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existingRows, error: selectError } = await window._supabase
+	        .from('homestay_host_students')
+	        .select('id')
+	        .eq('host_user_id', userId);
+	      if (selectError) throw selectError;
+
+	      if (Array.isArray(existingRows) && existingRows.length) {
+	        const { error: deleteError } = await window._supabase
+	          .from('homestay_host_students')
+	          .delete()
+	          .eq('host_user_id', userId);
+	        if (deleteError) throw deleteError;
+	      }
+
+	      if (!hasStudents) {
+	        currentHomestayHostStudents = [];
+	        window._currentHomestayHostStudents = currentHomestayHostStudents;
+	        return true;
+	      }
+
+	      const payloads = homestayHostStudentPayloadsFromUi(userId);
+	      if (!payloads.length) {
+	        currentHomestayHostStudents = [];
+	        window._currentHomestayHostStudents = currentHomestayHostStudents;
+	        return true;
+	      }
+
+	      const { error: insertError } = await window._supabase
+	        .from('homestay_host_students')
+	        .insert(payloads);
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_host_students sync error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveHostUserModeToSupabase() {
 	    const userId = window._currentUser?.id;
 	    if (!userId || !window._supabase?.from) return false;
@@ -12682,6 +12765,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details. Please try again.' : '住所情報を保存できませんでした。もう一度お試しください。' };
 	    }
 
+	    const savedStudents = await syncHomestayHostStudentsToSupabase(userId, hostProfilePayload.other_students_present === true);
+	    if (!savedStudents) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
 	    const savedMode = await saveHostUserModeToSupabase();
 	    if (!savedMode) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode. Please try again.' : 'ホスト登録状態を保存できませんでした。もう一度お試しください。' };
@@ -12728,7 +12816,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host name. Please try again.' : 'ホスト名を保存できませんでした。もう一度お試しください。' };
 	    }
 
-	    const savedHostProfile = await updateExistingHomestayHostProfileToSupabase(userId, homestayHostProfilePayloadFromForm('profile', userId));
+	    const hostProfilePayload = homestayHostProfilePayloadFromForm('profile', userId);
+	    const savedHostProfile = await updateExistingHomestayHostProfileToSupabase(userId, hostProfilePayload);
 	    if (!savedHostProfile) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host profile. Please try again.' : 'ホスト情報を保存できませんでした。もう一度お試しください。' };
 	    }
@@ -12748,6 +12837,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    });
 	    if (!savedPrivateDetails) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details. Please try again.' : '住所情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedStudents = await syncHomestayHostStudentsToSupabase(userId, hostProfilePayload.other_students_present === true);
+	    if (!savedStudents) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
 	    }
 
 	    const reloaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
@@ -12832,6 +12926,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const hostProfile = data.hostProfile || {};
 	    const listing = data.listing || {};
 	    const details = data.details || {};
+	    const students = Array.isArray(data.students) ? data.students : currentHomestayHostStudents;
 	    if (!hostProfile.user_id && !listing.id) return;
 
 	    const host = HOSTS.sarah;
@@ -12897,7 +12992,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        lifestyle: `起床時間：${hostDisplayValue(fromHostProfileDbValue('partner_wake_time', hostProfile.partner_wake_time))} / 就寝時間：${hostDisplayValue(fromHostProfileDbValue('partner_bedtime', hostProfile.partner_bedtime))}`,
 	        hobbies: hostDisplayValue(hostProfile.partner_hobbies, '')
 	      },
-	      students: []
+	      students: (Array.isArray(students) ? students : []).map(homestayHostStudentUiFromDbRow)
 	    };
 	    host.room = [
 	      { label: '部屋タイプ', val: roomType },
@@ -13008,6 +13103,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const studentPresence = hostProfile.other_students_present === true ? 'いる' : hostProfile.other_students_present === false ? 'いない' : '';
 	    setSingleFormChip('host-profile-student-presence', studentPresence);
 	    setHostStudentFieldsVisibility('host-profile', hostProfile.other_students_present === true);
+	    renderHostStudentEditors();
 	    setSingleFormChip('host-profile-smoking-status', fromHostProfileDbValue('smoking_environment', hostProfile.smoking_environment));
 	    setSingleFormChip('host-profile-wake', fromHostProfileDbValue('wake_time', hostProfile.wake_time));
 	    setSingleFormChip('host-profile-sleep', fromHostProfileDbValue('bedtime', hostProfile.bedtime));
@@ -13061,7 +13157,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        hostProfile: currentHomestayHostProfile,
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
-	        privateDetails: currentHomestayListingPrivateDetails
+	        privateDetails: currentHomestayListingPrivateDetails,
+	        students: currentHomestayHostStudents
 	      });
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
@@ -13092,6 +13189,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        .maybeSingle();
 	      if (listingError) throw listingError;
 
+	      const { data: students, error: studentsError } = await window._supabase
+	        .from('homestay_host_students')
+	        .select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at')
+	        .eq('host_user_id', userId)
+	        .order('sort_order', { ascending: true })
+	        .order('created_at', { ascending: true });
+	      if (studentsError) throw studentsError;
+
 	      let details = null;
 	      let privateDetails = null;
 	      if (listing?.id) {
@@ -13119,10 +13224,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      currentHomestayListing = listing || null;
 	      currentHomestayListingDetails = details || null;
 	      currentHomestayListingPrivateDetails = privateDetails || null;
+	      currentHomestayHostStudents = Array.isArray(students) ? students : [];
 	      window._currentHomestayHostProfile = currentHomestayHostProfile;
 	      window._currentHomestayListing = currentHomestayListing;
 	      window._currentHomestayListingDetails = currentHomestayListingDetails;
 	      window._currentHomestayListingPrivateDetails = currentHomestayListingPrivateDetails;
+	      window._currentHomestayHostStudents = currentHomestayHostStudents;
+	      replaceHostInternationalStudentsFromDb(currentHomestayHostStudents);
 	      currentHomestayHostDataLoaded = !!(hostProfile || listing);
 
 	      if (!currentHomestayHostDataLoaded) return false;
@@ -13131,7 +13239,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        hostProfile: currentHomestayHostProfile,
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
-	        privateDetails: currentHomestayListingPrivateDetails
+	        privateDetails: currentHomestayListingPrivateDetails,
+	        students: currentHomestayHostStudents
 	      });
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
@@ -13302,6 +13411,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
 	    const hasStudents = el.textContent.trim().includes('いる') || el.textContent.trim().includes('Yes');
 	    setHostStudentFieldsVisibility(prefix, hasStudents);
+	    renderHostStudentEditors();
 	  }
 
 	  function updateHostConditionalFields(prefix) {
@@ -13383,14 +13493,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const wake = selectedChipText(prefix + '-student-wake', '6〜8時');
 	    const sleep = selectedChipText(prefix + '-student-sleep', '22〜23時');
 	    hostInternationalStudents.push({
-	      age: formValue(prefix + '-student-age', '未入力'),
+	      age: formValue(prefix + '-student-age', ''),
 	      gender: genderEl?.textContent.trim() || '選択しない',
-	      nationality: formValue(prefix + '-student-nationality', '未入力'),
+	      nationality: formValue(prefix + '-student-nationality', ''),
 	      wake,
 	      sleep,
 	      lifestyle: `起床時間：${wake} / 就寝時間：${sleep}`,
-	      hobbies: formValue(prefix + '-student-hobbies', '未入力'),
-	      stay: formValue(prefix + '-student-stay', '未入力')
+	      hobbies: formValue(prefix + '-student-hobbies', ''),
+	      stay: formValue(prefix + '-student-stay', '')
 	    });
 	    ['age','nationality','hobbies','stay'].forEach(key => {
 	      const el = document.getElementById(prefix + '-student-' + key);
@@ -13437,7 +13547,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const container = document.getElementById(containerId);
 	    if (!container) return;
 	    if (hostInternationalStudents.length === 0) {
-	      container.innerHTML = `<div style="font-size:13px;color:var(--light);padding:10px 0;">${localizeText('同居している留学生はいません')}</div>`;
+	      const prefix = containerId.startsWith('host-profile') ? 'host-profile' : containerId.startsWith('host-ob') ? 'host-ob' : '';
+	      const selectedPresence = prefix ? selectedChipText(prefix + '-student-presence', '') : '';
+	      const message = selectedPresence.includes('いる')
+	        ? '留学生情報を追加してください'
+	        : '留学生情報は未登録です';
+	      container.innerHTML = `<div style="font-size:13px;color:var(--light);padding:10px 0;">${localizeText(message)}</div>`;
 	      return;
 	    }
 	    container.innerHTML = hostInternationalStudents.map((m, i) => `
