@@ -5311,6 +5311,7 @@
 	          <div class="form-chip" onclick="toggleChip(this)">室内でも吸う</div>
 	        </div>
 	      </div>
+	      <div class="form-group"><div class="form-label">自己紹介</div><textarea class="form-textarea" id="host-ob-note" placeholder="自己紹介">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea></div>
 	      <div class="form-section-title">🌙 ホストの生活スタイル</div>
 	      <div class="form-group"><div class="form-label">起床時間</div><div class="form-chip-row" id="host-ob-wake"><div class="form-chip" onclick="toggleChip(this)">6時以前</div><div class="form-chip selected" onclick="toggleChip(this)">6〜8時</div><div class="form-chip" onclick="toggleChip(this)">8〜9時</div><div class="form-chip" onclick="toggleChip(this)">9時以降</div></div></div>
 	      <div class="form-group"><div class="form-label">就寝時間</div><div class="form-chip-row" id="host-ob-sleep"><div class="form-chip" onclick="toggleChip(this)">21〜22時</div><div class="form-chip selected" onclick="toggleChip(this)">22〜23時</div><div class="form-chip" onclick="toggleChip(this)">23時以降</div></div></div>
@@ -5319,7 +5320,6 @@
 	      <div class="form-group"><div class="form-label">趣味</div><div class="form-chip-row" id="host-ob-hobbies"><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🎵 音楽</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🎬 映画</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">📚 読書</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🍳 料理</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🏃 スポーツ</div><div class="form-chip selected" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">🌿 アウトドア</div><div class="form-chip" onclick="toggleHostOtherField(this,'host-ob-hobby-other-wrap')">その他</div></div><div id="host-ob-hobby-other-wrap" style="display:none;margin-top:10px;"><input class="form-input" id="host-ob-hobby-other" type="text" placeholder="その他の趣味" /></div></div>
 	      <input type="hidden" id="host-ob-ng" value="喫煙、深夜の大きな音、無断の来客宿泊" />
 	      <input type="hidden" id="host-ob-values" value="清潔さ、思いやり、適度な会話" />
-	      <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="host-ob-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea></div>
 	    </div>
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
@@ -6416,7 +6416,7 @@
 	          </div>
 	          <input type="hidden" id="host-profile-ng" value="喫煙、深夜の大きな音、無断の来客宿泊" />
 	          <input type="hidden" id="host-profile-values" value="清潔さ、思いやり、適度な会話" />
-	          <textarea class="form-textarea" id="host-profile-note" placeholder="一言">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
+	          <textarea class="form-textarea" id="host-profile-note" placeholder="自己紹介">家族の一員のように温かく迎えます。生活ルールを大切にしながら、安心して滞在できる環境です。</textarea>
 	        </div>
 	      </div>
 	      <div class="homestay-profile-only" style="border-top:1px solid var(--border);padding-top:16px;">
@@ -11729,6 +11729,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        </div>
 	      </div>
 	      <div class="form-group"><div class="form-label">喫煙者かどうか</div>${hostChipRowHtml(`${prefix}-smoking-status`, ['吸わない','屋外で吸う','室内でも吸う'])}</div>
+	      <div class="form-group"><div class="form-label">自己紹介</div><textarea class="form-textarea" id="${prefix}-note" placeholder="自己紹介"></textarea></div>
 	      <div class="form-section-title">🌙 ホストの生活スタイル</div>
 	      <div class="form-group"><div class="form-label">起床時間</div>${hostChipRowHtml(`${prefix}-wake`, ['6時以前','6〜8時','8〜9時','9時以降'])}</div>
 	      <div class="form-group"><div class="form-label">就寝時間</div>${hostChipRowHtml(`${prefix}-sleep`, ['21〜22時','22〜23時','23時以降'])}</div>
@@ -11741,7 +11742,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      </div>
 	      <input type="hidden" id="${prefix}-ng" value="" />
 	      <input type="hidden" id="${prefix}-values" value="" />
-	      <div class="form-group"><div class="form-label">一言</div><textarea class="form-textarea" id="${prefix}-note" placeholder="一言"></textarea></div>
 	    `;
 	  }
 
@@ -13007,8 +13007,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setInputValueById('host-profile-partner-hobbies', Array.isArray(hostProfile.partner_hobbies) ? hostProfile.partner_hobbies.join('、') : '');
 	    const studentPresence = hostProfile.other_students_present === true ? 'いる' : hostProfile.other_students_present === false ? 'いない' : '';
 	    setSingleFormChip('host-profile-student-presence', studentPresence);
-	    const studentFields = document.getElementById('host-profile-student-fields');
-	    if (studentFields) studentFields.style.display = hostProfile.other_students_present === true ? 'block' : 'none';
+	    setHostStudentFieldsVisibility('host-profile', hostProfile.other_students_present === true);
 	    setSingleFormChip('host-profile-smoking-status', fromHostProfileDbValue('smoking_environment', hostProfile.smoking_environment));
 	    setSingleFormChip('host-profile-wake', fromHostProfileDbValue('wake_time', hostProfile.wake_time));
 	    setSingleFormChip('host-profile-sleep', fromHostProfileDbValue('bedtime', hostProfile.bedtime));
@@ -13291,11 +13290,18 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (other) other.style.display = isOther ? 'block' : 'none';
 	  }
 
+	  function setHostStudentFieldsVisibility(prefix, hasStudents) {
+	    const fields = document.getElementById(prefix + '-student-fields');
+	    const form = document.getElementById(prefix + '-student-form');
+	    if (fields) fields.style.display = hasStudents ? 'block' : 'none';
+	    if (form) form.style.display = hasStudents ? 'block' : 'none';
+	  }
+
 	  function toggleHostStudentFields(el, scope) {
 	    toggleChip(el);
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
-	    const fields = document.getElementById(prefix + '-student-fields');
-	    if (fields) fields.style.display = el.textContent.trim().includes('いる') || el.textContent.trim().includes('Yes') ? 'block' : 'none';
+	    const hasStudents = el.textContent.trim().includes('いる') || el.textContent.trim().includes('Yes');
+	    setHostStudentFieldsVisibility(prefix, hasStudents);
 	  }
 
 	  function updateHostConditionalFields(prefix) {
