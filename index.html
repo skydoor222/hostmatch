@@ -5339,7 +5339,7 @@
       <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-ob-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /></div>
       <input type="hidden" id="host-ob-nightly-price" value="50" />
       <div class="form-section-title">🖼️ 部屋情報</div>
-      <div class="form-group"><div class="form-label">部屋の写真</div><label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span><span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、1枚10MBまで。複数枚選択できます</span><input id="host-ob-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'ob')" style="display:none;" /></label><div id="host-ob-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div><div id="host-ob-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div></div>
+      <div class="form-group"><div class="form-label">部屋の写真</div><label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span><span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、1枚10MBまで。複数枚選択できます</span><input id="host-ob-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'ob')" style="display:none;" /></label><div id="host-ob-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div><div id="host-ob-room-photo-count" style="font-size:12px;color:var(--light);font-weight:800;margin-top:6px;">0 / 10枚</div><div id="host-ob-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div></div>
       <div class="form-group"><div class="form-label">部屋タイプ</div><div class="form-chip-row" id="host-ob-room-type"><div class="form-chip selected" onclick="toggleChip(this)">個室</div><div class="form-chip" onclick="toggleChip(this)">相部屋</div></div></div>
       <div class="form-group"><div class="form-label">家具</div><div class="form-chip-row" id="host-ob-furniture"><div class="form-chip selected" onclick="toggleChip(this)">家具付き</div><div class="form-chip" onclick="toggleChip(this)">家具なし</div></div></div>
       <div class="form-group"><div class="form-label">部屋の階</div><div class="form-chip-row" id="host-ob-room-floor"><div class="form-chip" onclick="toggleChip(this)">ベースメント</div><div class="form-chip selected" onclick="toggleChip(this)">1階</div><div class="form-chip" onclick="toggleChip(this)">2階</div><div class="form-chip" onclick="toggleChip(this)">3階以上</div></div></div>
@@ -11448,9 +11448,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingHomestayRoomPhotoFiles = { ob: [], profile: [] };
 	  const pendingHomestayListingPhotoDeleteIds = new Set();
-  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+	  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
 	  const LISTING_PHOTO_MAX_SIZE = 10 * 1024 * 1024;
+	  const HOMESTAY_ROOM_PHOTO_MAX_COUNT = 10;
 
   function nullableText(value) {
     const trimmed = String(value || '').trim();
@@ -11722,6 +11723,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          <input id="${prefix}-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'${scope}')" style="display:none;" />
 	        </label>
 	        <div id="${prefix}-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	        <div id="${prefix}-room-photo-count" style="font-size:12px;color:var(--light);font-weight:800;margin-top:6px;">0 / 10枚</div>
 	        <div id="${prefix}-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div>
 	      </div>
 	    `;
@@ -12411,6 +12413,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const messages = {
 	      type: currentLang === 'en' ? `${name}Please select JPG, PNG, or WebP room photos.` : `${name}JPG / PNG / WebP形式の部屋写真を選択してください。`,
 	      size: currentLang === 'en' ? `${name}Please select room photos up to 10MB each.` : `${name}1枚10MB以下の部屋写真を選択してください。`,
+	      count: currentLang === 'en' ? 'You can register up to 10 room photos.' : '部屋写真は最大10枚まで登録できます。',
 	      user: currentLang === 'en' ? 'Please log in again before saving room photos.' : '部屋写真を保存するには再度ログインしてください。'
 	    };
 	    return messages[key] || (currentLang === 'en' ? 'Could not save room photos.' : '部屋写真を保存できませんでした。');
@@ -12432,14 +12435,29 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    pendingHomestayRoomPhotoFiles[key] = [];
 	  }
 
+	  function roomPhotoFileKey(file) {
+	    return [file?.name || '', file?.size || 0, file?.lastModified || 0].join(':');
+	  }
+
+	  function visibleHomestayListingPhotoCount() {
+	    return (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
+	      .filter(photo => photo?.id && !pendingHomestayListingPhotoDeleteIds.has(photo.id))
+	      .length;
+	  }
+
+	  function currentHomestayRoomPhotoCount(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    return visibleHomestayListingPhotoCount() + pendingHomestayRoomPhotoFiles[key].length;
+	  }
+
 	  function handleHomestayHostRoomPhotoSelection(event, scope) {
 	    const key = homestayHostPhotoScope(scope);
 	    const input = event?.target;
 	    const files = Array.from(input?.files || []);
 	    setHomestayRoomPhotoMessage(key, '');
-	    clearPendingHomestayRoomPhotos(key);
 
 	    if (!files.length) {
+	      if (input) input.value = '';
 	      renderHomestayHostRoomPhotoPreview(key);
 	      return;
 	    }
@@ -12460,10 +12478,21 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return;
 	    }
 
-	    pendingHomestayRoomPhotoFiles[key] = files.map(file => ({
+	    const existingPendingKeys = new Set(pendingHomestayRoomPhotoFiles[key].map(item => roomPhotoFileKey(item.file)));
+	    const uniqueFiles = files.filter(file => !existingPendingKeys.has(roomPhotoFileKey(file)));
+	    const nextCount = visibleHomestayListingPhotoCount() + pendingHomestayRoomPhotoFiles[key].length + uniqueFiles.length;
+	    if (nextCount > HOMESTAY_ROOM_PHOTO_MAX_COUNT) {
+	      if (input) input.value = '';
+	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('count'));
+	      renderHomestayHostRoomPhotoPreview(key);
+	      return;
+	    }
+
+	    pendingHomestayRoomPhotoFiles[key].push(...uniqueFiles.map(file => ({
 	      file,
 	      previewUrl: URL.createObjectURL(file)
-	    }));
+	    })));
+	    if (input) input.value = '';
 	    renderHomestayHostRoomPhotoPreview(key);
 	  }
 
@@ -12490,6 +12519,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!container) return;
 	    const existingPhotos = (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
 	      .filter(photo => photo?.id && !pendingHomestayListingPhotoDeleteIds.has(photo.id));
+	    const countEl = document.getElementById(`${prefix}-room-photo-count`);
+	    if (countEl) countEl.textContent = `${existingPhotos.length + pendingHomestayRoomPhotoFiles[key].length} / ${HOMESTAY_ROOM_PHOTO_MAX_COUNT}枚`;
 	    const existingHtml = existingPhotos.map(photo => {
 	      const url = homestayListingPhotoPublicUrl(photo.storage_path);
 	      if (!url) return '';
