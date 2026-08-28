@@ -6864,7 +6864,7 @@
     if (typeof applyLang === 'function') applyLang();
   }
 
-  async function restoreGuestModeFromUserModes(user) {
+  async function restoreUserModeFromUserModes(user) {
     const modes = await loadCurrentUserModes(user);
     if (!modes || modes.length !== 1) {
       showTypeSelectScreen();
@@ -6872,20 +6872,30 @@
     }
 
     const mode = modes[0];
-    if (mode.role !== 'guest' || !['homestay', 'sharehouse'].includes(mode.housing_type)) {
+    const isGuestMode = mode.role === 'guest' && ['homestay', 'sharehouse'].includes(mode.housing_type);
+    const isHomestayHostMode = mode.role === 'host' && mode.housing_type === 'homestay';
+    if (isGuestMode || isHomestayHostMode) {
+      window._pendingUserModeRestore = { housingType: mode.housing_type, role: mode.role };
+      window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housing_type : null;
+      if (typeof window.applyPendingUserModeRestore === 'function') return await window.applyPendingUserModeRestore();
+      if (mode.role === 'guest' && typeof window.applyPendingGuestModeRestore === 'function') return window.applyPendingGuestModeRestore();
       showTypeSelectScreen();
       return false;
     }
 
-    window._pendingGuestModeRestore = mode.housing_type;
-    if (typeof window.applyPendingGuestModeRestore === 'function') window.applyPendingGuestModeRestore();
-    else showTypeSelectScreen();
-    return true;
+    showTypeSelectScreen();
+    return false;
+  }
+
+  async function restoreGuestModeFromUserModes(user) {
+    return await restoreUserModeFromUserModes(user);
   }
 
   window.loadCurrentUserProfile = loadCurrentUserProfile;
   window.applyCurrentUserProfile = applyCurrentUserProfile;
   window.loadCurrentUserModes = loadCurrentUserModes;
+  window.showTypeSelectScreen = showTypeSelectScreen;
+  window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
   window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
 
   function showLoggedOutScreen() {
@@ -6903,7 +6913,7 @@
     loadCurrentUserProfile(user);
     document.getElementById('app-loading').style.display = 'none';
     if (!window.currentScreen || window.currentScreen === 'login') {
-      await restoreGuestModeFromUserModes(user);
+      await restoreUserModeFromUserModes(user);
     }
   }
 
@@ -17805,19 +17815,56 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   /* ===== 検索カテゴリ切り替え ===== */
   let currentSearchCat = 'homestay';
 
-  function applyPendingGuestModeRestore() {
-    const housingType = window._pendingGuestModeRestore;
-    if (!['homestay', 'sharehouse'].includes(housingType)) return false;
+  async function applyPendingUserModeRestore() {
+    const pendingMode = window._pendingUserModeRestore || (
+      window._pendingGuestModeRestore
+        ? { housingType: window._pendingGuestModeRestore, role: 'guest' }
+        : null
+    );
+    if (!pendingMode) return false;
+    const housingType = pendingMode.housingType;
+    const role = pendingMode.role;
+    window._pendingUserModeRestore = null;
     window._pendingGuestModeRestore = null;
-    currentRole = 'guest';
-    currentSearchCat = housingType;
-    window._serviceType = housingType;
-    navigate('type-select', 'search');
+
+    if (role === 'guest' && ['homestay', 'sharehouse'].includes(housingType)) {
+      currentRole = 'guest';
+      currentSearchCat = housingType;
+      window._serviceType = housingType;
+      navigate('type-select', 'search');
+      return true;
+    }
+
+    if (role === 'host' && housingType === 'homestay') {
+      currentRole = 'host';
+      currentSearchCat = 'homestay';
+      window._serviceType = 'homestay';
+      const loaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+      if (!loaded) {
+        if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+        return false;
+      }
+      navigate('type-select', 'host-dashboard');
+      return true;
+    }
+
+    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+    return false;
+  }
+
+  function applyPendingGuestModeRestore() {
+    if (!window._pendingGuestModeRestore) return false;
+    window._pendingUserModeRestore = {
+      housingType: window._pendingGuestModeRestore,
+      role: 'guest'
+    };
+    applyPendingUserModeRestore();
     return true;
   }
 
+  window.applyPendingUserModeRestore = applyPendingUserModeRestore;
   window.applyPendingGuestModeRestore = applyPendingGuestModeRestore;
-  applyPendingGuestModeRestore();
+  applyPendingUserModeRestore();
 
 	  function switchSearchCat(cat, skipApply = false) {
 	    currentSearchCat = cat;
