@@ -4375,8 +4375,12 @@
           <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
         </div>
 	        <div class="form-group">
+	          <div class="form-label">生年月日</div>
+	          <input class="form-input" id="hs-onboard-birth-date" type="date" onchange="updateHomestayOnboardingAgeFromBirthDate()" />
+	        </div>
+	        <div class="form-group">
 	          <div class="form-label">年齢</div>
-	          <input class="form-input" id="hs-onboard-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+	          <input class="form-input" id="hs-onboard-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
 	        </div>
 	        <div class="form-group">
 	          <div class="form-label">国籍</div>
@@ -10661,9 +10665,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function guestProfilePayloadFromHomestayOnboarding() {
+	    const birthDate = nullableText(document.getElementById('hs-onboard-birth-date')?.value);
 	    return {
-	      birth_date: null,
-	      age: nullableNumber(document.getElementById('hs-onboard-age')?.value),
+	      birth_date: birthDate,
+	      age: birthDate && !isFutureDateInputValue(birthDate) ? calculateAgeFromBirthDate(birthDate) : null,
 	      nationality: nullableText(document.getElementById('hs-onboard-nationality')?.value),
 	      gender: toGuestProfileDbValue('gender', selectedChipTextFromRow('hs-onboard-gender', '')),
 	      religion: toGuestProfileDbValue('religion', selectedChipTextFromRow('hs-onboard-religion', '')),
@@ -10705,6 +10710,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  async function saveHomestayGuestOnboardingToSupabase() {
 	    lastHomestayOnboardingSaveError = '';
+	    setHomestayOnboardingBirthDateMax();
+	    const birthDate = document.getElementById('hs-onboard-birth-date')?.value || '';
+	    if (isFutureDateInputValue(birthDate)) {
+	      lastHomestayOnboardingSaveError = 'birth_date';
+	      updateHomestayOnboardingAgeFromBirthDate();
+	      console.warn('Supabase homestay onboarding birth_date validation error:', birthDate);
+	      return false;
+	    }
+	    updateHomestayOnboardingAgeFromBirthDate();
 	    const guestProfilePayload = guestProfilePayloadFromHomestayOnboarding();
 	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload);
 	    if (!savedGuestProfile) {
@@ -11239,16 +11253,53 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return age >= 0 ? age : null;
   }
 
-  function updateProfileAgeFromBirthDate() {
-    const birthDateInput = document.getElementById('prof-birth-date');
-    const ageInput = document.getElementById('prof-age');
-    if (!ageInput) return null;
+	  function updateProfileAgeFromBirthDate() {
+	    const birthDateInput = document.getElementById('prof-birth-date');
+	    const ageInput = document.getElementById('prof-age');
+	    if (!ageInput) return null;
     const age = calculateAgeFromBirthDate(birthDateInput?.value || '');
     ageInput.value = age === null ? '' : String(age);
     return age;
-  }
+	  }
 
-  window.updateProfileAgeFromBirthDate = updateProfileAgeFromBirthDate;
+	  window.updateProfileAgeFromBirthDate = updateProfileAgeFromBirthDate;
+
+	  function todayDateInputValue() {
+	    const today = new Date();
+	    const yyyy = today.getFullYear();
+	    const mm = String(today.getMonth() + 1).padStart(2, '0');
+	    const dd = String(today.getDate()).padStart(2, '0');
+	    return `${yyyy}-${mm}-${dd}`;
+	  }
+
+	  function isFutureDateInputValue(value) {
+	    if (!value) return false;
+	    const date = new Date(`${value}T00:00:00`);
+	    const today = new Date(`${todayDateInputValue()}T00:00:00`);
+	    return !Number.isNaN(date.getTime()) && date > today;
+	  }
+
+	  function setHomestayOnboardingBirthDateMax() {
+	    const input = document.getElementById('hs-onboard-birth-date');
+	    if (input) input.max = todayDateInputValue();
+	  }
+
+	  function updateHomestayOnboardingAgeFromBirthDate() {
+	    setHomestayOnboardingBirthDateMax();
+	    const birthDateInput = document.getElementById('hs-onboard-birth-date');
+	    const ageInput = document.getElementById('hs-onboard-age');
+	    if (!ageInput) return null;
+	    const value = birthDateInput?.value || '';
+	    if (!value || isFutureDateInputValue(value)) {
+	      ageInput.value = '';
+	      return null;
+	    }
+	    const age = calculateAgeFromBirthDate(value);
+	    ageInput.value = age === null ? '' : String(age);
+	    return age;
+	  }
+
+	  window.updateHomestayOnboardingAgeFromBirthDate = updateHomestayOnboardingAgeFromBirthDate;
 
   function setInputValueById(id, value) {
     const el = document.getElementById(id);
@@ -13544,6 +13595,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        document.getElementById('hs-onboard-avatar-preview'),
 	        pendingHomestayOnboardingAvatarPreviewUrl || window._currentProfile?.avatar_url || ''
 	      );
+	      updateHomestayOnboardingAgeFromBirthDate();
 	    }
 	  }
 
@@ -13604,6 +13656,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        if (!savedHomestayOnboarding) {
 	          const message = lastHomestayOnboardingSaveError === 'avatar'
 	            ? (currentLang === 'ja' ? 'プロフィール写真を保存できませんでした。もう一度お試しください。' : 'Could not save your profile photo. Please try again.')
+	            : lastHomestayOnboardingSaveError === 'birth_date'
+	              ? (currentLang === 'ja' ? '生年月日を確認してください。未来の日付は選択できません。' : 'Please check your date of birth. Future dates cannot be selected.')
 	            : (currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
 	          showToast(message);
 	          return;
