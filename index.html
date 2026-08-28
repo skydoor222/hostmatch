@@ -5166,11 +5166,12 @@
 	      <div class="form-group">
 	        <div class="form-label">プロフィール写真</div>
 	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-	          <span style="font-size:34px;">👤</span>
+	          <span id="host-ob-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
 	          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
-	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-	          <input type="file" accept="image/*" style="display:none;" />
+	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+	          <input id="host-ob-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'ob')" style="display:none;" />
 	        </label>
+	        <div id="host-ob-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">ホスト名</div>
@@ -5338,7 +5339,7 @@
       <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="host-ob-monthly-rent" type="number" min="0" inputmode="numeric" value="1500" placeholder="1500 CAD / month" /></div>
       <input type="hidden" id="host-ob-nightly-price" value="50" />
       <div class="form-section-title">🖼️ 部屋情報</div>
-      <div class="form-group"><div class="form-label">部屋の写真</div><label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span><span style="font-size:12px;color:var(--light);">複数枚選択できます</span><input type="file" accept="image/*" multiple style="display:none;" /></label></div>
+      <div class="form-group"><div class="form-label">部屋の写真</div><label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;"><span style="font-size:28px;">📷</span><span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span><span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、1枚10MBまで。複数枚選択できます</span><input id="host-ob-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'ob')" style="display:none;" /></label><div id="host-ob-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div><div id="host-ob-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div></div>
       <div class="form-group"><div class="form-label">部屋タイプ</div><div class="form-chip-row" id="host-ob-room-type"><div class="form-chip selected" onclick="toggleChip(this)">個室</div><div class="form-chip" onclick="toggleChip(this)">相部屋</div></div></div>
       <div class="form-group"><div class="form-label">家具</div><div class="form-chip-row" id="host-ob-furniture"><div class="form-chip selected" onclick="toggleChip(this)">家具付き</div><div class="form-chip" onclick="toggleChip(this)">家具なし</div></div></div>
       <div class="form-group"><div class="form-label">部屋の階</div><div class="form-chip-row" id="host-ob-room-floor"><div class="form-chip" onclick="toggleChip(this)">ベースメント</div><div class="form-chip selected" onclick="toggleChip(this)">1階</div><div class="form-chip" onclick="toggleChip(this)">2階</div><div class="form-chip" onclick="toggleChip(this)">3階以上</div></div></div>
@@ -6806,6 +6807,10 @@
       const img = document.createElement('img');
       img.src = avatarUrl;
       img.alt = 'Profile photo';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.display = 'block';
       el.appendChild(img);
     } else {
       el.textContent = '';
@@ -6817,6 +6822,8 @@
 	    renderAvatarElement(document.querySelector('.mypage-avatar'), avatarUrl);
 	    renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
 	    renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), avatarUrl);
+	    renderAvatarElement(document.getElementById('host-ob-avatar-preview'), avatarUrl);
+	    renderAvatarElement(document.getElementById('host-profile-avatar-preview'), avatarUrl);
 	  }
 
   window.renderAvatarElement = renderAvatarElement;
@@ -11435,9 +11442,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let currentHomestayListingDetails = null;
 	  let currentHomestayListingPrivateDetails = null;
 	  let currentHomestayHostStudents = [];
+	  let currentHomestayListingPhotos = [];
 	  let currentHomestayHostDataLoaded = false;
+	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
+	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
+	  const pendingHomestayRoomPhotoFiles = { ob: [], profile: [] };
+	  const pendingHomestayListingPhotoDeleteIds = new Set();
   const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+	  const LISTING_PHOTO_MAX_SIZE = 10 * 1024 * 1024;
 
   function nullableText(value) {
     const trimmed = String(value || '').trim();
@@ -11681,16 +11694,35 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return `<div class="form-chip-row" id="${id}">${values.map(value => formChipHtml(value, onclick)).join('')}</div>`;
 	  }
 
-	  function hostPhotoUploadBoxHtml(label, mainText, subText, multiple = false) {
+	  function hostAvatarUploadBoxHtml(scope) {
+	    const prefix = hostFormPrefix(scope);
 	    return `
 	      <div class="form-group">
-	        <div class="form-label">${label}</div>
+	        <div class="form-label">プロフィール写真</div>
 	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-	          <span style="font-size:${multiple ? 28 : 34}px;">${multiple ? '📷' : '👤'}</span>
-	          <span style="font-size:14px;font-weight:700;color:var(--dark);">${mainText}</span>
-	          <span style="font-size:12px;color:var(--light);">${subText}</span>
-	          <input type="file" accept="image/*"${multiple ? ' multiple' : ''} style="display:none;" />
+	          <span id="${prefix}-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
+	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+	          <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="display:none;" />
 	        </label>
+	        <div id="${prefix}-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	      </div>
+	    `;
+	  }
+
+	  function hostRoomPhotoUploadBoxHtml(scope) {
+	    const prefix = hostFormPrefix(scope);
+	    return `
+	      <div class="form-group">
+	        <div class="form-label">部屋の写真</div>
+	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	          <span style="font-size:28px;">📷</span>
+	          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋や外観の写真をアップロード</span>
+	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、1枚10MBまで。複数枚選択できます</span>
+	          <input id="${prefix}-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'${scope}')" style="display:none;" />
+	        </label>
+	        <div id="${prefix}-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	        <div id="${prefix}-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div>
 	      </div>
 	    `;
 	  }
@@ -11700,7 +11732,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
 	    return `
 	      <div class="form-section-title">👥 ホスト・家族について</div>
-	      ${hostPhotoUploadBoxHtml('プロフィール写真', '顔写真をアップロード', '画像保存は次のSTEPで対応します')}
+	      ${hostAvatarUploadBoxHtml(scope)}
 	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" placeholder="山田ファミリー" /></div>
 	      <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
 	      <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-nationality" type="text" placeholder="国籍を入力してください" /></div>
@@ -11808,7 +11840,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      <div class="form-group"><div class="form-label">月額料金（CAD）</div><input class="form-input" id="${prefix}-monthly-rent" type="number" min="0" inputmode="numeric" placeholder="1500 CAD / month" /></div>
 	      <input type="hidden" id="${prefix}-nightly-price" value="" />
 	      <div class="form-section-title">🖼️ 部屋情報</div>
-	      ${hostPhotoUploadBoxHtml('部屋の写真', '部屋や外観の写真をアップロード', '複数枚選択できます。保存は次のSTEPで対応します', true)}
+	      ${hostRoomPhotoUploadBoxHtml(scope)}
 	      <div class="form-group"><div class="form-label">部屋タイプ</div>${hostChipRowHtml(`${prefix}-room-type`, ['個室','相部屋'])}</div>
 	      <div class="form-group"><div class="form-label">家具</div>${hostChipRowHtml(`${prefix}-furniture`, ['家具付き','家具なし'])}</div>
 	      <div class="form-group"><div class="form-label">部屋の階</div>${hostChipRowHtml(`${prefix}-room-floor`, ['ベースメント','1階','2階','3階以上'])}</div>
@@ -12295,6 +12327,297 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return true;
 	  }
 
+	  function homestayHostPhotoScope(scope) {
+	    return scope === 'profile' ? 'profile' : 'ob';
+	  }
+
+	  function setHomestayHostAvatarMessage(scope, message) {
+	    const prefix = hostFormPrefix(homestayHostPhotoScope(scope));
+	    const el = document.getElementById(`${prefix}-avatar-message`);
+	    if (el) el.textContent = message || '';
+	  }
+
+	  function setHomestayRoomPhotoMessage(scope, message) {
+	    const prefix = hostFormPrefix(homestayHostPhotoScope(scope));
+	    const el = document.getElementById(`${prefix}-room-photo-message`);
+	    if (el) el.textContent = message || '';
+	  }
+
+	  function clearPendingHomestayHostAvatar(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    pendingHomestayHostAvatarFiles[key] = null;
+	    if (pendingHomestayHostAvatarPreviewUrls[key]) {
+	      URL.revokeObjectURL(pendingHomestayHostAvatarPreviewUrls[key]);
+	      pendingHomestayHostAvatarPreviewUrls[key] = '';
+	    }
+	  }
+
+	  function renderHomestayHostAvatarPreview(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const prefix = hostFormPrefix(key);
+	    const avatarUrl = pendingHomestayHostAvatarPreviewUrls[key] || window._currentProfile?.avatar_url || '';
+	    window.renderAvatarElement(document.getElementById(`${prefix}-avatar-preview`), avatarUrl);
+	  }
+
+	  function handleHomestayHostAvatarSelection(event, scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const input = event?.target;
+	    const file = input?.files?.[0] || null;
+	    setHomestayHostAvatarMessage(key, '');
+	    clearPendingHomestayHostAvatar(key);
+
+	    if (!file) {
+	      renderHomestayHostAvatarPreview(key);
+	      return;
+	    }
+	    if (!PROFILE_AVATAR_ALLOWED_TYPES.has(file.type)) {
+	      if (input) input.value = '';
+	      setHomestayHostAvatarMessage(key, profileAvatarErrorMessage('type'));
+	      renderHomestayHostAvatarPreview(key);
+	      return;
+	    }
+	    if (file.size > PROFILE_AVATAR_MAX_SIZE) {
+	      if (input) input.value = '';
+	      setHomestayHostAvatarMessage(key, profileAvatarErrorMessage('size'));
+	      renderHomestayHostAvatarPreview(key);
+	      return;
+	    }
+
+	    pendingHomestayHostAvatarFiles[key] = file;
+	    pendingHomestayHostAvatarPreviewUrls[key] = URL.createObjectURL(file);
+	    renderHomestayHostAvatarPreview(key);
+	  }
+
+	  async function saveHomestayHostAvatarToSupabase(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const file = pendingHomestayHostAvatarFiles[key];
+	    if (!file) return true;
+
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(file, message => setHomestayHostAvatarMessage(key, message));
+	    if (!publicUrl) {
+	      console.error('Supabase homestay host profile photo save error:', new Error('Profile photo upload returned no public URL'));
+	      return false;
+	    }
+
+	    clearPendingHomestayHostAvatar(key);
+	    const input = document.getElementById(`${hostFormPrefix(key)}-avatar-input`);
+	    if (input) input.value = '';
+	    renderHomestayHostAvatarPreview(key);
+	    return true;
+	  }
+
+	  function listingPhotoErrorMessage(key, fileName = '') {
+	    const name = fileName ? `「${fileName}」` : '';
+	    const messages = {
+	      type: currentLang === 'en' ? `${name}Please select JPG, PNG, or WebP room photos.` : `${name}JPG / PNG / WebP形式の部屋写真を選択してください。`,
+	      size: currentLang === 'en' ? `${name}Please select room photos up to 10MB each.` : `${name}1枚10MB以下の部屋写真を選択してください。`,
+	      user: currentLang === 'en' ? 'Please log in again before saving room photos.' : '部屋写真を保存するには再度ログインしてください。'
+	    };
+	    return messages[key] || (currentLang === 'en' ? 'Could not save room photos.' : '部屋写真を保存できませんでした。');
+	  }
+
+	  function homestayListingPhotoPublicUrl(storagePath) {
+	    if (!storagePath || !window._supabase?.storage) return '';
+	    const { data } = window._supabase.storage
+	      .from('listing-photos')
+	      .getPublicUrl(storagePath);
+	    return data?.publicUrl || '';
+	  }
+
+	  function clearPendingHomestayRoomPhotos(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    pendingHomestayRoomPhotoFiles[key].forEach(item => {
+	      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+	    });
+	    pendingHomestayRoomPhotoFiles[key] = [];
+	  }
+
+	  function handleHomestayHostRoomPhotoSelection(event, scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const input = event?.target;
+	    const files = Array.from(input?.files || []);
+	    setHomestayRoomPhotoMessage(key, '');
+	    clearPendingHomestayRoomPhotos(key);
+
+	    if (!files.length) {
+	      renderHomestayHostRoomPhotoPreview(key);
+	      return;
+	    }
+
+	    const invalidType = files.find(file => !PROFILE_AVATAR_ALLOWED_TYPES.has(file.type));
+	    if (invalidType) {
+	      if (input) input.value = '';
+	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('type', invalidType.name));
+	      renderHomestayHostRoomPhotoPreview(key);
+	      return;
+	    }
+
+	    const tooLarge = files.find(file => file.size > LISTING_PHOTO_MAX_SIZE);
+	    if (tooLarge) {
+	      if (input) input.value = '';
+	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('size', tooLarge.name));
+	      renderHomestayHostRoomPhotoPreview(key);
+	      return;
+	    }
+
+	    pendingHomestayRoomPhotoFiles[key] = files.map(file => ({
+	      file,
+	      previewUrl: URL.createObjectURL(file)
+	    }));
+	    renderHomestayHostRoomPhotoPreview(key);
+	  }
+
+	  function removePendingHomestayRoomPhoto(scope, index) {
+	    const key = homestayHostPhotoScope(scope);
+	    const item = pendingHomestayRoomPhotoFiles[key][index];
+	    if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+	    pendingHomestayRoomPhotoFiles[key].splice(index, 1);
+	    const input = document.getElementById(`${hostFormPrefix(key)}-room-photo-input`);
+	    if (input && pendingHomestayRoomPhotoFiles[key].length === 0) input.value = '';
+	    renderHomestayHostRoomPhotoPreview(key);
+	  }
+
+	  function markHomestayListingPhotoForDelete(photoId, scope = 'profile') {
+	    if (!photoId) return;
+	    pendingHomestayListingPhotoDeleteIds.add(photoId);
+	    renderHomestayHostRoomPhotoPreview(scope);
+	  }
+
+	  function renderHomestayHostRoomPhotoPreview(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const prefix = hostFormPrefix(key);
+	    const container = document.getElementById(`${prefix}-room-photo-preview`);
+	    if (!container) return;
+	    const existingPhotos = (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
+	      .filter(photo => photo?.id && !pendingHomestayListingPhotoDeleteIds.has(photo.id));
+	    const existingHtml = existingPhotos.map(photo => {
+	      const url = homestayListingPhotoPublicUrl(photo.storage_path);
+	      if (!url) return '';
+	      return `
+	        <div style="position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
+	          <img src="${escapeHtml(url)}" alt="Room photo" style="width:100%;height:100%;object-fit:cover;display:block;">
+	          <button type="button" onclick="markHomestayListingPhotoForDelete('${escapeHtml(photo.id)}','${key}')" aria-label="写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	        </div>
+	      `;
+	    }).join('');
+	    const pendingHtml = pendingHomestayRoomPhotoFiles[key].map((item, index) => `
+	      <div style="position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
+	        <img src="${escapeHtml(item.previewUrl)}" alt="New room photo" style="width:100%;height:100%;object-fit:cover;display:block;">
+	        <button type="button" onclick="removePendingHomestayRoomPhoto('${key}',${index})" aria-label="選択写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	      </div>
+	    `).join('');
+	    container.innerHTML = existingHtml + pendingHtml;
+	  }
+
+	  async function uploadHomestayListingPhotoFileToSupabase(userId, listingId, file, index) {
+	    if (!userId || !listingId || !window._supabase?.storage) throw new Error('Missing user or listing for room photo upload');
+	    const path = `${userId}/${listingId}/room-${Date.now()}-${index}.${profileAvatarExtension(file.type)}`;
+	    const { error } = await window._supabase.storage
+	      .from('listing-photos')
+	      .upload(path, file, {
+	        cacheControl: '3600',
+	        contentType: file.type,
+	        upsert: false
+	      });
+	    if (error) throw error;
+	    return path;
+	  }
+
+	  async function insertHomestayListingPhotoMetadata(listingId, storagePath, sortOrder, isCover) {
+	    const { error } = await window._supabase
+	      .from('listing_photos')
+	      .insert({
+	        listing_id: listingId,
+	        storage_path: storagePath,
+	        photo_type: 'room',
+	        sort_order: sortOrder,
+	        is_cover: isCover
+	      });
+	    if (error) throw error;
+	  }
+
+	  async function normalizeHomestayListingPhotoOrder(listingId) {
+	    const { data, error } = await window._supabase
+	      .from('listing_photos')
+	      .select('id, sort_order, created_at')
+	      .eq('listing_id', listingId)
+	      .order('sort_order', { ascending: true })
+	      .order('created_at', { ascending: true });
+	    if (error) throw error;
+	    const rows = Array.isArray(data) ? data : [];
+	    for (const [index, photo] of rows.entries()) {
+	      const { error: updateError } = await window._supabase
+	        .from('listing_photos')
+	        .update({ sort_order: index, is_cover: index === 0 })
+	        .eq('id', photo.id)
+	        .eq('listing_id', listingId);
+	      if (updateError) throw updateError;
+	    }
+	  }
+
+	  async function syncHomestayListingPhotosToSupabase(userId, listingId, scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const pendingPhotos = pendingHomestayRoomPhotoFiles[key];
+	    if (!userId || !listingId || !window._supabase?.from || !window._supabase?.storage) {
+	      if (pendingPhotos.length || pendingHomestayListingPhotoDeleteIds.size) {
+	        setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('user'));
+	        return false;
+	      }
+	      return true;
+	    }
+
+	    if (currentHomestayListing?.id === listingId && currentHomestayListing?.owner_id && currentHomestayListing.owner_id !== userId) {
+	      console.error('Supabase listing photo sync error:', new Error('Current listing does not belong to the logged-in user'));
+	      return false;
+	    }
+
+	    const photosForListing = (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
+	      .filter(photo => photo?.listing_id === listingId);
+	    const deletePhotos = photosForListing.filter(photo => pendingHomestayListingPhotoDeleteIds.has(photo.id));
+
+	    if (!pendingPhotos.length && !deletePhotos.length) return true;
+
+	    try {
+	      for (const photo of deletePhotos) {
+	        const { error: deleteError } = await window._supabase
+	          .from('listing_photos')
+	          .delete()
+	          .eq('id', photo.id)
+	          .eq('listing_id', listingId);
+	        if (deleteError) throw deleteError;
+	        if (photo.storage_path) {
+	          const { error: removeError } = await window._supabase.storage
+	            .from('listing-photos')
+	            .remove([photo.storage_path]);
+	          if (removeError) throw removeError;
+	        }
+	      }
+
+	      const remainingCount = photosForListing.filter(photo => !pendingHomestayListingPhotoDeleteIds.has(photo.id)).length;
+	      for (const [index, item] of pendingPhotos.entries()) {
+	        const storagePath = await uploadHomestayListingPhotoFileToSupabase(userId, listingId, item.file, index);
+	        try {
+	          await insertHomestayListingPhotoMetadata(listingId, storagePath, remainingCount + index, remainingCount === 0 && index === 0);
+	        } catch (metadataError) {
+	          await window._supabase.storage.from('listing-photos').remove([storagePath]).catch(() => {});
+	          throw metadataError;
+	        }
+	      }
+
+	      await normalizeHomestayListingPhotoOrder(listingId);
+	      pendingHomestayListingPhotoDeleteIds.clear();
+	      clearPendingHomestayRoomPhotos(key);
+	      const input = document.getElementById(`${hostFormPrefix(key)}-room-photo-input`);
+	      if (input) input.value = '';
+	      setHomestayRoomPhotoMessage(key, '');
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase listing photo sync error:', error);
+	      setHomestayRoomPhotoMessage(key, currentLang === 'en' ? 'Could not save room photos. Please try again.' : '部屋写真を保存できませんでした。もう一度お試しください。');
+	      return false;
+	    }
+	  }
+
   async function saveCurrentUserDisplayNameToSupabase(displayName) {
     const trimmedName = String(displayName || '').trim();
     const userId = window._currentUser?.id;
@@ -12770,6 +13093,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
 	    }
 
+	    const savedAvatar = await saveHomestayHostAvatarToSupabase('ob');
+	    if (!savedAvatar) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your profile photo. Please try again.' : 'プロフィール写真を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedRoomPhotos = await syncHomestayListingPhotosToSupabase(userId, listingId, 'ob');
+	    if (!savedRoomPhotos) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save room photos. Please try again.' : '部屋写真を保存できませんでした。もう一度お試しください。' };
+	    }
+
 	    const savedMode = await saveHostUserModeToSupabase();
 	    if (!savedMode) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode. Please try again.' : 'ホスト登録状態を保存できませんでした。もう一度お試しください。' };
@@ -12842,6 +13175,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const savedStudents = await syncHomestayHostStudentsToSupabase(userId, hostProfilePayload.other_students_present === true);
 	    if (!savedStudents) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedAvatar = await saveHomestayHostAvatarToSupabase('profile');
+	    if (!savedAvatar) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your profile photo. Please try again.' : 'プロフィール写真を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedRoomPhotos = await syncHomestayListingPhotosToSupabase(userId, listingId, 'profile');
+	    if (!savedRoomPhotos) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save room photos. Please try again.' : '部屋写真を保存できませんでした。もう一度お試しください。' };
 	    }
 
 	    const reloaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
@@ -12927,6 +13270,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const listing = data.listing || {};
 	    const details = data.details || {};
 	    const students = Array.isArray(data.students) ? data.students : currentHomestayHostStudents;
+	    const photos = Array.isArray(data.photos) ? data.photos : currentHomestayListingPhotos;
 	    if (!hostProfile.user_id && !listing.id) return;
 
 	    const host = HOSTS.sarah;
@@ -12949,6 +13293,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    host.name = name;
 	    host.avatar = profile.avatar_url ? '🧑' : '🧑';
 	    host.avatarUrl = profile.avatar_url || '';
+	    const photoUrls = photos.map(photo => homestayListingPhotoPublicUrl(photo.storage_path)).filter(Boolean);
+	    if (photoUrls.length) host.photos = photoUrls;
 	    host.city = city;
 	    host.state = 'Canada';
 	    host.stateShort = '';
@@ -13083,6 +13429,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const privateDetails = currentHomestayListingPrivateDetails || {};
 	    if (!hostProfile.user_id && !listing.id) return;
 
+	    renderHomestayHostAvatarPreview('profile');
+	    renderHomestayHostRoomPhotoPreview('profile');
 	    setInputValueById('host-profile-name', profile.display_name || '');
 	    setInputValueById('host-profile-age', hostProfile.age ?? '');
 	    setInputValueById('host-profile-nationality', hostProfile.nationality || '');
@@ -13158,7 +13506,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
 	        privateDetails: currentHomestayListingPrivateDetails,
-	        students: currentHomestayHostStudents
+	        students: currentHomestayHostStudents,
+	        photos: currentHomestayListingPhotos
 	      });
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
@@ -13199,6 +13548,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	      let details = null;
 	      let privateDetails = null;
+	      let listingPhotos = [];
 	      if (listing?.id) {
 	        const { data: listingDetails, error: detailsError } = await window._supabase
 	          .from('homestay_listing_details')
@@ -13215,6 +13565,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          .maybeSingle();
 	        if (privateError) throw privateError;
 	        privateDetails = listingPrivateDetails;
+
+	        const { data: photos, error: photosError } = await window._supabase
+	          .from('listing_photos')
+	          .select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at')
+	          .eq('listing_id', listing.id)
+	          .order('sort_order', { ascending: true })
+	          .order('created_at', { ascending: true });
+	        if (photosError) throw photosError;
+	        listingPhotos = Array.isArray(photos) ? photos : [];
 	      }
 
 	      if (profile) {
@@ -13225,11 +13584,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      currentHomestayListingDetails = details || null;
 	      currentHomestayListingPrivateDetails = privateDetails || null;
 	      currentHomestayHostStudents = Array.isArray(students) ? students : [];
+	      currentHomestayListingPhotos = listingPhotos;
 	      window._currentHomestayHostProfile = currentHomestayHostProfile;
 	      window._currentHomestayListing = currentHomestayListing;
 	      window._currentHomestayListingDetails = currentHomestayListingDetails;
 	      window._currentHomestayListingPrivateDetails = currentHomestayListingPrivateDetails;
 	      window._currentHomestayHostStudents = currentHomestayHostStudents;
+	      window._currentHomestayListingPhotos = currentHomestayListingPhotos;
 	      replaceHostInternationalStudentsFromDb(currentHomestayHostStudents);
 	      currentHomestayHostDataLoaded = !!(hostProfile || listing);
 
@@ -13240,7 +13601,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
 	        privateDetails: currentHomestayListingPrivateDetails,
-	        students: currentHomestayHostStudents
+	        students: currentHomestayHostStudents,
+	        photos: currentHomestayListingPhotos
 	      });
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
@@ -18867,6 +19229,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('host-ob-back-btn').style.display = hostObStep > 1 ? 'block' : 'none';
     document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
+    if (hostObStep === 1) renderHomestayHostAvatarPreview('ob');
+    if (hostObStep === 2) renderHomestayHostRoomPhotoPreview('ob');
   }
 
   async function hostObNext() {
