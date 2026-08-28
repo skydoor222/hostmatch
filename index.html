@@ -4363,10 +4363,11 @@
         <div class="form-group">
           <div class="form-label">写真</div>
           <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-            <span style="font-size:34px;">🧑</span>
+            <span class="profile-avatar-preview" id="hs-onboard-avatar-preview">🧑</span>
             <span style="font-size:14px;font-weight:700;color:var(--dark);">プロフィール写真を選択</span>
-            <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-            <input type="file" accept="image/*" style="display:none;" />
+            <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+            <span id="hs-onboard-avatar-message" style="font-size:12px;color:#c2410c;"></span>
+            <input id="hs-onboard-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayOnboardingAvatarSelection(event)" style="display:none;" />
           </label>
         </div>
         <div class="form-group">
@@ -6808,10 +6809,11 @@
     }
   }
 
-  function applyCurrentUserAvatarUrl(avatarUrl) {
-    renderAvatarElement(document.querySelector('.mypage-avatar'), avatarUrl);
-    renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
-  }
+	  function applyCurrentUserAvatarUrl(avatarUrl) {
+	    renderAvatarElement(document.querySelector('.mypage-avatar'), avatarUrl);
+	    renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
+	    renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), avatarUrl);
+	  }
 
   window.renderAvatarElement = renderAvatarElement;
   window.applyCurrentUserAvatarUrl = applyCurrentUserAvatarUrl;
@@ -10702,9 +10704,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  async function saveHomestayGuestOnboardingToSupabase() {
+	    lastHomestayOnboardingSaveError = '';
 	    const guestProfilePayload = guestProfilePayloadFromHomestayOnboarding();
 	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload);
 	    if (!savedGuestProfile) {
+	      lastHomestayOnboardingSaveError = 'profile';
 	      console.warn('Supabase homestay onboarding guest profile save error:', guestProfilePayload);
 	      return false;
 	    }
@@ -10712,7 +10716,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const homestayPreferencesPayload = homestayGuestPreferencesPayloadFromOnboarding();
 	    const savedPreferences = await saveHomestayGuestPreferencesToSupabase(homestayPreferencesPayload);
 	    if (!savedPreferences) {
+	      lastHomestayOnboardingSaveError = 'preferences';
 	      console.warn('Supabase homestay onboarding preferences save error:', homestayPreferencesPayload);
+	      return false;
+	    }
+
+	    const savedAvatar = await saveHomestayOnboardingAvatarToSupabase();
+	    if (!savedAvatar) {
+	      lastHomestayOnboardingSaveError = 'avatar';
+	      console.warn('Supabase homestay onboarding avatar save error:', pendingHomestayOnboardingAvatarFile);
 	      return false;
 	    }
 
@@ -11193,10 +11205,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     renderSharehouseFilterResults(committedSharehouseFilters);
   }
 
-  /* ===== MYPAGE SUB SCREENS ===== */
-  let pendingProfileAvatarFile = null;
-  let pendingProfileAvatarPreviewUrl = '';
-  let currentGuestProfileData = null;
+	  /* ===== MYPAGE SUB SCREENS ===== */
+	  let pendingProfileAvatarFile = null;
+	  let pendingProfileAvatarPreviewUrl = '';
+	  let pendingHomestayOnboardingAvatarFile = null;
+	  let pendingHomestayOnboardingAvatarPreviewUrl = '';
+	  let lastHomestayOnboardingSaveError = '';
+	  let currentGuestProfileData = null;
   let currentHomestayGuestPreferences = null;
   const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
@@ -11354,10 +11369,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return 'jpg';
   }
 
-  function handleProfileAvatarSelection(event) {
-    const input = event?.target;
-    const file = input?.files?.[0] || null;
-    setProfileAvatarMessage('');
+	  function handleProfileAvatarSelection(event) {
+	    const input = event?.target;
+	    const file = input?.files?.[0] || null;
+	    setProfileAvatarMessage('');
     pendingProfileAvatarFile = null;
 
     if (!file) return;
@@ -11374,23 +11389,49 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
     pendingProfileAvatarFile = file;
     if (pendingProfileAvatarPreviewUrl) URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
-    pendingProfileAvatarPreviewUrl = URL.createObjectURL(file);
-    window.applyCurrentUserAvatarUrl(pendingProfileAvatarPreviewUrl);
-  }
+	    pendingProfileAvatarPreviewUrl = URL.createObjectURL(file);
+	    window.applyCurrentUserAvatarUrl(pendingProfileAvatarPreviewUrl);
+	  }
 
-  async function saveCurrentUserAvatarToSupabase() {
-    if (!pendingProfileAvatarFile) return true;
+	  function setHomestayOnboardingAvatarMessage(message) {
+	    const el = document.getElementById('hs-onboard-avatar-message');
+	    if (el) el.textContent = message || '';
+	  }
 
-    const userId = window._currentUser?.id;
-    if (!userId || !window._supabase?.storage || !window._supabase?.from) {
-      setProfileAvatarMessage(profileAvatarErrorMessage('user'));
-      return false;
-    }
+	  function handleHomestayOnboardingAvatarSelection(event) {
+	    const input = event?.target;
+	    const file = input?.files?.[0] || null;
+	    setHomestayOnboardingAvatarMessage('');
+	    pendingHomestayOnboardingAvatarFile = null;
 
-    const file = pendingProfileAvatarFile;
-    const path = `${userId}/avatar-${Date.now()}.${profileAvatarExtension(file.type)}`;
+	    if (!file) return;
+	    if (!PROFILE_AVATAR_ALLOWED_TYPES.has(file.type)) {
+	      if (input) input.value = '';
+	      setHomestayOnboardingAvatarMessage(profileAvatarErrorMessage('type'));
+	      return;
+	    }
+	    if (file.size > PROFILE_AVATAR_MAX_SIZE) {
+	      if (input) input.value = '';
+	      setHomestayOnboardingAvatarMessage(profileAvatarErrorMessage('size'));
+	      return;
+	    }
 
-    try {
+	    pendingHomestayOnboardingAvatarFile = file;
+	    if (pendingHomestayOnboardingAvatarPreviewUrl) URL.revokeObjectURL(pendingHomestayOnboardingAvatarPreviewUrl);
+	    pendingHomestayOnboardingAvatarPreviewUrl = URL.createObjectURL(file);
+	    window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), pendingHomestayOnboardingAvatarPreviewUrl);
+	  }
+
+	  async function uploadProfileAvatarFileToSupabase(file, setMessage = setProfileAvatarMessage) {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.storage || !window._supabase?.from) {
+	      setMessage(profileAvatarErrorMessage('user'));
+	      return null;
+	    }
+
+	    const path = `${userId}/avatar-${Date.now()}.${profileAvatarExtension(file.type)}`;
+
+	    try {
       const { error: uploadError } = await window._supabase.storage
         .from('profile-photos')
         .upload(path, file, {
@@ -11399,50 +11440,77 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           upsert: false
         });
       if (uploadError) throw uploadError;
-    } catch (error) {
-      console.warn('Supabase profile photo upload error:', error);
-      setProfileAvatarMessage(currentLang === 'en' ? 'Could not upload the photo.' : '写真をアップロードできませんでした。');
-      return false;
-    }
+	    } catch (error) {
+	      console.warn('Supabase profile photo upload error:', error);
+	      setMessage(currentLang === 'en' ? 'Could not upload the photo.' : '写真をアップロードできませんでした。');
+	      return null;
+	    }
 
-    const { data } = window._supabase.storage
+	    const { data } = window._supabase.storage
       .from('profile-photos')
       .getPublicUrl(path);
-    const publicUrl = data?.publicUrl || '';
-    if (!publicUrl) {
-      console.warn('Supabase profile photo upload error:', new Error('Public URL was not returned'));
-      setProfileAvatarMessage(currentLang === 'en' ? 'Could not get the photo URL.' : '写真URLを取得できませんでした。');
-      return false;
-    }
+	    const publicUrl = data?.publicUrl || '';
+	    if (!publicUrl) {
+	      console.warn('Supabase profile photo upload error:', new Error('Public URL was not returned'));
+	      setMessage(currentLang === 'en' ? 'Could not get the photo URL.' : '写真URLを取得できませんでした。');
+	      return null;
+	    }
 
-    try {
+	    try {
       const { error } = await window._supabase
         .from('profiles')
         .update({ avatar_url: publicUrl })
         .eq('id', userId);
-      if (error) throw error;
-    } catch (error) {
-      console.warn('Supabase profiles avatar_url update error:', error);
-      setProfileAvatarMessage(currentLang === 'en' ? 'Could not save the photo URL.' : '写真URLをプロフィールへ保存できませんでした。');
-      return false;
-    }
+	      if (error) throw error;
+	    } catch (error) {
+	      console.warn('Supabase profiles avatar_url update error:', error);
+	      setMessage(currentLang === 'en' ? 'Could not save the photo URL.' : '写真URLをプロフィールへ保存できませんでした。');
+	      return null;
+	    }
 
-    window._currentProfile = {
+	    window._currentProfile = {
       ...(window._currentProfile || {}),
-      id: userId,
-      avatar_url: publicUrl
-    };
-    pendingProfileAvatarFile = null;
-    if (pendingProfileAvatarPreviewUrl) {
-      URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
-      pendingProfileAvatarPreviewUrl = '';
-    }
-    const input = document.getElementById('prof-avatar-input');
-    if (input) input.value = '';
-    window.applyCurrentUserAvatarUrl(publicUrl);
-    setProfileAvatarMessage('');
-    return true;
-  }
+	      id: userId,
+	      avatar_url: publicUrl
+	    };
+	    window.applyCurrentUserAvatarUrl(publicUrl);
+	    setMessage('');
+	    return publicUrl;
+	  }
+
+	  async function saveCurrentUserAvatarToSupabase() {
+	    if (!pendingProfileAvatarFile) return true;
+
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(pendingProfileAvatarFile, setProfileAvatarMessage);
+	    if (!publicUrl) return false;
+
+	    pendingProfileAvatarFile = null;
+	    if (pendingProfileAvatarPreviewUrl) {
+	      URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
+	      pendingProfileAvatarPreviewUrl = '';
+	    }
+	    const input = document.getElementById('prof-avatar-input');
+	    if (input) input.value = '';
+	    return true;
+	  }
+
+	  async function saveHomestayOnboardingAvatarToSupabase() {
+	    if (!pendingHomestayOnboardingAvatarFile) return true;
+
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(pendingHomestayOnboardingAvatarFile, setHomestayOnboardingAvatarMessage);
+	    if (!publicUrl) return false;
+
+	    pendingHomestayOnboardingAvatarFile = null;
+	    if (pendingHomestayOnboardingAvatarPreviewUrl) {
+	      URL.revokeObjectURL(pendingHomestayOnboardingAvatarPreviewUrl);
+	      pendingHomestayOnboardingAvatarPreviewUrl = '';
+	    }
+	    const input = document.getElementById('hs-onboard-avatar-input');
+	    if (input) input.value = '';
+	    window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), publicUrl);
+	    setHomestayOnboardingAvatarMessage('');
+	    return true;
+	  }
 
   async function saveCurrentUserDisplayNameToSupabase(displayName) {
     const trimmedName = String(displayName || '').trim();
@@ -13469,9 +13537,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       }
     });
 
-    document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
-    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
-  }
+	    document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
+	    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
+	    if (type === 'homestay' && onboardStep === 1 && typeof window.renderAvatarElement === 'function') {
+	      window.renderAvatarElement(
+	        document.getElementById('hs-onboard-avatar-preview'),
+	        pendingHomestayOnboardingAvatarPreviewUrl || window._currentProfile?.avatar_url || ''
+	      );
+	    }
+	  }
 
 	  async function saveGuestUserModeToSupabase(housingType) {
 	    const userId = window._currentUser?.id;
@@ -13528,7 +13602,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        shouldApplyRegisteredFilters.homestay = true;
 	        const savedHomestayOnboarding = await saveHomestayGuestOnboardingToSupabase();
 	        if (!savedHomestayOnboarding) {
-	          showToast(currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
+	          const message = lastHomestayOnboardingSaveError === 'avatar'
+	            ? (currentLang === 'ja' ? 'プロフィール写真を保存できませんでした。もう一度お試しください。' : 'Could not save your profile photo. Please try again.')
+	            : (currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
+	          showToast(message);
 	          return;
 	        }
 	      }
