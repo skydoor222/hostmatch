@@ -10598,6 +10598,155 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  };
 
+	  const HOST_PROFILE_DB_VALUE_MAPS = {
+	    gender: {
+	      '女性': 'female',
+	      '男性': 'male',
+	      '選択しない': 'prefer_not_to_say'
+	    },
+	    partner_gender: {
+	      '女性': 'female',
+	      '男性': 'male',
+	      '選択しない': 'prefer_not_to_say'
+	    },
+	    religion: {
+	      '仏教': 'buddhist',
+	      'キリスト教': 'christian',
+	      'イスラム教': 'muslim',
+	      'ヒンドゥー教': 'hindu',
+	      'ユダヤ教': 'jewish',
+	      '無宗教': 'none',
+	      'その他': 'other',
+	      '回答しない': 'prefer_not_to_say'
+	    },
+	    english_level: {
+	      '初心者': 'beginner',
+	      '日常会話': 'daily_conversation',
+	      'ビジネスレベル': 'business',
+	      'ネイティブレベル': 'native',
+	      '回答しない': 'prefer_not_to_say'
+	    },
+	    household_type: {
+	      '一人暮らし（女性）': 'single_female',
+	      '一人暮らし（男性）': 'single_male',
+	      'カップル': 'couple',
+	      'カップル＋子ども': 'couple_with_children',
+	      'ひとり親＋子ども': 'single_parent_with_children',
+	      'その他': 'other'
+	    },
+	    wake_time: {
+	      '6時以前': 'before_6',
+	      '6〜8時': '6_to_8',
+	      '8〜9時': '8_to_9',
+	      '9時以降': 'after_9'
+	    },
+	    partner_wake_time: {
+	      '6時以前': 'before_6',
+	      '6〜8時': '6_to_8',
+	      '8〜9時': '8_to_9',
+	      '9時以降': 'after_9'
+	    },
+	    bedtime: {
+	      '21〜22時': '21_to_22',
+	      '22〜23時': '22_to_23',
+	      '23時以降': 'after_23'
+	    },
+	    partner_bedtime: {
+	      '21〜22時': '21_to_22',
+	      '22〜23時': '22_to_23',
+	      '23時以降': 'after_23'
+	    },
+	    smoking_environment: {
+	      '吸わない': 'no_smoking',
+	      '屋外で吸う': 'outdoor_only',
+	      '室内でも吸う': 'indoor_smoking'
+	    },
+	    conversation_level: {
+	      '必要最低限': 'minimum',
+	      '適度に話したい': 'moderate',
+	      '毎日話したい': 'daily',
+	      '家族のように過ごしたい': 'family_like'
+	    },
+	    interaction_level: {
+	      '基本それぞれで過ごす': 'mostly_separate',
+	      '食事の時など時々': 'meals_sometimes',
+	      '休日に一緒に出かける': 'weekends_sometimes',
+	      '家族の一員のように交流する': 'family_like'
+	    }
+	  };
+
+	  const HOMESTAY_LISTING_DETAIL_DB_VALUE_MAPS = {
+	    meal_plan: {
+	      '食事提供なし': 'none',
+	      '朝食のみ': 'breakfast_only',
+	      '朝・夕食': 'breakfast_dinner',
+	      '3食': 'three_meals'
+	    },
+	    meal_style: {
+	      '家族と一緒に食べることが多い': 'family_together_often',
+	      '時々一緒に食べる': 'sometimes_together',
+	      '基本別々': 'mostly_separate',
+	      '作り置き・各自で食べることが多い': 'prepared_or_individual'
+	    },
+	    room_type: {
+	      '個室': 'private',
+	      '相部屋': 'shared'
+	    },
+	    floor_type: {
+	      'ベースメント': 'basement',
+	      '1階': 'first_floor',
+	      '2階': 'second_floor',
+	      '3階以上': 'third_floor_or_above'
+	    },
+	    bathroom_type: {
+	      '専用': 'private',
+	      '家族と共有': 'shared_with_family',
+	      '他の留学生と共有': 'shared_with_students'
+	    },
+	    // When curfew_type is none, the future save payload must set curfew_time to null.
+	    curfew_type: {
+	      '門限なし': 'none',
+	      '門限あり': 'has_curfew'
+	    },
+	    kitchen_rule: {
+	      'OK': 'unrestricted',
+	      '制限あり': 'restricted',
+	      'NG': 'not_available'
+	    },
+	    shower_limit: {
+	      '制限なし': 'no_limit',
+	      '10〜15分': '10_15_minutes',
+	      '5〜10分': '5_10_minutes',
+	      '5分以内': '5_minutes_or_less'
+	    },
+	    cleaning_rule: {
+	      '毎日': 'daily',
+	      '週1回': 'weekly',
+	      '月1回': 'monthly',
+	      '掃除はしなくて良い': 'no_roster'
+	    },
+	    visitor_rule: {
+	      '来客 OK': 'allowed',
+	      '来客 事前連絡必須': 'prior_notice_required',
+	      '来客 NG': 'not_allowed'
+	    },
+	    overnight_guest_rule: {
+	      '宿泊 OK': 'allowed',
+	      '宿泊 事前連絡必須': 'prior_consultation_required',
+	      '宿泊 NG': 'not_allowed'
+	    },
+	    drinking_rule: {
+	      '飲酒 OK': 'allowed',
+	      '飲酒 節度を守る': 'moderation_required',
+	      '飲酒 NG': 'not_allowed'
+	    },
+	    instrument_rule: {
+	      '楽器演奏 OK': 'allowed',
+	      '楽器演奏 時間制限あり': 'restricted',
+	      '楽器演奏 NG': 'not_allowed'
+	    }
+	  };
+
 	  function mapUiValueToDb(field, uiValue, maps) {
 	    const text = String(uiValue || '').trim();
 	    if (!text) return null;
@@ -10626,6 +10775,22 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  function fromHomestayPreferenceDbValue(field, dbValue) {
 	    return mapDbValueToUi(field, dbValue, HOMESTAY_PREFERENCE_DB_VALUE_MAPS);
+	  }
+
+	  function toHostProfileDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, HOST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function fromHostProfileDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, HOST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function toHomestayListingDetailDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, HOMESTAY_LISTING_DETAIL_DB_VALUE_MAPS);
+	  }
+
+	  function fromHomestayListingDetailDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, HOMESTAY_LISTING_DETAIL_DB_VALUE_MAPS);
 	  }
 
 	  function homestayFilterProfileFromOnboarding() {
@@ -11243,6 +11408,149 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return Number.isFinite(number) ? number : null;
   }
 
+	  function nullableInteger(value) {
+	    const number = nullableNumber(value);
+	    return number === null ? null : Math.trunc(number);
+	  }
+
+	  function splitFreeTextList(value) {
+	    return String(value || '')
+	      .split(/[、,]/)
+	      .map(item => item.trim())
+	      .filter(Boolean);
+	  }
+
+	  function booleanFromSelectedText(value, trueValues = [], falseValues = []) {
+	    const text = String(value || '').trim();
+	    if (trueValues.includes(text)) return true;
+	    if (falseValues.includes(text)) return false;
+	    return null;
+	  }
+
+	  function selectedHostOnboardingChipText(id, fallback = '') {
+	    return selectedChipText(id, fallback);
+	  }
+
+	  function selectedHostOnboardingChipTexts(id) {
+	    return selectedChipTexts('#' + id);
+	  }
+
+	  function hostOnboardingTextInput(id) {
+	    return nullableText(document.getElementById(id)?.value);
+	  }
+
+	  function hostOnboardingIntegerInput(id) {
+	    return nullableInteger(document.getElementById(id)?.value);
+	  }
+
+	  function hostOnboardingHasPartner(householdTypeUi) {
+	    const householdCode = toHostProfileDbValue('household_type', householdTypeUi);
+	    return householdCode === 'couple' || householdCode === 'couple_with_children';
+	  }
+
+	  function homestayHostProfilePayloadFromOnboarding(userId) {
+	    const spokenLanguages = selectedHostOnboardingChipTexts('host-ob-spoken-languages');
+	    const spokenOther = hostOnboardingTextInput('host-ob-spoken-language-other');
+	    if (spokenOther && !spokenLanguages.includes(spokenOther)) spokenLanguages.push(spokenOther);
+	    const homeLanguages = selectedHostOnboardingChipTexts('host-ob-home-languages');
+	    const homeOther = hostOnboardingTextInput('host-ob-home-language-other');
+	    if (homeOther && !homeLanguages.includes(homeOther)) homeLanguages.push(homeOther);
+	    const hobbies = selectedHostOnboardingChipTexts('host-ob-hobbies');
+	    const hobbyOther = hostOnboardingTextInput('host-ob-hobby-other');
+	    if (hobbyOther && !hobbies.includes(hobbyOther)) hobbies.push(hobbyOther);
+
+	    const householdTypeUi = selectedHostOnboardingChipText('host-ob-household-type', '');
+	    const householdType = toHostProfileDbValue('household_type', householdTypeUi);
+	    const hasPartner = hostOnboardingHasPartner(householdTypeUi);
+
+	    return {
+	      user_id: userId,
+	      age: hostOnboardingIntegerInput('host-ob-age'),
+	      nationality: hostOnboardingTextInput('host-ob-nationality'),
+	      spoken_languages: spokenLanguages,
+	      home_languages: homeLanguages,
+	      gender: toHostProfileDbValue('gender', selectedHostOnboardingChipText('host-ob-gender', '')),
+	      religion: toHostProfileDbValue('religion', selectedHostOnboardingChipText('host-ob-religion', '')),
+	      english_level: toHostProfileDbValue('english_level', selectedHostOnboardingChipText('host-ob-english-level', '')),
+	      household_type: householdType,
+	      partner_age: hasPartner ? hostOnboardingIntegerInput('host-ob-partner-age') : null,
+	      partner_gender: hasPartner ? toHostProfileDbValue('partner_gender', selectedHostOnboardingChipText('host-ob-partner-gender', '')) : null,
+	      partner_nationality: hasPartner ? hostOnboardingTextInput('host-ob-partner-nationality') : null,
+	      partner_wake_time: hasPartner ? toHostProfileDbValue('partner_wake_time', selectedHostOnboardingChipText('host-ob-partner-wake', '')) : null,
+	      partner_bedtime: hasPartner ? toHostProfileDbValue('partner_bedtime', selectedHostOnboardingChipText('host-ob-partner-sleep', '')) : null,
+	      partner_hobbies: hasPartner ? splitFreeTextList(document.getElementById('host-ob-partner-hobbies')?.value) : [],
+	      other_students_present: booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-student-presence', ''), ['いる'], ['いない']),
+	      smoking_environment: toHostProfileDbValue('smoking_environment', selectedHostOnboardingChipText('host-ob-smoking-status', '')),
+	      wake_time: toHostProfileDbValue('wake_time', selectedHostOnboardingChipText('host-ob-wake', '')),
+	      bedtime: toHostProfileDbValue('bedtime', selectedHostOnboardingChipText('host-ob-sleep', '')),
+	      conversation_level: toHostProfileDbValue('conversation_level', selectedHostOnboardingChipText('host-ob-guest-talk', '')),
+	      interaction_level: toHostProfileDbValue('interaction_level', selectedHostOnboardingChipText('host-ob-guest-frequency', '')),
+	      hobbies,
+	      bio: hostOnboardingTextInput('host-ob-note')
+	    };
+	  }
+
+	  function homestayListingPayloadFromOnboarding(userId) {
+	    const longStay = booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-long-stay', ''), ['長期滞在可能'], ['長期滞在不可']);
+	    return {
+	      owner_id: userId,
+	      listing_type: 'homestay',
+	      city: selectedHostOnboardingChipText('host-ob-area', '') || null,
+	      nearest_station: hostOnboardingTextInput('host-ob-station'),
+	      station_walk_minutes: hostOnboardingIntegerInput('host-ob-walk-min'),
+	      available_from: hostOnboardingTextInput('host-available-start'),
+	      available_until: hostOnboardingTextInput('host-available-end'),
+	      minimum_stay_months: hostOnboardingIntegerInput('host-ob-min-stay'),
+	      maximum_stay_months: hostOnboardingIntegerInput('host-ob-max-stay'),
+	      long_stay_allowed: longStay,
+	      monthly_price: hostOnboardingIntegerInput('host-ob-monthly-rent'),
+	      status: 'published'
+	    };
+	  }
+
+	  function homestayListingDetailsPayloadFromOnboarding() {
+	    const amenities = selectedHostOnboardingChipTexts('host-ob-amenities');
+	    const amenityOther = hostOnboardingTextInput('host-ob-amenity-other');
+	    if (amenityOther && !amenities.includes(amenityOther)) amenities.push(amenityOther);
+	    const petsPresent = formValue('host-ob-has-pets', '') === 'いる' ? true : formValue('host-ob-has-pets', '') === 'いない' ? false : null;
+	    const curfewType = toHomestayListingDetailDbValue('curfew_type', formValue('host-ob-rule-curfew', ''));
+	    const kitchenRule = toHomestayListingDetailDbValue('kitchen_rule', formValue('host-ob-rule-kitchen', ''));
+
+	    return {
+	      meal_plan: toHomestayListingDetailDbValue('meal_plan', selectedHostOnboardingChipText('host-ob-meal-plan', '')),
+	      meal_style: toHomestayListingDetailDbValue('meal_style', selectedHostOnboardingChipText('host-ob-dining-style', '')),
+	      room_type: toHomestayListingDetailDbValue('room_type', selectedHostOnboardingChipText('host-ob-room-type', '')),
+	      furnished: booleanFromSelectedText(selectedHostOnboardingChipText('host-ob-furniture', ''), ['家具付き'], ['家具なし']),
+	      floor_type: toHomestayListingDetailDbValue('floor_type', selectedHostOnboardingChipText('host-ob-room-floor', '')),
+	      bathroom_type: toHomestayListingDetailDbValue('bathroom_type', selectedHostOnboardingChipText('host-ob-bathroom', '')),
+	      amenities,
+	      pets_present: petsPresent,
+	      pet_details: petsPresent ? hostOnboardingTextInput('host-ob-pet-type') : null,
+	      curfew_type: curfewType,
+	      curfew_time: curfewType === 'has_curfew' ? hostOnboardingTextInput('host-ob-rule-curfew-time') : null,
+	      kitchen_rule: kitchenRule,
+	      kitchen_restriction_details: kitchenRule === 'restricted' ? hostOnboardingTextInput('host-ob-rule-kitchen-time') : null,
+	      shower_limit: toHomestayListingDetailDbValue('shower_limit', formValue('host-ob-rule-shower', '')),
+	      cleaning_rule: toHomestayListingDetailDbValue('cleaning_rule', formValue('host-ob-rule-cleaning', '')),
+	      visitor_rule: toHomestayListingDetailDbValue('visitor_rule', formValue('host-ob-rule-visitor', '')),
+	      overnight_guest_rule: toHomestayListingDetailDbValue('overnight_guest_rule', formValue('host-ob-rule-overnight', '')),
+	      drinking_rule: toHomestayListingDetailDbValue('drinking_rule', formValue('host-ob-rule-alcohol', '')),
+	      instrument_rule: toHomestayListingDetailDbValue('instrument_rule', formValue('host-ob-rule-instrument', '')),
+	      other_house_rules: hostOnboardingTextInput('host-ob-rule-other')
+	    };
+	  }
+
+	  function validateHomestayHostListingPayload(payload) {
+	    const errors = [];
+	    if (payload.station_walk_minutes !== null && payload.station_walk_minutes < 0) errors.push('最寄り駅までの徒歩分数は0以上で入力してください。');
+	    if (payload.minimum_stay_months !== null && payload.minimum_stay_months < 1) errors.push('最短滞在期間は1ヶ月以上で入力してください。');
+	    if (payload.maximum_stay_months !== null && payload.maximum_stay_months < 1) errors.push('最長滞在期間は1ヶ月以上で入力してください。');
+	    if (payload.minimum_stay_months !== null && payload.maximum_stay_months !== null && payload.minimum_stay_months > payload.maximum_stay_months) errors.push('最短滞在期間は最長滞在期間以下にしてください。');
+	    if (payload.monthly_price !== null && payload.monthly_price < 0) errors.push('月額料金は0以上で入力してください。');
+	    if (payload.available_from && payload.available_until && payload.available_from > payload.available_until) errors.push('受け入れ可能開始日は終了日以前にしてください。');
+	    return errors;
+	  }
+
   function calculateAgeFromBirthDate(birthDateValue) {
     if (!birthDateValue) return null;
     const birthDate = new Date(`${birthDateValue}T00:00:00`);
@@ -11832,6 +12140,192 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return false;
 	    }
 	    return true;
+	  }
+
+	  async function saveHomestayHostProfileToSupabase(payload) {
+	    const userId = payload?.user_id;
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('homestay_host_profiles')
+	        .select('user_id')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      const { user_id, ...updatePayload } = payload;
+	      const query = window._supabase.from('homestay_host_profiles');
+	      const { error: saveError } = existing
+	        ? await query.update(updatePayload).eq('user_id', userId)
+	        : await query.insert(payload);
+	      if (saveError) throw saveError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_host_profiles save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveHomestayListingToSupabase(payload) {
+	    const userId = payload?.owner_id;
+	    if (!userId || !window._supabase?.from) return null;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('listings')
+	        .select('id, created_at')
+	        .eq('owner_id', userId)
+	        .eq('listing_type', 'homestay')
+	        .order('created_at', { ascending: false })
+	        .limit(1)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+
+	      if (existing?.id) {
+	        const { error: updateError } = await window._supabase
+	          .from('listings')
+	          .update(payload)
+	          .eq('id', existing.id)
+	          .eq('owner_id', userId);
+	        if (updateError) throw updateError;
+	        return existing.id;
+	      }
+
+	      const { data: inserted, error: insertError } = await window._supabase
+	        .from('listings')
+	        .insert(payload)
+	        .select('id')
+	        .single();
+	      if (insertError) throw insertError;
+	      return inserted?.id || null;
+	    } catch (error) {
+	      console.error('Supabase listings save error:', error);
+	      return null;
+	    }
+	  }
+
+	  async function saveHomestayListingDetailsToSupabase(listingId, payload) {
+	    if (!listingId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('homestay_listing_details')
+	        .select('listing_id')
+	        .eq('listing_id', listingId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      const query = window._supabase.from('homestay_listing_details');
+	      const { error: saveError } = existing
+	        ? await query.update(payload).eq('listing_id', listingId)
+	        : await query.insert({ listing_id: listingId, ...payload });
+	      if (saveError) throw saveError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_listing_details save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveListingPrivateDetailsToSupabase(listingId, payload) {
+	    if (!listingId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('listing_private_details')
+	        .select('listing_id')
+	        .eq('listing_id', listingId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      const query = window._supabase.from('listing_private_details');
+	      const { error: saveError } = existing
+	        ? await query.update(payload).eq('listing_id', listingId)
+	        : await query.insert({ listing_id: listingId, ...payload });
+	      if (saveError) throw saveError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase listing_private_details save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveHostUserModeToSupabase() {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existingMode, error: selectError } = await window._supabase
+	        .from('user_modes')
+	        .select('user_id, housing_type, role')
+	        .eq('user_id', userId)
+	        .eq('housing_type', 'homestay')
+	        .eq('role', 'host')
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      if (existingMode) return true;
+
+	      const { error: insertError } = await window._supabase
+	        .from('user_modes')
+	        .insert({
+	          user_id: userId,
+	          housing_type: 'homestay',
+	          role: 'host'
+	        });
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase host user_modes save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveHomestayHostOnboardingToSupabase() {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) {
+	      console.error('Supabase homestay host onboarding save error:', new Error('No logged-in Supabase user'));
+	      return { ok: false, message: currentLang === 'en' ? 'Please log in again before saving.' : '保存するには再度ログインしてください。' };
+	    }
+
+	    const displayName = hostOnboardingTextInput('host-ob-name');
+	    if (!displayName) {
+	      return { ok: false, message: currentLang === 'en' ? 'Please enter a host name.' : 'ホスト名を入力してください。' };
+	    }
+
+	    const listingPayload = homestayListingPayloadFromOnboarding(userId);
+	    const validationErrors = validateHomestayHostListingPayload(listingPayload);
+	    if (validationErrors.length) {
+	      return { ok: false, message: validationErrors[0] };
+	    }
+
+	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
+	    if (!savedDisplayName) {
+	      console.error('Supabase profiles display_name save error:', new Error('profiles.display_name update returned false'));
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host name. Please try again.' : 'ホスト名を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const hostProfilePayload = homestayHostProfilePayloadFromOnboarding(userId);
+	    const savedHostProfile = await saveHomestayHostProfileToSupabase(hostProfilePayload);
+	    if (!savedHostProfile) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host profile. Please try again.' : 'ホスト情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const listingId = await saveHomestayListingToSupabase(listingPayload);
+	    if (!listingId) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your listing. Please try again.' : '掲載情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedListingDetails = await saveHomestayListingDetailsToSupabase(listingId, homestayListingDetailsPayloadFromOnboarding());
+	    if (!savedListingDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save listing details. Please try again.' : '掲載詳細を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedPrivateDetails = await saveListingPrivateDetailsToSupabase(listingId, {
+	      full_address: hostOnboardingTextInput('host-ob-address')
+	    });
+	    if (!savedPrivateDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details. Please try again.' : '住所情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedMode = await saveHostUserModeToSupabase();
+	    if (!savedMode) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode. Please try again.' : 'ホスト登録状態を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    return { ok: true, listingId };
 	  }
 
   async function saveSubScreen(name) {
@@ -17394,10 +17888,26 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
   }
 
-  function hostObNext() {
+  async function hostObNext() {
     if (hostObStep < hostObTotal) { hostObStep++; renderHostObStep(); }
     else {
+      const btn = document.getElementById('host-ob-next-btn');
+      if (btn?.disabled) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = localizeText('保存中...');
+      }
+      const savedToSupabase = await saveHomestayHostOnboardingToSupabase();
+      if (!savedToSupabase.ok) {
+        showToast(savedToSupabase.message || (currentLang === 'en' ? 'Could not save. Please try again.' : '保存できませんでした。もう一度お試しください。'));
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = localizeText('登録完了 ✓');
+        }
+        return;
+      }
       saveHostProfileEdits('ob');
+      if (btn) btn.disabled = false;
       navigate('host-onboarding', 'host-dashboard');
     }
   }
