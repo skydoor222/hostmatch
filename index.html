@@ -6813,6 +6813,9 @@
     renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
   }
 
+  window.renderAvatarElement = renderAvatarElement;
+  window.applyCurrentUserAvatarUrl = applyCurrentUserAvatarUrl;
+
   async function loadCurrentUserProfile(user) {
     if (!user?.id) return null;
     try {
@@ -11013,7 +11016,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     pendingProfileAvatarFile = file;
     if (pendingProfileAvatarPreviewUrl) URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
     pendingProfileAvatarPreviewUrl = URL.createObjectURL(file);
-    applyCurrentUserAvatarUrl(pendingProfileAvatarPreviewUrl);
+    window.applyCurrentUserAvatarUrl(pendingProfileAvatarPreviewUrl);
   }
 
   async function saveCurrentUserAvatarToSupabase() {
@@ -11077,7 +11080,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     }
     const input = document.getElementById('prof-avatar-input');
     if (input) input.value = '';
-    applyCurrentUserAvatarUrl(publicUrl);
+    window.applyCurrentUserAvatarUrl(publicUrl);
     setProfileAvatarMessage('');
     return true;
   }
