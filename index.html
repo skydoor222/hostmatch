@@ -856,6 +856,36 @@
       width: 64px; height: 64px; border-radius: 50%;
       background: linear-gradient(135deg, #fd79a8, #6c5ce7);
       display: flex; align-items: center; justify-content: center; font-size: 32px;
+      overflow: hidden;
+    }
+    .mypage-avatar img,
+    .profile-avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .profile-avatar-preview {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fd79a8, #6c5ce7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-size: 34px;
+    }
+    .profile-avatar-help {
+      font-size: 12px;
+      color: var(--light);
+    }
+    .profile-avatar-message {
+      min-height: 16px;
+      font-size: 12px;
+      color: #FF5A5F;
+      font-weight: 700;
+      margin-top: 6px;
     }
     .mypage-name { font-size: 20px; font-weight: 800; }
     .mypage-meta { font-size: 13px; color: var(--light); margin-top: 2px; }
@@ -3847,11 +3877,12 @@
 	      <div class="form-group">
 	        <div class="form-label">写真</div>
 	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-	          <span style="font-size:34px;">🧑</span>
+	          <span class="profile-avatar-preview" id="prof-avatar-preview">🧑</span>
 	          <span style="font-size:14px;font-weight:700;color:var(--dark);">プロフィール写真を選択</span>
-	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-	          <input type="file" accept="image/*" style="display:none;" />
+	          <span class="profile-avatar-help">JPG / PNG / WebP、5MBまで保存できます</span>
+	          <input id="prof-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleProfileAvatarSelection(event)" style="display:none;" />
 	        </label>
+	        <div class="profile-avatar-message" id="profile-avatar-message"></div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">名前</div>
@@ -6749,6 +6780,7 @@
   function applyCurrentUserProfile(user, profile) {
     const displayName = profile?.display_name || fallbackAuthDisplayName(user);
     const email = user?.email || '';
+    const avatarUrl = profile?.avatar_url || '';
     window._currentProfile = profile || null;
 
     const nameEl = document.getElementById('mypage-username');
@@ -6759,6 +6791,26 @@
     if (nameInput) nameInput.value = displayName;
     const emailInput = document.getElementById('prof-email');
     if (emailInput) emailInput.value = email;
+    applyCurrentUserAvatarUrl(avatarUrl);
+  }
+
+  function renderAvatarElement(el, avatarUrl) {
+    if (!el) return;
+    if (avatarUrl) {
+      el.textContent = '';
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.alt = 'Profile photo';
+      el.appendChild(img);
+    } else {
+      el.textContent = '';
+      el.textContent = '🧑';
+    }
+  }
+
+  function applyCurrentUserAvatarUrl(avatarUrl) {
+    renderAvatarElement(document.querySelector('.mypage-avatar'), avatarUrl);
+    renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
   }
 
   async function loadCurrentUserProfile(user) {
@@ -10915,6 +10967,121 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
+  let pendingProfileAvatarFile = null;
+  let pendingProfileAvatarPreviewUrl = '';
+  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+  const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+
+  function profileAvatarErrorMessage(key) {
+    const messages = {
+      type: currentLang === 'en' ? 'Please select a JPG, PNG, or WebP image.' : 'JPG / PNG / WebP形式の画像を選択してください。',
+      size: currentLang === 'en' ? 'Please select an image up to 5MB.' : '5MB以下の画像を選択してください。',
+      user: currentLang === 'en' ? 'Please log in again before saving your photo.' : '写真を保存するには再度ログインしてください。'
+    };
+    return messages[key] || (currentLang === 'en' ? 'Could not save the photo.' : '写真を保存できませんでした。');
+  }
+
+  function setProfileAvatarMessage(message) {
+    const el = document.getElementById('profile-avatar-message');
+    if (el) el.textContent = message || '';
+  }
+
+  function profileAvatarExtension(fileType) {
+    if (fileType === 'image/png') return 'png';
+    if (fileType === 'image/webp') return 'webp';
+    return 'jpg';
+  }
+
+  function handleProfileAvatarSelection(event) {
+    const input = event?.target;
+    const file = input?.files?.[0] || null;
+    setProfileAvatarMessage('');
+    pendingProfileAvatarFile = null;
+
+    if (!file) return;
+    if (!PROFILE_AVATAR_ALLOWED_TYPES.has(file.type)) {
+      if (input) input.value = '';
+      setProfileAvatarMessage(profileAvatarErrorMessage('type'));
+      return;
+    }
+    if (file.size > PROFILE_AVATAR_MAX_SIZE) {
+      if (input) input.value = '';
+      setProfileAvatarMessage(profileAvatarErrorMessage('size'));
+      return;
+    }
+
+    pendingProfileAvatarFile = file;
+    if (pendingProfileAvatarPreviewUrl) URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
+    pendingProfileAvatarPreviewUrl = URL.createObjectURL(file);
+    applyCurrentUserAvatarUrl(pendingProfileAvatarPreviewUrl);
+  }
+
+  async function saveCurrentUserAvatarToSupabase() {
+    if (!pendingProfileAvatarFile) return true;
+
+    const userId = window._currentUser?.id;
+    if (!userId || !window._supabase?.storage || !window._supabase?.from) {
+      setProfileAvatarMessage(profileAvatarErrorMessage('user'));
+      return false;
+    }
+
+    const file = pendingProfileAvatarFile;
+    const path = `${userId}/avatar-${Date.now()}.${profileAvatarExtension(file.type)}`;
+
+    try {
+      const { error: uploadError } = await window._supabase.storage
+        .from('profile-photos')
+        .upload(path, file, {
+          cacheControl: '3600',
+          contentType: file.type,
+          upsert: false
+        });
+      if (uploadError) throw uploadError;
+    } catch (error) {
+      console.warn('Supabase profile photo upload error:', error);
+      setProfileAvatarMessage(currentLang === 'en' ? 'Could not upload the photo.' : '写真をアップロードできませんでした。');
+      return false;
+    }
+
+    const { data } = window._supabase.storage
+      .from('profile-photos')
+      .getPublicUrl(path);
+    const publicUrl = data?.publicUrl || '';
+    if (!publicUrl) {
+      console.warn('Supabase profile photo upload error:', new Error('Public URL was not returned'));
+      setProfileAvatarMessage(currentLang === 'en' ? 'Could not get the photo URL.' : '写真URLを取得できませんでした。');
+      return false;
+    }
+
+    try {
+      const { error } = await window._supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', userId);
+      if (error) throw error;
+    } catch (error) {
+      console.warn('Supabase profiles avatar_url update error:', error);
+      setProfileAvatarMessage(currentLang === 'en' ? 'Could not save the photo URL.' : '写真URLをプロフィールへ保存できませんでした。');
+      return false;
+    }
+
+    window._currentProfile = {
+      ...(window._currentProfile || {}),
+      id: userId,
+      avatar_url: publicUrl
+    };
+    pendingProfileAvatarFile = null;
+    if (pendingProfileAvatarPreviewUrl) {
+      URL.revokeObjectURL(pendingProfileAvatarPreviewUrl);
+      pendingProfileAvatarPreviewUrl = '';
+    }
+    const input = document.getElementById('prof-avatar-input');
+    if (input) input.value = '';
+    applyCurrentUserAvatarUrl(publicUrl);
+    setProfileAvatarMessage('');
+    return true;
+  }
+
   async function saveCurrentUserDisplayNameToSupabase(displayName) {
     const trimmedName = String(displayName || '').trim();
     const userId = window._currentUser?.id;
@@ -10952,6 +11119,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         const newName = nameInput ? nameInput.value.trim() : '';
         const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(newName);
         if (!savedDisplayName) return;
+        const savedAvatar = await saveCurrentUserAvatarToSupabase();
+        if (!savedAvatar) return;
         if (newName) {
           nameInput.value = newName;
           const mypageName = document.getElementById('mypage-username');
@@ -10971,6 +11140,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const newEmail = emailInput ? emailInput.value.trim() : '';
       const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(newName);
       if (!savedDisplayName) return;
+      const savedAvatar = await saveCurrentUserAvatarToSupabase();
+      if (!savedAvatar) return;
       if (newName) {
         nameInput.value = newName;
         const mypageName = document.getElementById('mypage-username');
