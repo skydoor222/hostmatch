@@ -3890,20 +3890,20 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">生年月日</div>
-	        <input class="form-input" type="date" value="2002-04-12" />
+	        <input class="form-input" id="prof-birth-date" type="date" onchange="updateProfileAgeFromBirthDate()" />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">年齢</div>
-	        <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+	        <input class="form-input" id="prof-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" readonly />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">国籍</div>
-	        <input class="form-input" type="text" placeholder="国籍を入力してください" value="日本" />
+	        <input class="form-input" id="prof-nationality" type="text" placeholder="国籍を入力してください" />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">性別</div>
-	        <div class="form-chip-row">
-	          <div class="form-chip selected" onclick="toggleChip(this)">女性</div>
+	        <div class="form-chip-row" id="prof-gender">
+	          <div class="form-chip" onclick="toggleChip(this)">女性</div>
 	          <div class="form-chip" onclick="toggleChip(this)">男性</div>
 	          <div class="form-chip" onclick="toggleChip(this)">選択しない</div>
 	        </div>
@@ -3911,22 +3911,22 @@
 	      <div class="form-group">
 	        <div class="form-label">宗教</div>
 	        <div class="sensitive-info-note"><strong data-i18n="religion_sensitive_title">宗教・信仰に関する情報について</strong><span data-i18n="religion_sensitive_body">この項目は任意です。入力した情報は、共同生活における相互理解のために利用され、プロフィール上で他の登録ユーザーに表示されます。</span></div>
-	        <div class="form-chip-row">
+	        <div class="form-chip-row" id="prof-religion">
 	          <div class="form-chip" onclick="toggleChip(this)">仏教</div>
 	          <div class="form-chip" onclick="toggleChip(this)">キリスト教</div>
 	          <div class="form-chip" onclick="toggleChip(this)">イスラム教</div>
 	          <div class="form-chip" onclick="toggleChip(this)">ヒンドゥー教</div>
 	          <div class="form-chip" onclick="toggleChip(this)">ユダヤ教</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">無宗教</div>
+	          <div class="form-chip" onclick="toggleChip(this)">無宗教</div>
 	          <div class="form-chip" onclick="toggleChip(this)">その他</div>
 	          <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
 	        </div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">英語レベル</div>
-	        <div class="form-chip-row">
+	        <div class="form-chip-row" id="prof-english-level">
 	          <div class="form-chip" onclick="toggleChip(this)">初心者</div>
-	          <div class="form-chip selected" onclick="toggleChip(this)">日常会話</div>
+	          <div class="form-chip" onclick="toggleChip(this)">日常会話</div>
 	          <div class="form-chip" onclick="toggleChip(this)">ビジネスレベル</div>
 	          <div class="form-chip" onclick="toggleChip(this)">ネイティブレベル</div>
 	          <div class="form-chip" onclick="toggleChip(this)">回答しない</div>
@@ -3934,9 +3934,9 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">使用言語</div>
-	        <div class="form-chip-row">
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">英語</div>
-	          <div class="form-chip selected" onclick="toggleMultiChip(this)">日本語</div>
+	        <div class="form-chip-row" id="prof-languages">
+	          <div class="form-chip" onclick="toggleMultiChip(this)">英語</div>
+	          <div class="form-chip" onclick="toggleMultiChip(this)">日本語</div>
 	          <div class="form-chip" onclick="toggleMultiChip(this)">中国語</div>
 	          <div class="form-chip" onclick="toggleMultiChip(this)">韓国語</div>
 	          <div class="form-chip" onclick="toggleMultiChip(this)">スペイン語</div>
@@ -3947,8 +3947,8 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">留学目的</div>
-	        <div class="form-chip-row">
-	          <div class="form-chip selected" onclick="toggleChip(this)">学生</div>
+	        <div class="form-chip-row" id="prof-stay-status">
+	          <div class="form-chip" onclick="toggleChip(this)">学生</div>
 	          <div class="form-chip" onclick="toggleChip(this)">ワーホリ</div>
 	          <div class="form-chip" onclick="toggleChip(this)">社会人</div>
 	        </div>
@@ -3959,26 +3959,26 @@
       <div class="form-group">
         <div class="form-label">希望エリア（複数可）</div>
         <div class="form-chip-row" id="hs-profile-area">
-          <div class="form-chip selected" onclick="toggleMultiChip(this)">バンクーバー</div>
+          <div class="form-chip" onclick="toggleMultiChip(this)">バンクーバー</div>
           <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
         </div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">滞在開始日</div>
-	        <input class="form-input" id="profile-stay-start" type="date" value="2026-07-01" onchange="syncGuestStayDatesFromProfile()" />
+	        <input class="form-input" id="profile-stay-start" type="date" onchange="syncGuestStayDatesFromProfile()" />
 	        <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">滞在終了日</div>
-	        <input class="form-input" id="profile-stay-end" type="date" value="2026-09-30" onchange="syncGuestStayDatesFromProfile()" />
+	        <input class="form-input" id="profile-stay-end" type="date" onchange="syncGuestStayDatesFromProfile()" />
 	        <div style="font-size:12px;color:var(--light);margin-top:6px;">カレンダーから選択してください</div>
 	      </div>
       <div class="form-group">
         <div class="form-label">月額予算（CAD）</div>
         <div class="form-range-row">
-          <input class="form-range-input" type="number" value="500" placeholder="下限" />
+          <input class="form-range-input" id="hs-profile-budget-min" type="number" placeholder="下限" />
           <div class="form-range-sep">〜</div>
-          <input class="form-range-input" id="hs-profile-budget-max" type="number" value="1200" placeholder="上限" />
+          <input class="form-range-input" id="hs-profile-budget-max" type="number" placeholder="上限" />
         </div>
       </div>
     </div>
@@ -10972,8 +10972,140 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   /* ===== MYPAGE SUB SCREENS ===== */
   let pendingProfileAvatarFile = null;
   let pendingProfileAvatarPreviewUrl = '';
+  let currentGuestProfileData = null;
+  let currentHomestayGuestPreferences = null;
   const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+
+  function nullableText(value) {
+    const trimmed = String(value || '').trim();
+    return trimmed || null;
+  }
+
+  function nullableNumber(value) {
+    const trimmed = String(value || '').trim();
+    if (!trimmed) return null;
+    const number = Number(trimmed);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function calculateAgeFromBirthDate(birthDateValue) {
+    if (!birthDateValue) return null;
+    const birthDate = new Date(`${birthDateValue}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const birthdayThisYear = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+    if (today < birthdayThisYear) age -= 1;
+    return age >= 0 ? age : null;
+  }
+
+  function updateProfileAgeFromBirthDate() {
+    const birthDateInput = document.getElementById('prof-birth-date');
+    const ageInput = document.getElementById('prof-age');
+    if (!ageInput) return null;
+    const age = calculateAgeFromBirthDate(birthDateInput?.value || '');
+    ageInput.value = age === null ? '' : String(age);
+    return age;
+  }
+
+  window.updateProfileAgeFromBirthDate = updateProfileAgeFromBirthDate;
+
+  function setInputValueById(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? '';
+  }
+
+  function chipStoredText(chip) {
+    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
+    return (textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent || '').trim();
+  }
+
+  function setSingleFormChip(rowId, value) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    row.querySelectorAll('.form-chip').forEach(chip => {
+      chip.classList.toggle('selected', !!value && chipStoredText(chip) === value);
+    });
+  }
+
+  function setMultiFormChips(rowId, values = []) {
+    const selectedValues = new Set(Array.isArray(values) ? values.filter(Boolean) : []);
+    const row = document.getElementById(rowId);
+    if (!row) return;
+    row.querySelectorAll('.form-chip').forEach(chip => {
+      chip.classList.toggle('selected', selectedValues.has(chipStoredText(chip)));
+    });
+  }
+
+  function applyGuestProfileDataToProfileScreen(data) {
+    const profile = data || {};
+    setInputValueById('prof-birth-date', profile.birth_date || '');
+    updateProfileAgeFromBirthDate();
+    setInputValueById('prof-nationality', profile.nationality || '');
+    setSingleFormChip('prof-gender', profile.gender || '');
+    setSingleFormChip('prof-religion', profile.religion || '');
+    setSingleFormChip('prof-english-level', profile.english_level || '');
+    setMultiFormChips('prof-languages', profile.languages || []);
+    setSingleFormChip('prof-stay-status', profile.stay_status || '');
+  }
+
+  function applyHomestayGuestPreferencesToProfileScreen(data) {
+    const prefs = data || {};
+    setMultiFormChips('hs-profile-area', prefs.preferred_cities || []);
+    setInputValueById('profile-stay-start', prefs.stay_start_date || '');
+    setInputValueById('profile-stay-end', prefs.stay_end_date || '');
+    setInputValueById('hs-profile-budget-min', prefs.budget_min ?? '');
+    setInputValueById('hs-profile-budget-max', prefs.budget_max ?? '');
+  }
+
+  async function loadGuestProfileDataForProfileScreen() {
+    const userId = window._currentUser?.id;
+    if (!userId || !window._supabase?.from) return false;
+    try {
+      const { data, error } = await window._supabase
+        .from('guest_profiles')
+        .select('user_id, birth_date, age, nationality, gender, religion, english_level, languages, stay_status')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      currentGuestProfileData = data || null;
+      window._currentGuestProfileData = currentGuestProfileData;
+      applyGuestProfileDataToProfileScreen(currentGuestProfileData);
+      return true;
+    } catch (error) {
+      console.warn('Supabase guest_profiles fetch error:', error);
+      return false;
+    }
+  }
+
+  async function loadHomestayGuestPreferencesForProfileScreen() {
+    const userId = window._currentUser?.id;
+    if (!userId || !window._supabase?.from) return false;
+    try {
+      const { data, error } = await window._supabase
+        .from('homestay_guest_preferences')
+        .select('user_id, preferred_cities, stay_start_date, stay_end_date, budget_min, budget_max')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      currentHomestayGuestPreferences = data || null;
+      window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
+      applyHomestayGuestPreferencesToProfileScreen(currentHomestayGuestPreferences);
+      return true;
+    } catch (error) {
+      console.warn('Supabase homestay_guest_preferences fetch error:', error);
+      return false;
+    }
+  }
+
+	  async function loadHomestayGuestProfileEditData() {
+	    if (!isHomestayGuestContext()) return;
+	    applyGuestProfileDataToProfileScreen(currentGuestProfileData);
+	    applyHomestayGuestPreferencesToProfileScreen(currentHomestayGuestPreferences);
+	    await loadGuestProfileDataForProfileScreen();
+	    await loadHomestayGuestPreferencesForProfileScreen();
+	  }
 
   function profileAvatarErrorMessage(key) {
     const messages = {
@@ -11112,6 +11244,95 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     }
   }
 
+  function guestProfilePayloadFromProfileScreen() {
+    const birthDate = nullableText(document.getElementById('prof-birth-date')?.value);
+    const age = birthDate ? calculateAgeFromBirthDate(birthDate) : null;
+    return {
+      birth_date: birthDate,
+      age,
+      nationality: nullableText(document.getElementById('prof-nationality')?.value),
+      gender: nullableText(selectedChipText('prof-gender', '')),
+      religion: nullableText(selectedChipText('prof-religion', '')),
+      english_level: nullableText(selectedChipText('prof-english-level', '')),
+      languages: selectedChipTexts('#prof-languages'),
+      stay_status: nullableText(selectedChipText('prof-stay-status', ''))
+    };
+  }
+
+  function homestayGuestPreferencesPayloadFromProfileScreen() {
+    return {
+      preferred_cities: selectedChipTexts('#hs-profile-area'),
+      stay_start_date: nullableText(document.getElementById('profile-stay-start')?.value),
+      stay_end_date: nullableText(document.getElementById('profile-stay-end')?.value),
+      budget_min: nullableNumber(document.getElementById('hs-profile-budget-min')?.value),
+      budget_max: nullableNumber(document.getElementById('hs-profile-budget-max')?.value)
+    };
+  }
+
+  async function saveGuestProfileDataToSupabase(payload) {
+    const userId = window._currentUser?.id;
+    if (!userId || !window._supabase?.from) return false;
+
+    try {
+      const { data: existing, error: selectError } = await window._supabase
+        .from('guest_profiles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (selectError) throw selectError;
+
+      const query = window._supabase.from('guest_profiles');
+      const { error: saveError } = existing
+        ? await query.update(payload).eq('user_id', userId)
+        : await query.insert({ user_id: userId, ...payload });
+      if (saveError) throw saveError;
+
+      currentGuestProfileData = { user_id: userId, ...payload };
+      window._currentGuestProfileData = currentGuestProfileData;
+      applyGuestProfileDataToProfileScreen(currentGuestProfileData);
+      return true;
+    } catch (error) {
+      console.warn('Supabase guest_profiles save error:', error);
+      return false;
+    }
+  }
+
+  async function saveHomestayGuestPreferencesToSupabase(payload) {
+    const userId = window._currentUser?.id;
+    if (!userId || !window._supabase?.from) return false;
+
+    try {
+      const { data: existing, error: selectError } = await window._supabase
+        .from('homestay_guest_preferences')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (selectError) throw selectError;
+
+      const query = window._supabase.from('homestay_guest_preferences');
+      const { error: saveError } = existing
+        ? await query.update(payload).eq('user_id', userId)
+        : await query.insert({ user_id: userId, ...payload });
+      if (saveError) throw saveError;
+
+      currentHomestayGuestPreferences = { user_id: userId, ...payload };
+      window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
+      applyHomestayGuestPreferencesToProfileScreen(currentHomestayGuestPreferences);
+      return true;
+    } catch (error) {
+      console.warn('Supabase homestay_guest_preferences save error:', error);
+      return false;
+    }
+  }
+
+	  async function saveHomestayGuestProfileEditDataToSupabase() {
+	    if (!isHomestayGuestContext()) return true;
+	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayloadFromProfileScreen());
+	    if (!savedGuestProfile) return false;
+	    const savedPreferences = await saveHomestayGuestPreferencesToSupabase(homestayGuestPreferencesPayloadFromProfileScreen());
+	    return savedPreferences;
+	  }
+
   async function saveSubScreen(name) {
     if (isSharehouseGuestContext() && (name === 'profile' || name === 'lifestyle')) {
       collectSharehouseGuestProfileFromEdit();
@@ -11145,6 +11366,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       if (!savedDisplayName) return;
       const savedAvatar = await saveCurrentUserAvatarToSupabase();
       if (!savedAvatar) return;
+      const savedHomestayProfileData = await saveHomestayGuestProfileEditDataToSupabase();
+      if (!savedHomestayProfileData) return;
       if (newName) {
         nameInput.value = newName;
         const mypageName = document.getElementById('mypage-username');
@@ -11748,11 +11971,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return sharehouseGuestDemoProfile;
 	  }
 
-	  function isSharehouseGuestContext() {
-	    return currentRole === 'guest' && (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse');
-	  }
+		  function isSharehouseGuestContext() {
+		    return currentRole === 'guest' && (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse');
+		  }
 
-  function rehydrateGuestProfileIdentityFields() {
+		  function isHomestayGuestContext() {
+		    return currentRole === 'guest' && (window._serviceType === 'homestay' || currentSearchCat === 'homestay') && !isSharehouseGuestContext();
+		  }
+
+	  function rehydrateGuestProfileIdentityFields() {
     if (window._currentUser && typeof window.applyCurrentUserProfile === 'function') {
       window.applyCurrentUserProfile(window._currentUser, window._currentProfile || null);
     }
@@ -11768,6 +11995,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       body.innerHTML = homestayProfileBodyHtml;
     }
     rehydrateGuestProfileIdentityFields();
+    loadHomestayGuestProfileEditData();
   }
 
 	  const SH_HOST_LANGUAGE_OPTIONS = ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語'];
