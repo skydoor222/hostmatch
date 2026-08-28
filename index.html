@@ -10915,12 +10915,42 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   /* ===== MYPAGE SUB SCREENS ===== */
-  function saveSubScreen(name) {
+  async function saveCurrentUserDisplayNameToSupabase(displayName) {
+    const trimmedName = String(displayName || '').trim();
+    const userId = window._currentUser?.id;
+    if (!trimmedName) return true;
+    if (!userId || !window._supabase?.from) return false;
+
+    try {
+      const { error } = await window._supabase
+        .from('profiles')
+        .update({ display_name: trimmedName })
+        .eq('id', userId);
+      if (error) throw error;
+
+      window._currentProfile = {
+        ...(window._currentProfile || {}),
+        id: userId,
+        display_name: trimmedName
+      };
+      const mypageName = document.getElementById('mypage-username') || document.querySelector('.mypage-name');
+      if (mypageName) mypageName.textContent = trimmedName;
+      return true;
+    } catch (error) {
+      console.warn('Supabase profiles display_name update error:', error);
+      return false;
+    }
+  }
+
+  async function saveSubScreen(name) {
     if (isSharehouseGuestContext() && (name === 'profile' || name === 'lifestyle')) {
       collectSharehouseGuestProfileFromEdit();
       shouldApplyRegisteredFilters.sharehouse = true;
       if (name === 'profile') {
-        const newName = sharehouseGuestDemoProfile?.basic?.name || '';
+        const nameInput = document.getElementById('prof-name');
+        const newName = nameInput ? nameInput.value.trim() : '';
+        const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(newName);
+        if (!savedDisplayName) return;
         if (newName) document.querySelector('.mypage-name').textContent = newName;
       }
       showToast(currentLang === 'en' ? 'Saved' : '保存しました');
@@ -10933,6 +10963,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const emailInput = document.getElementById('prof-email');
       const newName = nameInput ? nameInput.value.trim() : '';
       const newEmail = emailInput ? emailInput.value.trim() : '';
+      const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(newName);
+      if (!savedDisplayName) return;
       if (newName) document.querySelector('.mypage-name').textContent = newName;
       if (newEmail) document.querySelector('.mypage-meta').textContent = newEmail;
     }
