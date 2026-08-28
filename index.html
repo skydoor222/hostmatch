@@ -11636,11 +11636,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        <div class="form-group">
 	          <div class="form-label">${localizeText('プロフィール写真')}</div>
 	          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:20px 14px;background:var(--bg);cursor:pointer;text-align:center;">
-	            <span style="font-size:32px;">👤</span><span style="font-size:14px;font-weight:800;">${localizeText('顔写真をアップロード')}</span>
-	            <input type="file" accept="image/*" style="display:none;" />
+	            <span class="profile-avatar-preview" id="prof-avatar-preview">🧑</span><span style="font-size:14px;font-weight:800;">${localizeText('顔写真をアップロード')}</span>
+	            <span class="profile-avatar-help">JPG / PNG / WebP、5MBまで保存できます</span>
+	            <input id="prof-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleProfileAvatarSelection(event)" style="display:none;" />
 	          </label>
+	          <div class="profile-avatar-message" id="profile-avatar-message"></div>
 	        </div>
-	        <div class="form-group"><div class="form-label">${localizeText('名前')}</div>${shTextInput(`${prefix}-name`, profile.basic.name, '名前')}</div>
+	        <div class="form-group"><div class="form-label">${localizeText('名前')}</div><input class="form-input" id="prof-name" type="text" value="${escapeHtml(profile.basic.name)}" placeholder="${localizeText('名前')}" /></div>
 	        <div class="form-group"><div class="form-label">${localizeText('年齢')}</div><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(profile.basic.age)}" /></div>
 	        <div class="form-group"><div class="form-label">${localizeText('国籍')}</div>${shTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')}</div>
 	        <div class="form-group"><div class="form-label">${localizeText('性別')}</div>${shChipRow(prefix, 'gender', ['女性','男性','選択しない'], profile.basic.gender)}</div>
@@ -11698,7 +11700,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const hobbies = shSelectedChipTexts('shge', 'hobbies').filter(v => !['その他', 'Other'].includes(v));
 	    const nextProfile = {
 	      basic: {
-	        name: formValue('shge-name', existing.basic.name),
+	        name: formValue('prof-name', existing.basic.name),
 	        age: formValue('shge-age', existing.basic.age),
 	        nationality: formValue('shge-nationality', existing.basic.nationality),
 	        gender: shSelectedChipText('shge', 'gender', existing.basic.gender),
@@ -11750,6 +11752,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return currentRole === 'guest' && (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse');
 	  }
 
+  function rehydrateGuestProfileIdentityFields() {
+    if (window._currentUser && typeof window.applyCurrentUserProfile === 'function') {
+      window.applyCurrentUserProfile(window._currentUser, window._currentProfile || null);
+    }
+  }
+
   function updateGuestProfileMode() {
     const body = document.querySelector('#screen-profile .mypage-sub-body');
     if (!body) return;
@@ -11759,6 +11767,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    } else if (body.innerHTML !== homestayProfileBodyHtml) {
       body.innerHTML = homestayProfileBodyHtml;
     }
+    rehydrateGuestProfileIdentityFields();
   }
 
 	  const SH_HOST_LANGUAGE_OPTIONS = ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語'];
