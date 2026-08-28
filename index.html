@@ -4373,14 +4373,14 @@
           <div class="form-label">名前</div>
           <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
         </div>
-        <div class="form-group">
-          <div class="form-label">年齢</div>
-          <input class="form-input" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
-        </div>
-        <div class="form-group">
-          <div class="form-label">国籍</div>
-          <input class="form-input" type="text" placeholder="国籍を入力してください" value="日本" />
-        </div>
+	        <div class="form-group">
+	          <div class="form-label">年齢</div>
+	          <input class="form-input" id="hs-onboard-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+	        </div>
+	        <div class="form-group">
+	          <div class="form-label">国籍</div>
+	          <input class="form-input" id="hs-onboard-nationality" type="text" placeholder="国籍を入力してください" value="日本" />
+	        </div>
         <div class="form-group">
           <div class="form-label">性別</div>
           <div class="form-chip-row" id="hs-onboard-gender">
@@ -4392,7 +4392,7 @@
         <div class="form-group">
           <div class="form-label">宗教</div>
           <div class="sensitive-info-note"><strong data-i18n="religion_sensitive_title">宗教・信仰に関する情報について</strong><span data-i18n="religion_sensitive_body">この項目は任意です。入力した情報は、共同生活における相互理解のために利用され、プロフィール上で他の登録ユーザーに表示されます。</span></div>
-          <div class="form-chip-row">
+	          <div class="form-chip-row" id="hs-onboard-religion">
             <div class="form-chip" onclick="toggleChip(this)">仏教</div>
             <div class="form-chip" onclick="toggleChip(this)">キリスト教</div>
             <div class="form-chip" onclick="toggleChip(this)">イスラム教</div>
@@ -4405,7 +4405,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">英語レベル</div>
-          <div class="form-chip-row">
+	          <div class="form-chip-row" id="hs-onboard-english-level">
             <div class="form-chip" onclick="toggleChip(this)">初心者</div>
             <div class="form-chip selected" onclick="toggleChip(this)">日常会話</div>
             <div class="form-chip" onclick="toggleChip(this)">ビジネスレベル</div>
@@ -4415,7 +4415,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">使用言語</div>
-          <div class="form-chip-row">
+	          <div class="form-chip-row" id="hs-onboard-languages">
             <div class="form-chip selected" onclick="toggleMultiChip(this)">英語</div>
             <div class="form-chip selected" onclick="toggleMultiChip(this)">日本語</div>
             <div class="form-chip" onclick="toggleMultiChip(this)">中国語</div>
@@ -4428,7 +4428,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">留学目的</div>
-          <div class="form-chip-row">
+	          <div class="form-chip-row" id="hs-onboard-stay-status">
             <div class="form-chip selected" onclick="toggleChip(this)">学生</div>
             <div class="form-chip" onclick="toggleChip(this)">ワーホリ</div>
             <div class="form-chip" onclick="toggleChip(this)">社会人</div>
@@ -4460,7 +4460,7 @@
         <div class="form-group">
           <div class="form-label">月額予算（CAD）</div>
           <div class="form-range-row">
-            <input class="form-range-input" type="number" value="500" placeholder="下限" />
+	            <input class="form-range-input" id="hs-onboard-budget-min" type="number" value="500" placeholder="下限" />
             <div class="form-range-sep">〜</div>
             <input class="form-range-input" id="hs-onboard-budget-max" type="number" value="1200" placeholder="上限" />
           </div>
@@ -4503,7 +4503,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">一言</div>
-          <textarea class="form-textarea" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！" data-i18n-placeholder="guest_about_placeholder"></textarea>
+	          <textarea class="form-textarea" id="hs-onboard-bio" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！" data-i18n-placeholder="guest_about_placeholder"></textarea>
         </div>
       </div>
     </div>
@@ -10458,9 +10458,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return canonicalFilterValue(filterRowId, value);
   }
 
-  function homestayFilterProfileFromOnboarding() {
-    const meal = selectedChipTextFromRow('hs-onboard-meal', '朝食のみ');
-    const mealMap = { '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
+	  function homestayFilterProfileFromOnboarding() {
+	    const meal = selectedChipTextFromRow('hs-onboard-meal', '朝食のみ');
+	    const mealMap = { '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
     const pet = selectedChipTextFromRow('hs-onboard-pets', 'ペットOK');
     const smoking = selectedChipTextFromRow('hs-onboard-smoking', '喫煙NG');
     const students = selectedChipTextFromRow('hs-onboard-students', 'いてもOK');
@@ -10491,11 +10491,72 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       shower: homestayRulePreferenceFromOnboarding('hs-onboard-shower', 'hmf-shower'),
       kitchen: homestayRulePreferenceFromOnboarding('hs-onboard-kitchen', 'hmf-kitchen'),
       cleaning: homestayRulePreferenceFromOnboarding('hs-onboard-cleaning', 'hmf-cleaning'),
-      overnight: homestayRulePreferenceFromOnboarding('hs-onboard-overnight', 'hmf-overnight')
-    };
-  }
+	      overnight: homestayRulePreferenceFromOnboarding('hs-onboard-overnight', 'hmf-overnight')
+	    };
+	  }
 
-  function homestayRegisteredFilterProfile() {
+	  function guestProfilePayloadFromHomestayOnboarding() {
+	    return {
+	      birth_date: null,
+	      age: nullableNumber(document.getElementById('hs-onboard-age')?.value),
+	      nationality: nullableText(document.getElementById('hs-onboard-nationality')?.value),
+	      gender: nullableText(selectedChipTextFromRow('hs-onboard-gender', '')),
+	      religion: nullableText(selectedChipTextFromRow('hs-onboard-religion', '')),
+	      english_level: nullableText(selectedChipTextFromRow('hs-onboard-english-level', '')),
+	      languages: selectedChipTextsFromRow('hs-onboard-languages'),
+	      stay_status: nullableText(selectedChipTextFromRow('hs-onboard-stay-status', '')),
+	      wake_time: nullableText(selectedChipTextFromRow('hs-onboard-wake', '')),
+	      bedtime: nullableText(selectedChipTextFromRow('hs-onboard-sleep', '')),
+	      hobbies: selectedChipTextsFromRow('hs-onboard-hobbies'),
+	      bio: nullableText(document.getElementById('hs-onboard-bio')?.value)
+	    };
+	  }
+
+	  function homestayGuestPreferencesPayloadFromOnboarding() {
+	    return {
+	      preferred_cities: selectedChipTextsFromRow('hs-onboard-area'),
+	      stay_start_date: nullableText(document.getElementById('guest-stay-start')?.value),
+	      stay_end_date: nullableText(document.getElementById('guest-stay-end')?.value),
+	      budget_min: nullableNumber(document.getElementById('hs-onboard-budget-min')?.value),
+	      budget_max: nullableNumber(document.getElementById('hs-onboard-budget-max')?.value),
+	      host_household_preference: nullableText(selectedChipTextFromRow('hs-onboard-family', '')),
+	      interaction_preference: nullableText(selectedChipTextFromRow('hs-onboard-frequency', '')),
+	      conversation_preference: nullableText(selectedChipTextFromRow('hs-onboard-talk', '')),
+	      meal_plan_preference: nullableText(selectedChipTextFromRow('hs-onboard-meal', '')),
+	      meal_style_preference: nullableText(selectedChipTextFromRow('hs-onboard-dining', '')),
+	      dietary_restriction: selectedChipTextsFromRow('hs-onboard-diet'),
+	      pet_preference: nullableText(selectedChipTextFromRow('hs-onboard-pets', '')),
+	      other_students_preference: nullableText(selectedChipTextFromRow('hs-onboard-students', '')),
+	      smoking_preference: nullableText(selectedChipTextFromRow('hs-onboard-smoking', '')),
+	      curfew_preference: nullableText(selectedChipTextFromRow('hs-onboard-curfew', '')),
+	      visitor_preference: nullableText(selectedChipTextFromRow('hs-onboard-visitor', '')),
+	      shower_limit_preference: nullableText(selectedChipTextFromRow('hs-onboard-shower', '')),
+	      kitchen_preference: nullableText(selectedChipTextFromRow('hs-onboard-kitchen', '')),
+	      cleaning_preference: nullableText(selectedChipTextFromRow('hs-onboard-cleaning', '')),
+	      overnight_guest_preference: nullableText(selectedChipTextFromRow('hs-onboard-overnight', '')),
+	      other_dealbreakers: null
+	    };
+	  }
+
+	  async function saveHomestayGuestOnboardingToSupabase() {
+	    const guestProfilePayload = guestProfilePayloadFromHomestayOnboarding();
+	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload);
+	    if (!savedGuestProfile) {
+	      console.warn('Supabase homestay onboarding guest profile save error:', guestProfilePayload);
+	      return false;
+	    }
+
+	    const homestayPreferencesPayload = homestayGuestPreferencesPayloadFromOnboarding();
+	    const savedPreferences = await saveHomestayGuestPreferencesToSupabase(homestayPreferencesPayload);
+	    if (!savedPreferences) {
+	      console.warn('Supabase homestay onboarding preferences save error:', homestayPreferencesPayload);
+	      return false;
+	    }
+
+	    return true;
+	  }
+
+	  function homestayRegisteredFilterProfile() {
     const stored = readStoredJson(HOMESTAY_GUEST_FILTERS_STORAGE_KEY);
     if (stored) homestayGuestDemoFilters = stored;
     return homestayGuestDemoFilters || homestayFilterProfileFromOnboarding();
@@ -11038,14 +11099,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     });
   }
 
-  function applyGuestProfileDataToProfileScreen(data) {
-    const profile = data || {};
-    setInputValueById('prof-birth-date', profile.birth_date || '');
-    updateProfileAgeFromBirthDate();
-    setInputValueById('prof-nationality', profile.nationality || '');
-    setSingleFormChip('prof-gender', profile.gender || '');
-    setSingleFormChip('prof-religion', profile.religion || '');
-    setSingleFormChip('prof-english-level', profile.english_level || '');
+	  function applyGuestProfileDataToProfileScreen(data) {
+	    const profile = data || {};
+	    setInputValueById('prof-birth-date', profile.birth_date || '');
+	    updateProfileAgeFromBirthDate();
+	    if (!profile.birth_date && profile.age !== null && profile.age !== undefined) {
+	      setInputValueById('prof-age', profile.age);
+	    }
+	    setInputValueById('prof-nationality', profile.nationality || '');
+	    setSingleFormChip('prof-gender', profile.gender || '');
+	    setSingleFormChip('prof-religion', profile.religion || '');
+	    setSingleFormChip('prof-english-level', profile.english_level || '');
     setMultiFormChips('prof-languages', profile.languages || []);
     setSingleFormChip('prof-stay-status', profile.stay_status || '');
   }
@@ -13246,10 +13310,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
   }
 
-  async function saveGuestUserModeToSupabase(housingType) {
-    const userId = window._currentUser?.id;
-    const normalizedHousingType = housingType === 'sharehouse' ? 'sharehouse' : 'homestay';
-    if (!userId || !window._supabase?.from) return;
+	  async function saveGuestUserModeToSupabase(housingType) {
+	    const userId = window._currentUser?.id;
+	    const normalizedHousingType = housingType === 'sharehouse' ? 'sharehouse' : 'homestay';
+	    if (!userId || !window._supabase?.from) return false;
 
     try {
       const { data: existingMode, error: selectError } = await window._supabase
@@ -13260,8 +13324,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         .eq('role', 'guest')
         .maybeSingle();
 
-      if (selectError) throw selectError;
-      if (existingMode) return;
+	      if (selectError) throw selectError;
+	      if (existingMode) return true;
 
       const { error: insertError } = await window._supabase
         .from('user_modes')
@@ -13271,33 +13335,48 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           role: 'guest'
         });
 
-      if (insertError) throw insertError;
-    } catch (error) {
-      console.warn('Supabase user_modes save error:', error);
-    }
-  }
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.warn('Supabase user_modes save error:', error);
+	      return false;
+	    }
+	  }
 
-	  function onboardNext() {
-	    const onboardTotal = (window._serviceType || 'homestay') === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
-	    if (onboardStep < onboardTotal) {
-      onboardStep++;
-      renderOnboardStep();
+		  async function onboardNext() {
+		    const onboardTotal = (window._serviceType || 'homestay') === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
+		    if (onboardStep < onboardTotal) {
+	      onboardStep++;
+	      renderOnboardStep();
     } else {
       const type = window._serviceType || 'homestay';
       currentRole = 'guest';
       currentSearchCat = type === 'sharehouse' ? 'sharehouse' : 'homestay';
-      window._serviceType = currentSearchCat;
-      if (currentSearchCat === 'sharehouse') {
-        collectSharehouseGuestProfile();
-        shouldApplyRegisteredFilters.sharehouse = true;
-      } else {
-        saveHomestayGuestFilterProfile(homestayFilterProfileFromOnboarding());
-        shouldApplyRegisteredFilters.homestay = true;
-      }
-      saveGuestUserModeToSupabase(currentSearchCat);
-      navigate('onboarding', 'search');
-    }
-  }
+	      window._serviceType = currentSearchCat;
+	      if (currentSearchCat === 'sharehouse') {
+	        collectSharehouseGuestProfile();
+	        shouldApplyRegisteredFilters.sharehouse = true;
+	        saveGuestUserModeToSupabase(currentSearchCat);
+	        navigate('onboarding', 'search');
+	        return;
+	      } else {
+	        const homestayFilterProfile = homestayFilterProfileFromOnboarding();
+	        saveHomestayGuestFilterProfile(homestayFilterProfile);
+	        shouldApplyRegisteredFilters.homestay = true;
+	        const savedHomestayOnboarding = await saveHomestayGuestOnboardingToSupabase();
+	        if (!savedHomestayOnboarding) {
+	          showToast(currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
+	          return;
+	        }
+	      }
+	      const savedUserMode = await saveGuestUserModeToSupabase('homestay');
+	      if (!savedUserMode) {
+	        showToast(currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
+	        return;
+	      }
+	      navigate('onboarding', 'search');
+	    }
+	  }
 
 	  function onboardBack() {
     if (onboardStep > 1) {
