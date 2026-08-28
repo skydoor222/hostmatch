@@ -13547,12 +13547,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const container = document.getElementById(containerId);
 	    if (!container) return;
 	    if (hostInternationalStudents.length === 0) {
-	      const prefix = containerId.startsWith('host-profile') ? 'host-profile' : containerId.startsWith('host-ob') ? 'host-ob' : '';
-	      const selectedPresence = prefix ? selectedChipText(prefix + '-student-presence', '') : '';
-	      const message = selectedPresence.includes('いる')
-	        ? '留学生情報を追加してください'
-	        : '留学生情報は未登録です';
-	      container.innerHTML = `<div style="font-size:13px;color:var(--light);padding:10px 0;">${localizeText(message)}</div>`;
+	      container.innerHTML = '';
 	      return;
 	    }
 	    container.innerHTML = hostInternationalStudents.map((m, i) => `
