@@ -4035,7 +4035,7 @@
       </div>
       <div class="form-group">
         <div class="form-label">一言</div>
-        <textarea class="form-textarea" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！" data-i18n-placeholder="guest_about_placeholder">はじめまして、Yukiです。現地の生活文化も体験したく、ホームステイを希望しています。よろしくお願いします！</textarea>
+        <textarea class="form-textarea" id="hs-lifestyle-bio" rows="3" placeholder="例：日本から来た大学生です。料理が好きで、ホストと一緒に食事を楽しみたいです！" data-i18n-placeholder="guest_about_placeholder"></textarea>
       </div>
       <div class="form-group">
         <div class="form-label">あなたはどのくらいホストファミリーと会話したいですか？</div>
@@ -7463,6 +7463,7 @@
     document.querySelectorAll('#screen-lifestyle .sharehouse-guest-lifestyle-only').forEach(el => {
       el.style.display = 'none';
     });
+    loadHomestayGuestLifestyleEditData();
   }
 
   const HOMESTAY_NEW_HOST_IDS = ['emily', 'jennifer', 'robert', 'sarah', 'michael', 'thompson'];
@@ -11400,6 +11401,114 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    await loadHomestayGuestPreferencesForProfileScreen();
 	  }
 
+	  function normalizedHobbyLabel(value) {
+	    return String(value || '').trim().replace(/^[^\p{L}\p{N}]+/u, '').trim();
+	  }
+
+	  function setLifestyleHobbyChips(rowId, values = []) {
+	    const row = document.getElementById(rowId);
+	    if (!row) return;
+	    const selectedValues = Array.isArray(values) ? values.filter(Boolean) : [];
+	    const exactValues = new Set(selectedValues.map(value => String(value || '').trim()));
+	    const normalizedValues = new Set(selectedValues.map(normalizedHobbyLabel).filter(Boolean));
+	    row.querySelectorAll('.form-chip').forEach(chip => {
+	      const chipText = chipStoredText(chip);
+	      const selected = exactValues.has(chipText) || normalizedValues.has(normalizedHobbyLabel(chipText));
+	      chip.classList.toggle('selected', selected);
+	    });
+	  }
+
+	  function applyGuestProfileDataToLifestyleScreen(data) {
+	    const profile = data || {};
+	    setSingleFormChip('hs-lifestyle-wake', fromGuestProfileDbValue('wake_time', profile.wake_time));
+	    setSingleFormChip('hs-lifestyle-sleep', fromGuestProfileDbValue('bedtime', profile.bedtime));
+	    setLifestyleHobbyChips('hs-lifestyle-hobbies', profile.hobbies || []);
+	    setInputValueById('hs-lifestyle-bio', profile.bio || '');
+	  }
+
+	  function applyHomestayGuestPreferencesToLifestyleScreen(data) {
+	    const prefs = data || {};
+	    setSingleFormChip('hs-lifestyle-family', fromHomestayPreferenceDbValue('host_household_preference', prefs.host_household_preference));
+	    setSingleFormChip('hs-lifestyle-frequency', fromHomestayPreferenceDbValue('interaction_preference', prefs.interaction_preference));
+	    setSingleFormChip('hs-lifestyle-talk', fromHomestayPreferenceDbValue('conversation_preference', prefs.conversation_preference));
+	    setSingleFormChip('hs-lifestyle-meal', fromHomestayPreferenceDbValue('meal_plan_preference', prefs.meal_plan_preference));
+	    setSingleFormChip('hs-lifestyle-dining', fromHomestayPreferenceDbValue('meal_style_preference', prefs.meal_style_preference));
+	    setSingleFormChip('hs-lifestyle-diet', fromHomestayPreferenceDbValue('dietary_restriction', prefs.dietary_restriction));
+	    setSingleFormChip('hs-lifestyle-pets', fromHomestayPreferenceDbValue('pet_preference', prefs.pet_preference));
+	    setSingleFormChip('hs-lifestyle-students', fromHomestayPreferenceDbValue('other_students_preference', prefs.other_students_preference));
+	    setSingleFormChip('hs-lifestyle-smoking', fromHomestayPreferenceDbValue('smoking_preference', prefs.smoking_preference));
+	    setSingleFormChip('hs-lifestyle-curfew', fromHomestayPreferenceDbValue('curfew_preference', prefs.curfew_preference));
+	    setSingleFormChip('hs-lifestyle-visitor', fromHomestayPreferenceDbValue('visitor_preference', prefs.visitor_preference));
+	    setSingleFormChip('hs-lifestyle-shower', fromHomestayPreferenceDbValue('shower_limit_preference', prefs.shower_limit_preference));
+	    setSingleFormChip('hs-lifestyle-kitchen', fromHomestayPreferenceDbValue('kitchen_preference', prefs.kitchen_preference));
+	    setSingleFormChip('hs-lifestyle-cleaning', fromHomestayPreferenceDbValue('cleaning_preference', prefs.cleaning_preference));
+	    setSingleFormChip('hs-lifestyle-overnight', fromHomestayPreferenceDbValue('overnight_guest_preference', prefs.overnight_guest_preference));
+	  }
+
+	  async function loadHomestayGuestLifestyleEditData() {
+	    if (!isHomestayGuestContext()) return false;
+	    applyGuestProfileDataToLifestyleScreen(currentGuestProfileData);
+	    applyHomestayGuestPreferencesToLifestyleScreen(currentHomestayGuestPreferences);
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) return false;
+
+	    try {
+	      const { data: profileData, error: profileError } = await window._supabase
+	        .from('guest_profiles')
+	        .select('user_id, wake_time, bedtime, hobbies, bio')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (profileError) throw profileError;
+	      currentGuestProfileData = {
+	        ...(currentGuestProfileData || {}),
+	        user_id: userId,
+	        ...(profileData || { wake_time: null, bedtime: null, hobbies: [], bio: null })
+	      };
+	      window._currentGuestProfileData = currentGuestProfileData;
+	      applyGuestProfileDataToLifestyleScreen(currentGuestProfileData);
+	    } catch (error) {
+	      console.warn('Supabase homestay lifestyle guest_profiles fetch error:', error);
+	      applyGuestProfileDataToLifestyleScreen(currentGuestProfileData);
+	    }
+
+	    try {
+	      const { data: prefsData, error: prefsError } = await window._supabase
+	        .from('homestay_guest_preferences')
+	        .select('user_id, host_household_preference, interaction_preference, conversation_preference, meal_plan_preference, meal_style_preference, dietary_restriction, pet_preference, other_students_preference, smoking_preference, curfew_preference, visitor_preference, shower_limit_preference, kitchen_preference, cleaning_preference, overnight_guest_preference')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (prefsError) throw prefsError;
+	      currentHomestayGuestPreferences = {
+	        ...(currentHomestayGuestPreferences || {}),
+	        user_id: userId,
+	        ...(prefsData || {
+	          host_household_preference: null,
+	          interaction_preference: null,
+	          conversation_preference: null,
+	          meal_plan_preference: null,
+	          meal_style_preference: null,
+	          dietary_restriction: null,
+	          pet_preference: null,
+	          other_students_preference: null,
+	          smoking_preference: null,
+	          curfew_preference: null,
+	          visitor_preference: null,
+	          shower_limit_preference: null,
+	          kitchen_preference: null,
+	          cleaning_preference: null,
+	          overnight_guest_preference: null
+	        })
+	      };
+	      window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
+	      applyHomestayGuestPreferencesToLifestyleScreen(currentHomestayGuestPreferences);
+	    } catch (error) {
+	      console.warn('Supabase homestay lifestyle preferences fetch error:', error);
+	      applyHomestayGuestPreferencesToLifestyleScreen(currentHomestayGuestPreferences);
+	    }
+
+	    return true;
+	  }
+
   function profileAvatarErrorMessage(key) {
     const messages = {
       type: currentLang === 'en' ? 'Please select a JPG, PNG, or WebP image.' : 'JPG / PNG / WebP形式の画像を選択してください。',
@@ -11615,6 +11724,35 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     };
   }
 
+	  function guestProfileLifestylePayloadFromScreen() {
+	    return {
+	      wake_time: toGuestProfileDbValue('wake_time', selectedChipTextFromRow('hs-lifestyle-wake', '')),
+	      bedtime: toGuestProfileDbValue('bedtime', selectedChipTextFromRow('hs-lifestyle-sleep', '')),
+	      hobbies: selectedChipTextsFromRow('hs-lifestyle-hobbies'),
+	      bio: nullableText(document.getElementById('hs-lifestyle-bio')?.value)
+	    };
+	  }
+
+	  function homestayGuestPreferencesLifestylePayloadFromScreen() {
+	    return {
+	      host_household_preference: toHomestayPreferenceDbValue('host_household_preference', selectedChipTextFromRow('hs-lifestyle-family', '')),
+	      interaction_preference: toHomestayPreferenceDbValue('interaction_preference', selectedChipTextFromRow('hs-lifestyle-frequency', '')),
+	      conversation_preference: toHomestayPreferenceDbValue('conversation_preference', selectedChipTextFromRow('hs-lifestyle-talk', '')),
+	      meal_plan_preference: toHomestayPreferenceDbValue('meal_plan_preference', selectedChipTextFromRow('hs-lifestyle-meal', '')),
+	      meal_style_preference: toHomestayPreferenceDbValue('meal_style_preference', selectedChipTextFromRow('hs-lifestyle-dining', '')),
+	      dietary_restriction: toHomestayPreferenceDbValue('dietary_restriction', selectedChipTextFromRow('hs-lifestyle-diet', '')),
+	      pet_preference: toHomestayPreferenceDbValue('pet_preference', selectedChipTextFromRow('hs-lifestyle-pets', '')),
+	      other_students_preference: toHomestayPreferenceDbValue('other_students_preference', selectedChipTextFromRow('hs-lifestyle-students', '')),
+	      smoking_preference: toHomestayPreferenceDbValue('smoking_preference', selectedChipTextFromRow('hs-lifestyle-smoking', '')),
+	      curfew_preference: toHomestayPreferenceDbValue('curfew_preference', selectedChipTextFromRow('hs-lifestyle-curfew', '')),
+	      visitor_preference: toHomestayPreferenceDbValue('visitor_preference', selectedChipTextFromRow('hs-lifestyle-visitor', '')),
+	      shower_limit_preference: toHomestayPreferenceDbValue('shower_limit_preference', selectedChipTextFromRow('hs-lifestyle-shower', '')),
+	      kitchen_preference: toHomestayPreferenceDbValue('kitchen_preference', selectedChipTextFromRow('hs-lifestyle-kitchen', '')),
+	      cleaning_preference: toHomestayPreferenceDbValue('cleaning_preference', selectedChipTextFromRow('hs-lifestyle-cleaning', '')),
+	      overnight_guest_preference: toHomestayPreferenceDbValue('overnight_guest_preference', selectedChipTextFromRow('hs-lifestyle-overnight', ''))
+	    };
+	  }
+
   async function saveGuestProfileDataToSupabase(payload) {
     const userId = window._currentUser?.id;
     if (!userId || !window._supabase?.from) return false;
@@ -11633,7 +11771,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         : await query.insert({ user_id: userId, ...payload });
       if (saveError) throw saveError;
 
-      currentGuestProfileData = { user_id: userId, ...payload };
+      currentGuestProfileData = { ...(currentGuestProfileData || {}), user_id: userId, ...payload };
       window._currentGuestProfileData = currentGuestProfileData;
       applyGuestProfileDataToProfileScreen(currentGuestProfileData);
       return true;
@@ -11661,7 +11799,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         : await query.insert({ user_id: userId, ...payload });
       if (saveError) throw saveError;
 
-      currentHomestayGuestPreferences = { user_id: userId, ...payload };
+      currentHomestayGuestPreferences = { ...(currentHomestayGuestPreferences || {}), user_id: userId, ...payload };
       window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
       applyHomestayGuestPreferencesToProfileScreen(currentHomestayGuestPreferences);
       return true;
@@ -11677,6 +11815,23 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!savedGuestProfile) return false;
 	    const savedPreferences = await saveHomestayGuestPreferencesToSupabase(homestayGuestPreferencesPayloadFromProfileScreen());
 	    return savedPreferences;
+	  }
+
+	  async function saveHomestayGuestLifestyleEditDataToSupabase() {
+	    if (!isHomestayGuestContext()) return true;
+	    const guestProfilePayload = guestProfileLifestylePayloadFromScreen();
+	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload);
+	    if (!savedGuestProfile) {
+	      console.warn('Supabase homestay lifestyle guest_profiles save error:', guestProfilePayload);
+	      return false;
+	    }
+	    const homestayPreferencesPayload = homestayGuestPreferencesLifestylePayloadFromScreen();
+	    const savedPreferences = await saveHomestayGuestPreferencesToSupabase(homestayPreferencesPayload);
+	    if (!savedPreferences) {
+	      console.warn('Supabase homestay lifestyle preferences save error:', homestayPreferencesPayload);
+	      return false;
+	    }
+	    return true;
 	  }
 
   async function saveSubScreen(name) {
@@ -11720,6 +11875,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         if (mypageName) mypageName.textContent = newName;
       }
       if (newEmail) document.querySelector('.mypage-meta').textContent = newEmail;
+    }
+    if (name === 'lifestyle') {
+      const savedHomestayLifestyleData = await saveHomestayGuestLifestyleEditDataToSupabase();
+      if (!savedHomestayLifestyleData) return;
     }
     if (name === 'profile' || name === 'lifestyle' || name === 'preferences') {
       collectHomestayGuestFiltersFromEdit(name);
