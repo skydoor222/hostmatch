@@ -22048,16 +22048,36 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    robert: { center: [41.9250, -87.6490], radius: 800, label: 'Lincoln Park, Chicago' }
 	  };
 
-	  function getHomestayApproxLocation(hostId) {
-	    const h = HOSTS[hostId] || HOSTS.sarah;
-	    const areaText = [h.hostStayInfo?.area, h.city, h.state].filter(Boolean).join(' ');
+	  function homestayApproxLocationFromPublicArea(areaText = '') {
 	    if (/バンクーバー|Vancouver/i.test(areaText)) return HOMESTAY_APPROX_LOCATIONS.vancouver;
 	    if (/トロント|Toronto/i.test(areaText)) return HOMESTAY_APPROX_LOCATIONS.toronto;
-	    return HOMESTAY_APPROX_LOCATIONS[hostId] || HOMESTAY_APPROX_LOCATIONS.sarah;
+	    return null;
+	  }
+
+	  function getHomestayApproxLocation(hostId) {
+	    const isPublishedHost = isPublishedHomestayDetailHost(hostId);
+	    const h = HOSTS[hostId] || (isPublishedHost ? null : HOSTS.sarah);
+	    if (!h) return null;
+	    const areaText = [h.hostStayInfo?.area, h.city, h.state].filter(Boolean).join(' ');
+	    const cityLocation = homestayApproxLocationFromPublicArea(areaText);
+	    if (cityLocation) return cityLocation;
+	    return isPublishedHost ? null : (HOMESTAY_APPROX_LOCATIONS[hostId] || HOMESTAY_APPROX_LOCATIONS.sarah);
 	  }
 
 	  function getHomestayStationWalkText(hostId) {
-	    const h = HOSTS[hostId] || HOSTS.sarah;
+	    const isPublishedHost = isPublishedHomestayDetailHost(hostId);
+	    const h = HOSTS[hostId] || (isPublishedHost ? null : HOSTS.sarah);
+	    if (!h) return '';
+	    if (isPublishedHost) {
+	      const parts = [];
+	      if (h.hostStayInfo?.area || h.city) parts.push(h.hostStayInfo?.area || h.city);
+	      if (h.hostStayInfo?.station) {
+	        const walk = h.hostStayInfo?.walkMin;
+	        const stationText = walk ? `${h.hostStayInfo.station} 徒歩${walk}分` : `最寄り駅：${h.hostStayInfo.station}`;
+	        parts.push(stationText);
+	      }
+	      return parts.length ? parts.join(' · ') : localizeText('未設定');
+	    }
 	    const stationMatch = (h.mapNote || '').match(/最寄り駅：(.+?) 徒歩(\d+)分/);
 	    const station = h.hostStayInfo?.station || stationMatch?.[1] || 'Central Station';
 	    const walkMin = h.hostStayInfo?.walkMin || stationMatch?.[2] || '8';
@@ -22071,13 +22091,23 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!mapEl) return;
 	    const loc = getHomestayApproxLocation(hostId);
 	    if (stationNote) stationNote.textContent = getHomestayStationWalkText(hostId);
-	    if (privacyNote) privacyNote.textContent = localizeText('正確な住所はプライバシー保護のため表示していません');
+	    if (privacyNote) privacyNote.textContent = loc
+	      ? localizeText('正確な住所ではなく概略エリアです')
+	      : localizeText('正確な住所はプライバシー保護のため表示していません');
 	    mapEl.setAttribute('aria-label', localizeText('おおよその位置'));
 
 	    if (homestayDetailMap) {
 	      homestayDetailMap.remove();
 	      homestayDetailMap = null;
 	    }
+
+	    if (!loc) {
+	      mapEl.innerHTML = '';
+	      mapEl.style.display = 'none';
+	      return;
+	    }
+
+	    mapEl.style.display = '';
 
 	    if (!window.L) {
 	      mapEl.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--light);font-size:13px;font-weight:800;">${localizeText('おおよその位置')}</div>`;
