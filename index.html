@@ -43,14 +43,16 @@
     }
     .bnav-item.active { color: var(--primary); }
     .bnav-icon { font-size: 22px; line-height: 1; }
-    .bnav-badge {
-      position: absolute; top: 6px; right: calc(50% - 18px);
-      background: var(--primary); color: white;
-      font-size: 9px; font-weight: 800; min-width: 16px; height: 16px;
-      border-radius: 8px; padding: 0 4px;
-      display: flex; align-items: center; justify-content: center;
+    .message-unread-dot {
+      position: absolute; top: 8px; right: calc(50% - 18px);
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: var(--primary);
       border: 1.5px solid white;
+      display: none;
+      pointer-events: none;
     }
+    .message-unread-dot.visible { display: block; }
 
     /* ===== COMMON HEADER ===== */
     .screen-header {
@@ -1584,7 +1586,7 @@
     }
 
     .bnav-icon { font-size: 24px; }
-    .bnav-badge { top: 8px; right: 14px; }
+    .message-unread-dot { top: 10px; right: 18px; }
 
     .screen-header,
     .mypage-sub-header,
@@ -1974,7 +1976,7 @@
       text-align: center;
     }
 
-    .bnav-badge {
+    .message-unread-dot {
       top: -2px;
       right: 4px;
     }
@@ -2557,8 +2559,8 @@
       font-size: 20px !important;
     }
 
-    .bottom-nav .bnav-badge,
-    .host-bottom-nav .bnav-badge {
+    .bottom-nav .message-unread-dot,
+    .host-bottom-nav .message-unread-dot {
       top: -2px !important;
       right: 4px !important;
     }
@@ -6007,8 +6009,8 @@
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
             <div>
               <div style="font-size:15px;font-weight:900;" data-i18n="host_messages">メッセージ</div>
-              <div style="font-size:30px;font-weight:900;margin-top:8px;color:var(--primary);" data-i18n="unread_count_demo">5件の未読</div>
-              <div style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;" data-i18n="new_conversations_demo">3件の新しい会話</div>
+              <div style="font-size:22px;font-weight:900;margin-top:8px;color:var(--primary);" data-i18n="message_center">メッセージを確認</div>
+              <div style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;" data-i18n="message_unread_dot_note">未読がある場合は赤丸でお知らせします</div>
             </div>
             <div style="font-size:38px;">💬</div>
           </div>
@@ -6684,10 +6686,10 @@
     <div class="bnav-icon">🔍</div>
     <div data-i18n="nav_search">探す</div>
   </div>
-  <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')">
+  <div class="bnav-item" id="bnav-messages" onclick="navigate(currentScreen,'messages')" aria-label="メッセージ">
     <div class="bnav-icon">💬</div>
     <div data-i18n="nav_messages">メッセージ</div>
-    <div class="bnav-badge">2</div>
+    <span class="message-unread-dot" id="guest-message-unread-dot" aria-hidden="true"></span>
   </div>
   <div class="bnav-item" id="bnav-favorites" onclick="navigate(currentScreen,'favorites')">
     <div class="bnav-icon">❤️</div>
@@ -6705,10 +6707,10 @@
     <div class="bnav-icon">🏠</div>
     <div data-i18n="nav_home">ホーム</div>
   </div>
-  <div class="bnav-item" id="hbnav-host-messages" onclick="hostNavigate('host-messages')">
+  <div class="bnav-item" id="hbnav-host-messages" onclick="hostNavigate('host-messages')" aria-label="メッセージ">
     <div class="bnav-icon">💬</div>
     <div data-i18n="host_messages">メッセージ</div>
-    <div class="bnav-badge">5</div>
+    <span class="message-unread-dot" id="host-message-unread-dot" aria-hidden="true"></span>
   </div>
   <div class="bnav-item" id="hbnav-host-listing" onclick="hostNavigate('host-profile')">
     <div class="bnav-icon">📝</div>
@@ -7579,6 +7581,7 @@
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-listing','host-settings':'hbnav-host-settings'};
     if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
+    if (typeof scheduleMessageUnreadDotRefresh === 'function') scheduleMessageUnreadDotRefresh();
   }
 
   function updateSharehouseManagerProfileCard() {
@@ -9448,6 +9451,135 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return map;
 	  }
 
+	  function conversationHasUnreadForUser(conversationId, messages = [], readsByConversation, userId) {
+	    if (!conversationId || !userId) return false;
+	    const read = readsByConversation?.get(conversationId) || null;
+	    const readAt = read?.last_read_at ? new Date(read.last_read_at) : null;
+	    return (Array.isArray(messages) ? messages : []).some(message => {
+	      if (message?.conversation_id !== conversationId) return false;
+	      if (!message.created_at || message.sender_id === userId) return false;
+	      if (!readAt) return true;
+	      return new Date(message.created_at) > readAt;
+	    });
+	  }
+
+	  function groupMessagesByConversation(messages = []) {
+	    const map = new Map();
+	    (Array.isArray(messages) ? messages : []).forEach(message => {
+	      if (!message?.conversation_id) return;
+	      if (!map.has(message.conversation_id)) map.set(message.conversation_id, []);
+	      map.get(message.conversation_id).push(message);
+	    });
+	    return map;
+	  }
+
+	  function setMessageUnreadDotVisible(target, hasUnread) {
+	    const isHost = target === 'host';
+	    const dot = document.getElementById(isHost ? 'host-message-unread-dot' : 'guest-message-unread-dot');
+	    const item = document.getElementById(isHost ? 'hbnav-host-messages' : 'bnav-messages');
+	    if (dot) dot.classList.toggle('visible', !!hasUnread);
+	    if (item) {
+	      const label = currentLang === 'en' ? 'Messages' : 'メッセージ';
+	      item.setAttribute('aria-label', hasUnread
+	        ? (currentLang === 'en' ? 'Messages, unread messages' : 'メッセージ（未読あり）')
+	        : label);
+	    }
+	  }
+
+	  function messageUnreadRoleForCurrentContext() {
+	    if (currentRole === 'host' && serviceModeForCurrentContext() === 'homestay') return 'host';
+	    if (currentRole === 'guest' && (window._serviceType || currentSearchCat || 'homestay') === 'homestay') return 'guest';
+	    return '';
+	  }
+
+	  async function hasSupabaseHomestayUnreadMessages(role) {
+	    const userId = window._currentUser?.id || '';
+	    if (!userId || !window._supabase?.from) return false;
+	    const column = role === 'host' ? 'listing_owner_id' : role === 'guest' ? 'initiator_id' : '';
+	    if (!column) return false;
+
+	    const { data: conversations, error: conversationsError } = await window._supabase
+	      .from('conversations')
+	      .select('id, listing_id, initiator_id, listing_owner_id')
+	      .eq(column, userId);
+	    if (conversationsError) throw conversationsError;
+
+	    const rows = Array.isArray(conversations) ? conversations : [];
+	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
+	    const { data: listings, error: listingsError } = listingIds.length
+	      ? await window._supabase
+	        .from('listings')
+	        .select('id, owner_id, listing_type')
+	        .in('id', listingIds)
+	      : { data: [], error: null };
+	    if (listingsError) throw listingsError;
+	    const listingsById = indexRowsBy(listings, 'id');
+	    const homestayRows = rows.filter(row => {
+	      const listing = listingsById.get(row.listing_id);
+	      if (!listing || listing.listing_type !== 'homestay') return false;
+	      return role === 'host' ? listing.owner_id === userId : true;
+	    });
+	    const conversationIds = homestayRows.map(row => row.id).filter(Boolean);
+	    if (!conversationIds.length) return false;
+
+	    const [messagesResult, readsResult] = await Promise.all([
+	      window._supabase
+	        .from('messages')
+	        .select('id, conversation_id, sender_id, created_at')
+	        .in('conversation_id', conversationIds),
+	      window._supabase
+	        .from('conversation_reads')
+	        .select('conversation_id, user_id, last_read_at')
+	        .in('conversation_id', conversationIds)
+	        .eq('user_id', userId)
+	    ]);
+	    if (messagesResult.error) throw messagesResult.error;
+	    if (readsResult.error) throw readsResult.error;
+
+	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
+	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
+	    return homestayRows.some(conversation => conversationHasUnreadForUser(
+	      conversation.id,
+	      messagesByConversation.get(conversation.id) || [],
+	      readsByConversation,
+	      userId
+	    ));
+	  }
+
+	  async function refreshMessageUnreadDot(options = {}) {
+	    const role = options.role || messageUnreadRoleForCurrentContext();
+	    if (!role) {
+	      setMessageUnreadDotVisible('guest', false);
+	      setMessageUnreadDotVisible('host', false);
+	      return false;
+	    }
+	    const target = role === 'host' ? 'host' : 'guest';
+	    try {
+	      const hasUnread = await hasSupabaseHomestayUnreadMessages(target);
+	      setMessageUnreadDotVisible(target, hasUnread);
+	      if (target === 'guest') setMessageUnreadDotVisible('host', false);
+	      if (target === 'host') setMessageUnreadDotVisible('guest', false);
+	      return hasUnread;
+	    } catch (error) {
+	      console.error('Supabase message unread dot refresh error:', error);
+	      setMessageUnreadDotVisible(target, false);
+	      return false;
+	    }
+	  }
+
+	  function scheduleMessageUnreadDotRefresh(options = {}) {
+	    window.clearTimeout(scheduleMessageUnreadDotRefresh._timer);
+	    scheduleMessageUnreadDotRefresh._timer = window.setTimeout(() => {
+	      refreshMessageUnreadDot(options);
+	    }, 80);
+	  }
+	  window.refreshMessageUnreadDot = refreshMessageUnreadDot;
+	  window.setMessageUnreadDotVisible = setMessageUnreadDotVisible;
+	  window.addEventListener('focus', () => scheduleMessageUnreadDotRefresh());
+	  document.addEventListener('visibilitychange', () => {
+	    if (document.visibilityState === 'visible') scheduleMessageUnreadDotRefresh();
+	  });
+
 	  function ensureHomestayConversationHostObject(conversation, profile = {}, listing = {}) {
 	    const listingId = conversation?.listing_id;
 	    if (!listingId || HOSTS[listingId]) return;
@@ -9480,7 +9612,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (conversationsError) throw conversationsError;
 
 	    const rows = Array.isArray(conversations) ? conversations : [];
-	    if (!rows.length) return [];
+	    if (!rows.length) {
+	      currentSupabaseGuestConversationRows = [];
+	      return [];
+	    }
 
 	    const hostIds = [...new Set(rows.map(row => row.listing_owner_id).filter(Boolean))];
 	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
@@ -9507,6 +9642,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
+	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      const profile = profilesById.get(conversation.listing_owner_id) || {};
@@ -9516,9 +9652,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
-	      const unread = !!latestMessage
-	        && latestMessage.sender_id !== userId
-	        && (!read?.last_read_at || new Date(latestMessage.created_at) > new Date(read.last_read_at));
+	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
 	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
@@ -9606,6 +9740,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
+	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      const listing = listingsById.get(conversation.listing_id);
@@ -9614,9 +9749,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
-	      const unread = !!latestMessage
-	        && latestMessage.sender_id !== userId
-	        && (!read?.last_read_at || new Date(latestMessage.created_at) > new Date(read.last_read_at));
+	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
 	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
@@ -9673,11 +9806,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const rows = await loadSupabaseHostConversations();
 	      if (seq !== supabaseHostConversationLoadSeq) return;
 	      renderSupabaseHostConversationRows(rows);
+	      refreshMessageUnreadDot({ role: 'host' });
 	    } catch (error) {
 	      console.error('Supabase host conversations load error:', error);
 	      if (seq === supabaseHostConversationLoadSeq && body) {
 	        body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages.' : 'メッセージを読み込めませんでした'}</div>`;
 	      }
+	      setMessageUnreadDotVisible('host', false);
 	    } finally {
 	      if (seq === supabaseHostConversationLoadSeq) isLoadingSupabaseHostConversations = false;
 	    }
@@ -9737,6 +9872,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
 	      renderSupabaseHomestayMessages(messages);
 	      await markSupabaseConversationRead(conversation.id);
+	      await refreshMessageUnreadDot({ role: 'host' });
 	      navigate(currentScreen, 'chat');
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -9758,11 +9894,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const rows = await loadSupabaseGuestConversations();
 	      if (seq !== supabaseGuestConversationLoadSeq) return;
 	      renderSupabaseGuestConversationRows(rows);
+	      refreshMessageUnreadDot({ role: 'guest' });
 	    } catch (error) {
 	      console.error('Supabase guest conversations load error:', error);
 	      if (seq === supabaseGuestConversationLoadSeq && list) {
 	        list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages.' : 'メッセージを読み込めませんでした'}</div>`;
 	      }
+	      setMessageUnreadDotVisible('guest', false);
 	    } finally {
 	      if (seq === supabaseGuestConversationLoadSeq) isLoadingSupabaseGuestConversations = false;
 	    }
@@ -9802,6 +9940,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
 	      renderSupabaseHomestayMessages(messages);
 	      await markSupabaseConversationRead(conversation.id);
+	      await refreshMessageUnreadDot({ role: 'guest' });
 	      navigate(currentScreen, 'chat');
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -10047,6 +10186,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const rows = await loadSupabaseConversationMessages(conversation.id);
 	      renderSupabaseHomestayMessages(rows);
 	      await markSupabaseConversationRead(conversation.id);
+	      await refreshMessageUnreadDot({ role: 'guest' });
 	      navigate(currentScreen, 'chat');
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -10265,6 +10405,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         const rows = await loadSupabaseConversationMessages(currentSupabaseConversationId);
         renderSupabaseHomestayMessages(rows.length ? rows : (data ? [data] : []));
         await markSupabaseConversationRead(currentSupabaseConversationId);
+        await refreshMessageUnreadDot({ role: currentSupabaseChatMode === 'homestay-host' ? 'host' : 'guest' });
         const area = document.querySelector('.chat-messages');
         if (area) area.scrollTop = area.scrollHeight;
       } catch (error) {
@@ -18050,8 +18191,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     edit_availability:'受け入れ期間を編集',
     monthly_rent_cad:'月額料金（CAD）',
     condition_match:'条件一致',
-    unread_count_demo:'5件の未読',
-    new_conversations_demo:'3件の新しい会話',
+    unread_count_demo:'未読メッセージ',
+    new_conversations_demo:'新しい会話',
+    message_center:'メッセージを確認',
+    message_unread_dot_note:'未読がある場合は赤丸でお知らせします',
     view_messages:'確認する',
     listing_stats:'掲載統計',
     switch_to_guest_mode:'ゲストモードに切り替える',
@@ -18405,8 +18548,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     edit_availability:'Edit Availability',
     monthly_rent_cad:'Monthly Rent (CAD)',
     condition_match:'Condition Match',
-    unread_count_demo:'5 unread',
-    new_conversations_demo:'3 new conversations',
+    unread_count_demo:'Unread messages',
+    new_conversations_demo:'New conversations',
+    message_center:'Check Messages',
+    message_unread_dot_note:'Unread messages are shown with a red dot',
     view_messages:'View Messages',
     listing_stats:'Listing Stats',
     switch_to_guest_mode:'Switch to Guest Mode',
@@ -19669,8 +19814,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     ,'稼働率':'Occupancy'
     ,'評価':'Rating'
     ,'応募者管理':'Applicants'
-    ,'3件の新着':'3 new'
-    ,'5件未読':'5 unread'
     ,'カレンダー':'Calendar'
     ,'空室管理':'Availability'
     ,'収益管理':'Revenue'
@@ -19902,8 +20045,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     'ゲストには受け入れ可能期間として表示されます。':'This is shown to guests as your available period.',
     '掲載統計':'Listing Stats',
     '確認する':'View Messages',
-    '5件の未読':'5 unread',
-    '3件の新しい会話':'3 new conversations',
     'ゲストモードに切り替える':'Switch to Guest Mode',
     'メッセージしたユーザー':'Message Contacts',
     'ホスト・家族について':'Host & Family',
@@ -20845,6 +20986,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentSupabaseHostConversationRows = [];
     window._lastRestoredUserMode = null;
     window._registrationStartScreenActive = false;
+    if (typeof setMessageUnreadDotVisible === 'function') {
+      setMessageUnreadDotVisible('guest', false);
+      setMessageUnreadDotVisible('host', false);
+    }
   }
 
   async function loadRegisteredHomestayGuestDataForRestore() {
@@ -20901,7 +21046,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       navigate(currentScreen || 'login', screen);
     }
     if (typeof window.setRestoredModeLock === 'function') window.setRestoredModeLock(mode);
-    return enforceOnlyActiveScreen(screen);
+    const restored = enforceOnlyActiveScreen(screen);
+    if (typeof scheduleMessageUnreadDotRefresh === 'function') scheduleMessageUnreadDotRefresh({ role: mode.role === 'host' ? 'host' : 'guest' });
+    return restored;
   }
 
   async function applyPendingUserModeRestore() {
