@@ -7550,7 +7550,11 @@
   function renderHomestayListCard(hostId) {
     const h = HOSTS[hostId];
     if (!h) return '';
-    const image = h.photos?.[0] || '';
+    const image = h.photos?.[0] || neutralHomestayListingPhotoUrl();
+    const currency = h.currency || 'CAD';
+    const priceLabel = currency === 'CAD'
+      ? `C$${h.price.toLocaleString()}`
+      : `${escapeHtml(currency)} ${h.price.toLocaleString()}`;
     const comparison = hmEvaluateHost(hostId, homestayInitialFilters());
     const comparisonText = comparison.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
@@ -7573,7 +7577,7 @@
             ${h.tags.slice(0, 4).map(tag => `<span class="ctag ${tag.cls === 'green' ? 'ok' : tag.cls === 'red' ? 'ng' : ''}">${localizeText(tag.text)}</span>`).join('')}
           </div>
           <div class="match-card-footer">
-            <div class="match-card-price"><strong>$${h.price.toLocaleString()}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div>
+            <div class="match-card-price"><strong>${priceLabel}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div>
             <div class="match-card-meals">${localizeText(h.mealsTag)}</div>
           </div>
         </div>
@@ -7586,15 +7590,33 @@
     const subtitle = document.getElementById('homestay-host-list-subtitle');
     const list = document.getElementById('homestay-host-list-cards');
     if (!list) return;
+    const hasCurrentPublishedHomestayCache = publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser();
+    if (isLoggedInHomestayGuestSearchContext() && publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser()) {
+      if (title) title.textContent = currentLang === 'ja' ? 'ホームステイホスト一覧' : 'Homestay Hosts';
+      if (subtitle) subtitle.textContent = currentLang === 'ja' ? 'ホスト情報を読み込めませんでした' : 'Could not load hosts';
+      list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '公開中のホームステイを読み込めませんでした。' : 'Could not load published homestays.'}</div>`;
+      return;
+    }
+    if (isLoggedInHomestayGuestSearchContext() && !hasCurrentPublishedHomestayCache && !(publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser())) {
+      if (title) title.textContent = currentLang === 'ja' ? 'ホームステイホスト一覧' : 'Homestay Hosts';
+      if (subtitle) subtitle.textContent = currentLang === 'ja' ? '公開中のホームステイを読み込み中です' : 'Loading published homestays';
+      list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? 'ホスト情報を読み込んでいます。' : 'Loading hosts.'}</div>`;
+      ensurePublishedHomestayListingsForGuest();
+      return;
+    }
     const isPopular = homestayHostListType === 'popular';
-    const ids = isPopular ? HOMESTAY_POPULAR_HOST_IDS : HOMESTAY_NEW_HOST_IDS;
+    const ids = (isLoggedInHomestayGuestSearchContext() || hasCurrentPublishedHomestayCache)
+      ? homestaySearchHostIds()
+      : (isPopular ? HOMESTAY_POPULAR_HOST_IDS : HOMESTAY_NEW_HOST_IDS);
     if (title) title.textContent = isPopular
       ? (currentLang === 'ja' ? '人気ホスト一覧' : 'Popular Hosts')
       : (currentLang === 'ja' ? '新着ホスト一覧' : 'New Hosts');
     if (subtitle) subtitle.textContent = currentLang === 'ja'
       ? `ホームステイホスト全件 · ${ids.length}件`
       : `All homestay hosts · ${ids.length} results`;
-    list.innerHTML = ids.map(renderHomestayListCard).join('');
+    list.innerHTML = ids.length
+      ? ids.map(renderHomestayListCard).join('')
+      : `<div class="hm-empty-result">${currentLang === 'ja' ? '現在公開中のホームステイはありません。' : 'There are no published homestays right now.'}</div>`;
   }
 
   function openNotificationSettings() {
@@ -10457,13 +10479,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   function homestayInitialComparisonResults() {
     const filters = homestayInitialFilters();
-    return ['sarah','michael','emily','thompson','jennifer','robert']
+    return homestaySearchHostIds()
       .map(id => hmEvaluateHost(id, filters))
       .filter(result => result.hardPass);
   }
 
   function renderHomestayFilterCard(result) {
     const h = HOSTS[result.hostId];
+    if (!h) return '';
+    const hostId = escapeHtml(result.hostId);
+    const image = h.photos?.[0] || neutralHomestayListingPhotoUrl();
+    const currency = h.currency || 'CAD';
+    const priceLabel = currency === 'CAD'
+      ? `C$${(h.price || 0).toLocaleString()}`
+      : `${escapeHtml(currency)} ${(h.price || 0).toLocaleString()}`;
     const summary = result.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${result.matchedTotal}/${result.activeTotal}項目一致` : `${result.matchedTotal} of ${result.activeTotal} conditions match`)
       : localizeText('全ホスト表示');
@@ -10473,9 +10502,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return `<div class="${cls}">${mark} ${localizeText(item.label)}</div>`;
     }).join('') : `<div class="hm-match-ok">✓ ${localizeText('条件未選択')}</div>`;
     return `
-      <div class="match-card" onclick="openDetail('${result.hostId}')">
+      <div class="match-card" onclick="openDetail('${hostId}')">
         <div class="match-card-img">
-          <img src="${h.photos[0]}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${summary}</div>
           <div class="match-card-flag">📍 ${localizeText(hmHostMeta(result.hostId).area || h.city)}</div>
           <div class="match-card-save">${favorites.has(result.hostId) ? '❤️' : '🤍'}</div>
@@ -10484,7 +10513,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
           <div class="match-card-location">${localizeText(hmHostMeta(result.hostId).area || h.city)} · ${localizeText(h.roomType)} · ${t('host_years').replace('{years}', h.years)}</div>
           <div class="hm-match-breakdown">${rows}</div>
-          <div class="match-card-footer"><div class="match-card-price"><strong>C$${(h.price || 0).toLocaleString()}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(hmHostMeta(result.hostId).meal || h.mealsTag)}</div></div>
+          <div class="match-card-footer"><div class="match-card-price"><strong>${priceLabel}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(hmHostMeta(result.hostId).meal || h.mealsTag)}</div></div>
         </div>
       </div>
     `;
@@ -10492,8 +10521,24 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   function renderHomestayFilterResults(filters) {
     syncGuestServiceContext('homestay');
+    const hasCurrentPublishedHomestayCache = publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser();
+    if (isLoggedInHomestayGuestSearchContext() && publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser()) {
+      const summary = document.getElementById('hm-filter-summary');
+      const list = document.getElementById('hm-filter-results');
+      if (summary) summary.textContent = currentLang === 'ja' ? 'ホスト情報を読み込めませんでした' : 'Could not load hosts';
+      if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '公開中のホームステイを読み込めませんでした。時間をおいてもう一度お試しください。' : 'Could not load published homestays. Please try again later.'}</div>`;
+      return;
+    }
+    if (isLoggedInHomestayGuestSearchContext() && !hasCurrentPublishedHomestayCache && !(publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser())) {
+      const summary = document.getElementById('hm-filter-summary');
+      const list = document.getElementById('hm-filter-results');
+      if (summary) summary.textContent = currentLang === 'ja' ? 'ホスト情報を読み込み中です' : 'Loading hosts';
+      if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '公開中のホームステイを読み込んでいます。' : 'Loading published homestays.'}</div>`;
+      ensurePublishedHomestayListingsForGuest();
+      return;
+    }
     const sortMode = document.getElementById('hm-sort')?.value || 'newest';
-    const results = ['sarah','michael','emily','thompson','jennifer','robert']
+    const results = homestaySearchHostIds()
       .map(id => hmEvaluateHost(id, filters))
       .filter(result => result.hardPass);
     if (sortMode === 'conditions') {
@@ -10506,13 +10551,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const hasFilters = activeHomestayFilterCount(filters) > 0;
       summary.textContent = hasFilters
         ? (currentLang === 'ja' ? `${results.length}件のホストが見つかりました` : `${results.length} hosts found`)
-        : localizeText('すべてのホスト');
+        : (hasCurrentPublishedHomestayCache
+          ? (currentLang === 'ja' ? `公開中のホームステイ · ${results.length}件` : `Published homestays · ${results.length} results`)
+          : localizeText('すべてのホスト'));
     }
     const list = document.getElementById('hm-filter-results');
     if (!list) return;
     list.innerHTML = results.length
       ? results.map(renderHomestayFilterCard).join('')
-      : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No hosts match your selected conditions.<br>Try adjusting your filters and search again.'}</div>`;
+      : `<div class="hm-empty-result">${hasCurrentPublishedHomestayCache && !activeHomestayFilterCount(filters)
+        ? (currentLang === 'ja' ? '現在公開中のホームステイはありません。' : 'There are no published homestays right now.')
+        : (currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No hosts match your selected conditions.<br>Try adjusting your filters and search again.')}</div>`;
   }
 
   function applyHomestayFilters() {
@@ -11470,6 +11519,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let currentHomestayHostStudents = [];
 	  let currentHomestayListingPhotos = [];
 	  let currentHomestayHostDataLoaded = false;
+	  let currentPublishedHomestayListings = [];
+	  let publishedHomestaySearchHosts = [];
+	  let publishedHomestayHostsLoaded = false;
+	  let publishedHomestayHostsLoading = false;
+	  let publishedHomestayHostsLoadFailed = false;
+	  let publishedHomestayHostsCacheUserId = '';
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingHomestayHostAvatarCrops = { ob: null, profile: null };
@@ -12509,6 +12564,325 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      .from('listing-photos')
 	      .getPublicUrl(storagePath);
 	    return data?.publicUrl || '';
+	  }
+
+	  function neutralHomestayListingPhotoUrl() {
+	    const svg = `
+	      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000">
+	        <rect width="1600" height="1000" fill="#f4f7f2"/>
+	        <rect x="160" y="150" width="1280" height="700" rx="28" fill="#ffffff" stroke="#d9e3d5" stroke-width="8"/>
+	        <path d="M330 710 L620 455 L810 635 L990 500 L1270 710 Z" fill="#cddfc8"/>
+	        <circle cx="1160" cy="320" r="70" fill="#a7c49e"/>
+	        <text x="800" y="860" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="700" fill="#6d7d68">HostMatch</text>
+	      </svg>
+	    `;
+	    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+	  }
+
+	  function isLoggedInHomestayGuestSearchContext() {
+	    return currentRole === 'guest'
+	      && (currentSearchCat === 'homestay' || window._serviceType === 'homestay')
+	      && !!window._currentUser?.id
+	      && !!window._supabase?.from;
+	  }
+
+	  function homestayDemoHostIds() {
+	    return ['sarah','michael','emily','thompson','jennifer','robert'];
+	  }
+
+	  function publishedHomestayHostsCacheMatchesCurrentUser() {
+	    return publishedHomestayHostsCacheUserId === (window._currentUser?.id || '');
+	  }
+
+	  function homestaySearchHostIds() {
+	    if (publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser()) {
+	      return publishedHomestaySearchHosts.map(host => host.id);
+	    }
+	    if (isLoggedInHomestayGuestSearchContext()) {
+	      return [];
+	    }
+	    return homestayDemoHostIds();
+	  }
+
+	  function homestaySearchPhotoUrls(photos = []) {
+	    const rows = (Array.isArray(photos) ? photos : [])
+	      .filter(photo => photo?.storage_path)
+	      .sort((a, b) => {
+	        if (!!a.is_cover !== !!b.is_cover) return a.is_cover ? -1 : 1;
+	        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+	      });
+	    const urls = rows.map(photo => homestayListingPhotoPublicUrl(photo.storage_path)).filter(Boolean);
+	    return urls.length ? urls : [neutralHomestayListingPhotoUrl()];
+	  }
+
+	  function homestayDetailFilterCode(field, dbValue) {
+	    if (!dbValue) return '';
+	    const maps = {
+	      curfew_type: { none: 'none', has_curfew: 'allowed' },
+	      visitor_rule: { allowed: 'ok', prior_notice_required: 'notice_required', not_allowed: 'ng' },
+	      shower_limit: { no_limit: 'unlimited', '10_15_minutes': 'ten_to_fifteen', '5_10_minutes': 'five_to_ten', '5_minutes_or_less': 'under_5' },
+	      kitchen_rule: { unrestricted: 'ok', restricted: 'restricted', not_available: 'ng' },
+	      cleaning_rule: { daily: 'daily', weekly: 'weekly', monthly: 'monthly', no_roster: 'none' },
+	      overnight_guest_rule: { allowed: 'ok', prior_consultation_required: 'notice_required', not_allowed: 'ng' }
+	    };
+	    return maps[field]?.[dbValue] || '';
+	  }
+
+	  function homestaySearchSmokingLabel(dbValue) {
+	    if (dbValue === 'no_smoking') return '完全禁煙';
+	    if (dbValue === 'outdoor_only') return '屋外喫煙ならOK';
+	    if (dbValue === 'indoor_smoking') return '喫煙OK';
+	    return '';
+	  }
+
+	  function homestaySearchStatusLabel(status) {
+	    if (status === 'published') return '公開中';
+	    if (status === 'draft') return '下書き';
+	    if (status === 'paused') return '一時停止中';
+	    return '未設定';
+	  }
+
+	  function syncPublishedHomestayListingToSearchObjects({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [] }) {
+	    if (!listing.id) return null;
+	    const hostId = listing.id;
+	    const name = hostDisplayValue(profile.display_name);
+	    const city = hostDisplayValue(listing.city);
+	    const roomType = hostDisplayValue(fromHomestayListingDetailDbValue('room_type', details.room_type));
+	    const mealPlan = fromHomestayListingDetailDbValue('meal_plan', details.meal_plan);
+	    const mealStyle = fromHomestayListingDetailDbValue('meal_style', details.meal_style);
+	    const floorType = fromHomestayListingDetailDbValue('floor_type', details.floor_type);
+	    const bathroomType = fromHomestayListingDetailDbValue('bathroom_type', details.bathroom_type);
+	    const furnished = hostBooleanLabel(details.furnished, '家具付き', '家具なし');
+	    const station = hostDisplayValue(listing.nearest_station, '');
+	    const walkMin = listing.station_walk_minutes ?? '';
+	    const minStay = listing.minimum_stay_months ? `${listing.minimum_stay_months}ヶ月` : '未設定';
+	    const maxStay = listing.maximum_stay_months ? `${listing.maximum_stay_months}ヶ月` : '未設定';
+	    const longStay = hostBooleanLabel(listing.long_stay_allowed, '長期滞在可能', '長期滞在不可');
+	    const amenities = Array.isArray(details.amenities) ? details.amenities : [];
+	    const price = Number(listing.monthly_price);
+	    const priceValue = Number.isFinite(price) ? price : 0;
+	    const currency = listing.currency || 'CAD';
+	    const photoUrls = homestaySearchPhotoUrls(photos);
+	    const householdType = hostDisplayValue(fromHostProfileDbValue('household_type', hostProfile.household_type));
+	    const smokingStatus = hostDisplayValue(fromHostProfileDbValue('smoking_environment', hostProfile.smoking_environment));
+	    const wakeUi = hostDisplayValue(fromHostProfileDbValue('wake_time', hostProfile.wake_time));
+	    const sleepUi = hostDisplayValue(fromHostProfileDbValue('bedtime', hostProfile.bedtime));
+	    const talkUi = hostDisplayValue(fromHostProfileDbValue('conversation_level', hostProfile.conversation_level));
+	    const frequencyUi = hostDisplayValue(fromHostProfileDbValue('interaction_level', hostProfile.interaction_level));
+	    const rules = hostListingRulesFromDetails(details);
+
+	    HOSTS[hostId] = {
+	      id: hostId,
+	      name,
+	      avatar: '🧑',
+	      avatarUrl: profile.avatar_url || '',
+	      avClass: '',
+	      roomBg: '',
+	      roomEmoji: '',
+	      match: 0,
+	      rating: 0,
+	      reviews: 0,
+	      years: 0,
+	      gender: hostDisplayValue(fromHostProfileDbValue('gender', hostProfile.gender), ''),
+	      city,
+	      state: listing.country_code === 'CA' ? 'Canada' : hostDisplayValue(listing.country_code, ''),
+	      stateShort: listing.country_code || '',
+	      country: listing.country_code === 'CA' ? '🇨🇦' : '',
+	      roomType,
+	      price: priceValue,
+	      currency,
+	      photos: photoUrls,
+	      pets: {
+	        hasPets: details.pets_present === true,
+	        type: details.pets_present === true ? hostDisplayValue(details.pet_details, '') : ''
+	      },
+	      lifestyle: { wake: wakeUi, sleep: sleepUi, talk: talkUi, clean: '未設定' },
+	      rules,
+	      hostStayInfo: {
+	        address: '',
+	        area: city,
+	        station,
+	        walkMin: walkMin === '' ? '' : String(walkMin),
+	        availableStart: listing.available_from || '',
+	        availableEnd: listing.available_until || '',
+	        minStay,
+	        maxStay,
+	        longStay,
+	        monthlyRent: priceValue || null,
+	        status: listing.status || ''
+	      },
+	      hostHousehold: {
+	        type: householdType,
+	        smokingStatus,
+	        spokenLanguages: Array.isArray(hostProfile.spoken_languages) ? hostProfile.spoken_languages : [],
+	        homeLanguages: Array.isArray(hostProfile.home_languages) ? hostProfile.home_languages : [],
+	        partner: {
+	          age: hostProfile.partner_age ?? '',
+	          gender: hostDisplayValue(fromHostProfileDbValue('partner_gender', hostProfile.partner_gender), ''),
+	          nationality: hostDisplayValue(hostProfile.partner_nationality, ''),
+	          wake: hostDisplayValue(fromHostProfileDbValue('partner_wake_time', hostProfile.partner_wake_time), ''),
+	          sleep: hostDisplayValue(fromHostProfileDbValue('partner_bedtime', hostProfile.partner_bedtime), ''),
+	          hobbies: hostDisplayValue(hostProfile.partner_hobbies, '')
+	        },
+	        students: undefined
+	      },
+	      room: [
+	        { label: '部屋タイプ', val: roomType },
+	        { label: '家具', val: furnished },
+	        { label: '階数', val: hostDisplayValue(floorType) },
+	        { label: 'バスルーム', val: hostDisplayValue(bathroomType) },
+	        { label: '設備', val: hostDisplayValue(amenities) }
+	      ],
+	      priceBreakdown: [{ label: '月額費用', value: currency === 'CAD' ? `C$${priceValue.toLocaleString()}` : `${currency} ${priceValue.toLocaleString()}` }],
+	      mealsTag: hostMealTagFromPlan(mealPlan)
+	    };
+
+	    hostProfileInfo[hostId] = {
+	      age: hostAgeDisplay(hostProfile.age),
+	      nationality: hostDisplayValue(hostProfile.nationality),
+	      gender: hostDisplayValue(fromHostProfileDbValue('gender', hostProfile.gender)),
+	      religion: hostDisplayValue(fromHostProfileDbValue('religion', hostProfile.religion)),
+	      englishLevel: hostDisplayValue(fromHostProfileDbValue('english_level', hostProfile.english_level))
+	    };
+	    hostDetailExtras[hostId] = {
+	      hobbies: hostDisplayValue(hostProfile.hobbies),
+	      bio: hostDisplayValue(hostProfile.bio),
+	      status: homestaySearchStatusLabel(listing.status)
+	    };
+	    hostCompatibilityConditions[hostId] = {
+	      guestTalk: talkUi === '未設定' ? '' : talkUi,
+	      guestFrequency: frequencyUi === '未設定' ? '' : frequencyUi,
+	      mealPlan,
+	      diningStyle: mealStyle,
+	      dietSupport: [],
+	      allergySupported: '',
+	      unacceptable: []
+	    };
+	    HOMESTAY_FILTER_HOST_META[hostId] = {
+	      area: city,
+	      meal: hmNormalizeMeal(mealPlan),
+	      dining: hmNormalizeMealStyle(mealStyle),
+	      diet: [],
+	      pets: details.pets_present === true ? 'あり' : details.pets_present === false ? 'なし' : '',
+	      smoking: homestaySearchSmokingLabel(hostProfile.smoking_environment),
+	      students: hostProfile.other_students_present === true ? 'いる' : hostProfile.other_students_present === false ? 'いない' : '',
+	      family: householdType,
+	      familyType: hmHostFamilyValue(householdType),
+	      talk: talkUi === '未設定' ? '' : talkUi,
+	      frequency: frequencyUi === '未設定' ? '' : frequencyUi,
+	      wake: hmNormalizeWake(wakeUi),
+	      sleep: hmNormalizeSleep(sleepUi),
+	      curfew: homestayDetailFilterCode('curfew_type', details.curfew_type),
+	      curfewTime: details.curfew_time || '',
+	      visitor: homestayDetailFilterCode('visitor_rule', details.visitor_rule),
+	      shower: homestayDetailFilterCode('shower_limit', details.shower_limit),
+	      kitchen: homestayDetailFilterCode('kitchen_rule', details.kitchen_rule),
+	      kitchenTime: details.kitchen_restriction_details || '',
+	      cleaning: homestayDetailFilterCode('cleaning_rule', details.cleaning_rule),
+	      overnight: homestayDetailFilterCode('overnight_guest_rule', details.overnight_guest_rule)
+	    };
+	    return { id: hostId, listing, profile, hostProfile, details, photos };
+	  }
+
+	  function indexRowsBy(rows = [], key) {
+	    const map = new Map();
+	    (Array.isArray(rows) ? rows : []).forEach(row => {
+	      const value = row?.[key];
+	      if (value && !map.has(value)) map.set(value, row);
+	    });
+	    return map;
+	  }
+
+	  function groupRowsBy(rows = [], key) {
+	    const map = new Map();
+	    (Array.isArray(rows) ? rows : []).forEach(row => {
+	      const value = row?.[key];
+	      if (!value) return;
+	      if (!map.has(value)) map.set(value, []);
+	      map.get(value).push(row);
+	    });
+	    return map;
+	  }
+
+	  async function loadPublishedHomestayListingsForGuest({ force = false } = {}) {
+	    if (!window._supabase?.from) return [];
+	    const currentUserId = window._currentUser?.id || '';
+	    if (!force && publishedHomestayHostsLoaded && publishedHomestayHostsCacheUserId === currentUserId) return publishedHomestaySearchHosts;
+	    publishedHomestayHostsLoadFailed = false;
+
+	    const { data: listingRows, error: listingsError } = await window._supabase
+	      .from('listings')
+	      .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, created_at')
+	      .eq('listing_type', 'homestay')
+	      .eq('status', 'published')
+	      .order('created_at', { ascending: false });
+	    if (listingsError) throw listingsError;
+
+	    const listings = (Array.isArray(listingRows) ? listingRows : []).filter(listing => listing.owner_id !== currentUserId);
+	    currentPublishedHomestayListings = listings;
+	    if (!listings.length) {
+	      publishedHomestaySearchHosts = [];
+	      publishedHomestayHostsLoaded = true;
+	      publishedHomestayHostsCacheUserId = currentUserId;
+	      window._currentPublishedHomestayListings = currentPublishedHomestayListings;
+	      window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	      return publishedHomestaySearchHosts;
+	    }
+
+	    const ownerIds = [...new Set(listings.map(listing => listing.owner_id).filter(Boolean))];
+	    const listingIds = listings.map(listing => listing.id).filter(Boolean);
+	    const [profilesResult, hostProfilesResult, detailsResult, photosResult] = await Promise.all([
+	      window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', ownerIds),
+	      window._supabase.from('homestay_host_profiles').select('user_id, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
+	      window._supabase.from('homestay_listing_details').select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules').in('listing_id', listingIds),
+	      window._supabase.from('listing_photos').select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at').in('listing_id', listingIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+	    ]);
+	    if (profilesResult.error) throw profilesResult.error;
+	    if (hostProfilesResult.error) throw hostProfilesResult.error;
+	    if (detailsResult.error) throw detailsResult.error;
+	    if (photosResult.error) throw photosResult.error;
+
+	    const profilesById = indexRowsBy(profilesResult.data, 'id');
+	    const hostProfilesByUserId = indexRowsBy(hostProfilesResult.data, 'user_id');
+	    const detailsByListingId = indexRowsBy(detailsResult.data, 'listing_id');
+	    const photosByListingId = groupRowsBy(photosResult.data, 'listing_id');
+	    publishedHomestaySearchHosts = listings.map(listing => syncPublishedHomestayListingToSearchObjects({
+	      listing,
+	      profile: profilesById.get(listing.owner_id) || {},
+	      hostProfile: hostProfilesByUserId.get(listing.owner_id) || {},
+	      details: detailsByListingId.get(listing.id) || {},
+	      photos: photosByListingId.get(listing.id) || []
+	    })).filter(Boolean);
+	    publishedHomestayHostsLoaded = true;
+	    publishedHomestayHostsCacheUserId = currentUserId;
+	    window._currentPublishedHomestayListings = currentPublishedHomestayListings;
+	    window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	    return publishedHomestaySearchHosts;
+	  }
+
+	  async function ensurePublishedHomestayListingsForGuest({ force = false } = {}) {
+	    if (!isLoggedInHomestayGuestSearchContext()) return [];
+	    if (!force && publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser()) return publishedHomestaySearchHosts;
+	    if (!force && publishedHomestayHostsLoading) return publishedHomestaySearchHosts;
+	    publishedHomestayHostsLoading = true;
+	    try {
+	      const hosts = await loadPublishedHomestayListingsForGuest({ force });
+	      publishedHomestayHostsLoadFailed = false;
+	      return hosts;
+	    } catch (error) {
+	      console.error('Supabase published homestay listings load error:', error);
+	      currentPublishedHomestayListings = [];
+	      publishedHomestaySearchHosts = [];
+	      publishedHomestayHostsLoaded = false;
+	      publishedHomestayHostsLoadFailed = true;
+	      publishedHomestayHostsCacheUserId = window._currentUser?.id || '';
+	      return [];
+	    } finally {
+	      publishedHomestayHostsLoading = false;
+	      if (currentScreen === 'search' && currentSearchCat === 'homestay') rerenderHomestayFilterResults();
+	      if (currentScreen === 'ai-result' && (window._serviceType || currentSearchCat) === 'homestay') renderAiResult();
+	      if (currentScreen === 'homestay-host-list') renderHomestayHostList();
+	    }
 	  }
 
 	  function clearPendingHomestayRoomPhotos(scope) {
@@ -20303,6 +20677,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         </div>
       `;
 	    } else {
+	      const hasCurrentPublishedHomestayCache = publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser();
+	      if (isLoggedInHomestayGuestSearchContext() && publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser()) {
+	        if (titleEl) titleEl.textContent = t('condition_comparison_results');
+	        if (subtitleEl) subtitleEl.textContent = currentLang === 'ja' ? 'ホスト情報を読み込めませんでした' : 'Could not load hosts';
+	        listEl.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '公開中のホームステイを読み込めませんでした。' : 'Could not load published homestays.'}</div>`;
+	        return;
+	      }
+	      if (isLoggedInHomestayGuestSearchContext() && !hasCurrentPublishedHomestayCache && !(publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser())) {
+	        if (titleEl) titleEl.textContent = t('condition_comparison_results');
+	        if (subtitleEl) subtitleEl.textContent = currentLang === 'ja' ? '公開中のホームステイを読み込み中です' : 'Loading published homestays';
+	        listEl.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? 'ホスト情報を読み込んでいます。' : 'Loading hosts.'}</div>`;
+	        ensurePublishedHomestayListingsForGuest();
+	        return;
+	      }
 	      const guestRange = getGuestStayRange();
 	      const results = homestayInitialComparisonResults();
 	      if (titleEl) titleEl.textContent = t('condition_comparison_results');
