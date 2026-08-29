@@ -9266,7 +9266,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      { label: '最短滞在期間', value: stayInfo.minStay || (isPublishedHost ? '未設定' : '1ヶ月') },
 	      { label: '最長滞在期間', value: stayInfo.maxStay || (isPublishedHost ? '未設定' : '12ヶ月') },
 	      { label: '長期滞在', value: stayInfo.longStay || (isPublishedHost ? '未設定' : '長期滞在可能') },
-	      { label: '月額料金（CAD）', value: Number.isFinite(Number(h.price)) ? `C$${Number(h.price).toLocaleString()}` : '未設定' },
+	      { label: '月額料金（CAD）', value: hostMonthlyPriceText({ monthly_price: h.price, currency: h.currency }) },
       ...detailRooms.map(r => ({ label: r.label, value: r.val }))
     ]);
 
@@ -23301,6 +23301,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const comparisonText = comparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
 	      : t('condition_comparison');
+	    const locationParts = [h.city, localizeText(h.roomType)];
+	    if (!isPublishedListing && h.years !== null && h.years !== undefined && h.years !== '') {
+	      locationParts.push(t('host_years').replace('{years}', h.years));
+	    }
+	    const priceLabel = localizeText(hostMonthlyPriceText({ monthly_price: h.price, currency: h.currency }));
 	    const statusBg = matchInfo.available ? '#E8F7EF' : '#FFF3CD';
 	    const statusColor = matchInfo.available ? '#167A45' : '#856404';
 	    const statusText = matchInfo.available
@@ -23318,11 +23323,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        </div>
 	        <div class="match-card-body">
 	          <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
-	          <div class="match-card-location">${h.city} · ${h.roomType} · ホスト歴${h.years}年</div>
+	          <div class="match-card-location">${locationParts.filter(Boolean).join(' · ')}</div>
 	          <div style="display:inline-flex;margin-top:10px;background:${statusBg};color:${statusColor};font-size:12px;font-weight:800;padding:5px 10px;border-radius:10px;">${statusText}</div>
 	          <div style="font-size:11px;color:var(--light);margin-top:6px;">${availabilityLabel}: ${formatDateRange(matchInfo.hostRange)}</div>
 	          <div class="match-card-tags">${h.tags.slice(0, 4).map(tag => `<span class="ctag ${tag.cls === 'green' ? 'ok' : ''}">${localizeText(tag.text)}</span>`).join('')}</div>
-	          <div class="match-card-footer"><div class="match-card-price"><strong>$${h.price.toLocaleString()}</strong><span> /月〜</span></div><div class="match-card-meals">${localizeText(h.mealsTag)}</div></div>
+	          <div class="match-card-footer"><div class="match-card-price"><strong>${priceLabel}</strong></div><div class="match-card-meals">${localizeText(h.mealsTag)}</div></div>
 	        </div>
 	      </div>
 	    `;
