@@ -3705,6 +3705,56 @@
   </div>
 </div>
 
+<!-- ==================== ホームステイ ゲスト詳細（Host向け） ==================== -->
+<div id="screen-homestay-guest-detail" class="screen">
+  <div class="detail-scroll">
+    <div class="detail-topbar">
+      <button class="back-btn" onclick="goBackFromHomestayGuestDetail()">←</button>
+      <div class="more-menu-wrap">
+        <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('homestay-guest-detail-user-menu')">…</button>
+        <div class="more-menu" id="homestay-guest-detail-user-menu">
+          <button type="button" onclick="startBlockCurrentUser()" data-i18n="block">ブロック</button>
+          <button type="button" onclick="openReportModal()" data-i18n="report_user">通報</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-host-card" style="margin-top:16px;">
+      <div class="detail-avatar" id="homestay-guest-detail-avatar">🧑</div>
+      <div style="flex:1;min-width:0;">
+        <h2 id="homestay-guest-detail-name" data-i18n="guest_profile">ゲストプロフィール</h2>
+        <div class="detail-meta" id="homestay-guest-detail-meta"></div>
+      </div>
+    </div>
+    <div class="blocked-notice" id="homestay-guest-detail-blocked-notice" data-i18n="blocked_by_you_notice">このユーザーをブロックしています</div>
+
+    <div class="detail-section" id="homestay-guest-detail-bio-section" style="display:none;">
+      <div class="detail-info-card">
+        <div class="detail-info-value" id="homestay-guest-detail-bio" style="line-height:1.8;"></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title" data-i18n="basic_profile">👤 基本プロフィール</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="homestay-guest-detail-basic"></div></div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="homestay-guest-detail-lifestyle"></div></div>
+    </div>
+
+    <div class="detail-section" style="padding-bottom:120px;">
+      <div class="detail-section-title" data-i18n="preferences">🎯 希望条件</div>
+      <div class="detail-info-card"><div class="detail-info-grid" id="homestay-guest-detail-preferences"></div></div>
+    </div>
+  </div>
+
+  <div class="detail-cta">
+    <button class="btn-primary" type="button" onclick="goBackFromHomestayGuestDetail()" data-i18n="back_to_messages">メッセージに戻る</button>
+  </div>
+</div>
+
 <!-- ==================== チャット画面 ==================== -->
 <div id="screen-chat" class="screen">
   <div class="chat-header">
@@ -7492,6 +7542,10 @@
   let supabaseHostConversationLoadSeq = 0;
   let hostDashboardConversationCountSeq = 0;
   let hostDashboardFavoriteCountSeq = 0;
+  let currentHomestayGuestDetailConversationId = '';
+  let currentHomestayGuestDetailGuestUserId = '';
+  let currentHomestayGuestDetailBackScreen = 'host-messages';
+  let currentHomestayGuestDetailData = null;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -7583,8 +7637,8 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','notification-settings','map','login','password-reset-request','password-update','onboarding','matching','ai-result','support','privacy-security','blocked-users','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
-    const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
+    const noNav = ['detail','chat','homestay-guest-detail','profile','lifestyle','preferences','notification-settings','map','login','password-reset-request','password-update','onboarding','matching','ai-result','support','privacy-security','blocked-users','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','homestay-guest-detail','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
     if (hostNav) hostNav.style.display = (isHostScreen && !noNav.includes(to)) ? 'flex' : 'none';
@@ -8177,6 +8231,10 @@
   }
 
   function getCurrentUserTarget() {
+    if (currentScreen === 'homestay-guest-detail' && currentHomestayGuestDetailGuestUserId) {
+      const name = currentHomestayGuestDetailData?.profile?.display_name || document.getElementById('homestay-guest-detail-name')?.textContent || currentHomestayGuestDetailGuestUserId;
+      return { id: `guest:homestay:${currentHomestayGuestDetailGuestUserId}`, name, type: 'homestay-guest', avatar: '🧑' };
+    }
     if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
       const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
       return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse', avatar: '🏢' };
@@ -8260,9 +8318,11 @@
     const detailNotice = document.getElementById('detail-blocked-notice');
     const shNotice = document.getElementById('sharehouse-blocked-notice');
     const applicantNotice = document.getElementById('applicant-blocked-notice');
+    const guestDetailNotice = document.getElementById('homestay-guest-detail-blocked-notice');
     if (detailNotice) detailNotice.style.display = blocked && currentScreen === 'detail' ? 'block' : 'none';
     if (shNotice) shNotice.style.display = blocked && currentScreen === 'sharehouse-detail' ? 'block' : 'none';
     if (applicantNotice) applicantNotice.style.display = blocked && currentScreen === 'host-applicant-detail' ? 'block' : 'none';
+    if (guestDetailNotice) guestDetailNotice.style.display = blocked && currentScreen === 'homestay-guest-detail' ? 'block' : 'none';
     let notice = document.getElementById('chat-blocked-notice');
     const messageArea = document.querySelector('#screen-chat .chat-messages');
     if (!notice && messageArea) {
@@ -10843,10 +10903,272 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	            ${subtitle ? `<div style="font-size:11px;color:var(--light);font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(subtitle)}</div>` : ''}
 	            <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-weight:${row.unread ? '800' : '500'};">${escapeHtml(preview)}</div>
 	          </div>
+	          <button onclick="event.stopPropagation();openHomestayGuestDetailFromConversation('${escapeHtml(conversation.id)}','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${localizeText('詳細を見る')}</button>
 	          ${row.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' : ''}
 	        </div>
 	      `;
 	    }).join('');
+	  }
+
+	  function homestayGuestDetailNotProvided() {
+	    return currentLang === 'en' ? 'Not provided' : '未入力';
+	  }
+
+	  function homestayGuestDetailValue(value) {
+	    if (value === null || value === undefined) return homestayGuestDetailNotProvided();
+	    if (Array.isArray(value)) {
+	      const values = value.filter(Boolean);
+	      return values.length ? values.join(currentLang === 'ja' ? '、' : ', ') : homestayGuestDetailNotProvided();
+	    }
+	    const text = String(value).trim();
+	    return text || homestayGuestDetailNotProvided();
+	  }
+
+	  function homestayGuestDetailRawArray(value) {
+	    return Array.isArray(value) ? value.filter(Boolean) : [];
+	  }
+
+	  function homestayGuestDetailAge(profile = {}) {
+	    const age = Number(profile.age);
+	    if (Number.isFinite(age) && age >= 0) return currentLang === 'ja' ? `${Math.trunc(age)}歳` : `${Math.trunc(age)} years old`;
+	    const birthDate = profile.birth_date ? new Date(profile.birth_date) : null;
+	    if (!birthDate || Number.isNaN(birthDate.getTime())) return homestayGuestDetailNotProvided();
+	    const today = new Date();
+	    let computed = today.getFullYear() - birthDate.getFullYear();
+	    const monthDiff = today.getMonth() - birthDate.getMonth();
+	    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) computed -= 1;
+	    return computed >= 0 ? (currentLang === 'ja' ? `${computed}歳` : `${computed} years old`) : homestayGuestDetailNotProvided();
+	  }
+
+	  function homestayGuestDetailDateRange(preferences = {}) {
+	    const start = preferences.stay_start_date || '';
+	    const end = preferences.stay_end_date || '';
+	    if (!start && !end) return homestayGuestDetailNotProvided();
+	    const format = currentLang === 'ja' ? formatDateJa : formatDateEn;
+	    return `${start ? format(start) : '—'} ${currentLang === 'ja' ? '〜' : '–'} ${end ? format(end) : '—'}`;
+	  }
+
+	  function homestayGuestDetailBudget(preferences = {}) {
+	    const min = Number(preferences.budget_min);
+	    const max = Number(preferences.budget_max);
+	    const hasMin = Number.isFinite(min);
+	    const hasMax = Number.isFinite(max);
+	    if (!hasMin && !hasMax) return homestayGuestDetailNotProvided();
+	    const money = value => `C$${Math.trunc(value).toLocaleString()}`;
+	    if (hasMin && hasMax) return `${money(min)} ${currentLang === 'ja' ? '〜' : '–'} ${money(max)} / ${currentLang === 'ja' ? '月' : 'mo'}`;
+	    if (hasMax) return currentLang === 'ja' ? `${money(max)} / 月まで` : `Up to ${money(max)} / mo`;
+	    return currentLang === 'ja' ? `${money(min)} / 月以上` : `${money(min)}+ / mo`;
+	  }
+
+	  function homestayGuestDetailMappedValue(mapper, field, value) {
+	    const mapped = mapper(field, value);
+	    return mapped || homestayGuestDetailNotProvided();
+	  }
+
+	  function homestayGuestDetailConversationFromCache(conversationId) {
+	    const id = String(conversationId || '').trim();
+	    return currentSupabaseHostConversationRows.find(row => row.conversation?.id === id) || null;
+	  }
+
+	  async function loadHomestayGuestDetailConversation(conversationId) {
+	    const id = String(conversationId || '').trim();
+	    const hostUserId = window._currentUser?.id || '';
+	    if (!id || !hostUserId || !window._supabase?.from) throw new Error('Missing host conversation context');
+
+	    const cached = homestayGuestDetailConversationFromCache(id);
+	    if (cached?.conversation?.listing_owner_id === hostUserId) return cached;
+
+	    const { data: conversation, error: conversationError } = await window._supabase
+	      .from('conversations')
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .eq('id', id)
+	      .eq('listing_owner_id', hostUserId)
+	      .maybeSingle();
+	    if (conversationError) {
+	      console.error('Supabase conversations guest detail load error:', conversationError);
+	      throw conversationError;
+	    }
+	    if (!conversation?.id || conversation.listing_owner_id !== hostUserId || !conversation.initiator_id) {
+	      throw new Error('Conversation is not available for this host');
+	    }
+
+	    const { data: listing, error: listingError } = await window._supabase
+	      .from('listings')
+	      .select('id, owner_id, listing_type, title, city, status')
+	      .eq('id', conversation.listing_id)
+	      .eq('owner_id', hostUserId)
+	      .eq('listing_type', 'homestay')
+	      .maybeSingle();
+	    if (listingError) {
+	      console.error('Supabase listings guest detail verification error:', listingError);
+	      throw listingError;
+	    }
+	    if (!listing?.id) throw new Error('Conversation listing is not available for this host');
+
+	    return { conversation, listing, profile: {} };
+	  }
+
+	  async function loadHomestayGuestPublicDetail(conversationId) {
+	    const row = await loadHomestayGuestDetailConversation(conversationId);
+	    const conversation = row.conversation;
+	    const guestUserId = conversation.initiator_id;
+	    const [profileResult, guestProfileResult, preferencesResult] = await Promise.all([
+	      window._supabase
+	        .from('profiles')
+	        .select('id, display_name, avatar_url')
+	        .eq('id', guestUserId)
+	        .maybeSingle(),
+	      window._supabase
+	        .from('guest_profiles')
+	        .select('user_id, birth_date, age, nationality, gender, religion, english_level, languages, stay_status, wake_time, bedtime, hobbies, bio')
+	        .eq('user_id', guestUserId)
+	        .maybeSingle(),
+	      window._supabase
+	        .from('homestay_guest_preferences')
+	        .select('user_id, preferred_cities, stay_start_date, stay_end_date, budget_min, budget_max, host_household_preference, interaction_preference, conversation_preference, meal_plan_preference, meal_style_preference, dietary_restriction, pet_preference, other_students_preference, smoking_preference, curfew_preference, visitor_preference, shower_limit_preference, kitchen_preference, cleaning_preference, overnight_guest_preference')
+	        .eq('user_id', guestUserId)
+	        .maybeSingle()
+	    ]);
+	    if (profileResult.error) {
+	      console.error('Supabase profiles guest detail load error:', profileResult.error);
+	      throw profileResult.error;
+	    }
+	    if (guestProfileResult.error) {
+	      console.error('Supabase guest_profiles guest detail load error:', guestProfileResult.error);
+	      throw guestProfileResult.error;
+	    }
+	    if (preferencesResult.error) {
+	      console.error('Supabase homestay_guest_preferences guest detail load error:', preferencesResult.error);
+	      throw preferencesResult.error;
+	    }
+	    return {
+	      conversation,
+	      listing: row.listing || {},
+	      profile: profileResult.data || row.profile || {},
+	      guestProfile: guestProfileResult.data || {},
+	      preferences: preferencesResult.data || {}
+	    };
+	  }
+
+	  function renderHomestayGuestPublicDetail(data) {
+	    const profile = data?.profile || {};
+	    const guestProfile = data?.guestProfile || {};
+	    const preferences = data?.preferences || {};
+	    const name = homestayGuestDetailValue(profile.display_name || (currentLang === 'en' ? 'Guest' : 'ゲスト'));
+	    const avatar = document.getElementById('homestay-guest-detail-avatar');
+	    if (avatar) {
+	      avatar.className = 'detail-avatar';
+	      if (profile.avatar_url) {
+	        avatar.innerHTML = `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`;
+	      } else {
+	        avatar.textContent = '🧑';
+	      }
+	    }
+	    const nameEl = document.getElementById('homestay-guest-detail-name');
+	    if (nameEl) {
+	      nameEl.removeAttribute('data-i18n');
+	      nameEl.textContent = name;
+	    }
+	    const meta = [
+	      homestayGuestDetailAge(guestProfile),
+	      guestProfile.nationality || ''
+	    ].filter(value => value && value !== homestayGuestDetailNotProvided()).join(' · ');
+	    const metaEl = document.getElementById('homestay-guest-detail-meta');
+	    if (metaEl) metaEl.textContent = meta || localizeText('ゲストプロフィール');
+	    const bioSection = document.getElementById('homestay-guest-detail-bio-section');
+	    const bioEl = document.getElementById('homestay-guest-detail-bio');
+	    if (bioSection && bioEl) {
+	      const bio = String(guestProfile.bio || '').trim();
+	      bioSection.style.display = bio ? 'block' : 'none';
+	      bioEl.textContent = bio;
+	    }
+
+	    renderDetailInfoGrid('homestay-guest-detail-basic', [
+	      { label: '名前', value: name, raw: true },
+	      { label: '年齢', value: homestayGuestDetailAge(guestProfile) },
+	      { label: '国籍', value: homestayGuestDetailValue(guestProfile.nationality), raw: true },
+	      { label: '性別', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'gender', guestProfile.gender) },
+	      { label: '話せる言語', value: homestayGuestDetailValue(homestayGuestDetailRawArray(guestProfile.languages)), raw: true },
+	      { label: '英語レベル', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'english_level', guestProfile.english_level) },
+	      { label: '現在の立場', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'stay_status', guestProfile.stay_status) },
+	      { label: '宗教', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'religion', guestProfile.religion) }
+	    ]);
+	    renderDetailInfoGrid('homestay-guest-detail-lifestyle', [
+	      { label: '起床時間', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'wake_time', guestProfile.wake_time) },
+	      { label: '就寝時間', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'bedtime', guestProfile.bedtime) },
+	      { label: '趣味', value: homestayGuestDetailValue(homestayGuestDetailRawArray(guestProfile.hobbies)), raw: true }
+	    ]);
+	    renderDetailInfoGrid('homestay-guest-detail-preferences', [
+	      { label: '希望エリア', value: homestayGuestDetailValue(homestayGuestDetailRawArray(preferences.preferred_cities)), raw: true },
+	      { label: '希望滞在期間', value: homestayGuestDetailDateRange(preferences) },
+	      { label: '月額予算', value: homestayGuestDetailBudget(preferences) },
+	      { label: '希望するホストの家族構成', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'host_household_preference', preferences.host_household_preference) },
+	      { label: 'ホストとの交流頻度', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'interaction_preference', preferences.interaction_preference) },
+	      { label: '会話量', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'conversation_preference', preferences.conversation_preference) },
+	      { label: '食事', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'meal_plan_preference', preferences.meal_plan_preference) },
+	      { label: '食事スタイル', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'meal_style_preference', preferences.meal_style_preference) },
+	      { label: '食事制限', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'dietary_restriction', preferences.dietary_restriction) },
+	      { label: 'ペット', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'pet_preference', preferences.pet_preference) },
+	      { label: '同居留学生', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'other_students_preference', preferences.other_students_preference) },
+	      { label: '喫煙環境', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'smoking_preference', preferences.smoking_preference) },
+	      { label: '門限', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'curfew_preference', preferences.curfew_preference) },
+	      { label: '来客', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'visitor_preference', preferences.visitor_preference) },
+	      { label: 'シャワー時間', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'shower_limit_preference', preferences.shower_limit_preference) },
+	      { label: 'キッチン利用', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'kitchen_preference', preferences.kitchen_preference) },
+	      { label: '掃除ルール', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'cleaning_preference', preferences.cleaning_preference) },
+	      { label: '宿泊ゲスト', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'overnight_guest_preference', preferences.overnight_guest_preference) }
+	    ]);
+	  }
+
+	  function renderHomestayGuestDetailError() {
+	    const containers = ['homestay-guest-detail-basic', 'homestay-guest-detail-lifestyle', 'homestay-guest-detail-preferences'];
+	    containers.forEach((id, index) => {
+	      const el = document.getElementById(id);
+	      if (!el) return;
+	      el.innerHTML = index === 0
+	        ? `<div class="detail-info-item"><div class="detail-info-value">${currentLang === 'en' ? 'Could not load guest information.' : 'Guest情報を読み込めませんでした'}</div></div>`
+	        : '';
+	    });
+	  }
+
+	  async function openHomestayGuestDetailFromConversation(conversationId, fromScreen = 'host-messages') {
+	    const id = String(conversationId || '').trim();
+	    if (!id) return false;
+	    try {
+	      const row = await loadHomestayGuestDetailConversation(id);
+	      const guestUserId = row.conversation?.initiator_id || '';
+	      if (!guestUserId) throw new Error('Conversation is missing guest user id');
+	      currentHomestayGuestDetailConversationId = id;
+	      currentHomestayGuestDetailGuestUserId = guestUserId;
+	      currentHomestayGuestDetailBackScreen = fromScreen === 'chat' ? 'chat' : 'host-messages';
+	      currentSupabaseChatOtherUserId = guestUserId;
+	      const loading = currentLang === 'en' ? 'Loading guest information...' : 'Guest情報を読み込み中...';
+	      const basic = document.getElementById('homestay-guest-detail-basic');
+	      if (basic) basic.innerHTML = `<div class="detail-info-item"><div class="detail-info-value">${loading}</div></div>`;
+	      navigate(currentScreen, 'homestay-guest-detail');
+	      const data = await loadHomestayGuestPublicDetail(id);
+	      currentHomestayGuestDetailData = data;
+	      renderHomestayGuestPublicDetail(data);
+	      updateBlockedUi();
+	      const scroll = document.querySelector('#screen-homestay-guest-detail .detail-scroll');
+	      if (scroll) scroll.scrollTop = 0;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay guest detail open error:', error);
+	      currentHomestayGuestDetailData = null;
+	      renderHomestayGuestDetailError();
+	      showToast(currentLang === 'en' ? 'Could not load guest information.' : 'Guest情報を読み込めませんでした');
+	      navigate(currentScreen, 'host-messages');
+	      return false;
+	    }
+	  }
+
+	  function goBackFromHomestayGuestDetail() {
+	    if (currentHomestayGuestDetailBackScreen === 'chat' && currentHomestayGuestDetailConversationId) {
+	      openSupabaseHostConversation(currentHomestayGuestDetailConversationId);
+	      return;
+	    }
+	    navigate(currentScreen, 'host-messages');
 	  }
 
 	  async function renderSupabaseHostMessages() {
@@ -11482,6 +11804,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
 	  function openChatDetail() {
+	    if (currentSupabaseChatMode === 'homestay-host' && currentSupabaseConversationId) {
+	      openHomestayGuestDetailFromConversation(currentSupabaseConversationId, 'chat');
+	      return;
+	    }
 	    if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') && currentChatApplicant) {
 	      openApplicantDetail(currentChatApplicant, 'host-messages');
 	      return;
@@ -19777,6 +20103,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       review_tag_fast_reply:'返信が早い', review_tag_kind:'親切', review_tag_hospitality:'ホスピタリティ高い',
       review_tag_talkative:'会話が多い', review_tag_breakfast:'朝食が充実',
       review_tag_study:'勉強に集中できる', review_tag_quiet:'静かな環境',
+      guest_profile:'ゲストプロフィール', basic_profile:'基本プロフィール',
+      back_to_messages:'メッセージに戻る',
       notif_messages:'メッセージが届いた時', notif_messages_sub:'ホストからの新着メッセージを通知',
       notif_approved:'リクエストが承諾された時', notif_approved_sub:'申請が承諾された時に通知',
       notif_rejected:'リクエストが否認された時', notif_rejected_sub:'申請結果が否認だった時に通知',
@@ -19889,6 +20217,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       review_tag_fast_reply:'Fast Reply', review_tag_kind:'Kind', review_tag_hospitality:'Great Hospitality',
       review_tag_talkative:'Good Conversation', review_tag_breakfast:'Great Breakfast',
       review_tag_study:'Good for Studying', review_tag_quiet:'Quiet Environment',
+      guest_profile:'Guest Profile', basic_profile:'Basic Profile',
+      back_to_messages:'Back to Messages',
       notif_messages:'When a message arrives', notif_messages_sub:'Notify me about new messages from hosts',
       notif_approved:'When a request is approved', notif_approved_sub:'Notify me when an application is approved',
       notif_rejected:'When a request is declined', notif_rejected_sub:'Notify me when an application is declined',
@@ -22164,12 +22494,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '学生':'Student',
     'ワーホリ':'Working Holiday',
     '社会人':'Working Professional',
+    'ゲストプロフィール':'Guest Profile',
+    '基本プロフィール':'Basic Profile',
+    '生活スタイル':'Lifestyle',
+    'メッセージに戻る':'Back to Messages',
+    '現在の立場':'Current Status',
     '月額予算（USD）':'Monthly Budget (CAD)',
     '月額予算（CAD）':'Monthly Budget (CAD)',
     '💰 月額予算（USD）':'💰 Monthly Budget (CAD)',
     '💰 月額予算（CAD）':'💰 Monthly Budget (CAD)',
     '希望エリア（複数可）':'Preferred Area (multiple selections allowed)',
     '希望エリア':'Preferred Area',
+    '希望滞在期間':'Preferred Stay Period',
+    '月額予算':'Monthly Budget',
+    '食事':'Meals',
+    '食事スタイル':'Meal Style',
+    '食事制限':'Dietary Restrictions',
     'バンクーバー':'Vancouver',
     'トロント':'Toronto',
     '起床時間':'Wake-up Time',
@@ -22187,17 +22527,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '一言':'About Me',
     'ひとこと（ホストへの自己紹介）':'About Me',
     'ペット可否':'Pet Preference',
+    'ペット':'Pets',
     'ペットOK':'Pets OK',
     'できればいない方がいい':'Prefer not if possible',
     'ペットNG':'No pets',
     '他の留学生':'Other International Students',
+    '同居留学生':'Other International Students',
     'いてもOK':'OK with other international students',
     'いない家庭を希望':'I prefer a household without other international students',
     '喫煙可否':'Smoking Preference',
+    '喫煙環境':'Smoking Environment',
     '喫煙OK':'Smoking OK',
     '屋外ならOK':'Outside only is OK',
     'ホストファミリーとの交流頻度':'Time with Host Family',
     'ホストファミリーと一緒に過ごしたい頻度':'Desired Time with Host Family',
+    'ホストとの交流頻度':'Interaction with Host',
+    '会話量':'Conversation Level',
     'ホストファミリーとどのくらい一緒に過ごしたいですか？':'How much time would you like to spend with your host family?',
     '基本それぞれで過ごしたい':'I prefer to mostly spend time independently',
     '食事の時など時々':'Occasionally, such as during meals',
@@ -22205,6 +22550,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '家族の一員のように交流したい':"I'd like to interact as part of the family",
     '休日は一緒に過ごしたい':"I'd like to spend time together on days off",
     '希望する家族構成':'Preferred Host Family Type',
+    '希望するホストの家族構成':'Preferred Host Family Type',
     'ホストの家族構成':'Host Family Type',
     'ホスト家族構成':'Host Family Type',
     'こだわらない':'No preference',
@@ -22213,27 +22559,33 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '門限NG':'No curfew',
     '来客NG':'No visitors',
     '門限について':'Curfew',
+    '門限':'Curfew',
     '門限なし希望':'Prefer no curfew',
     '門限ありでもOK':'Curfew is OK',
     '友人などの来客について':'Visitors',
+    '来客':'Visitors',
     '来客OKの家庭を希望':'Prefer households where visitors are OK',
     '事前連絡が必要でもOK':'Prior notice is OK',
     '来客NGでもOK':'No visitors is OK',
     'シャワーの利用時間について':'Shower Time Limit',
+    'シャワー時間':'Shower Time Limit',
     '時間制限なし希望':'Prefer no time limit',
     '10〜15分程度ならOK':'10-15 minutes is OK',
     '5〜10分程度でもOK':'5-10 minutes is OK',
     '5分以内でもOK':'Within 5 minutes is OK',
     'キッチン利用について':'Kitchen Use',
+    'キッチン利用':'Kitchen Use',
     '自由に使える家庭を希望':'Prefer free kitchen access',
     '時間制限があってもOK':'Time limits are OK',
     'キッチンを使えなくてもOK':'No kitchen access is OK',
     '共有スペースの掃除について':'Shared Space Cleaning',
+    '掃除ルール':'Cleaning Rules',
     '毎日でもOK':'Daily cleaning is OK',
     '週1回程度ならOK':'About once a week is OK',
     '月1回程度ならOK':'About once a month is OK',
     '掃除当番なし希望':'Prefer no cleaning duty',
     '友人・パートナーなどの宿泊について':'Friends or Partners Staying Overnight',
+    '宿泊ゲスト':'Overnight Guests',
     '宿泊OKの家庭を希望':'Prefer households where overnight guests are OK',
     '事前相談が必要でもOK':'Prior discussion is OK',
     '宿泊NGでもOK':'No overnight guests is OK',
@@ -22802,6 +23154,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
 	    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
 	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
+	    if (currentScreen === 'homestay-guest-detail' && currentHomestayGuestDetailData) renderHomestayGuestPublicDetail(currentHomestayGuestDetailData);
 	    if (currentScreen === 'onboarding') renderOnboardStep();
 	    if (currentScreen === 'profile') updateGuestProfileMode();
 	    if (currentScreen === 'lifestyle') updateGuestLifestyleMode();
@@ -22993,6 +23346,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       'host-profile',
       'host-messages',
       'chat',
+      'homestay-guest-detail',
       'host-settings',
       'notification-settings',
       'support',
@@ -23020,6 +23374,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (!currentSupabaseConversationId || !['homestay', 'homestay-host'].includes(currentSupabaseChatMode)) return null;
       route.conversationId = String(currentSupabaseConversationId);
       route.chatMode = currentSupabaseChatMode || (routeRole === 'host' ? 'homestay-host' : 'homestay');
+    }
+    if (routeScreen === 'homestay-guest-detail') {
+      if (routeRole !== 'host' || !currentHomestayGuestDetailConversationId || !currentHomestayGuestDetailGuestUserId) return null;
+      route.conversationId = String(currentHomestayGuestDetailConversationId);
+      route.guestUserId = String(currentHomestayGuestDetailGuestUserId);
+      route.detailFrom = currentHomestayGuestDetailBackScreen || extra.detailFrom || 'host-messages';
     }
     if (extra.listingId) route.listingId = String(extra.listingId);
     if (extra.conversationId) route.conversationId = String(extra.conversationId);
@@ -23166,6 +23526,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           window._authenticatedRouteRestored = true;
           return true;
         }
+        if (screen === 'homestay-guest-detail') {
+          const conversationId = String(route.conversationId || '').trim();
+          if (!conversationId) throw new Error('Saved guest detail route is missing conversationId');
+          await openHomestayGuestDetailFromConversation(conversationId, route.detailFrom || 'host-messages');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
         if (['notification-settings', 'support', 'privacy-security', 'blocked-users'].includes(screen)) {
           await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
           prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
@@ -23230,6 +23597,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (typeof resetSupabaseChatState === 'function') resetSupabaseChatState();
     currentSupabaseGuestConversationRows = [];
     currentSupabaseHostConversationRows = [];
+    currentHomestayGuestDetailConversationId = '';
+    currentHomestayGuestDetailGuestUserId = '';
+    currentHomestayGuestDetailBackScreen = 'host-messages';
+    currentHomestayGuestDetailData = null;
     window._lastRestoredUserMode = null;
     window._registrationStartScreenActive = false;
     if (typeof clearSupabaseFavoriteCache === 'function') clearSupabaseFavoriteCache();
