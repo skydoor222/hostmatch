@@ -11606,6 +11606,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let currentHomestayListing = null;
 	  let currentHomestayListingDetails = null;
 	  let currentHomestayListingPrivateDetails = null;
+	  let currentHomestayHostFamilyMembers = [];
 	  let currentHomestayHostStudents = [];
 	  let currentHomestayListingPhotos = [];
 	  let currentHomestayHostDataLoaded = false;
@@ -11848,6 +11849,44 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      bedtime: toHostProfileDbValue('bedtime', student.sleep),
 	      hobbies: hostStudentHobbiesArray(student.hobbies),
 	      stay_period: nullableText(student.stay),
+	      sort_order: index
+	    }));
+	  }
+
+	  function homestayHostFamilyMemberUiFromDbRow(row = {}) {
+	    const wake = fromHostProfileDbValue('wake_time', row.wake_time);
+	    const sleep = fromHostProfileDbValue('bedtime', row.bedtime);
+	    return {
+	      id: row.id || null,
+	      name: row.name || '子供',
+	      age: row.age ?? '',
+	      gender: fromHostProfileDbValue('gender', row.gender) || '選択しない',
+	      nationality: row.nationality || '',
+	      wake: wake || '',
+	      sleep: sleep || '',
+	      lifestyle: `起床時間：${wake || '未設定'} / 就寝時間：${sleep || '未設定'}`,
+	      hobbies: hostStudentHobbiesArray(row.hobbies).join('、'),
+	      note: row.note || ''
+	    };
+	  }
+
+	  function replaceHostFamilyMembersFromDb(rows = []) {
+	    hostFamilyMembers.splice(0, hostFamilyMembers.length);
+	    rows.forEach(row => hostFamilyMembers.push(homestayHostFamilyMemberUiFromDbRow(row)));
+	    renderHostFamilyEditors();
+	  }
+
+	  function homestayHostFamilyMemberPayloadsFromUi(userId) {
+	    return hostFamilyMembers.map((member, index) => ({
+	      host_user_id: userId,
+	      name: nullableText(member.name) || '子供',
+	      age: nullableInteger(member.age),
+	      gender: toHostProfileDbValue('gender', member.gender),
+	      nationality: nullableText(member.nationality),
+	      wake_time: toHostProfileDbValue('wake_time', member.wake),
+	      bedtime: toHostProfileDbValue('bedtime', member.sleep),
+	      hobbies: hostStudentHobbiesArray(member.hobbies),
+	      note: nullableText(member.note),
 	      sort_order: index
 	    }));
 	  }
@@ -14063,6 +14102,41 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	  }
 
+	  async function syncHomestayHostFamilyMembersToSupabase(userId) {
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existingRows, error: selectError } = await window._supabase
+	        .from('homestay_host_family_members')
+	        .select('id')
+	        .eq('host_user_id', userId);
+	      if (selectError) throw selectError;
+
+	      if (Array.isArray(existingRows) && existingRows.length) {
+	        const { error: deleteError } = await window._supabase
+	          .from('homestay_host_family_members')
+	          .delete()
+	          .eq('host_user_id', userId);
+	        if (deleteError) throw deleteError;
+	      }
+
+	      const payloads = homestayHostFamilyMemberPayloadsFromUi(userId);
+	      if (!payloads.length) {
+	        currentHomestayHostFamilyMembers = [];
+	        window._currentHomestayHostFamilyMembers = currentHomestayHostFamilyMembers;
+	        return true;
+	      }
+
+	      const { error: insertError } = await window._supabase
+	        .from('homestay_host_family_members')
+	        .insert(payloads);
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase homestay_host_family_members sync error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveHostUserModeToSupabase() {
 	    const userId = window._currentUser?.id;
 	    if (!userId || !window._supabase?.from) return false;
@@ -14142,6 +14216,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const savedStudents = await syncHomestayHostStudentsToSupabase(userId, hostProfilePayload.other_students_present === true);
 	    if (!savedStudents) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedFamilyMembers = await syncHomestayHostFamilyMembersToSupabase(userId);
+	    if (!savedFamilyMembers) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save family member information. Please try again.' : '追加家族情報を保存できませんでした。もう一度お試しください。' };
 	    }
 
 	    const savedAvatar = await saveHomestayHostAvatarToSupabase('ob');
@@ -14226,6 +14305,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const savedStudents = await syncHomestayHostStudentsToSupabase(userId, hostProfilePayload.other_students_present === true);
 	    if (!savedStudents) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save international student information. Please try again.' : '同居留学生情報を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedFamilyMembers = await syncHomestayHostFamilyMembersToSupabase(userId);
+	    if (!savedFamilyMembers) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save family member information. Please try again.' : '追加家族情報を保存できませんでした。もう一度お試しください。' };
 	    }
 
 	    const savedAvatar = await saveHomestayHostAvatarToSupabase('profile');
@@ -14557,9 +14641,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
 	        privateDetails: currentHomestayListingPrivateDetails,
+	        familyMembers: currentHomestayHostFamilyMembers,
 	        students: currentHomestayHostStudents,
 	        photos: currentHomestayListingPhotos
 	      });
+	      replaceHostFamilyMembersFromDb(currentHomestayHostFamilyMembers);
+	      replaceHostInternationalStudentsFromDb(currentHomestayHostStudents);
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
 	      return true;
@@ -14596,6 +14683,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        .order('sort_order', { ascending: true })
 	        .order('created_at', { ascending: true });
 	      if (studentsError) throw studentsError;
+
+	      const { data: familyMembers, error: familyMembersError } = await window._supabase
+	        .from('homestay_host_family_members')
+	        .select('id, host_user_id, name, age, gender, nationality, wake_time, bedtime, hobbies, note, sort_order, created_at, updated_at')
+	        .eq('host_user_id', userId)
+	        .order('sort_order', { ascending: true })
+	        .order('created_at', { ascending: true });
+	      if (familyMembersError) throw familyMembersError;
 
 	      let details = null;
 	      let privateDetails = null;
@@ -14634,14 +14729,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      currentHomestayListing = listing || null;
 	      currentHomestayListingDetails = details || null;
 	      currentHomestayListingPrivateDetails = privateDetails || null;
+	      currentHomestayHostFamilyMembers = Array.isArray(familyMembers) ? familyMembers : [];
 	      currentHomestayHostStudents = Array.isArray(students) ? students : [];
 	      currentHomestayListingPhotos = listingPhotos;
 	      window._currentHomestayHostProfile = currentHomestayHostProfile;
 	      window._currentHomestayListing = currentHomestayListing;
 	      window._currentHomestayListingDetails = currentHomestayListingDetails;
 	      window._currentHomestayListingPrivateDetails = currentHomestayListingPrivateDetails;
+	      window._currentHomestayHostFamilyMembers = currentHomestayHostFamilyMembers;
 	      window._currentHomestayHostStudents = currentHomestayHostStudents;
 	      window._currentHomestayListingPhotos = currentHomestayListingPhotos;
+	      replaceHostFamilyMembersFromDb(currentHomestayHostFamilyMembers);
 	      replaceHostInternationalStudentsFromDb(currentHomestayHostStudents);
 	      currentHomestayHostDataLoaded = !!(hostProfile || listing);
 
@@ -14652,6 +14750,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        listing: currentHomestayListing,
 	        details: currentHomestayListingDetails,
 	        privateDetails: currentHomestayListingPrivateDetails,
+	        familyMembers: currentHomestayHostFamilyMembers,
 	        students: currentHomestayHostStudents,
 	        photos: currentHomestayListingPhotos
 	      });
