@@ -951,6 +951,10 @@
     }
     .toggle-switch.on { background: var(--primary); }
     .toggle-switch.on::after { transform: translateX(20px); }
+    .toggle-switch:disabled {
+      cursor: wait;
+      opacity: .55;
+    }
     .faq-list { display: flex; flex-direction: column; gap: 8px; }
     .faq-item {
       background: white; border: 1px solid var(--border); border-radius: 12px;
@@ -7492,6 +7496,10 @@
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
   let blockedUsersBackScreen = 'mypage';
+  let currentMessageNotificationsEnabled = true;
+  let notificationPreferencesLoaded = false;
+  let notificationPreferencesLoading = false;
+  let notificationPreferencesCacheUserId = '';
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let sharehouseDetailMap = null;
@@ -7596,6 +7604,9 @@
     if (to === 'ai-result') renderAiResult();
     if (to === 'messages') renderGuestMessages();
     if (to === 'homestay-host-list') renderHomestayHostList();
+    if (to === 'notification-settings' && typeof loadCurrentNotificationPreferences === 'function' && !notificationPreferencesLoading) {
+      loadCurrentNotificationPreferences({ showError: true });
+    }
     if (to === 'host-onboarding' || to === 'host-profile') {
       renderHostFamilyEditors();
       toggleHostPetFields(to === 'host-profile' ? 'profile' : 'ob');
@@ -7625,7 +7636,7 @@
   }
 
   function isHostListingPaused() {
-    return localStorage.getItem('hostmatch_host_listing_paused') === '1';
+    return currentHomestayListing?.status === 'paused';
   }
 
   function hostDashboardAvailabilityText(listing = {}) {
@@ -7711,9 +7722,49 @@
     updateHostDashboardFromCurrentHomestayData();
   }
 
-  function toggleHostListingStatus() {
-    localStorage.setItem('hostmatch_host_listing_paused', isHostListingPaused() ? '0' : '1');
-    updateHostDashboardListing();
+  async function toggleHostListingStatus() {
+    const userId = window._currentUser?.id;
+    const listingId = currentHomestayListing?.id;
+    const pauseBtn = document.getElementById('host-listing-pause-btn');
+    if (!userId || !listingId || !window._supabase?.from) {
+      showToast(currentLang === 'en' ? 'Could not update listing status. Please log in again.' : '掲載状況を更新できませんでした。再度ログインしてください。');
+      return;
+    }
+    const nextStatus = isHostListingPaused() ? 'published' : 'paused';
+    const previousStatus = currentHomestayListing.status || '';
+    if (pauseBtn) {
+      pauseBtn.disabled = true;
+      pauseBtn.style.opacity = '.55';
+    }
+    try {
+      const { error } = await window._supabase
+        .from('listings')
+        .update({ status: nextStatus })
+        .eq('id', listingId)
+        .eq('owner_id', userId)
+        .eq('listing_type', 'homestay');
+      if (error) throw error;
+      currentHomestayListing.status = nextStatus;
+      window._currentHomestayListing = currentHomestayListing;
+      updateHostDashboardListing();
+      if (typeof loadCurrentHomestayHostData === 'function') {
+        await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+      }
+      if (typeof invalidatePublishedHomestayGuestCache === 'function') invalidatePublishedHomestayGuestCache();
+      showToast(nextStatus === 'paused'
+        ? (currentLang === 'en' ? 'Listing paused.' : '掲載を一時停止しました。')
+        : (currentLang === 'en' ? 'Listing published.' : '掲載を公開しました。'));
+    } catch (error) {
+      console.error('Supabase homestay listing status update error:', error);
+      if (currentHomestayListing) currentHomestayListing.status = previousStatus;
+      updateHostDashboardListing();
+      showToast(currentLang === 'en' ? 'Could not update listing status. Please try again.' : '掲載状況を更新できませんでした。もう一度お試しください。');
+    } finally {
+      if (pauseBtn && currentHomestayListing?.id) {
+        pauseBtn.disabled = false;
+        pauseBtn.style.opacity = '1';
+      }
+    }
   }
 
   async function previewHostListing() {
@@ -7760,6 +7811,7 @@
       renderHostFamilyEditors();
       renderHostStudentEditors();
       applyCurrentHomestayHostDataToHostProfileScreen();
+      applyLang();
       return;
     }
     if (isSharehouse && body && originalHostProfileBodyHtml !== null && !body.querySelector('.sharehouse-profile-section')) {
@@ -7892,7 +7944,7 @@
       : `<div class="hm-empty-result">${currentLang === 'ja' ? '現在公開中のホームステイはありません。' : 'There are no published homestays right now.'}</div>`;
   }
 
-  function openNotificationSettings() {
+  async function openNotificationSettings() {
     notificationBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
     const isHostNotification = notificationBackScreen === 'host-settings';
     document.querySelectorAll('#screen-notification-settings .non-host-notification-row').forEach(row => {
@@ -7910,10 +7962,13 @@
     }
     const message = document.getElementById('notification-save-message');
     if (message) message.style.display = 'none';
-    document.querySelectorAll('#screen-notification-settings .toggle-switch').forEach(toggle => {
-      toggle.setAttribute('aria-pressed', toggle.classList.contains('on') ? 'true' : 'false');
+    notificationPreferencesLoading = true;
+    setNotificationPreferenceUi(currentMessageNotificationsEnabled, {
+      loading: true,
+      message: currentLang === 'en' ? 'Loading notification settings...' : '通知設定を読み込み中...'
     });
     navigate(currentScreen, 'notification-settings');
+    await loadCurrentNotificationPreferences({ force: true, showError: true });
   }
 
   function updateSupportMode() {
@@ -7924,16 +7979,164 @@
     document.querySelectorAll('#screen-support .faq-item.open').forEach(item => item.classList.remove('open'));
   }
 
-  function toggleNotificationSwitch(toggle) {
-    toggle.classList.toggle('on');
-    toggle.setAttribute('aria-pressed', toggle.classList.contains('on') ? 'true' : 'false');
-    const message = document.getElementById('notification-save-message');
-    if (message) message.style.display = 'none';
+  function notificationPreferenceToggle() {
+    return document.querySelector('#screen-notification-settings .toggle-switch');
   }
 
-  function saveNotificationSettings() {
-    const message = document.getElementById('notification-save-message');
-    if (message) message.style.display = 'block';
+  function notificationPreferenceMessage() {
+    return document.getElementById('notification-save-message');
+  }
+
+  function messageNotificationAriaLabel(enabled) {
+    if (currentLang === 'en') return enabled ? 'Receive notifications' : 'Do not receive notifications';
+    return enabled ? '通知を受け取る' : '通知を受け取らない';
+  }
+
+  function setNotificationPreferenceUi(enabled, options = {}) {
+    const toggle = notificationPreferenceToggle();
+    const message = notificationPreferenceMessage();
+    const isEnabled = enabled !== false;
+    currentMessageNotificationsEnabled = isEnabled;
+    if (toggle) {
+      toggle.classList.toggle('on', isEnabled);
+      toggle.setAttribute('aria-pressed', isEnabled ? 'true' : 'false');
+      toggle.setAttribute('aria-label', messageNotificationAriaLabel(isEnabled));
+      toggle.disabled = !!options.loading;
+    }
+    if (message) {
+      if (options.message) {
+        message.removeAttribute('data-i18n');
+        message.textContent = options.message;
+        message.style.display = 'block';
+        message.style.background = options.error ? '#FFF1F1' : options.loading ? '#F3F4F6' : '#E8F7EF';
+        message.style.color = options.error ? '#B42318' : options.loading ? 'var(--mid)' : '#167A45';
+        message.style.borderColor = options.error ? '#FFD0D0' : options.loading ? 'var(--border)' : '#BFE8D1';
+      } else {
+        message.style.display = 'none';
+      }
+    }
+  }
+
+  async function loadCurrentNotificationPreferences(options = {}) {
+    const { force = false, showError = false } = options;
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.from) {
+      notificationPreferencesLoaded = false;
+      notificationPreferencesLoading = false;
+      notificationPreferencesCacheUserId = '';
+      setNotificationPreferenceUi(true, {
+        error: true,
+        message: currentLang === 'en' ? 'Could not load notification settings.' : '通知設定を読み込めませんでした'
+      });
+      return false;
+    }
+    if (!force && notificationPreferencesLoaded && notificationPreferencesCacheUserId === userId) {
+      setNotificationPreferenceUi(currentMessageNotificationsEnabled);
+      return true;
+    }
+    notificationPreferencesLoading = true;
+    setNotificationPreferenceUi(currentMessageNotificationsEnabled, {
+      loading: true,
+      message: currentLang === 'en' ? 'Loading notification settings...' : '通知設定を読み込み中...'
+    });
+    try {
+      const { data, error } = await window._supabase
+        .from('notification_preferences')
+        .select('message_notifications')
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (error) throw error;
+      const enabled = data?.message_notifications !== false;
+      notificationPreferencesLoaded = true;
+      notificationPreferencesCacheUserId = userId;
+      setNotificationPreferenceUi(enabled);
+      return true;
+    } catch (error) {
+      console.error('Supabase notification_preferences load error:', error);
+      notificationPreferencesLoaded = false;
+      notificationPreferencesCacheUserId = userId;
+      setNotificationPreferenceUi(currentMessageNotificationsEnabled, {
+        error: true,
+        message: currentLang === 'en' ? 'Could not load notification settings.' : '通知設定を読み込めませんでした'
+      });
+      if (showError) showToast(currentLang === 'en' ? 'Could not load notification settings.' : '通知設定を読み込めませんでした');
+      return false;
+    } finally {
+      notificationPreferencesLoading = false;
+      const toggle = notificationPreferenceToggle();
+      if (toggle) toggle.disabled = false;
+    }
+  }
+
+  async function saveCurrentMessageNotificationPreference(enabled) {
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.from) throw new Error('No logged-in Supabase user');
+    const { error } = await window._supabase
+      .from('notification_preferences')
+      .upsert({
+        user_id: userId,
+        message_notifications: enabled === true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' });
+    if (error) throw error;
+    notificationPreferencesLoaded = true;
+    notificationPreferencesCacheUserId = userId;
+    currentMessageNotificationsEnabled = enabled === true;
+    return true;
+  }
+
+  async function toggleNotificationSwitch(toggle) {
+    if (notificationPreferencesLoading || toggle?.disabled) return;
+    const previous = currentMessageNotificationsEnabled !== false;
+    const next = !previous;
+    notificationPreferencesLoading = true;
+    setNotificationPreferenceUi(next, {
+      loading: true,
+      message: currentLang === 'en' ? 'Saving...' : '保存中...'
+    });
+    try {
+      await saveCurrentMessageNotificationPreference(next);
+      setNotificationPreferenceUi(next, {
+        message: currentLang === 'en' ? 'Saved' : '保存しました'
+      });
+    } catch (error) {
+      console.error('Supabase notification_preferences save error:', error);
+      setNotificationPreferenceUi(previous, {
+        error: true,
+        message: currentLang === 'en' ? 'Could not save notification settings.' : '通知設定を保存できませんでした'
+      });
+      showToast(currentLang === 'en' ? 'Could not save notification settings.' : '通知設定を保存できませんでした');
+    } finally {
+      notificationPreferencesLoading = false;
+      const currentToggle = notificationPreferenceToggle();
+      if (currentToggle) currentToggle.disabled = false;
+    }
+  }
+
+  async function saveNotificationSettings() {
+    const enabled = currentMessageNotificationsEnabled !== false;
+    notificationPreferencesLoading = true;
+    setNotificationPreferenceUi(enabled, {
+      loading: true,
+      message: currentLang === 'en' ? 'Saving...' : '保存中...'
+    });
+    try {
+      await saveCurrentMessageNotificationPreference(enabled);
+      setNotificationPreferenceUi(enabled, {
+        message: currentLang === 'en' ? 'Saved' : '保存しました'
+      });
+    } catch (error) {
+      console.error('Supabase notification_preferences save error:', error);
+      setNotificationPreferenceUi(enabled, {
+        error: true,
+        message: currentLang === 'en' ? 'Could not save notification settings.' : '通知設定を保存できませんでした'
+      });
+      showToast(currentLang === 'en' ? 'Could not save notification settings.' : '通知設定を保存できませんでした');
+    } finally {
+      notificationPreferencesLoading = false;
+      const toggle = notificationPreferenceToggle();
+      if (toggle) toggle.disabled = false;
+    }
   }
 
 	  function toggleFaq(button) {
@@ -7956,28 +8159,9 @@
 
   function confirmDeleteAccountDemo() {
     closeDeleteAccountModal();
-    currentRole = 'guest';
-    currentSearchCat = 'homestay';
-    window._serviceType = 'homestay';
-    window._currentUser = null;
-    hostPreviewMode = false;
-    localStorage.removeItem('hostmatch_host_listing_paused');
-    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-    const login = document.getElementById('screen-login');
-    if (login) login.classList.add('active');
-    currentScreen = 'login';
-    window.currentScreen = 'login';
-    const bottomNav = document.getElementById('bottom-nav');
-    const hostNav = document.getElementById('host-bottom-nav');
-    if (bottomNav) bottomNav.style.display = 'none';
-    if (hostNav) hostNav.style.display = 'none';
-    const email = document.getElementById('login-email');
-    const password = document.getElementById('login-password');
-    const error = document.getElementById('login-error');
-    if (email) email.value = '';
-    if (password) password.value = '';
-    if (error) error.textContent = '';
-    applyLang();
+    showToast(currentLang === 'en'
+      ? 'Account deletion is not available in the app yet. Please contact support.'
+      : 'アカウント削除はアプリ内ではまだ実行できません。お問い合わせからご連絡ください。');
   }
 
   function openPrivacySecurity() {
@@ -22342,6 +22526,29 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '公開中のホームステイを読み込めませんでした。時間をおいてもう一度お試しください。':'Could not load published homestays. Please try again later.',
     'ホスト情報を読み込み中です':'Loading hosts',
     'ホスト情報を読み込めませんでした':'Could not load hosts',
+    '公開エリア':'Public Area',
+    '正確な住所は公開されません':'Exact address is not shown to guests.',
+    '最寄り駅まで徒歩何分':'Walking minutes to nearest station',
+    '非公開住所':'Private Address',
+    '住所を入力してください':'Enter the address',
+    '住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。':'To create an approximate area, part of the address is sent to a map service when you save. Guests will not see the exact address.',
+    '概略位置を確認':'Check approximate location',
+    '実際の住居位置を確認してください。ゲストには500mの円だけが表示され、ピンや住所は表示されません。':'Check the actual home location. Guests only see a 500m circle, not a pin or address.',
+    '住所から位置を取得':'Get location from address',
+    '住所を入力して概略位置を取得してください。':'Enter the address and get the approximate location.',
+    '住所が変更されました。位置を再取得してから、実際の住居位置をクリックしてください。':'The address changed. Get the location again, then click the actual home location.',
+    '住所地点を自動取得できませんでした。実際の住居位置をクリックしてください。':'Could not get the address point automatically. Please click the actual home location.',
+    '受け入れ可能開始日':'Available From',
+    '受け入れ可能終了日':'Available Until',
+    'ヶ月':'months',
+    '部屋情報':'Room Information',
+    '部屋や外観の写真をアップロード':'Upload room or exterior photos',
+    'JPG / PNG / WebP、5MBまで':'JPG / PNG / WebP, up to 5MB',
+    'JPG / PNG / WebP、1枚10MBまで。複数枚選択できます':'JPG / PNG / WebP, up to 10MB each. You can select multiple photos.',
+    '表示を調整':'Adjust display',
+    '写真の表示範囲を調整':'Adjust photo framing',
+    'プロフィール写真の表示範囲を調整':'Adjust profile photo framing',
+    'ドラッグして位置を調整できます':'Drag to adjust the position.',
     '公開中のホームステイ':'Published homestays',
     '現在公開中のホームステイはありません。':'There are no published homestays right now.',
     'すべてのホスト':'All hosts',
@@ -22352,6 +22559,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     'まだメッセージはありません':'No messages yet',
     'あなた: ':'You: ',
     '公開中':'Published',
+    '一時停止中':'Paused',
+    '下書き':'Draft',
+    '掲載は下書きとして保存されています。':'This listing is saved as a draft.',
+    '掲載状況が未設定です。':'Listing status is not set.',
+    '掲載情報を読み込み中です。':'Loading listing information.',
+    '掲載を一時停止しました。':'Listing paused.',
+    '掲載を公開しました。':'Listing published.',
+    '掲載状況を更新できませんでした。再度ログインしてください。':'Could not update listing status. Please log in again.',
+    '掲載状況を更新できませんでした。もう一度お試しください。':'Could not update listing status. Please try again.',
     'プロフィール編集':'Edit Profile',
     '通知設定':'Notification Settings',
     '言語':'Language',
@@ -22559,6 +22775,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     updateSignupConsentLabels();
     updateSignupConsentState();
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
+    if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
     const legalModal = document.getElementById('legal-modal');
     if (legalModal && legalModal.style.display !== 'none' && legalModal.style.display !== '') {
       const title = document.getElementById('legal-modal-title');
@@ -22599,7 +22816,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (currentScreen === 'role-select' && window._registrationStartScreenActive) renderRegistrationStartOptions();
 	    else if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
 	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
-	    if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
+    if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
+    if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
 	    updateListingActionButtons();
 	    applyAutoTextTranslations();
 	  }
@@ -22995,6 +23213,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentHomestayHostStudents = [];
     currentHomestayListingPhotos = [];
     currentHomestayHostDataLoaded = false;
+    currentMessageNotificationsEnabled = true;
+    notificationPreferencesLoaded = false;
+    notificationPreferencesLoading = false;
+    notificationPreferencesCacheUserId = '';
     Object.keys(homestayHostApproxLocationMaps || {}).forEach(scope => clearHomestayHostApproxLocationMap(scope));
     currentHomestayApproxLocationDraft = { ob: null, profile: null };
     currentHomestayPrivateHousePoint = { ob: null, profile: null };
