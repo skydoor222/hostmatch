@@ -7534,6 +7534,24 @@
   };
 
   /* ===== NAVIGATION ===== */
+  const HOMESTAY_LEGACY_HOST_SCREENS = new Set([
+    'host-applicants',
+    'host-applicant-detail',
+    'host-calendar',
+    'host-revenue'
+  ]);
+
+  function isHomestayAuthenticatedHostContext() {
+    return currentRole === 'host'
+      && !!window._currentUser?.id
+      && (window._serviceType || currentSearchCat || 'homestay') === 'homestay';
+  }
+
+  function isBlockedHomestayLegacyScreen(screen) {
+    return isHomestayAuthenticatedHostContext()
+      && HOMESTAY_LEGACY_HOST_SCREENS.has(String(screen || ''));
+  }
+
   function navigate(from, to) {
     if (to !== 'chat' && currentScreen === 'chat' && typeof unsubscribeSupabaseMessageRealtime === 'function') {
       unsubscribeSupabaseMessageRealtime();
@@ -7542,6 +7560,10 @@
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
       to = 'search';
+    }
+    if (isBlockedHomestayLegacyScreen(to)) {
+      console.warn('Blocked legacy Homestay host screen:', { screen: to });
+      to = 'host-dashboard';
     }
     if (to !== 'detail' && to !== 'sharehouse-detail') hostPreviewMode = false;
     if (to === 'support') supportBackScreen = from || 'mypage';
@@ -22789,6 +22811,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   function openApplicantDetail(id, backScreen = 'host-applicants') {
     const service = serviceModeForCurrentContext();
+    if (service === 'homestay' && isHomestayAuthenticatedHostContext()) {
+      console.warn('Blocked legacy Homestay applicant detail:', { id, backScreen });
+      navigate(currentScreen, 'host-dashboard');
+      return;
+    }
     const applicant = getApplicantForService(id, service);
     if (!applicant) return;
     currentChatApplicant = id;
