@@ -7632,13 +7632,19 @@
     updateHostDashboardListing();
   }
 
-  function previewHostListing() {
+  async function previewHostListing() {
     hostPreviewMode = true;
     if (serviceModeForCurrentContext() === 'sharehouse') {
       openSharehouseDetail('sh1', 'host-dashboard');
       return;
     }
-    openDetail('sarah', 'host-dashboard');
+    const previewId = await prepareCurrentHomestayHostPublicPreview();
+    if (!previewId) {
+      hostPreviewMode = false;
+      showToast(currentLang === 'en' ? 'Could not open the preview.' : 'プレビューを開けませんでした。');
+      return;
+    }
+    openDetail(previewId, 'host-dashboard');
   }
 
   function formatDateJa(value) {
@@ -14555,6 +14561,40 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   function isPublishedHomestayDetailHost(hostId) {
     return !!publishedHomestaySearchHostByListingId(hostId);
   }
+
+	  async function prepareCurrentHomestayHostPublicPreview() {
+	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') return '';
+	    const loaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+	    if (!loaded || !currentHomestayListing?.id) {
+	      console.error('Homestay host preview load failed:', { loaded, listingId: currentHomestayListing?.id });
+	      return '';
+	    }
+	    const listing = currentHomestayListing;
+	    const previewHost = syncPublishedHomestayListingToSearchObjects({
+	      listing,
+	      profile: window._currentProfile || {},
+	      hostProfile: currentHomestayHostProfile || {},
+	      details: currentHomestayListingDetails || {},
+	      photos: currentHomestayListingPhotos || [],
+	      familyMembers: currentHomestayHostFamilyMembers || [],
+	      students: currentHomestayHostStudents || []
+	    });
+	    if (!previewHost?.id) {
+	      console.error('Homestay host preview adapter failed:', { listingId: listing.id });
+	      return '';
+	    }
+	    publishedHomestaySearchHosts = [
+	      previewHost,
+	      ...publishedHomestaySearchHosts.filter(host => host.id !== previewHost.id && host.listing?.id !== previewHost.id)
+	    ];
+	    currentPublishedHomestayListings = [
+	      listing,
+	      ...currentPublishedHomestayListings.filter(row => row.id !== listing.id)
+	    ];
+	    window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	    window._currentPublishedHomestayListings = currentPublishedHomestayListings;
+	    return previewHost.id;
+	  }
 
 	  function homestaySearchPhotoUrls(photos = []) {
 	    const rows = (Array.isArray(photos) ? photos : [])
