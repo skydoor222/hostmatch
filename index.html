@@ -10383,14 +10383,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const range = getHostAvailability(hostId);
       const guestRange = { start: filters.start, end: filters.end };
       activeHard++;
-      if (!isDateRangeOverlapping(guestRange, range)) {
+      const coversGuestRange = isDateRangeCovered(guestRange, range);
+      const stayMonthsOk = homestayGuestStayMonthsWithinHostLimits(guestRange, h);
+      if (!coversGuestRange) {
         hardPass = false;
-        hmAddCondition(items, filters, true, '期間重複なし', false);
-      } else if (isDateRangeCovered(guestRange, range)) {
+        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), false);
+      } else if (!stayMonthsOk) {
+        hardPass = false;
+        hmAddCondition(items, filters, true, '滞在期間がホストの受け入れ条件外', false);
+      } else {
         matchedHard++;
         hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), true);
-      } else {
-        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), false, true);
       }
     } else if (filters.start || filters.end) {
       near(true, '滞在期間を確認', true);
@@ -10420,7 +10423,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   function homestayInitialFilters() {
-    return homestayRegisteredSearchFilters();
+    return homestayInitialCoreSearchFilters();
   }
 
   function createDefaultHomestayFilterState() {
@@ -11075,11 +11078,34 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return homestayGuestDemoFilters || homestayFilterProfileFromOnboarding();
   }
 
+  function storedHomestayRegisteredFilterProfile() {
+    const stored = readStoredJson(HOMESTAY_GUEST_FILTERS_STORAGE_KEY);
+    if (stored) homestayGuestDemoFilters = stored;
+    return homestayGuestDemoFilters || null;
+  }
+
   function homestayRegisteredSearchFilters() {
     const registeredProfile = homestayRegisteredFilterProfile();
     return normalizeHomestayFilterState({
       ...registeredProfile,
       budgetOnly: !!registeredProfile.budget
+    });
+  }
+
+  function homestayInitialCoreSearchFilters() {
+    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || null;
+    const registeredProfile = storedHomestayRegisteredFilterProfile();
+    const preferredCities = Array.isArray(prefs?.preferred_cities) ? prefs.preferred_cities.filter(Boolean) : [];
+    const budgetMax = prefs?.budget_max ?? registeredProfile?.budget ?? null;
+    const budgetNumber = Number(budgetMax);
+    const hasBudget = Number.isFinite(budgetNumber) && budgetNumber > 0 && budgetNumber < 2000;
+    return normalizeHomestayFilterState({
+      ...createDefaultHomestayFilterState(),
+      area: preferredCities[0] || registeredProfile?.area || '',
+      start: prefs?.stay_start_date || registeredProfile?.start || '',
+      end: prefs?.stay_end_date || registeredProfile?.end || '',
+      budget: hasBudget ? budgetNumber : 2000,
+      budgetOnly: hasBudget
     });
   }
 
@@ -11122,12 +11148,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return next;
   }
 
-  function applyHomestayRegisteredFiltersToSearch() {
-    const profile = homestayRegisteredSearchFilters();
+  function applyHomestayInitialCoreFiltersToSearch() {
+    const profile = homestayInitialCoreSearchFilters();
     const sort = document.getElementById('hm-sort');
     if (sort) sort.value = 'newest';
     committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(profile));
     renderHomestayFilterResults(committedHomestayFilters);
+  }
+
+  function applyHomestayRegisteredFiltersToSearch() {
+    applyHomestayInitialCoreFiltersToSearch();
   }
 
   function applyHomestayDefaultFiltersToSearch() {
@@ -11139,7 +11169,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   function prepareHomestaySearchForDisplay() {
     if (shouldApplyRegisteredFilters.homestay) {
-      applyHomestayRegisteredFiltersToSearch();
+      applyHomestayInitialCoreFiltersToSearch();
       shouldApplyRegisteredFilters.homestay = false;
       return;
     }
@@ -11148,7 +11178,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       renderHomestayFilterResults(committedHomestayFilters);
       return;
     }
-    applyHomestayDefaultFiltersToSearch();
+    applyHomestayInitialCoreFiltersToSearch();
   }
 
   function shUpdateBudgetLabel() {
@@ -20639,6 +20669,32 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function isDateRangeOverlapping(guestRange, hostRange) {
 	    if (!guestRange?.start || !guestRange?.end || !hostRange?.start || !hostRange?.end) return true;
 	    return hostRange.start <= guestRange.end && hostRange.end >= guestRange.start;
+	  }
+
+	  function homestayStayMonthsFromDateRange(range) {
+	    if (!range?.start || !range?.end) return null;
+	    const start = new Date(range.start + 'T00:00:00');
+	    const end = new Date(range.end + 'T00:00:00');
+	    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return null;
+	    const days = Math.max(1, Math.ceil((end - start) / 86400000));
+	    return Math.max(1, Math.ceil(days / 30.4375));
+	  }
+
+	  function homestayStayMonthLimitValue(value) {
+	    if (value === null || value === undefined || value === '') return null;
+	    const match = String(value).match(/\d+/);
+	    return match ? Number(match[0]) : null;
+	  }
+
+	  function homestayGuestStayMonthsWithinHostLimits(guestRange, host) {
+	    const months = homestayStayMonthsFromDateRange(guestRange);
+	    if (!months) return true;
+	    const stayInfo = host?.hostStayInfo || {};
+	    const min = homestayStayMonthLimitValue(stayInfo.minStay);
+	    const max = homestayStayMonthLimitValue(stayInfo.maxStay);
+	    if (min !== null && months < min) return false;
+	    if (max !== null && months > max) return false;
+	    return true;
 	  }
 
 	  function availabilityMatchLabel(guestRange, hostRange) {
