@@ -9071,10 +9071,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: '年齢', value: `${st.age}${String(st.age).includes('歳') ? '' : '歳'}` },
       { label: '性別', value: st.gender },
       { label: '国籍', value: st.nationality },
-      { label: '起床時間', value: st.wake || '6〜8時' },
-      { label: '就寝時間', value: st.sleep || '22〜23時' },
-      { label: '趣味', value: st.hobbies },
-      { label: '滞在期間', value: st.stay }
+      { label: '起床時間', value: st.wake || st.wakeTime || st.wake_time || '未設定' },
+      { label: '就寝時間', value: st.sleep || st.bedtime || st.bedtimeText || '未設定' },
+      { label: '趣味', value: Array.isArray(st.hobbies) ? st.hobbies.join('、') : (st.hobbiesText || st.hobbies || '未設定') },
+      { label: '滞在期間', value: st.stay || st.stayPeriod || st.stay_period || '未設定' }
     ])));
     document.getElementById('detail-host-family').innerHTML = familyCards.length
       ? familyCards.join('')
@@ -11561,6 +11561,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let publishedHomestayHostsLoading = false;
 	  let publishedHomestayHostsLoadFailed = false;
 	  let publishedHomestayHostsCacheUserId = '';
+	  let currentPublishedHomestayHostStudents = [];
 	  let currentSelectedHomestayListingId = '';
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
@@ -12685,6 +12686,29 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return '未設定';
 	  }
 
+	  function homestayHostStudentDetailUiFromDbRow(row = {}) {
+	    const wake = fromHostProfileDbValue('wake_time', row.wake_time);
+	    const sleep = fromHostProfileDbValue('bedtime', row.bedtime);
+	    const hobbies = hostStudentHobbiesArray(row.hobbies);
+	    return {
+	      id: row.id || null,
+	      age: row.age ?? '',
+	      gender: fromHostProfileDbValue('gender', row.gender) || '選択しない',
+	      nationality: row.nationality || '',
+	      wake,
+	      wakeTime: wake,
+	      wake_time: wake,
+	      sleep,
+	      bedtime: sleep,
+	      bedtimeText: sleep,
+	      hobbies,
+	      hobbiesText: hobbies.join('、'),
+	      stay: row.stay_period || '',
+	      stayPeriod: row.stay_period || '',
+	      stay_period: row.stay_period || ''
+	    };
+	  }
+
 	  function syncPublishedHomestayListingToSearchObjects({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [], students = [] }) {
 	    if (!listing.id) return null;
 	    const hostId = listing.id;
@@ -12714,7 +12738,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const frequencyUi = hostDisplayValue(fromHostProfileDbValue('interaction_level', hostProfile.interaction_level));
 	    const rules = hostListingRulesFromDetails(details);
 	    const studentRows = hostProfile.other_students_present === false ? [] : (Array.isArray(students) ? students : []);
-	    const studentUiRows = studentRows.map(homestayHostStudentUiFromDbRow);
+	    const studentUiRows = studentRows.map(homestayHostStudentDetailUiFromDbRow);
 	    const tags = [
 	      roomType !== '未設定' ? { text: roomType, cls: 'green' } : null,
 	      mealPlan ? { text: mealPlan, cls: 'blue' } : null,
@@ -12767,7 +12791,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      hostHousehold: {
 	        type: householdType,
 	        smokingStatus,
-	        otherStudentsPresent: hostProfile.other_students_present === true,
+	        otherStudentsPresent: hostProfile.other_students_present === true || studentUiRows.length > 0,
 	        spokenLanguages: Array.isArray(hostProfile.spoken_languages) ? hostProfile.spoken_languages : [],
 	        homeLanguages: Array.isArray(hostProfile.home_languages) ? hostProfile.home_languages : [],
 	        partner: {
@@ -12876,10 +12900,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    currentPublishedHomestayListings = listings;
 	    if (!listings.length) {
 	      publishedHomestaySearchHosts = [];
+	      currentPublishedHomestayHostStudents = [];
 	      publishedHomestayHostsLoaded = true;
 	      publishedHomestayHostsCacheUserId = currentUserId;
 	      window._currentPublishedHomestayListings = currentPublishedHomestayListings;
 	      window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	      window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	      return publishedHomestaySearchHosts;
 	    }
 
@@ -12902,7 +12928,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const hostProfilesByUserId = indexRowsBy(hostProfilesResult.data, 'user_id');
 	    const detailsByListingId = indexRowsBy(detailsResult.data, 'listing_id');
 	    const photosByListingId = groupRowsBy(photosResult.data, 'listing_id');
-	    const studentsByHostUserId = groupRowsBy(studentsResult.error ? [] : studentsResult.data, 'host_user_id');
+	    currentPublishedHomestayHostStudents = studentsResult.error ? [] : (Array.isArray(studentsResult.data) ? studentsResult.data : []);
+	    const studentsByHostUserId = groupRowsBy(currentPublishedHomestayHostStudents, 'host_user_id');
 	    publishedHomestaySearchHosts = listings.map(listing => syncPublishedHomestayListingToSearchObjects({
 	      listing,
 	      profile: profilesById.get(listing.owner_id) || {},
@@ -12915,6 +12942,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    publishedHomestayHostsCacheUserId = currentUserId;
 	    window._currentPublishedHomestayListings = currentPublishedHomestayListings;
 	    window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	    window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	    return publishedHomestaySearchHosts;
 	  }
 
@@ -12958,7 +12986,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      await ensurePublishedHomestayListingsForGuest({ force: !publishedHomestayHostsLoaded || !publishedHomestayHostsCacheMatchesCurrentUser() });
 	      selected = publishedHomestaySearchHostByListingId(id);
 	    }
-	    if (selected && !HOSTS[id]) {
+	    if (selected) {
 	      selected = syncPublishedHomestayListingToSearchObjects(selected);
 	    }
 	    if (!selected || !HOSTS[id]) {
