@@ -3837,7 +3837,7 @@
     <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></a>
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'type-select')"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="navigate(currentScreen,'type-select',{forceTypeSelect:true})"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
   </div>
 </div>
@@ -5831,7 +5831,7 @@
       <!-- JSで動的に生成 -->
     </div>
     <div style="margin-top:20px;">
-      <button onclick="navigate(currentScreen,'type-select')" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 戻る</button>
+      <button onclick="navigate(currentScreen,'type-select',{forceTypeSelect:true})" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 戻る</button>
     </div>
   </div>
 </div>
@@ -7030,19 +7030,76 @@
     window._restoreDiagnosticObserver = observer;
   }
 
-  function showTypeSelectScreen() {
+  function currentRestoredModeLock() {
+    const lock = window._restoredModeLock;
+    const userId = window._currentUser?.id;
+    if (!lock || !userId || lock.userId !== userId || !lock.homeScreen) return null;
+    return lock;
+  }
+
+  function shouldBlockRestoredModeTypeSelect(options = {}) {
+    return !options.force && !!currentRestoredModeLock();
+  }
+
+  function keepRestoredModeHomeScreen(reason = 'blocked-type-select') {
+    const lock = currentRestoredModeLock();
+    if (!lock) return false;
+    console.warn('Blocked type-select navigation after restored mode:', { reason, lock });
+    const mode = { housingType: lock.housingType, role: lock.role };
+    if (typeof window.ensureRestoredUserHomeScreen === 'function') {
+      return window.ensureRestoredUserHomeScreen(mode);
+    }
+    if (typeof window.enforceOnlyActiveScreen === 'function') {
+      return window.enforceOnlyActiveScreen(lock.homeScreen);
+    }
+    return false;
+  }
+
+  function setRestoredModeLock(mode) {
+    const homeScreen = typeof window.restoredHomeScreenForMode === 'function'
+      ? window.restoredHomeScreenForMode(mode)
+      : '';
+    const userId = window._currentUser?.id;
+    if (!userId || !homeScreen) {
+      window._restoredModeLock = null;
+      return null;
+    }
+    window._restoredModeLock = {
+      userId,
+      housingType: mode.housingType,
+      role: mode.role,
+      homeScreen
+    };
+    return window._restoredModeLock;
+  }
+
+  function clearRestoredModeLock() {
+    window._restoredModeLock = null;
+  }
+
+  function showTypeSelectScreen(options = {}) {
+    if (shouldBlockRestoredModeTypeSelect(options)) {
+      keepRestoredModeHomeScreen('showTypeSelectScreen');
+      return false;
+    }
+    if (options.force) clearRestoredModeLock();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-type-select').classList.add('active');
     window.currentScreen = 'type-select';
     if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
     if (typeof applyLang === 'function') applyLang();
     scheduleRestoreDiagnosticPanel('showTypeSelectScreen');
+    return true;
   }
 
   async function restoreUserModeFromUserModes(user) {
     const modes = await loadCurrentUserModes(user);
-    if (!modes || modes.length !== 1) {
+    if (!modes) {
       showTypeSelectScreen();
+      return false;
+    }
+    if (modes.length !== 1) {
+      showTypeSelectScreen({ force: true });
       return false;
     }
 
@@ -7059,7 +7116,7 @@
       return false;
     }
 
-    showTypeSelectScreen();
+    showTypeSelectScreen({ force: true });
     return false;
   }
 
@@ -7073,6 +7130,11 @@
   window.showTypeSelectScreen = showTypeSelectScreen;
   window.runRestoreDiagnosticPanel = runRestoreDiagnosticPanel;
   window.scheduleRestoreDiagnosticPanel = scheduleRestoreDiagnosticPanel;
+  window.currentRestoredModeLock = currentRestoredModeLock;
+  window.shouldBlockRestoredModeTypeSelect = shouldBlockRestoredModeTypeSelect;
+  window.keepRestoredModeHomeScreen = keepRestoredModeHomeScreen;
+  window.setRestoredModeLock = setRestoredModeLock;
+  window.clearRestoredModeLock = clearRestoredModeLock;
   window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
   window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
   installRestoreDiagnosticObserver();
@@ -7113,6 +7175,7 @@
 
   function showLoggedOutScreen() {
     window._currentProfile = null;
+    clearRestoredModeLock();
     lastRestoredUserModeUserId = '';
     lastRestoredUserModeAt = 0;
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
@@ -7580,11 +7643,18 @@
   };
 
   /* ===== NAVIGATION ===== */
-  function navigate(from, to) {
+  function navigate(from, to, options = {}) {
     if (to === 'sharehouse') {
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
       to = 'search';
+    }
+    if (to === 'type-select' && window.shouldBlockRestoredModeTypeSelect?.({ force: options.forceTypeSelect === true })) {
+      window.keepRestoredModeHomeScreen?.('navigate-type-select');
+      return;
+    }
+    if (to === 'type-select' && options.forceTypeSelect === true) {
+      window.clearRestoredModeLock?.();
     }
     if (to !== 'detail' && to !== 'sharehouse-detail') hostPreviewMode = false;
     if (to === 'support') supportBackScreen = from || 'mypage';
@@ -17573,7 +17643,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const restored = await restoreUserModeOnce(user);
       if (restored) return;
     }
-    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
   }
 
   function supabaseAuthErrorMessage(error, mode) {
@@ -17653,6 +17723,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   async function doLogout() {
+    if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     try {
       if (window._supabase?.auth) await window._supabase.auth.signOut();
     } catch(e) {}
@@ -20861,6 +20932,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   let currentSearchCat = 'homestay';
 
   function clearRuntimeSessionState() {
+    if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     currentRole = 'guest';
     currentSearchCat = 'homestay';
     window._serviceType = 'homestay';
@@ -20903,6 +20975,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     if (mode.housingType === 'sharehouse' && (mode.role === 'host' || mode.role === 'resident')) return 'host-dashboard';
     return '';
   }
+  window.restoredHomeScreenForMode = restoredHomeScreenForMode;
 
   function enforceOnlyActiveScreen(screen) {
     const targetEl = document.getElementById('screen-' + screen);
@@ -20941,6 +21014,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     if (!alreadyCorrect || currentScreen !== screen || window.currentScreen !== screen) {
       navigate(currentScreen || 'type-select', screen);
     }
+    if (typeof window.setRestoredModeLock === 'function') window.setRestoredModeLock(mode);
     return enforceOnlyActiveScreen(screen);
   }
 
@@ -20963,7 +21037,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       if (housingType === 'homestay') {
         const loaded = await loadRegisteredHomestayGuestDataForRestore();
         if (!loaded) {
-          if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+          if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
           return false;
         }
       }
@@ -20978,7 +21052,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       window._serviceType = 'homestay';
       const loaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
       if (!loaded) {
-        if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+        if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
         return false;
       }
       window._lastRestoredUserMode = { housingType, role };
@@ -20995,7 +21069,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return true;
     }
 
-    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
+    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
     return false;
   }
 
