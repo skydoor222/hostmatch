@@ -9053,16 +9053,22 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         { label: '趣味', value: household.partner.hobbies }
       ]));
     }
-    const memberSource = currentHost === 'sarah' && Array.isArray(hostFamilyMembers) ? hostFamilyMembers : [];
-    familyCards.push(...memberSource.map((m, i) => detailMemberCard(m.name || `家族 ${i + 1}`, m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑', [
-      { label: '年齢', value: `${m.age}${String(m.age).includes('歳') ? '' : '歳'}` },
-      { label: '性別', value: m.gender },
-      { label: '国籍', value: m.nationality },
-      { label: '起床時間', value: m.wake || '6〜8時' },
-      { label: '就寝時間', value: m.sleep || '22〜23時' },
-      { label: '趣味', value: m.hobbies },
-      { label: '一言', value: m.note }
-    ])));
+    const familyMemberSource = Array.isArray(household.familyMembers)
+      ? household.familyMembers
+      : (currentHost === 'sarah' && Array.isArray(hostFamilyMembers) ? hostFamilyMembers : []);
+    familyCards.push(...familyMemberSource.map((m, i) => {
+      const familyTitle = m.id ? `${m.name || '家族'} ${i + 1}` : (m.name || `家族 ${i + 1}`);
+      const memberRows = [
+        { label: '年齢', value: m.age === '' || m.age === null || m.age === undefined ? '未設定' : `${m.age}${String(m.age).includes('歳') ? '' : '歳'}` },
+        { label: '性別', value: m.gender || '未設定' },
+        { label: '国籍', value: m.nationality || '未設定' },
+        { label: '起床時間', value: m.wake || m.wakeTime || '未設定' },
+        { label: '就寝時間', value: m.sleep || m.bedtime || '未設定' },
+        { label: '趣味', value: Array.isArray(m.hobbies) ? m.hobbies.join('、') : (m.hobbiesText || m.hobbies || '未設定') }
+      ];
+      if (m.note) memberRows.push({ label: '一言', value: m.note });
+      return detailMemberCard(familyTitle, m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑', memberRows);
+    }));
     const students = Array.isArray(household.students)
       ? household.students
       : (currentHost === 'sarah' && Array.isArray(hostInternationalStudents) ? hostInternationalStudents : []);
@@ -11616,6 +11622,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let publishedHomestayHostsLoading = false;
 	  let publishedHomestayHostsLoadFailed = false;
 	  let publishedHomestayHostsCacheUserId = '';
+	  let currentPublishedHomestayHostFamilyMembers = [];
 	  let currentPublishedHomestayHostStudents = [];
 	  let currentSelectedHomestayListingId = '';
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
@@ -12802,7 +12809,27 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    };
 	  }
 
-	  function syncPublishedHomestayListingToSearchObjects({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [], students = [] }) {
+	  function homestayHostFamilyMemberDetailUiFromDbRow(row = {}) {
+	    const wake = fromHostProfileDbValue('wake_time', row.wake_time);
+	    const sleep = fromHostProfileDbValue('bedtime', row.bedtime);
+	    const hobbies = hostStudentHobbiesArray(row.hobbies);
+	    return {
+	      id: row.id || null,
+	      name: row.name || '子供',
+	      age: row.age ?? '',
+	      gender: fromHostProfileDbValue('gender', row.gender) || '選択しない',
+	      nationality: row.nationality || '',
+	      wake,
+	      wakeTime: wake,
+	      sleep,
+	      bedtime: sleep,
+	      hobbies,
+	      hobbiesText: hobbies.join('、'),
+	      note: row.note || ''
+	    };
+	  }
+
+	  function syncPublishedHomestayListingToSearchObjects({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [], students = [], familyMembers = [] }) {
 	    if (!listing.id) return null;
 	    const hostId = listing.id;
 	    const name = hostDisplayValue(profile.display_name);
@@ -12832,6 +12859,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const rules = hostListingRulesFromDetails(details);
 	    const studentRows = hostProfile.other_students_present === false ? [] : (Array.isArray(students) ? students : []);
 	    const studentUiRows = studentRows.map(homestayHostStudentDetailUiFromDbRow);
+	    const familyMemberRows = Array.isArray(familyMembers) ? familyMembers : [];
+	    const familyMemberUiRows = familyMemberRows.map(homestayHostFamilyMemberDetailUiFromDbRow);
 	    const tags = [
 	      roomType !== '未設定' ? { text: roomType, cls: 'green' } : null,
 	      mealPlan ? { text: mealPlan, cls: 'blue' } : null,
@@ -12895,6 +12924,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          sleep: hostDisplayValue(fromHostProfileDbValue('partner_bedtime', hostProfile.partner_bedtime), ''),
 	          hobbies: hostDisplayValue(hostProfile.partner_hobbies, '')
 	        },
+	        familyMembers: familyMemberUiRows,
 	        students: studentUiRows
 	      },
 	      room: [
@@ -12952,7 +12982,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      cleaning: homestayDetailFilterCode('cleaning_rule', details.cleaning_rule),
 	      overnight: homestayDetailFilterCode('overnight_guest_rule', details.overnight_guest_rule)
 	    };
-	    return { id: hostId, listing, profile, hostProfile, details, photos, students: studentRows };
+	    return { id: hostId, listing, profile, hostProfile, details, photos, students: studentRows, familyMembers: familyMemberRows };
 	  }
 
 	  function indexRowsBy(rows = [], key) {
@@ -12993,34 +13023,40 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    currentPublishedHomestayListings = listings;
 	    if (!listings.length) {
 	      publishedHomestaySearchHosts = [];
+	      currentPublishedHomestayHostFamilyMembers = [];
 	      currentPublishedHomestayHostStudents = [];
 	      publishedHomestayHostsLoaded = true;
 	      publishedHomestayHostsCacheUserId = currentUserId;
 	      window._currentPublishedHomestayListings = currentPublishedHomestayListings;
 	      window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	      window._currentPublishedHomestayHostFamilyMembers = currentPublishedHomestayHostFamilyMembers;
 	      window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	      return publishedHomestaySearchHosts;
 	    }
 
 	    const ownerIds = [...new Set(listings.map(listing => listing.owner_id).filter(Boolean))];
 	    const listingIds = listings.map(listing => listing.id).filter(Boolean);
-	    const [profilesResult, hostProfilesResult, detailsResult, photosResult, studentsResult] = await Promise.all([
+	    const [profilesResult, hostProfilesResult, detailsResult, photosResult, studentsResult, familyMembersResult] = await Promise.all([
 	      window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', ownerIds),
 	      window._supabase.from('homestay_host_profiles').select('user_id, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
 	      window._supabase.from('homestay_listing_details').select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules').in('listing_id', listingIds),
 	      window._supabase.from('listing_photos').select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at').in('listing_id', listingIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
-	      window._supabase.from('homestay_host_students').select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at').in('host_user_id', ownerIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
+	      window._supabase.from('homestay_host_students').select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at').in('host_user_id', ownerIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
+	      window._supabase.from('homestay_host_family_members').select('id, host_user_id, name, age, gender, nationality, wake_time, bedtime, hobbies, note, sort_order, created_at').in('host_user_id', ownerIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
 	    ]);
 	    if (profilesResult.error) throw profilesResult.error;
 	    if (hostProfilesResult.error) throw hostProfilesResult.error;
 	    if (detailsResult.error) throw detailsResult.error;
 	    if (photosResult.error) throw photosResult.error;
 	    if (studentsResult.error) console.error('Supabase published homestay host students load error:', studentsResult.error);
+	    if (familyMembersResult.error) console.error('Supabase published homestay host family members load error:', familyMembersResult.error);
 
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
 	    const hostProfilesByUserId = indexRowsBy(hostProfilesResult.data, 'user_id');
 	    const detailsByListingId = indexRowsBy(detailsResult.data, 'listing_id');
 	    const photosByListingId = groupRowsBy(photosResult.data, 'listing_id');
+	    currentPublishedHomestayHostFamilyMembers = familyMembersResult.error ? [] : (Array.isArray(familyMembersResult.data) ? familyMembersResult.data : []);
+	    const familyMembersByHostUserId = groupRowsBy(currentPublishedHomestayHostFamilyMembers, 'host_user_id');
 	    currentPublishedHomestayHostStudents = studentsResult.error ? [] : (Array.isArray(studentsResult.data) ? studentsResult.data : []);
 	    const studentsByHostUserId = groupRowsBy(currentPublishedHomestayHostStudents, 'host_user_id');
 	    publishedHomestaySearchHosts = listings.map(listing => syncPublishedHomestayListingToSearchObjects({
@@ -13029,12 +13065,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      hostProfile: hostProfilesByUserId.get(listing.owner_id) || {},
 	      details: detailsByListingId.get(listing.id) || {},
 	      photos: photosByListingId.get(listing.id) || [],
+	      familyMembers: familyMembersByHostUserId.get(listing.owner_id) || [],
 	      students: studentsByHostUserId.get(listing.owner_id) || []
 	    })).filter(Boolean);
 	    publishedHomestayHostsLoaded = true;
 	    publishedHomestayHostsCacheUserId = currentUserId;
 	    window._currentPublishedHomestayListings = currentPublishedHomestayListings;
 	    window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	    window._currentPublishedHomestayHostFamilyMembers = currentPublishedHomestayHostFamilyMembers;
 	    window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	    return publishedHomestaySearchHosts;
 	  }
@@ -13052,9 +13090,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      console.error('Supabase published homestay listings load error:', error);
 	      currentPublishedHomestayListings = [];
 	      publishedHomestaySearchHosts = [];
+	      currentPublishedHomestayHostFamilyMembers = [];
+	      currentPublishedHomestayHostStudents = [];
 	      publishedHomestayHostsLoaded = false;
 	      publishedHomestayHostsLoadFailed = true;
 	      publishedHomestayHostsCacheUserId = window._currentUser?.id || '';
+	      window._currentPublishedHomestayHostFamilyMembers = currentPublishedHomestayHostFamilyMembers;
+	      window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	      return [];
 	    } finally {
 	      publishedHomestayHostsLoading = false;
