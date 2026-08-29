@@ -6922,7 +6922,11 @@
       return true;
     }
     if (activeUserModeRestorePromise && activeUserModeRestoreUserId === user.id) {
-      return await activeUserModeRestorePromise;
+      const restored = await activeUserModeRestorePromise;
+      if (restored && typeof window.ensureRestoredUserHomeScreen === 'function') {
+        window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
+      }
+      return restored;
     }
     activeUserModeRestoreUserId = user.id;
     activeUserModeRestorePromise = restoreUserModeFromUserModes(user);
@@ -6957,10 +6961,14 @@
     applyCurrentUserProfile(user, window._currentProfile);
     await loadCurrentUserProfile(user);
     const shouldRestoreMode = forceRestoreMode || !window.currentScreen || window.currentScreen === 'login';
+    let restoredMode = false;
     if (shouldRestoreMode) {
-      await restoreUserModeOnce(user);
+      restoredMode = await restoreUserModeOnce(user);
     }
     document.getElementById('app-loading').style.display = 'none';
+    if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
+      window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
+    }
   }
 
   function isPasswordRecoveryUrl() {
@@ -20674,6 +20682,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return '';
   }
 
+  function enforceOnlyActiveScreen(screen) {
+    const targetEl = document.getElementById('screen-' + screen);
+    if (!targetEl) {
+      console.error('Restore target screen not found:', screen);
+      return false;
+    }
+    document.querySelectorAll('.screen').forEach(el => {
+      el.classList.toggle('active', el === targetEl);
+    });
+    currentScreen = screen;
+    window.currentScreen = screen;
+    return true;
+  }
+
   function ensureRestoredUserHomeScreen(mode) {
     const screen = restoredHomeScreenForMode(mode);
     if (!screen) return false;
@@ -20697,8 +20719,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     if (!alreadyCorrect || currentScreen !== screen || window.currentScreen !== screen) {
       navigate(currentScreen || 'type-select', screen);
     }
-    window.currentScreen = screen;
-    return true;
+    return enforceOnlyActiveScreen(screen);
   }
 
   async function applyPendingUserModeRestore() {
@@ -20770,6 +20791,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   window.applyPendingGuestModeRestore = applyPendingGuestModeRestore;
   window.clearRuntimeSessionState = clearRuntimeSessionState;
   window.ensureRestoredUserHomeScreen = ensureRestoredUserHomeScreen;
+  window.enforceOnlyActiveScreen = enforceOnlyActiveScreen;
   applyPendingUserModeRestore();
 
 	  function switchSearchCat(cat, skipApply = false) {
