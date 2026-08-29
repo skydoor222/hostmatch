@@ -6908,9 +6908,38 @@
   window.showTypeSelectScreen = showTypeSelectScreen;
   window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
   window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
+  let activeUserModeRestorePromise = null;
+  let activeUserModeRestoreUserId = '';
+  let lastRestoredUserModeUserId = '';
+  let lastRestoredUserModeAt = 0;
+
+  async function restoreUserModeOnce(user) {
+    if (!user?.id) return false;
+    if (lastRestoredUserModeUserId === user.id && Date.now() - lastRestoredUserModeAt < 1200) {
+      return true;
+    }
+    if (activeUserModeRestorePromise && activeUserModeRestoreUserId === user.id) {
+      return await activeUserModeRestorePromise;
+    }
+    activeUserModeRestoreUserId = user.id;
+    activeUserModeRestorePromise = restoreUserModeFromUserModes(user);
+    try {
+      const restored = await activeUserModeRestorePromise;
+      if (restored) {
+        lastRestoredUserModeUserId = user.id;
+        lastRestoredUserModeAt = Date.now();
+      }
+      return restored;
+    } finally {
+      activeUserModeRestorePromise = null;
+      activeUserModeRestoreUserId = '';
+    }
+  }
 
   function showLoggedOutScreen() {
     window._currentProfile = null;
+    lastRestoredUserModeUserId = '';
+    lastRestoredUserModeAt = 0;
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-login').classList.add('active');
@@ -6919,14 +6948,16 @@
     if (typeof applyLang === 'function') applyLang();
   }
 
-  async function showLoggedInEntry(user) {
+  async function showLoggedInEntry(user, options = {}) {
+    const { forceRestoreMode = false } = options;
     window._currentUser = user;
     applyCurrentUserProfile(user, window._currentProfile);
     await loadCurrentUserProfile(user);
-    document.getElementById('app-loading').style.display = 'none';
-    if (!window.currentScreen || window.currentScreen === 'login') {
-      await restoreUserModeFromUserModes(user);
+    const shouldRestoreMode = forceRestoreMode || !window.currentScreen || window.currentScreen === 'login';
+    if (shouldRestoreMode) {
+      await restoreUserModeOnce(user);
     }
+    document.getElementById('app-loading').style.display = 'none';
   }
 
   function isPasswordRecoveryUrl() {
@@ -6937,27 +6968,42 @@
     const { data } = await supabase.auth.getSession();
     window._currentSession = data.session;
     window._currentUser = data.session?.user || null;
-    document.getElementById('app-loading').style.display = 'none';
     if (isPasswordRecoveryUrl()) {
+      document.getElementById('app-loading').style.display = 'none';
       if (typeof window.openPasswordUpdateScreen === 'function') window.openPasswordUpdateScreen();
       else window._pendingPasswordRecovery = true;
       return;
     }
-    if (data.session?.user) await showLoggedInEntry(data.session.user);
-    else showLoggedOutScreen();
+    if (data.session?.user) await showLoggedInEntry(data.session.user, { forceRestoreMode: true });
+    else {
+      document.getElementById('app-loading').style.display = 'none';
+      showLoggedOutScreen();
+    }
   }
 
   supabase.auth.onAuthStateChange(async (event, session) => {
     window._currentSession = session;
     window._currentUser = session?.user || null;
-    document.getElementById('app-loading').style.display = 'none';
     if (event === 'PASSWORD_RECOVERY') {
+      document.getElementById('app-loading').style.display = 'none';
       if (typeof window.openPasswordUpdateScreen === 'function') window.openPasswordUpdateScreen();
       else window._pendingPasswordRecovery = true;
       return;
     }
-    if (event === 'SIGNED_IN' && session?.user) await showLoggedInEntry(session.user);
-    if (event === 'SIGNED_OUT') showLoggedOutScreen();
+    if (event === 'INITIAL_SESSION' && session?.user) {
+      await showLoggedInEntry(session.user, { forceRestoreMode: true });
+      return;
+    }
+    if (event === 'SIGNED_IN' && session?.user) {
+      await showLoggedInEntry(session.user);
+      return;
+    }
+    if (event === 'SIGNED_OUT') {
+      document.getElementById('app-loading').style.display = 'none';
+      showLoggedOutScreen();
+      return;
+    }
+    document.getElementById('app-loading').style.display = 'none';
   });
 
   restoreSupabaseSession().catch(error => {
@@ -17289,8 +17335,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     const pe = document.getElementById('prof-email');
     if (pe) pe.value = email;
 
-    if (typeof window.restoreUserModeFromUserModes === 'function') {
-      const restored = await window.restoreUserModeFromUserModes(user);
+    if (typeof restoreUserModeOnce === 'function') {
+      const restored = await restoreUserModeOnce(user);
       if (restored) return;
     }
     if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen();
