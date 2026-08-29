@@ -7555,17 +7555,22 @@
     const priceLabel = currency === 'CAD'
       ? `C$${h.price.toLocaleString()}`
       : `${escapeHtml(currency)} ${h.price.toLocaleString()}`;
+    const safeHostId = escapeHtml(hostId);
+    const isPublishedListing = !!publishedHomestaySearchHostByListingId(hostId);
+    const openAction = isPublishedListing
+      ? `openPublishedHomestayListingDetail('${safeHostId}','homestay-host-list')`
+      : `openDetail('${safeHostId}','homestay-host-list')`;
     const comparison = hmEvaluateHost(hostId, homestayInitialFilters());
     const comparisonText = comparison.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
       : t('condition_comparison');
     return `
-      <div class="match-card" onclick="openDetail('${hostId}','homestay-host-list')">
+      <div class="match-card" data-listing-id="${safeHostId}" onclick="${openAction}">
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
           <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
-          <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
         </div>
         <div class="match-card-body">
           <div class="match-card-row1">
@@ -9167,10 +9172,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   function updateFavIcons() {
     document.querySelectorAll('.match-card-save').forEach(el => {
       const card = el.closest('.match-card');
+      const listingId = card?.dataset?.listingId;
+      if (listingId) {
+        el.textContent = favorites.has(listingId) ? '❤️' : '🤍';
+        return;
+      }
+      if (!card) return;
       const onclick = card.getAttribute('onclick');
-      const m = onclick && onclick.match(/openDetail\('(\w+)'\)/);
+      const m = onclick && onclick.match(/openDetail\('([^']+)'\)/);
       if (m) el.textContent = favorites.has(m[1]) ? '❤️' : '🤍';
-      const sh = onclick && onclick.match(/openSharehouseDetail\('(\w+)'\)/);
+      const sh = onclick && onclick.match(/openSharehouseDetail\('([^']+)'\)/);
       if (sh) el.textContent = favorites.has('sh:' + sh[1]) ? '❤️' : '🤍';
     });
   }
@@ -10493,6 +10504,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     const priceLabel = currency === 'CAD'
       ? `C$${(h.price || 0).toLocaleString()}`
       : `${escapeHtml(currency)} ${(h.price || 0).toLocaleString()}`;
+    const isPublishedListing = !!publishedHomestaySearchHostByListingId(result.hostId);
+    const openAction = isPublishedListing
+      ? `openPublishedHomestayListingDetail('${hostId}')`
+      : `openDetail('${hostId}')`;
     const summary = result.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${result.matchedTotal}/${result.activeTotal}項目一致` : `${result.matchedTotal} of ${result.activeTotal} conditions match`)
       : localizeText('全ホスト表示');
@@ -10502,12 +10517,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return `<div class="${cls}">${mark} ${localizeText(item.label)}</div>`;
     }).join('') : `<div class="hm-match-ok">✓ ${localizeText('条件未選択')}</div>`;
     return `
-      <div class="match-card" onclick="openDetail('${hostId}')">
+      <div class="match-card" data-listing-id="${hostId}" onclick="${openAction}">
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${summary}</div>
           <div class="match-card-flag">📍 ${localizeText(hmHostMeta(result.hostId).area || h.city)}</div>
-          <div class="match-card-save">${favorites.has(result.hostId) ? '❤️' : '🤍'}</div>
+          <div class="match-card-save" onclick="toggleFavorite('${hostId}',event)">${favorites.has(result.hostId) ? '❤️' : '🤍'}</div>
         </div>
         <div class="match-card-body">
           <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
@@ -11525,6 +11540,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let publishedHomestayHostsLoading = false;
 	  let publishedHomestayHostsLoadFailed = false;
 	  let publishedHomestayHostsCacheUserId = '';
+	  let currentSelectedHomestayListingId = '';
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingHomestayHostAvatarCrops = { ob: null, profile: null };
@@ -12604,6 +12620,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return homestayDemoHostIds();
 	  }
 
+	  function publishedHomestaySearchHostByListingId(listingId) {
+	    const id = String(listingId || '').trim();
+	    if (!id) return null;
+	    return publishedHomestaySearchHosts.find(host => host.id === id || host.listing?.id === id) || null;
+	  }
+
 	  function homestaySearchPhotoUrls(photos = []) {
 	    const rows = (Array.isArray(photos) ? photos : [])
 	      .filter(photo => photo?.storage_path)
@@ -12883,6 +12905,32 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      if (currentScreen === 'ai-result' && (window._serviceType || currentSearchCat) === 'homestay') renderAiResult();
 	      if (currentScreen === 'homestay-host-list') renderHomestayHostList();
 	    }
+	  }
+
+	  async function openPublishedHomestayListingDetail(listingId, backScreen = 'search') {
+	    const id = String(listingId || '').trim();
+	    if (!id) {
+	      console.error('Published homestay listing id is missing.');
+	      showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
+	      return;
+	    }
+	    currentSelectedHomestayListingId = id;
+	    window._selectedHomestayListingId = id;
+
+	    let selected = publishedHomestaySearchHostByListingId(id);
+	    if (!selected && isLoggedInHomestayGuestSearchContext()) {
+	      await ensurePublishedHomestayListingsForGuest({ force: !publishedHomestayHostsLoaded || !publishedHomestayHostsCacheMatchesCurrentUser() });
+	      selected = publishedHomestaySearchHostByListingId(id);
+	    }
+	    if (selected && !HOSTS[id]) {
+	      selected = syncPublishedHomestayListingToSearchObjects(selected);
+	    }
+	    if (!selected || !HOSTS[id]) {
+	      console.error('Published homestay listing detail data was not found:', { listingId: id });
+	      showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
+	      return;
+	    }
+	    openDetail(id, backScreen);
 	  }
 
 	  function clearPendingHomestayRoomPhotos(scope) {
@@ -20494,6 +20542,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function renderHomestayAiCard(hostId, matchInfo) {
 	    if (blockedUsers.has(`host:${hostId}`)) return '';
 	    const h = HOSTS[hostId];
+	    if (!h) return '';
+	    const safeHostId = escapeHtml(hostId);
+	    const isPublishedListing = !!publishedHomestaySearchHostByListingId(hostId);
+	    const openAction = isPublishedListing
+	      ? `openPublishedHomestayListingDetail('${safeHostId}','ai-result')`
+	      : `openDetail('${safeHostId}','ai-result')`;
 	    const comparison = matchInfo?.activeTotal ? matchInfo : hmEvaluateHost(hostId, homestayInitialFilters());
 	    const comparisonText = comparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
@@ -20506,12 +20560,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const availabilityLabel = currentLang === 'ja' ? '受け入れ可能期間' : 'Available dates';
 	    const opacity = matchInfo.available ? '1' : '.72';
 	    return `
-	      <div class="match-card" onclick="openDetail('${hostId}')" style="opacity:${opacity};">
+	      <div class="match-card" data-listing-id="${safeHostId}" onclick="${openAction}" style="opacity:${opacity};">
 	        <div class="match-card-img">
-	          <img src="${h.photos[0]}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+	          <img src="${h.photos?.[0] || neutralHomestayListingPhotoUrl()}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
 	          <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
 	          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
-	          <div class="match-card-save">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+	          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
 	        </div>
 	        <div class="match-card-body">
 	          <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
