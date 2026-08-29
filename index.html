@@ -6002,10 +6002,12 @@
 
         <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
           <div style="font-size:15px;font-weight:900;margin-bottom:12px;" data-i18n="listing_stats">掲載統計</div>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
-            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">👁</div><div style="font-size:18px;font-weight:900;">48</div><div style="font-size:11px;color:var(--light);font-weight:800;">Views</div></div>
-            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">♡</div><div style="font-size:18px;font-weight:900;">7</div><div style="font-size:11px;color:var(--light);font-weight:800;">Saves</div></div>
-            <div style="background:var(--bg);border-radius:14px;padding:12px;text-align:center;"><div style="font-size:20px;">💬</div><div style="font-size:18px;font-weight:900;">4</div><div style="font-size:11px;color:var(--light);font-weight:800;">Conversations</div></div>
+          <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+            <div id="host-dashboard-conversation-stat-card" style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+              <div style="font-size:20px;">💬</div>
+              <div id="host-dashboard-conversation-count" style="font-size:22px;font-weight:900;">—</div>
+              <div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="host_messages">メッセージ</div>
+            </div>
           </div>
         </div>
       </div>
@@ -7480,6 +7482,7 @@
   let currentSupabaseHostConversationRows = [];
   let isLoadingSupabaseHostConversations = false;
   let supabaseHostConversationLoadSeq = 0;
+  let hostDashboardConversationCountSeq = 0;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -9758,8 +9761,45 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      refreshMessageUnreadDot(options);
 	    }, 80);
 	  }
+
+	  function setHostDashboardConversationCount(value) {
+	    const el = document.getElementById('host-dashboard-conversation-count');
+	    if (!el) return;
+	    el.textContent = Number.isInteger(value) ? String(value) : '—';
+	  }
+
+	  async function countCurrentHomestayHostConversations() {
+	    const userId = window._currentUser?.id || '';
+	    const listingId = currentHomestayListing?.id || '';
+	    if (!userId || !listingId || !window._supabase?.from) return null;
+	    const { count, error } = await window._supabase
+	      .from('conversations')
+	      .select('id', { count: 'exact', head: true })
+	      .eq('listing_owner_id', userId)
+	      .eq('listing_id', listingId);
+	    if (error) throw error;
+	    const numericCount = Number(count);
+	    return Number.isFinite(numericCount) ? numericCount : 0;
+	  }
+
+	  async function refreshHostDashboardConversationCount() {
+	    const seq = ++hostDashboardConversationCountSeq;
+	    setHostDashboardConversationCount(null);
+	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') return null;
+	    try {
+	      const count = await countCurrentHomestayHostConversations();
+	      if (seq !== hostDashboardConversationCountSeq) return null;
+	      setHostDashboardConversationCount(count);
+	      return count;
+	    } catch (error) {
+	      console.error('Supabase host dashboard conversation count error:', error);
+	      if (seq === hostDashboardConversationCountSeq) setHostDashboardConversationCount(null);
+	      return null;
+	    }
+	  }
 	  window.refreshMessageUnreadDot = refreshMessageUnreadDot;
 	  window.setMessageUnreadDotVisible = setMessageUnreadDotVisible;
+	  window.refreshHostDashboardConversationCount = refreshHostDashboardConversationCount;
 	  window.addEventListener('focus', () => scheduleMessageUnreadDotRefresh());
 	  document.addEventListener('visibilitychange', () => {
 	    if (document.visibilityState === 'visible') scheduleMessageUnreadDotRefresh();
@@ -9991,6 +10031,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const rows = await loadSupabaseHostConversations();
 	      if (seq !== supabaseHostConversationLoadSeq) return;
 	      renderSupabaseHostConversationRows(rows);
+	      refreshHostDashboardConversationCount();
 	      refreshMessageUnreadDot({ role: 'host' });
 	    } catch (error) {
 	      console.error('Supabase host conversations load error:', error);
@@ -16443,11 +16484,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  function updateHostDashboardFromCurrentHomestayData() {
 	    const listing = currentHomestayListing;
-	    if (!listing) return;
+	    if (!listing) {
+	      if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
+	      return;
+	    }
 	    const cityEl = document.getElementById('host-dashboard-city');
 	    const priceEl = document.getElementById('host-dashboard-price');
 	    if (cityEl) cityEl.textContent = localizeText(hostDisplayValue(listing.city));
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
+	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
 	  }
 
 	  function setSelectValueById(id, value) {
