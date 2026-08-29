@@ -6163,29 +6163,7 @@
     <div class="mypage-sub-title" data-i18n="host_messages">メッセージ</div>
   </div>
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:2px;padding-bottom:100px;">
-    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('sakura')">
-      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👩</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;">
-          <div style="font-size:14px;font-weight:800;">中村 さくら</div>
-          <div style="font-size:11px;color:var(--light);">14:32</div>
-        </div>
-        <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">入居日について確認したいのですが...</div>
-      </div>
-      <button onclick="event.stopPropagation();openApplicantDetail('sakura','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">詳細を見る</button>
-      <div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>
-    </div>
-    <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('minjun')">
-      <div style="width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#fddb92,#d1fdff);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👨</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;">
-          <div style="font-size:14px;font-weight:800;">김 민준</div>
-          <div style="font-size:11px;color:var(--light);">昨日</div>
-        </div>
-        <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">ありがとうございます！よろしくお願いします</div>
-      </div>
-      <button onclick="event.stopPropagation();openApplicantDetail('minjun','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">詳細を見る</button>
-    </div>
+    <div class="hm-empty-result">メッセージを読み込み中...</div>
   </div>
 </div>
 
@@ -7335,6 +7313,9 @@
   let currentSupabaseGuestConversationRows = [];
   let isLoadingSupabaseGuestConversations = false;
   let supabaseGuestConversationLoadSeq = 0;
+  let currentSupabaseHostConversationRows = [];
+  let isLoadingSupabaseHostConversations = false;
+  let supabaseHostConversationLoadSeq = 0;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -9413,6 +9394,189 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }).join('');
 	  }
 
+	  async function loadSupabaseHostConversations() {
+	    const userId = window._currentUser?.id || '';
+	    if (!userId || !window._supabase?.from) return [];
+	    const { data: conversations, error: conversationsError } = await window._supabase
+	      .from('conversations')
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .eq('listing_owner_id', userId);
+	    if (conversationsError) throw conversationsError;
+
+	    const rows = Array.isArray(conversations) ? conversations : [];
+	    if (!rows.length) {
+	      currentSupabaseHostConversationRows = [];
+	      return [];
+	    }
+
+	    const guestIds = [...new Set(rows.map(row => row.initiator_id).filter(Boolean))];
+	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
+	    const conversationIds = rows.map(row => row.id).filter(Boolean);
+	    const [profilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
+	      guestIds.length
+	        ? window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', guestIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      listingIds.length
+	        ? window._supabase.from('listings').select('id, owner_id, listing_type, title, city, status').in('id', listingIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      conversationIds.length
+	        ? window._supabase.from('messages').select('id, conversation_id, sender_id, body, created_at').in('conversation_id', conversationIds).order('created_at', { ascending: true })
+	        : Promise.resolve({ data: [], error: null }),
+	      conversationIds.length
+	        ? window._supabase.from('conversation_reads').select('conversation_id, user_id, last_read_at').in('conversation_id', conversationIds).eq('user_id', userId)
+	        : Promise.resolve({ data: [], error: null })
+	    ]);
+	    if (profilesResult.error) throw profilesResult.error;
+	    if (listingsResult.error) throw listingsResult.error;
+	    if (messagesResult.error) throw messagesResult.error;
+	    if (readsResult.error) throw readsResult.error;
+
+	    const profilesById = indexRowsBy(profilesResult.data, 'id');
+	    const listingsById = indexRowsBy(listingsResult.data, 'id');
+	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
+	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
+	    const enriched = rows.map(conversation => {
+	      const listing = listingsById.get(conversation.listing_id);
+	      if (!listing || listing.owner_id !== userId || listing.listing_type !== 'homestay') return null;
+	      const profile = profilesById.get(conversation.initiator_id) || {};
+	      const latestMessage = latestByConversation.get(conversation.id) || null;
+	      const read = readsByConversation.get(conversation.id) || null;
+	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
+	      const unread = !!latestMessage
+	        && latestMessage.sender_id !== userId
+	        && (!read?.last_read_at || new Date(latestMessage.created_at) > new Date(read.last_read_at));
+	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
+	    }).filter(Boolean);
+	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
+	    currentSupabaseHostConversationRows = enriched;
+	    return enriched;
+	  }
+
+	  function renderSupabaseHostConversationRows(rows = []) {
+	    const body = document.querySelector('#screen-host-messages .mypage-sub-body');
+	    if (!body) return;
+	    if (!rows.length) {
+	      body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'No messages yet.' : 'まだメッセージはありません'}</div>`;
+	      return;
+	    }
+	    const userId = window._currentUser?.id || '';
+	    body.innerHTML = rows.map(row => {
+	      const conversation = row.conversation;
+	      const profile = row.profile || {};
+	      const listing = row.listing || {};
+	      const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Guest' : 'ゲスト');
+	      const latest = row.latestMessage;
+	      const previewPrefix = latest?.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
+	      const preview = latest?.body
+	        ? `${previewPrefix}${latest.body}`
+	        : (currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません');
+	      const time = formatConversationListTime(row.latestAt);
+	      const avatarHtml = profile.avatar_url
+	        ? `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`
+	        : '🧑';
+	      const subtitle = [listing.title, listing.city].filter(Boolean).join(' · ');
+	      return `
+	        <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openSupabaseHostConversation('${escapeHtml(conversation.id)}')">
+	          <div style="width:46px;height:46px;border-radius:50%;background:var(--bg);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${avatarHtml}</div>
+	          <div style="flex:1;min-width:0;">
+	            <div style="display:flex;justify-content:space-between;gap:8px;">
+	              <div style="font-size:14px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(name)}</div>
+	              <div style="font-size:11px;color:var(--light);flex-shrink:0;">${escapeHtml(time)}</div>
+	            </div>
+	            ${subtitle ? `<div style="font-size:11px;color:var(--light);font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(subtitle)}</div>` : ''}
+	            <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-weight:${row.unread ? '800' : '500'};">${escapeHtml(preview)}</div>
+	          </div>
+	          ${row.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' : ''}
+	        </div>
+	      `;
+	    }).join('');
+	  }
+
+	  async function renderSupabaseHostMessages() {
+	    const body = document.querySelector('#screen-host-messages .mypage-sub-body');
+	    const seq = ++supabaseHostConversationLoadSeq;
+	    if (body) body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Loading messages...' : 'メッセージを読み込み中...'}</div>`;
+	    isLoadingSupabaseHostConversations = true;
+	    try {
+	      const rows = await loadSupabaseHostConversations();
+	      if (seq !== supabaseHostConversationLoadSeq) return;
+	      renderSupabaseHostConversationRows(rows);
+	    } catch (error) {
+	      console.error('Supabase host conversations load error:', error);
+	      if (seq === supabaseHostConversationLoadSeq && body) {
+	        body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages.' : 'メッセージを読み込めませんでした'}</div>`;
+	      }
+	    } finally {
+	      if (seq === supabaseHostConversationLoadSeq) isLoadingSupabaseHostConversations = false;
+	    }
+	  }
+
+	  function applySupabaseHostChatHeader(row) {
+	    const profile = row?.profile || {};
+	    const listing = row?.listing || {};
+	    const header = document.querySelector('.chat-header');
+	    if (!header) return;
+	    const avatar = header.querySelector('.chat-avatar');
+	    if (avatar) {
+	      avatar.className = 'chat-avatar';
+	      avatar.style.background = 'var(--bg)';
+	      if (profile.avatar_url) {
+	        avatar.innerHTML = `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`;
+	      } else {
+	        avatar.textContent = '🧑';
+	      }
+	    }
+	    const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Guest' : 'ゲスト');
+	    header.querySelector('.chat-title').textContent = name;
+	    header.querySelector('.chat-subtitle').textContent = [listing.title, listing.city].filter(Boolean).join(' · ');
+	    document.getElementById('chat-banner-name').textContent = name;
+	    document.querySelector('.chat-banner-sub').textContent = currentLang === 'en' ? 'Conversation about this homestay' : 'このホームステイについてのメッセージ';
+	  }
+
+	  async function openSupabaseHostConversation(conversationId) {
+	    const id = String(conversationId || '').trim();
+	    if (!id) return;
+	    try {
+	      let row = currentSupabaseHostConversationRows.find(item => item.conversation?.id === id);
+	      if (!row) {
+	        const rows = await loadSupabaseHostConversations();
+	        row = rows.find(item => item.conversation?.id === id);
+	      }
+	      if (!row?.conversation?.id) throw new Error('Conversation was not found');
+	      const conversation = row.conversation;
+	      currentHost = conversation.listing_id;
+	      currentListing = {
+	        type: 'homestay',
+	        id: conversation.listing_id,
+	        name: row.listing?.title || row.listing?.city || (currentLang === 'en' ? 'Homestay' : 'ホームステイ'),
+	        detailScreen: 'detail',
+	        label: currentLang === 'en' ? 'Listing' : '掲載'
+	      };
+	      currentApplicationId = null;
+	      currentChatApplicant = null;
+	      chatBackScreen = 'host-messages';
+	      chatDetailMode = 'host';
+	      currentSupabaseConversation = conversation;
+	      currentSupabaseConversationId = conversation.id;
+	      currentSupabaseChatListingId = conversation.listing_id;
+	      currentSupabaseChatOtherUserId = conversation.initiator_id;
+	      currentSupabaseChatMode = 'homestay-host';
+	      applySupabaseHostChatHeader(row);
+	      const messages = await loadSupabaseConversationMessages(conversation.id);
+	      renderSupabaseHomestayMessages(messages);
+	      await markSupabaseConversationRead(conversation.id);
+	      navigate(currentScreen, 'chat');
+	      updateBlockedUi();
+	      const area = document.querySelector('.chat-messages');
+	      setTimeout(() => {
+	        if (area) area.scrollTop = area.scrollHeight;
+	      }, 50);
+	    } catch (error) {
+	      console.error('Supabase host conversation open error:', error);
+	      showToast(currentLang === 'en' ? 'Could not open messages. Please try again.' : 'メッセージを開けませんでした。もう一度お試しください。');
+	    }
+	  }
+
 	  async function renderSupabaseGuestMessages() {
 	    const list = document.getElementById('guest-message-list');
 	    const seq = ++supabaseGuestConversationLoadSeq;
@@ -9519,6 +9683,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const body = document.querySelector('#screen-host-messages .mypage-sub-body');
 	    if (!body) return;
 	    const service = serviceModeForCurrentContext();
+	    if (service === 'homestay' && window._currentUser?.id && window._supabase?.from) {
+	      renderSupabaseHostMessages();
+	      return;
+	    }
+	    if (service === 'homestay') {
+	      body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Please log in to view messages.' : 'メッセージを見るにはログインしてください'}</div>`;
+	      return;
+	    }
 	    const ids = ['sakura', 'minjun', 'emma'];
 	    body.innerHTML = ids.map((id, index) => {
 	      const applicant = getApplicantForService(id, service);
@@ -9544,7 +9716,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function isSupabaseHomestayChatActive() {
-	    return currentSupabaseChatMode === 'homestay'
+	    return (currentSupabaseChatMode === 'homestay' || currentSupabaseChatMode === 'homestay-host')
 	      && !!currentSupabaseConversationId
 	      && chatDetailMode === 'host'
 	      && !!currentSupabaseChatListingId;
@@ -9763,6 +9935,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function goBackFromChat() {
+	    if (currentSupabaseChatMode === 'homestay-host') {
+	      chatBackScreen = 'host-messages';
+	      navigate(currentScreen, 'host-messages');
+	      return;
+	    }
 	    if (chatDetailMode === 'sharehouse') {
 	      chatBackScreen = 'messages';
 	      setGuestMessageService('sharehouse');
