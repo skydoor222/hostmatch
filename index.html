@@ -8949,6 +8949,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     // mapから来た場合、screen-mapを非アクティブにする（navigate内で処理）
     const h = HOSTS[hostId];
     if (!h) return;
+    const detailPhotos = Array.isArray(h.photos) && h.photos.length ? h.photos : [neutralHomestayListingPhotoUrl()];
+    const detailTags = Array.isArray(h.tags) ? h.tags : [];
+    const detailRooms = Array.isArray(h.room) ? h.room : [];
+    const detailRules = Array.isArray(h.rules) ? h.rules : [];
     currentHost = hostId;
     currentListing = {
       type: 'homestay',
@@ -8968,14 +8972,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
     // Photos
     const track = document.getElementById('photo-track');
-    track.innerHTML = h.photos.map((src, i) =>
+    track.innerHTML = detailPhotos.map((src, i) =>
       `<img class="photo-slide" src="${src}" alt="写真${i+1}" loading="lazy" />`
     ).join('');
     photoIndex = 0;
     track.style.transform = 'translateX(0)';
-    document.getElementById('photo-counter').textContent = '1 / ' + h.photos.length;
+    document.getElementById('photo-counter').textContent = '1 / ' + detailPhotos.length;
     const dots = document.getElementById('photo-dots');
-    dots.innerHTML = h.photos.map((_, i) =>
+    dots.innerHTML = detailPhotos.map((_, i) =>
       `<div class="photo-dot${i === 0 ? ' active' : ''}"></div>`
     ).join('');
 
@@ -8999,7 +9003,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('detail-meta').textContent = h.country + ' ' + h.city + ', ' + h.state + ' · ' + t('host_years').replace('{years}', h.years);
     const profile = hostProfileInfo[hostId] || { age: '未設定', nationality: '未設定', gender: '選択しない' };
     // Tags
-    document.getElementById('detail-tags').innerHTML = h.tags.map(t =>
+    document.getElementById('detail-tags').innerHTML = detailTags.map(t =>
       `<span class="dtag ${t.cls}">${localizeText(t.text)}</span>`
     ).join('');
     renderGuestPreferenceSummary('homestay');
@@ -9010,7 +9014,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     const household = detailData.household;
     const stayInfo = detailData.stay;
     const availability = detailData.availability;
-    const formatList = (items, fallback) => (items && items.length ? items : fallback).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
+    const formatList = (items, fallback) => {
+      const values = Array.isArray(items) && items.length ? items : fallback;
+      return (Array.isArray(values) ? values : []).map(item => localizeText(item)).join(currentLang === 'ja' ? '、' : ', ');
+    };
 
     renderDetailInfoGrid('detail-basic-profile', [
       { label: 'ホスト名', value: h.name },
@@ -9041,7 +9048,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         { label: '趣味', value: household.partner.hobbies }
       ]));
     }
-    const memberSource = currentHost === 'sarah' ? hostFamilyMembers : [];
+    const memberSource = currentHost === 'sarah' && Array.isArray(hostFamilyMembers) ? hostFamilyMembers : [];
     familyCards.push(...memberSource.map((m, i) => detailMemberCard(m.name || `家族 ${i + 1}`, m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑', [
       { label: '年齢', value: `${m.age}${String(m.age).includes('歳') ? '' : '歳'}` },
       { label: '性別', value: m.gender },
@@ -9051,7 +9058,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: '趣味', value: m.hobbies },
       { label: '一言', value: m.note }
     ])));
-    const students = household.students || (currentHost === 'sarah' ? hostInternationalStudents : []);
+    const students = Array.isArray(household.students)
+      ? household.students
+      : (currentHost === 'sarah' && Array.isArray(hostInternationalStudents) ? hostInternationalStudents : []);
     familyCards.push(...students.map((st, i) => detailMemberCard(`${localizeText('同居している留学生')} ${i + 1}`, '🎓', [
       { label: '年齢', value: `${st.age}${String(st.age).includes('歳') ? '' : '歳'}` },
       { label: '性別', value: st.gender },
@@ -9098,7 +9107,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: '最長滞在期間', value: stayInfo.maxStay || '12ヶ月' },
       { label: '長期滞在', value: stayInfo.longStay || '長期滞在可能' },
       { label: '月額料金（CAD）', value: `C$${(h.price || 1500).toLocaleString()}` },
-      ...h.room.map(r => ({ label: r.label, value: r.val }))
+      ...detailRooms.map(r => ({ label: r.label, value: r.val }))
     ]);
     const stayRoomInfo = document.getElementById('detail-stay-room-info');
     if (stayRoomInfo) {
@@ -9106,7 +9115,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     }
 
     // Rules
-    document.querySelector('#screen-detail .rule-list').innerHTML = h.rules.map(r => renderRuleRow(r)).join('');
+    document.querySelector('#screen-detail .rule-list').innerHTML = detailRules.map(r => renderRuleRow(r)).join('');
 
     // Update action button state
     updateDetailActionBtn();
@@ -12698,6 +12707,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const talkUi = hostDisplayValue(fromHostProfileDbValue('conversation_level', hostProfile.conversation_level));
 	    const frequencyUi = hostDisplayValue(fromHostProfileDbValue('interaction_level', hostProfile.interaction_level));
 	    const rules = hostListingRulesFromDetails(details);
+	    const tags = [
+	      roomType !== '未設定' ? { text: roomType, cls: 'green' } : null,
+	      mealPlan ? { text: mealPlan, cls: 'blue' } : null,
+	      smokingStatus !== '未設定' ? { text: `喫煙環境：${smokingStatus}`, cls: hostProfile.smoking_environment === 'no_smoking' ? 'green' : 'blue' } : null,
+	      details.pets_present === true ? { text: 'ペットあり', cls: 'blue' } : null,
+	      details.pets_present === false ? { text: 'ペットなし', cls: 'green' } : null
+	    ].filter(Boolean);
 
 	    HOSTS[hostId] = {
 	      id: hostId,
@@ -12720,6 +12736,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      price: priceValue,
 	      currency,
 	      photos: photoUrls,
+	      tags,
 	      pets: {
 	        hasPets: details.pets_present === true,
 	        type: details.pets_present === true ? hostDisplayValue(details.pet_details, '') : ''
