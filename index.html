@@ -3768,47 +3768,7 @@
     <div class="header-row"><h1 data-i18n="nav_saved">お気に入り</h1></div>
   </div>
   <div class="fav-list">
-
-    <div class="host-card" onclick="openDetail('michael')">
-      <div class="card-img">
-        <div class="card-room-bg r2">🌴</div>
-        <div class="card-flag">🇺🇸 Los Angeles, CA</div>
-        <div class="card-save-btn">❤️</div>
-        <div class="card-avatar av2">👨</div>
-      </div>
-      <div class="card-body">
-        <div class="card-row1">
-          <div class="card-host-name">Michael & Lisa Chen</div>
-          
-        </div>
-        <div class="card-location">Santa Monica · 個室</div>
-        <div class="card-footer">
-          <div class="card-price"><strong>$1,100</strong><span> /月〜</span></div>
-          <div class="card-meals-tag">🍽️ 3食込み</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="host-card" onclick="openDetail('thompson')">
-      <div class="card-img">
-        <div class="card-room-bg r6">🌉</div>
-        <div class="card-flag">🇺🇸 San Francisco, CA</div>
-        <div class="card-save-btn">❤️</div>
-        <div class="card-avatar av6">👨</div>
-      </div>
-      <div class="card-body">
-        <div class="card-row1">
-          <div class="card-host-name">The Thompson Family</div>
-          
-        </div>
-        <div class="card-location">Mission District · 個室</div>
-        <div class="card-footer">
-          <div class="card-price"><strong>$1,050</strong><span> /月〜</span></div>
-          <div class="card-meals-tag">🍳 朝食込み</div>
-        </div>
-      </div>
-    </div>
-
+    <div class="fav-empty"><div class="fav-empty-icon">🤍</div><div class="fav-empty-text">お気に入りはまだありません</div></div>
   </div>
 </div>
 
@@ -7507,6 +7467,7 @@
   let currentSupabaseFavoriteListingIds = new Set();
   let supabaseFavoriteCacheUserId = '';
   let supabaseFavoritesLoaded = false;
+  let supabaseFavoritesLoadFailed = false;
   let supabaseFavoriteLoadingPromise = null;
   const pendingSupabaseFavoriteListingIds = new Set();
   const hostProfileInfo = {
@@ -9327,6 +9288,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentSupabaseFavoriteListingIds = new Set();
     supabaseFavoriteCacheUserId = '';
     supabaseFavoritesLoaded = false;
+    supabaseFavoritesLoadFailed = false;
     supabaseFavoriteLoadingPromise = null;
     pendingSupabaseFavoriteListingIds.clear();
     window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
@@ -9344,6 +9306,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     supabaseFavoriteCacheUserId = userId;
     supabaseFavoriteLoadingPromise = (async () => {
       try {
+        supabaseFavoritesLoadFailed = false;
         const { data, error } = await window._supabase
           .from('favorites')
           .select('listing_id')
@@ -9351,6 +9314,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         if (error) throw error;
         currentSupabaseFavoriteListingIds = new Set((Array.isArray(data) ? data : []).map(row => row.listing_id).filter(Boolean));
         supabaseFavoritesLoaded = true;
+        supabaseFavoritesLoadFailed = false;
         window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
         updateFavIcons();
         return currentSupabaseFavoriteListingIds;
@@ -9358,6 +9322,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         console.error('Supabase favorites load error:', error);
         currentSupabaseFavoriteListingIds = new Set();
         supabaseFavoritesLoaded = false;
+        supabaseFavoritesLoadFailed = true;
         window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
         updateFavIcons();
         if (typeof showToast === 'function') showToast(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。');
@@ -9397,6 +9362,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       }
       supabaseFavoritesLoaded = true;
       supabaseFavoriteCacheUserId = userId;
+      supabaseFavoritesLoadFailed = false;
       window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
       updateFavIcons();
       if (currentScreen === 'favorites') renderFavorites();
@@ -9467,86 +9433,111 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     if (detailSave && currentHost) detailSave.textContent = favoriteHeartForHost(currentHost);
   }
 
+  function isHomestayGuestFavoritesContext() {
+    return currentRole === 'guest'
+      && (currentSearchCat === 'homestay' || window._serviceType === 'homestay')
+      && !!window._currentUser?.id
+      && !!window._supabase?.from;
+  }
+
+  function renderFavoritesMessage(message, icon = '🤍') {
+    return `<div class="fav-empty"><div class="fav-empty-icon">${icon}</div><div class="fav-empty-text">${escapeHtml(message)}</div></div>`;
+  }
+
+  function renderSupabaseHomestayFavoriteCard(listingId) {
+    const h = HOSTS[listingId];
+    if (!h) return '';
+    const id = escapeHtml(listingId);
+    const image = h.photos?.[0] || neutralHomestayListingPhotoUrl();
+    const currency = h.currency || 'CAD';
+    const priceLabel = Number.isFinite(Number(h.price))
+      ? (currency === 'CAD' ? `C$${Number(h.price).toLocaleString()}` : `${escapeHtml(currency)} ${Number(h.price).toLocaleString()}`)
+      : localizeText('未設定');
+    const location = [
+      localizeText(h.roomType || ''),
+      h.stateShort || ''
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="match-card" onclick="openPublishedHomestayListingDetail('${id}','favorites')">
+        <div class="match-card-img">
+          <img src="${image}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
+          <div class="match-card-flag">📍 ${escapeHtml(h.city || '')}</div>
+          <div class="match-card-save" onclick="toggleFavorite('${id}',event)">❤️</div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1"><div class="match-card-name">${escapeHtml(h.name || '')}</div></div>
+          <div class="match-card-location">${escapeHtml(location)}</div>
+          <div class="match-card-footer"><div class="match-card-price"><strong>${priceLabel}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(h.mealsTag || '')}</div></div>
+        </div>
+      </div>`;
+  }
+
+  function loadHomestayGuestFavoritesForList() {
+    return Promise.resolve().then(async () => {
+      await loadCurrentUserFavorites();
+      const shouldForceHostLoad = !publishedHomestayHostsLoaded || !publishedHomestayHostsCacheMatchesCurrentUser();
+      await ensurePublishedHomestayListingsForGuest({ force: shouldForceHostLoad });
+      if (currentScreen === 'favorites') renderFavorites();
+    }).catch(error => {
+      console.error('Supabase favorite listings render error:', error);
+      const list = document.querySelector('.fav-list');
+      if (currentScreen === 'favorites' && list) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。', '⚠️');
+      }
+    });
+  }
+
   function renderFavorites() {
     const list = document.querySelector('.fav-list');
     if (!list) return;
-    if (window._currentUser?.id && window._supabase?.from && !supabaseFavoritesLoaded && !supabaseFavoriteLoadingPromise) {
-      loadCurrentUserFavorites().then(() => {
-        if (currentScreen === 'favorites') renderFavorites();
-      });
-    }
-    const supabaseFavoriteIds = Array.from(currentSupabaseFavoriteListingIds).filter(id => isSupabasePublishedFavoriteTarget(id) && HOSTS[id]);
-    const demoFavoriteIds = Array.from(favorites).filter(id => !isSupabasePublishedFavoriteTarget(id));
-    if (supabaseFavoriteIds.length === 0 && demoFavoriteIds.length === 0) {
-      list.innerHTML = '<div class="fav-empty"><div class="fav-empty-icon">🤍</div><div class="fav-empty-text">お気に入りはまだありません</div></div>';
-      return;
-    }
-    list.innerHTML = '';
-    supabaseFavoriteIds.forEach(id => {
-      const h = HOSTS[id];
-      const image = h.photos?.[0] || neutralHomestayListingPhotoUrl();
-      const currency = h.currency || 'CAD';
-      const priceLabel = Number.isFinite(Number(h.price))
-        ? (currency === 'CAD' ? `C$${Number(h.price).toLocaleString()}` : `${escapeHtml(currency)} ${Number(h.price).toLocaleString()}`)
-        : localizeText('未設定');
-      list.innerHTML += `
-        <div class="match-card" onclick="openPublishedHomestayListingDetail('${escapeHtml(id)}','favorites')">
-          <div class="match-card-img">
-            <img src="${image}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
-            <div class="match-card-flag">📍 ${escapeHtml(h.city || '')}</div>
-            <div class="match-card-save" onclick="toggleFavorite('${escapeHtml(id)}',event)">❤️</div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">${escapeHtml(h.name || '')}</div></div>
-            <div class="match-card-location">${[localizeText(h.roomType || ''), h.stateShort || ''].filter(Boolean).join(' · ')}</div>
-            <div class="match-card-footer"><div class="match-card-price"><strong>${priceLabel}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(h.mealsTag || '')}</div></div>
-          </div>
-        </div>`;
-    });
-    demoFavoriteIds.forEach(id => {
-      if (String(id).startsWith('sh:')) {
-        const shId = String(id).replace('sh:', '');
-        const profile = sharehouseListingProfile(shId);
-        list.innerHTML += `
-          <div class="match-card" onclick="openSharehouseDetail('${shId}')">
-            <div class="match-card-img">
-              <img src="${profile.photo}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-              <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
-              <div class="match-card-flag">📍 ${localizeText(profile.stay.area)}</div>
-              <div class="match-card-save" onclick="toggleSharehouseFavorite('${shId}',event)">❤️</div>
-            </div>
-            <div class="match-card-body">
-              <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div></div>
-              <div class="match-card-location">${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)} · ${formatDateRange(profile.available)}</div>
-              <div class="match-card-footer"><div class="match-card-price"><strong>${localizeText(profile.stay.budget)}</strong><span> ${currentLang === 'ja' ? '/月' : '/mo'}</span></div><div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div></div>
-            </div>
-          </div>`;
+
+    if (isHomestayGuestFavoritesContext()) {
+      const hasFavoriteCache = supabaseFavoritesLoaded && supabaseFavoriteCacheUserId === (window._currentUser?.id || '');
+      const hasPublishedHostCache = publishedHomestayHostsLoaded && publishedHomestayHostsCacheMatchesCurrentUser();
+      if (supabaseFavoritesLoadFailed || (publishedHomestayHostsLoadFailed && publishedHomestayHostsCacheMatchesCurrentUser())) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。', '⚠️');
         return;
       }
-      const h = HOSTS[id];
-      if (!h) return;
-      list.innerHTML += `
-        <div class="host-card" onclick="openDetail('${id}')">
-          <div class="card-img">
-            <div class="card-room-bg ${h.roomBg}">${h.roomEmoji}</div>
-            <div class="card-flag">${h.country} ${h.state}, ${h.stateShort}</div>
-            <div class="card-save-btn" onclick="toggleFavorite('${id}',event)">❤️</div>
-            <div class="card-avatar ${h.avClass}">${h.avatar}</div>
+      if (!hasFavoriteCache || !hasPublishedHostCache) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Loading saved listings...' : 'お気に入りを読み込み中...', '⌛');
+        if (!supabaseFavoriteLoadingPromise && !publishedHomestayHostsLoading) loadHomestayGuestFavoritesForList();
+        return;
+      }
+
+      const favoriteListingIds = Array.from(currentSupabaseFavoriteListingIds)
+        .filter(id => isSupabasePublishedFavoriteTarget(id) && HOSTS[id]);
+      if (favoriteListingIds.length === 0) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'No saved listings yet.' : 'お気に入りはまだありません');
+        return;
+      }
+      list.innerHTML = favoriteListingIds.map(id => renderSupabaseHomestayFavoriteCard(id)).join('');
+      return;
+    }
+
+    const sharehouseFavoriteIds = Array.from(favorites).filter(id => String(id).startsWith('sh:'));
+    if (sharehouseFavoriteIds.length === 0) {
+      list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'No saved listings yet.' : 'お気に入りはまだありません');
+      return;
+    }
+    list.innerHTML = sharehouseFavoriteIds.map(id => {
+      const shId = String(id).replace('sh:', '');
+      const profile = sharehouseListingProfile(shId);
+      return `
+        <div class="match-card" onclick="openSharehouseDetail('${shId}')">
+          <div class="match-card-img">
+            <img src="${profile.photo}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
+            <div class="match-card-flag">📍 ${localizeText(profile.stay.area)}</div>
+            <div class="match-card-save" onclick="toggleSharehouseFavorite('${shId}',event)">❤️</div>
           </div>
-          <div class="card-body">
-            <div class="card-row1">
-              <div class="card-host-name">${h.name}</div>
-              
-            </div>
-            <div class="card-location">${h.city} · ${h.roomType}</div>
-            <div class="card-footer">
-              <div class="card-price"><strong>$${h.price.toLocaleString()}</strong><span> /月〜</span></div>
-              <div class="card-meals-tag">${h.mealsTag}</div>
-            </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div></div>
+            <div class="match-card-location">${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)} · ${formatDateRange(profile.available)}</div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>${localizeText(profile.stay.budget)}</strong><span> ${currentLang === 'ja' ? '/月' : '/mo'}</span></div><div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div></div>
           </div>
         </div>`;
-    });
+    }).join('');
   }
 
   /* ===== CHAT ===== */
@@ -14327,6 +14318,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      if (currentScreen === 'search' && currentSearchCat === 'homestay') rerenderHomestayFilterResults();
 	      if (currentScreen === 'ai-result' && (window._serviceType || currentSearchCat) === 'homestay') renderAiResult();
 	      if (currentScreen === 'homestay-host-list') renderHomestayHostList();
+	      if (currentScreen === 'favorites') renderFavorites();
 	    }
 	  }
 
