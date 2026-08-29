@@ -7388,8 +7388,7 @@
     if (to === 'search') {
 	      switchSearchCat(currentSearchCat, true);
 	      if (currentSearchCat === 'homestay') {
-	        applyHomestayRegisteredFiltersToSearch();
-	        shouldApplyRegisteredFilters.homestay = false;
+	        prepareHomestaySearchForDisplay();
 	      }
 	      if (currentSearchCat === 'sharehouse') {
 	        applySharehouseRegisteredFiltersToSearch();
@@ -10424,7 +10423,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     return homestayRegisteredSearchFilters();
   }
 
-  function emptyHomestayFilters() {
+  function createDefaultHomestayFilterState() {
     return {
       area: '',
       start: '',
@@ -10449,6 +10448,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       cleaning: '',
       overnight: ''
     };
+  }
+
+  function emptyHomestayFilters() {
+    return createDefaultHomestayFilterState();
   }
 
   function normalizeHomestayFilterState(filters = {}) {
@@ -11125,6 +11128,27 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     if (sort) sort.value = 'newest';
     committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(profile));
     renderHomestayFilterResults(committedHomestayFilters);
+  }
+
+  function applyHomestayDefaultFiltersToSearch() {
+    const sort = document.getElementById('hm-sort');
+    if (sort) sort.value = 'newest';
+    committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(createDefaultHomestayFilterState()));
+    renderHomestayFilterResults(committedHomestayFilters);
+  }
+
+  function prepareHomestaySearchForDisplay() {
+    if (shouldApplyRegisteredFilters.homestay) {
+      applyHomestayRegisteredFiltersToSearch();
+      shouldApplyRegisteredFilters.homestay = false;
+      return;
+    }
+    if (committedHomestayFilters) {
+      committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(committedHomestayFilters));
+      renderHomestayFilterResults(committedHomestayFilters);
+      return;
+    }
+    applyHomestayDefaultFiltersToSearch();
   }
 
   function shUpdateBudgetLabel() {
@@ -19762,7 +19786,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (sharehouseContent) sharehouseContent.style.display = cat === 'sharehouse' ? 'flex' : 'none';
 	    updateSearchHeaderForCat(cat);
 	    if (skipApply) return;
-	    if (cat === 'homestay') applyHomestayRegisteredFiltersToSearch();
+	    if (cat === 'homestay') prepareHomestaySearchForDisplay();
 	    if (cat === 'sharehouse') applySharehouseRegisteredFiltersToSearch();
 	  }
 
