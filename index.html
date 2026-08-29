@@ -6002,7 +6002,12 @@
 
         <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
           <div style="font-size:15px;font-weight:900;margin-bottom:12px;" data-i18n="listing_stats">掲載統計</div>
-          <div style="display:grid;grid-template-columns:1fr;gap:8px;">
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+            <div id="host-dashboard-favorite-stat-card" style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
+              <div style="font-size:20px;">♡</div>
+              <div id="host-dashboard-favorite-count" style="font-size:22px;font-weight:900;">—</div>
+              <div style="font-size:11px;color:var(--light);font-weight:800;">Saves</div>
+            </div>
             <div id="host-dashboard-conversation-stat-card" style="background:var(--bg);border-radius:14px;padding:14px;text-align:center;">
               <div style="font-size:20px;">💬</div>
               <div id="host-dashboard-conversation-count" style="font-size:22px;font-weight:900;">—</div>
@@ -7483,6 +7488,7 @@
   let isLoadingSupabaseHostConversations = false;
   let supabaseHostConversationLoadSeq = 0;
   let hostDashboardConversationCountSeq = 0;
+  let hostDashboardFavoriteCountSeq = 0;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -9768,6 +9774,50 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    el.textContent = Number.isInteger(value) ? String(value) : '—';
 	  }
 
+	  function setHostDashboardFavoriteCount(value) {
+	    const el = document.getElementById('host-dashboard-favorite-count');
+	    if (!el) return;
+	    let text = '';
+	    if (typeof value === 'bigint') text = value.toString();
+	    if (typeof value === 'string' && /^\d+$/.test(value)) text = value;
+	    if (Number.isInteger(value)) text = String(value);
+	    el.textContent = text || '—';
+	  }
+
+	  function parseSupabaseCountValue(value) {
+	    if (typeof value === 'bigint') return value;
+	    if (typeof value === 'number') return Number.isInteger(value) && value >= 0 ? value : null;
+	    if (typeof value === 'string' && /^\d+$/.test(value.trim())) return value.trim();
+	    return null;
+	  }
+
+	  async function countCurrentHomestayHostFavorites() {
+	    const userId = window._currentUser?.id || '';
+	    const listingId = currentHomestayListing?.id || '';
+	    if (!userId || !listingId || !window._supabase?.rpc) return null;
+	    const { data, error } = await window._supabase.rpc('get_host_listing_favorite_count', {
+	      p_listing_id: listingId
+	    });
+	    if (error) throw error;
+	    return parseSupabaseCountValue(data);
+	  }
+
+	  async function refreshHostDashboardFavoriteCount() {
+	    const seq = ++hostDashboardFavoriteCountSeq;
+	    setHostDashboardFavoriteCount(null);
+	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') return null;
+	    try {
+	      const count = await countCurrentHomestayHostFavorites();
+	      if (seq !== hostDashboardFavoriteCountSeq) return null;
+	      setHostDashboardFavoriteCount(count);
+	      return count;
+	    } catch (error) {
+	      console.error('Supabase host dashboard favorite count error:', error);
+	      if (seq === hostDashboardFavoriteCountSeq) setHostDashboardFavoriteCount(null);
+	      return null;
+	    }
+	  }
+
 	  async function countCurrentHomestayHostConversations() {
 	    const userId = window._currentUser?.id || '';
 	    const listingId = currentHomestayListing?.id || '';
@@ -9799,6 +9849,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 	  window.refreshMessageUnreadDot = refreshMessageUnreadDot;
 	  window.setMessageUnreadDotVisible = setMessageUnreadDotVisible;
+	  window.refreshHostDashboardFavoriteCount = refreshHostDashboardFavoriteCount;
 	  window.refreshHostDashboardConversationCount = refreshHostDashboardConversationCount;
 	  window.addEventListener('focus', () => scheduleMessageUnreadDotRefresh());
 	  document.addEventListener('visibilitychange', () => {
@@ -16485,6 +16536,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function updateHostDashboardFromCurrentHomestayData() {
 	    const listing = currentHomestayListing;
 	    if (!listing) {
+	      if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
 	      if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
 	      return;
 	    }
@@ -16492,6 +16544,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const priceEl = document.getElementById('host-dashboard-price');
 	    if (cityEl) cityEl.textContent = localizeText(hostDisplayValue(listing.city));
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
+	    if (typeof refreshHostDashboardFavoriteCount === 'function') refreshHostDashboardFavoriteCount();
 	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
 	  }
 
