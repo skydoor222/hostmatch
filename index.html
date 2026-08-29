@@ -11694,13 +11694,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const guestRange = { start: filters.start, end: filters.end };
       activeHard++;
       const overlapsGuestRange = dateRangesOverlap(range.start, range.end, guestRange.start, guestRange.end);
-      const stayMonthsOk = homestayGuestStayMonthsWithinHostLimits(guestRange, h);
       if (!overlapsGuestRange) {
         hardPass = false;
         hmAddCondition(items, filters, true, currentLang === 'ja' ? '期間重複なし' : 'No overlapping dates', false);
-      } else if (!stayMonthsOk) {
-        hardPass = false;
-        hmAddCondition(items, filters, true, '滞在期間がホストの受け入れ条件外', false);
       } else {
         matchedHard++;
         hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), true);
