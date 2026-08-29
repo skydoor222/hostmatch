@@ -3874,6 +3874,7 @@
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
     <div class="mypage-item" onclick="showRegistrationStartScreen()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="openDeleteAccountModal()"><span class="mypage-item-icon">🗑</span><span class="mypage-item-label" data-i18n="delete_account">アカウント削除</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
   </div>
 </div>
@@ -6685,11 +6686,12 @@
 <!-- ==================== アカウント削除確認モーダル ==================== -->
 <div id="delete-account-modal" style="display:none;position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:3000;align-items:center;justify-content:center;padding:20px;">
   <div role="dialog" aria-modal="true" aria-labelledby="delete-account-title" style="width:min(100%,420px);background:white;border-radius:18px;padding:22px;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,.22);">
-    <div id="delete-account-title" style="font-size:18px;font-weight:900;color:var(--dark);line-height:1.5;" data-i18n="delete_account_confirm_title">本当にアカウントを削除しますか？</div>
-    <div style="font-size:13px;color:var(--mid);line-height:1.7;margin-top:8px;" data-i18n="delete_account_confirm_body">この操作は取り消せません。</div>
+    <div id="delete-account-title" style="font-size:18px;font-weight:900;color:var(--dark);line-height:1.5;" data-i18n="delete_account_confirm_title">アカウントを削除しますか？</div>
+    <div id="delete-account-body" style="font-size:13px;color:var(--mid);line-height:1.7;margin-top:8px;" data-i18n="delete_account_confirm_body">プロフィール、掲載情報、お気に入り、メッセージ、ブロック情報など、HostMatch上のデータは利用者画面から削除されます。この操作は元に戻せません。</div>
+    <div id="delete-account-message" style="display:none;background:#F3F4F6;color:var(--mid);border:1px solid var(--border);border-radius:12px;padding:11px 12px;font-size:13px;font-weight:800;margin-top:14px;"></div>
     <div style="display:flex;gap:10px;margin-top:20px;">
-      <button type="button" onclick="closeDeleteAccountModal()" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
-      <button type="button" onclick="confirmDeleteAccountDemo()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="delete_account_action">削除する</button>
+      <button type="button" id="delete-account-cancel-btn" onclick="closeDeleteAccountModal()" style="flex:1;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="cancel">キャンセル</button>
+      <button type="button" id="delete-account-confirm-btn" onclick="confirmDeleteAccount()" style="flex:1;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="delete_account_action">アカウントを削除</button>
     </div>
   </div>
 </div>
@@ -7552,6 +7554,7 @@
   let notificationPreferencesLoaded = false;
   let notificationPreferencesLoading = false;
   let notificationPreferencesCacheUserId = '';
+  let isDeletingAccount = false;
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let sharehouseDetailMap = null;
@@ -8211,21 +8214,195 @@
   function openDeleteAccountModal() {
     const modal = document.getElementById('delete-account-modal');
     if (modal) {
+      setDeleteAccountUi(false);
       modal.style.display = 'flex';
       applyLang();
     }
   }
 
   function closeDeleteAccountModal() {
+    if (isDeletingAccount) return;
     const modal = document.getElementById('delete-account-modal');
     if (modal) modal.style.display = 'none';
   }
 
-  function confirmDeleteAccountDemo() {
-    closeDeleteAccountModal();
-    showToast(currentLang === 'en'
-      ? 'Account deletion is not available in the app yet. Please contact support.'
-      : 'アカウント削除はアプリ内ではまだ実行できません。お問い合わせからご連絡ください。');
+  function setDeleteAccountUi(loading, options = {}) {
+    isDeletingAccount = !!loading;
+    const confirm = document.getElementById('delete-account-confirm-btn');
+    const cancel = document.getElementById('delete-account-cancel-btn');
+    const message = document.getElementById('delete-account-message');
+    if (confirm) {
+      confirm.disabled = !!loading;
+      confirm.textContent = loading ? (currentLang === 'en' ? 'Deleting...' : '削除しています...') : t('delete_account_action');
+      confirm.style.opacity = loading ? '.55' : '';
+      confirm.style.cursor = loading ? 'not-allowed' : 'pointer';
+    }
+    if (cancel) {
+      cancel.disabled = !!loading;
+      cancel.style.opacity = loading ? '.55' : '';
+      cancel.style.cursor = loading ? 'not-allowed' : 'pointer';
+    }
+    if (message) {
+      if (options.message) {
+        message.textContent = options.message;
+        message.style.display = 'block';
+        message.style.background = options.error ? '#FFF1F1' : '#F3F4F6';
+        message.style.color = options.error ? '#B42318' : 'var(--mid)';
+        message.style.borderColor = options.error ? '#FFD0D0' : 'var(--border)';
+      } else {
+        message.textContent = '';
+        message.style.display = 'none';
+      }
+    }
+  }
+
+  function storageCleanupErrorMessage() {
+    return currentLang === 'en'
+      ? 'Could not prepare your account data for deletion. Please try again later.'
+      : 'アカウントデータの削除準備に失敗しました。時間をおいてもう一度お試しください。';
+  }
+
+  function joinStoragePath(prefix, name) {
+    return [String(prefix || '').replace(/\/+$/g, ''), String(name || '').replace(/^\/+/g, '')]
+      .filter(Boolean)
+      .join('/');
+  }
+
+  function isSupabaseStorageFileEntry(entry) {
+    if (!entry || !entry.name) return false;
+    if (entry.id) return true;
+    const metadata = entry.metadata || {};
+    return Object.prototype.hasOwnProperty.call(metadata, 'size')
+      || Object.prototype.hasOwnProperty.call(metadata, 'mimetype');
+  }
+
+  async function listStorageFilesRecursively(bucketName, prefix) {
+    if (!window._supabase?.storage) throw new Error('Supabase storage is not available');
+    const bucket = window._supabase.storage.from(bucketName);
+    const files = [];
+    const pageSize = 100;
+
+    async function walk(path) {
+      let offset = 0;
+      while (true) {
+        const { data, error } = await bucket.list(path, {
+          limit: pageSize,
+          offset,
+          sortBy: { column: 'name', order: 'asc' }
+        });
+        if (error) {
+          console.error('Supabase storage list error:', { bucketName, error });
+          throw error;
+        }
+        const entries = Array.isArray(data) ? data : [];
+        for (const entry of entries) {
+          if (!entry?.name) continue;
+          const childPath = joinStoragePath(path, entry.name);
+          if (isSupabaseStorageFileEntry(entry)) {
+            files.push(childPath);
+          } else {
+            await walk(childPath);
+          }
+        }
+        if (entries.length < pageSize) break;
+        offset += pageSize;
+      }
+    }
+
+    await walk(String(prefix || '').replace(/^\/+|\/+$/g, ''));
+    return files;
+  }
+
+  async function removeStorageFilesInBatches(bucketName, paths) {
+    if (!paths.length) return true;
+    const bucket = window._supabase.storage.from(bucketName);
+    const batchSize = 100;
+    for (let i = 0; i < paths.length; i += batchSize) {
+      const batch = paths.slice(i, i + batchSize);
+      const { error } = await bucket.remove(batch);
+      if (error) {
+        console.error('Supabase storage remove error:', { bucketName, error });
+        throw error;
+      }
+    }
+    return true;
+  }
+
+  async function removeCurrentUserStorageFiles() {
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.storage) throw new Error('Missing current user or Supabase storage');
+    const buckets = ['profile-photos', 'listing-photos'];
+    for (const bucketName of buckets) {
+      const paths = await listStorageFilesRecursively(bucketName, userId);
+      await removeStorageFilesInBatches(bucketName, paths);
+    }
+    return true;
+  }
+
+  async function cleanupAfterAccountDeletion() {
+    if (typeof window.clearAuthenticatedRoute === 'function') window.clearAuthenticatedRoute();
+    if (typeof window.resetAuthenticatedEntryState === 'function') window.resetAuthenticatedEntryState();
+    if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
+    window._currentUser = null;
+    window._currentSession = null;
+    try {
+      if (window._supabase?.auth) await window._supabase.auth.signOut();
+    } catch (error) {
+      console.warn('Supabase signOut after account deletion failed:', error);
+    }
+  }
+
+  async function confirmDeleteAccount() {
+    if (isDeletingAccount) return;
+    if (!window._currentUser?.id || !window._supabase?.rpc) {
+      setDeleteAccountUi(false, {
+        error: true,
+        message: currentLang === 'en'
+          ? 'Could not delete your account. Please try again later.'
+          : 'アカウントを削除できませんでした。時間をおいてもう一度お試しください。'
+      });
+      return;
+    }
+    setDeleteAccountUi(true, {
+      message: currentLang === 'en' ? 'Deleting...' : '削除しています...'
+    });
+    try {
+      try {
+        await removeCurrentUserStorageFiles();
+      } catch (storageError) {
+        console.error('Supabase account deletion storage cleanup error:', storageError);
+        setDeleteAccountUi(false, {
+          error: true,
+          message: storageCleanupErrorMessage()
+        });
+        return;
+      }
+      const { data, error } = await window._supabase.rpc('delete_my_hostmatch_account');
+      if (error) throw error;
+      if (!data || data.success !== true) throw new Error('Account deletion RPC did not return success');
+      await cleanupAfterAccountDeletion();
+      const modal = document.getElementById('delete-account-modal');
+      if (modal) modal.style.display = 'none';
+      isDeletingAccount = false;
+      navigate(currentScreen || 'mypage', 'login');
+      const email = document.getElementById('login-email');
+      const password = document.getElementById('login-password');
+      const loginMessage = document.getElementById('login-error');
+      if (email) email.value = '';
+      if (password) password.value = '';
+      if (loginMessage) {
+        loginMessage.classList.remove('success');
+        loginMessage.textContent = '';
+      }
+    } catch (error) {
+      console.error('Supabase account deletion RPC error:', error);
+      setDeleteAccountUi(false, {
+        error: true,
+        message: currentLang === 'en'
+          ? 'Could not delete your account. Please try again later.'
+          : 'アカウントを削除できませんでした。時間をおいてもう一度お試しください。'
+      });
+    }
   }
 
   function openPrivacySecurity() {
@@ -11169,6 +11346,77 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return Array.isArray(value) ? value.filter(Boolean) : [];
 	  }
 
+	  const HOMESTAY_GUEST_DETAIL_VALUE_MAPS = {
+	    nationality: [
+	      { ja: '日本', en: 'Japan', aliases: ['日本', 'Japan'] },
+	      { ja: 'カナダ', en: 'Canada', aliases: ['カナダ', 'Canada'] },
+	      { ja: '韓国', en: 'South Korea', aliases: ['韓国', 'South Korea', 'Korea'] },
+	      { ja: '中国', en: 'China', aliases: ['中国', 'China'] },
+	      { ja: '台湾', en: 'Taiwan', aliases: ['台湾', 'Taiwan'] },
+	      { ja: 'アメリカ', en: 'United States', aliases: ['アメリカ', 'United States', 'USA', 'US', 'America'] },
+	      { ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] }
+	    ],
+	    languages: [
+	      { ja: '英語', en: 'English', aliases: ['英語', 'English'] },
+	      { ja: '日本語', en: 'Japanese', aliases: ['日本語', 'Japanese'] },
+	      { ja: '韓国語', en: 'Korean', aliases: ['韓国語', 'Korean'] },
+	      { ja: '中国語', en: 'Chinese', aliases: ['中国語', 'Chinese'] },
+	      { ja: 'スペイン語', en: 'Spanish', aliases: ['スペイン語', 'Spanish'] },
+	      { ja: 'フランス語', en: 'French', aliases: ['フランス語', 'French'] },
+	      { ja: 'イタリア語', en: 'Italian', aliases: ['イタリア語', 'Italian'] },
+	      { ja: 'ドイツ語', en: 'German', aliases: ['ドイツ語', 'German'] },
+	      { ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] }
+	    ],
+	    hobbies: [
+	      { ja: '音楽', en: 'Music', aliases: ['音楽', 'Music', '🎵 音楽', '🎵 Music'] },
+	      { ja: '映画', en: 'Movies', aliases: ['映画', 'Movies', '🎬 映画', '🎬 Movies'] },
+	      { ja: '読書', en: 'Reading', aliases: ['読書', 'Reading', '📚 読書', '📚 Reading'] },
+	      { ja: '料理', en: 'Cooking', aliases: ['料理', 'Cooking', '🍳 料理', '🍳 Cooking'] },
+	      { ja: 'スポーツ', en: 'Sports', aliases: ['スポーツ', 'Sports', '🏃 スポーツ', '🏃 Sports'] },
+	      { ja: 'ゲーム', en: 'Games', aliases: ['ゲーム', 'Games', '🎮 ゲーム', '🎮 Games'] },
+	      { ja: 'アート', en: 'Art', aliases: ['アート', 'Art', '🎨 アート', '🎨 Art'] },
+	      { ja: '旅行', en: 'Travel', aliases: ['旅行', 'Travel'] },
+	      { ja: 'アウトドア', en: 'Outdoors', aliases: ['アウトドア', 'Outdoors', '🌿 アウトドア', '🌿 Outdoors'] },
+	      { ja: 'ガーデニング', en: 'Gardening', aliases: ['ガーデニング', 'Gardening'] },
+	      { ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] }
+	    ],
+	    preferred_cities: [
+	      { ja: 'バンクーバー', en: 'Vancouver', aliases: ['バンクーバー', 'Vancouver'] },
+	      { ja: 'トロント', en: 'Toronto', aliases: ['トロント', 'Toronto'] },
+	      { ja: 'ビクトリア', en: 'Victoria', aliases: ['ビクトリア', 'Victoria'] },
+	      { ja: 'モントリオール', en: 'Montreal', aliases: ['モントリオール', 'Montreal'] },
+	      { ja: 'カルガリー', en: 'Calgary', aliases: ['カルガリー', 'Calgary'] },
+	      { ja: 'オタワ', en: 'Ottawa', aliases: ['オタワ', 'Ottawa'] },
+	      { ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] }
+	    ]
+	  };
+
+	  function normalizeHomestayGuestDetailSystemText(value) {
+	    return String(value || '').replace(/^[^\p{L}\p{N}]+/u, '').trim().toLowerCase();
+	  }
+
+	  function localizeGuestProfileValue(field, value) {
+	    if (value === null || value === undefined) return homestayGuestDetailNotProvided();
+	    const text = String(value).trim();
+	    if (!text) return homestayGuestDetailNotProvided();
+	    const options = HOMESTAY_GUEST_DETAIL_VALUE_MAPS[field] || [];
+	    const normalized = normalizeHomestayGuestDetailSystemText(text);
+	    const matched = options.find(option =>
+	      option.aliases.some(alias => normalizeHomestayGuestDetailSystemText(alias) === normalized)
+	    );
+	    if (!matched) return text;
+	    return currentLang === 'en' ? matched.en : matched.ja;
+	  }
+
+	  function localizeGuestProfileArray(field, values) {
+	    const items = homestayGuestDetailRawArray(values);
+	    if (!items.length) return homestayGuestDetailNotProvided();
+	    return items
+	      .map(value => localizeGuestProfileValue(field, value))
+	      .filter(value => value && value !== homestayGuestDetailNotProvided())
+	      .join(currentLang === 'ja' ? '、' : ', ') || homestayGuestDetailNotProvided();
+	  }
+
 	  function homestayGuestDetailAge(profile = {}) {
 	    const age = Number(profile.age);
 	    if (Number.isFinite(age) && age >= 0) return currentLang === 'ja' ? `${Math.trunc(age)}歳` : `${Math.trunc(age)} years old`;
@@ -11312,7 +11560,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    const meta = [
 	      homestayGuestDetailAge(guestProfile),
-	      guestProfile.nationality || ''
+	      localizeGuestProfileValue('nationality', guestProfile.nationality)
 	    ].filter(value => value && value !== homestayGuestDetailNotProvided()).join(' · ');
 	    const metaEl = document.getElementById('homestay-guest-detail-meta');
 	    if (metaEl) metaEl.textContent = meta || localizeText('ゲストプロフィール');
@@ -11327,9 +11575,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    renderDetailInfoGrid('homestay-guest-detail-basic', [
 	      { label: '名前', value: name, raw: true },
 	      { label: '年齢', value: homestayGuestDetailAge(guestProfile) },
-	      { label: '国籍', value: homestayGuestDetailValue(guestProfile.nationality), raw: true },
+	      { label: '国籍', value: localizeGuestProfileValue('nationality', guestProfile.nationality), raw: true },
 	      { label: '性別', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'gender', guestProfile.gender) },
-	      { label: '話せる言語', value: homestayGuestDetailValue(homestayGuestDetailRawArray(guestProfile.languages)), raw: true },
+	      { label: '話せる言語', value: localizeGuestProfileArray('languages', guestProfile.languages), raw: true },
 	      { label: '英語レベル', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'english_level', guestProfile.english_level) },
 	      { label: '現在の立場', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'stay_status', guestProfile.stay_status) },
 	      { label: '宗教', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'religion', guestProfile.religion) }
@@ -11337,10 +11585,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    renderDetailInfoGrid('homestay-guest-detail-lifestyle', [
 	      { label: '起床時間', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'wake_time', guestProfile.wake_time) },
 	      { label: '就寝時間', value: homestayGuestDetailMappedValue(fromGuestProfileDbValue, 'bedtime', guestProfile.bedtime) },
-	      { label: '趣味', value: homestayGuestDetailValue(homestayGuestDetailRawArray(guestProfile.hobbies)), raw: true }
+	      { label: '趣味', value: localizeGuestProfileArray('hobbies', guestProfile.hobbies), raw: true }
 	    ]);
 	    renderDetailInfoGrid('homestay-guest-detail-preferences', [
-	      { label: '希望エリア', value: homestayGuestDetailValue(homestayGuestDetailRawArray(preferences.preferred_cities)), raw: true },
+	      { label: '希望エリア', value: localizeGuestProfileArray('preferred_cities', preferences.preferred_cities), raw: true },
 	      { label: '希望滞在期間', value: homestayGuestDetailDateRange(preferences) },
 	      { label: '月額予算', value: homestayGuestDetailBudget(preferences) },
 	      { label: '希望するホストの家族構成', value: homestayGuestDetailMappedValue(fromHomestayPreferenceDbValue, 'host_household_preference', preferences.host_household_preference) },
@@ -20605,9 +20853,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     change_password:'パスワード変更',
     login_information:'ログイン情報',
     delete_account:'アカウント削除',
-    delete_account_confirm_title:'本当にアカウントを削除しますか？',
-    delete_account_confirm_body:'この操作は取り消せません。',
-    delete_account_action:'削除する',
+    delete_account_confirm_title:'アカウントを削除しますか？',
+    delete_account_confirm_body:'プロフィール、掲載情報、お気に入り、メッセージ、ブロック情報など、HostMatch上のデータは利用者画面から削除されます。この操作は元に戻せません。',
+    delete_account_action:'アカウントを削除',
     privacy_intro:'HostMatchでは、安心して共同生活の相手を探せるよう、ユーザーの個人情報とプライバシーの保護を大切にしています。',
     privacy_personal_info_title:'個人情報について',
     privacy_personal_info_body:'登録時に入力されたメールアドレス、電話番号、生年月日などの情報は、他のユーザーには公開されません。プロフィール上には、ユーザー自身が公開することを選択した情報のみが表示されます。',
@@ -20961,8 +21209,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     change_password:'Change Password',
     login_information:'Login Information',
     delete_account:'Delete Account',
-    delete_account_confirm_title:'Are you sure you want to delete your account?',
-    delete_account_confirm_body:'This action cannot be undone.',
+    delete_account_confirm_title:'Delete your account?',
+    delete_account_confirm_body:'Your profile, listings, favorites, messages, blocked-user data and other HostMatch account data will be removed from the service. This action cannot be undone.',
     delete_account_action:'Delete Account',
     privacy_intro:"HostMatch is committed to protecting users' personal information and privacy so that everyone can search for compatible homestay hosts or housemates with confidence.",
     privacy_personal_info_title:'Personal Information',
