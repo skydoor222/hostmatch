@@ -2914,100 +2914,6 @@
       </div>
     </div>
 
-    <!-- 新着物件 -->
-    <div class="slider-section">
-      <div class="slider-label">
-        <span data-i18n="new_hosts">✨ 新着ホスト</span>
-        <a onclick="openHomestayHostList('new')" data-i18n="view_all">すべて見る</a>
-      </div>
-      <div class="card-slider">
-        <div class="s-card" onclick="openDetail('emily')">
-          <div class="s-card-img"><div class="s-card-bg r3">🏠</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Emily Williams</div>
-            <div class="s-card-row"><span class="s-card-price">$880/月</span></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('jennifer')">
-          <div class="s-card-img"><div class="s-card-bg r6">🏡</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Jennifer Park</div>
-            <div class="s-card-row"><span class="s-card-price">$820/月</span></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('robert')">
-          <div class="s-card-img"><div class="s-card-bg r4">🏘️</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Robert & Mary</div>
-            <div class="s-card-row"><span class="s-card-price">$780/月</span></div>
-          </div>
-        </div>
-        <div class="s-card" onclick="openDetail('sarah')">
-          <div class="s-card-img"><div class="s-card-bg r1">🏠</div><div class="s-save">🤍</div></div>
-          <div class="s-card-info">
-            <div class="s-card-name">Sarah Johnson</div>
-            <div class="s-card-row"><span class="s-card-price">$950/月</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 人気ホスト -->
-    <div class="slider-section">
-      <div class="slider-label">
-        <span>🔥 人気のホスト</span>
-        <a onclick="openHomestayHostList('popular')">すべて見る</a>
-      </div>
-      <div class="match-list" style="padding:0 16px 16px;">
-        <div class="match-card" onclick="openDetail('michael')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-card-flag">🇺🇸 Los Angeles, CA</div>
-            <div class="match-card-save">❤️</div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1">
-              <div class="match-card-name">Michael & Lisa Chen</div>
-              
-            </div>
-            <div class="match-card-location">Santa Monica · 個室 · ホスト歴5年</div>
-            <div class="match-card-tags">
-              <span class="ctag ok">✓ 日本語OK</span>
-              <span class="ctag ok">✓ 3食付き</span>
-              <span class="ctag">🚭 禁煙</span>
-            </div>
-            <div class="match-card-footer">
-              <div class="match-card-price"><strong>$1,100</strong><span> /月〜</span></div>
-              <div class="match-card-meals">🍽️ 3食込み</div>
-            </div>
-          </div>
-        </div>
-        <div class="match-card" onclick="openDetail('thompson')">
-          <div class="match-card-img">
-            <img src="https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=800&q=80" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
-            <div class="match-card-flag">🇺🇸 San Francisco, CA</div>
-            <div class="match-card-save">❤️</div>
-          </div>
-          <div class="match-card-body">
-            <div class="match-card-row1">
-              <div class="match-card-name">The Thompson Family</div>
-              
-            </div>
-            <div class="match-card-location">Mission District · 個室 · ホスト歴4年</div>
-            <div class="match-card-tags">
-              <span class="ctag ok">✓ 朝食付き</span>
-              <span class="ctag ok">✓ 来客OK</span>
-              <span class="ctag">🚭 禁煙</span>
-            </div>
-            <div class="match-card-footer">
-              <div class="match-card-price"><strong>$1,050</strong><span> /月〜</span></div>
-              <div class="match-card-meals">🍳 朝食込み</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div><!-- /search-content-homestay -->
 
   <!-- シェアハウスコンテンツ -->
@@ -8878,11 +8784,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 		    const h = HOSTS[currentHost] || HOSTS.sarah;
 		    const isPublishedHost = isPublishedHomestayDetailHost(currentHost);
-		    const comparison = hmEvaluateHost(currentHost, hmFilters());
+		    const comparisonFilters = homestayRegisteredComparisonFilters();
+		    const comparison = hmEvaluateHost(currentHost, comparisonFilters);
 		    if (isPublishedHost && !comparison.activeTotal) {
 		      container.innerHTML = `
 		        <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--mid);font-size:13px;font-weight:800;">
-		          ${localizeText('条件未選択')}
+		          ${localizeText('比較できる登録条件がありません')}
 		        </div>
 		      `;
 		      return;
@@ -8958,7 +8865,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       detailAvatar.textContent = h.avatar;
     }
     document.getElementById('detail-name').textContent = h.name;
-	    const detailComparison = hmEvaluateHost(hostId, hmFilters());
+		    const detailComparison = hmEvaluateHost(hostId, isPublishedHost ? homestayRegisteredComparisonFilters() : hmFilters());
 	    const detailFallbackComparison = detailComparison.activeTotal || isPublishedHost ? detailComparison : hmEvaluateHost(hostId, homestayInitialFilters());
 	    document.getElementById('detail-match-badge').textContent = detailFallbackComparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${detailFallbackComparison.matchedTotal}/${detailFallbackComparison.activeTotal}項目一致` : `${detailFallbackComparison.matchedTotal} of ${detailFallbackComparison.activeTotal} conditions match`)
@@ -11075,9 +10982,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     });
   }
 
-  function homestayInitialCoreSearchFilters() {
-    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || null;
-    const registeredProfile = storedHomestayRegisteredFilterProfile();
+	  function homestayInitialCoreSearchFilters() {
+	    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || null;
+	    const registeredProfile = storedHomestayRegisteredFilterProfile();
     const preferredCities = Array.isArray(prefs?.preferred_cities) ? prefs.preferred_cities.filter(Boolean) : [];
     const budgetMax = prefs?.budget_max ?? registeredProfile?.budget ?? null;
     const budgetNumber = Number(budgetMax);
@@ -11088,9 +10995,84 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       start: prefs?.stay_start_date || registeredProfile?.start || '',
       end: prefs?.stay_end_date || registeredProfile?.end || '',
       budget: hasBudget ? budgetNumber : 2000,
-      budgetOnly: hasBudget
-    });
-  }
+	      budgetOnly: hasBudget
+	    });
+	  }
+
+	  function homestayRegisteredComparisonFilters() {
+	    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || {};
+	    const guestProfile = currentGuestProfileData || window._currentGuestProfileData || {};
+	    const stored = storedHomestayRegisteredFilterProfile() || {};
+	    const preferredCities = Array.isArray(prefs.preferred_cities) ? prefs.preferred_cities.filter(Boolean) : [];
+	    const budgetMax = prefs.budget_max ?? stored.budget ?? null;
+	    const budgetNumber = Number(budgetMax);
+	    const meal = fromHomestayPreferenceDbValue('meal_plan_preference', prefs.meal_plan_preference);
+	    const dining = fromHomestayPreferenceDbValue('meal_style_preference', prefs.meal_style_preference);
+	    const pets = fromHomestayPreferenceDbValue('pet_preference', prefs.pet_preference);
+	    const smoking = fromHomestayPreferenceDbValue('smoking_preference', prefs.smoking_preference);
+	    const students = fromHomestayPreferenceDbValue('other_students_preference', prefs.other_students_preference);
+	    const talk = fromHomestayPreferenceDbValue('conversation_preference', prefs.conversation_preference);
+	    const frequency = fromHomestayPreferenceDbValue('interaction_preference', prefs.interaction_preference);
+	    const wake = fromGuestProfileDbValue('wake_time', guestProfile.wake_time);
+	    const sleep = fromGuestProfileDbValue('bedtime', guestProfile.bedtime);
+	    return normalizeHomestayFilterState({
+	      ...createDefaultHomestayFilterState(),
+	      area: preferredCities[0] || stored.area || '',
+	      start: prefs.stay_start_date || stored.start || '',
+	      end: prefs.stay_end_date || stored.end || '',
+	      budget: Number.isFinite(budgetNumber) && budgetNumber > 0 ? budgetNumber : 2000,
+	      budgetOnly: Number.isFinite(budgetNumber) && budgetNumber > 0,
+	      meal: meal ? hmNormalizeMeal(meal) : (stored.meal || ''),
+	      dining: dining ? hmNormalizeMealStyle(dining) : (stored.dining || ''),
+	      diet: [],
+	      pets: pets === 'ペットOK' ? 'ペットOK' : ['できればいない方がいい', 'ペットNG'].includes(pets) ? 'ペットなし希望' : (stored.pets || ''),
+	      smoking: smoking === '喫煙NG' ? '完全禁煙' : smoking === '屋外ならOK' ? '屋外喫煙ならOK' : (stored.smoking || ''),
+	      students: students === 'いない家庭を希望' ? '他の留学生なし希望' : students ? '他の留学生がいてもOK' : (stored.students || ''),
+	      talk: talk === '毎日話したい' ? '毎日会話したい' : (talk || stored.talk || ''),
+	      frequency: frequency === '休日にたまに一緒に過ごしたい' ? '休日もたまに一緒に過ごしたい' : (frequency || stored.frequency || ''),
+	      family: hmNormalizeGuestFamilyPreference(fromHomestayPreferenceDbValue('host_household_preference', prefs.host_household_preference) || stored.family || ''),
+	      wake: wake ? wake.replace('6時以前', '〜6時').replace('9時以降', '9時〜') : (stored.wake || ''),
+	      sleep: sleep ? sleep.replace('23時以降', '23時〜') : (stored.sleep || ''),
+	      curfew: canonicalFilterValue('hmf-curfew', fromHomestayPreferenceDbValue('curfew_preference', prefs.curfew_preference) || stored.curfew || ''),
+	      visitor: canonicalFilterValue('hmf-visitor', fromHomestayPreferenceDbValue('visitor_preference', prefs.visitor_preference) || stored.visitor || ''),
+	      shower: canonicalFilterValue('hmf-shower', fromHomestayPreferenceDbValue('shower_limit_preference', prefs.shower_limit_preference) || stored.shower || ''),
+	      kitchen: canonicalFilterValue('hmf-kitchen', fromHomestayPreferenceDbValue('kitchen_preference', prefs.kitchen_preference) || stored.kitchen || ''),
+	      cleaning: canonicalFilterValue('hmf-cleaning', fromHomestayPreferenceDbValue('cleaning_preference', prefs.cleaning_preference) || stored.cleaning || ''),
+	      overnight: canonicalFilterValue('hmf-overnight', fromHomestayPreferenceDbValue('overnight_guest_preference', prefs.overnight_guest_preference) || stored.overnight || '')
+	    });
+	  }
+
+	  async function loadHomestayGuestComparisonData({ force = false } = {}) {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) return false;
+	    const prefsHaveLifestyle = !!currentHomestayGuestPreferences?.meal_plan_preference;
+	    const profileHasLifestyle = !!currentGuestProfileData?.wake_time || !!currentGuestProfileData?.bedtime;
+	    if (!force && prefsHaveLifestyle && profileHasLifestyle) return true;
+	    try {
+	      const [profileResult, prefsResult] = await Promise.all([
+	        window._supabase
+	          .from('guest_profiles')
+	          .select('user_id, wake_time, bedtime')
+	          .eq('user_id', userId)
+	          .maybeSingle(),
+	        window._supabase
+	          .from('homestay_guest_preferences')
+	          .select('user_id, preferred_cities, stay_start_date, stay_end_date, budget_max, host_household_preference, interaction_preference, conversation_preference, meal_plan_preference, meal_style_preference, dietary_restriction, pet_preference, other_students_preference, smoking_preference, curfew_preference, visitor_preference, shower_limit_preference, kitchen_preference, cleaning_preference, overnight_guest_preference')
+	          .eq('user_id', userId)
+	          .maybeSingle()
+	      ]);
+	      if (profileResult.error) throw profileResult.error;
+	      if (prefsResult.error) throw prefsResult.error;
+	      currentGuestProfileData = { ...(currentGuestProfileData || {}), ...(profileResult.data || {}) };
+	      window._currentGuestProfileData = currentGuestProfileData;
+	      currentHomestayGuestPreferences = { ...(currentHomestayGuestPreferences || {}), ...(prefsResult.data || {}) };
+	      window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
+	      return true;
+	    } catch (error) {
+	      console.warn('Supabase homestay guest comparison preferences fetch error:', error);
+	      return false;
+	    }
+	  }
 
   function collectHomestayGuestFiltersFromEdit(name) {
     const next = { ...homestayRegisteredFilterProfile() };
@@ -13111,6 +13093,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
 	      return;
 	    }
+	    await loadHomestayGuestComparisonData();
 	    openDetail(id, backScreen);
 	  }
 
