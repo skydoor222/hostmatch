@@ -7483,6 +7483,9 @@
   let currentSupabaseChatMode = '';
   let isOpeningSupabaseChat = false;
   let isSendingSupabaseMessage = false;
+  let currentSupabaseMessageChannel = null;
+  let currentRealtimeConversationId = '';
+  let supabaseRealtimeMessageRenderSeq = 0;
   let currentSupabaseGuestConversationRows = [];
   let isLoadingSupabaseGuestConversations = false;
   let supabaseGuestConversationLoadSeq = 0;
@@ -7526,6 +7529,9 @@
 
   /* ===== NAVIGATION ===== */
   function navigate(from, to) {
+    if (to !== 'chat' && currentScreen === 'chat' && typeof unsubscribeSupabaseMessageRealtime === 'function') {
+      unsubscribeSupabaseMessageRealtime();
+    }
     if (to === 'sharehouse') {
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
@@ -9874,6 +9880,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      await markSupabaseConversationRead(conversation.id);
 	      await refreshMessageUnreadDot({ role: 'host' });
 	      navigate(currentScreen, 'chat');
+	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
 	      setTimeout(() => {
@@ -9942,6 +9949,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      await markSupabaseConversationRead(conversation.id);
 	      await refreshMessageUnreadDot({ role: 'guest' });
 	      navigate(currentScreen, 'chat');
+	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
 	      setTimeout(() => {
@@ -10034,12 +10042,81 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function resetSupabaseChatState() {
+	    unsubscribeSupabaseMessageRealtime();
 	    currentSupabaseConversationId = '';
 	    currentSupabaseConversation = null;
 	    currentSupabaseChatListingId = '';
 	    currentSupabaseChatOtherUserId = '';
 	    currentSupabaseChatMode = '';
 	  }
+
+	  function unsubscribeSupabaseMessageRealtime() {
+	    const channel = currentSupabaseMessageChannel;
+	    currentSupabaseMessageChannel = null;
+	    currentRealtimeConversationId = '';
+	    supabaseRealtimeMessageRenderSeq += 1;
+	    if (!channel) return;
+	    try {
+	      const result = window._supabase?.removeChannel
+	        ? window._supabase.removeChannel(channel)
+	        : channel.unsubscribe?.();
+	      if (result?.catch) {
+	        result.catch(error => console.error('Supabase message realtime unsubscribe error:', error));
+	      }
+	    } catch (error) {
+	      console.error('Supabase message realtime unsubscribe error:', error);
+	    }
+	  }
+
+	  async function handleSupabaseMessageRealtimeInsert(payload) {
+	    const message = payload?.new || null;
+	    const conversationId = String(message?.conversation_id || '');
+	    if (!conversationId || conversationId !== currentSupabaseConversationId || conversationId !== currentRealtimeConversationId) return;
+	    if (currentScreen !== 'chat' || !isSupabaseHomestayChatActive()) return;
+	    if (message.sender_id === window._currentUser?.id) return;
+
+	    const seq = ++supabaseRealtimeMessageRenderSeq;
+	    try {
+	      const rows = await loadSupabaseConversationMessages(conversationId);
+	      if (seq !== supabaseRealtimeMessageRenderSeq || conversationId !== currentSupabaseConversationId || currentScreen !== 'chat') return;
+	      renderSupabaseHomestayMessages(rows);
+	      await markSupabaseConversationRead(conversationId);
+	      await refreshMessageUnreadDot({ role: currentSupabaseChatMode === 'homestay-host' ? 'host' : 'guest' });
+	      const area = document.querySelector('.chat-messages');
+	      if (area) area.scrollTop = area.scrollHeight;
+	    } catch (error) {
+	      console.error('Supabase message realtime render error:', error);
+	    }
+	  }
+
+	  function subscribeToCurrentSupabaseConversation() {
+	    const conversationId = String(currentSupabaseConversationId || '').trim();
+	    if (!conversationId || !window._supabase?.channel || !isSupabaseHomestayChatActive()) return false;
+	    if (currentSupabaseMessageChannel && currentRealtimeConversationId === conversationId) return true;
+	    unsubscribeSupabaseMessageRealtime();
+	    const channelName = `hostmatch-messages-${conversationId}`;
+	    currentRealtimeConversationId = conversationId;
+	    currentSupabaseMessageChannel = window._supabase
+	      .channel(channelName)
+	      .on(
+	        'postgres_changes',
+	        {
+	          event: 'INSERT',
+	          schema: 'public',
+	          table: 'messages',
+	          filter: `conversation_id=eq.${conversationId}`
+	        },
+	        handleSupabaseMessageRealtimeInsert
+	      )
+	      .subscribe(status => {
+	        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+	          console.error('Supabase message realtime subscription error:', { status, conversationId });
+	        }
+	      });
+	    return true;
+	  }
+	  window.unsubscribeSupabaseMessageRealtime = unsubscribeSupabaseMessageRealtime;
+	  window.subscribeToCurrentSupabaseConversation = subscribeToCurrentSupabaseConversation;
 
 	  function formatChatMessageTime(value) {
 	    const date = new Date(value || Date.now());
@@ -10188,6 +10265,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      await markSupabaseConversationRead(conversation.id);
 	      await refreshMessageUnreadDot({ role: 'guest' });
 	      navigate(currentScreen, 'chat');
+	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
 	      setTimeout(() => {
