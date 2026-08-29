@@ -3673,48 +3673,7 @@
     </div>
   </div>
   <div class="msg-list" id="guest-message-list">
-    <div class="msg-item unread" onclick="openChat('sarah')">
-      <div class="msg-avatar av1">👩</div>
-      <div class="msg-content">
-        <div class="msg-row1">
-          <div class="msg-name">Sarah Johnson</div>
-          <div class="msg-time">14:32</div>
-        </div>
-        <div class="msg-preview unread">Hi! Thank you for your interest. I'd love to tell you more about the room 😊</div>
-      </div>
-      <div class="msg-unread-dot"></div>
-    </div>
-    <div class="msg-item unread" onclick="openChat('michael')">
-      <div class="msg-avatar av2">👨</div>
-      <div class="msg-content">
-        <div class="msg-row1">
-          <div class="msg-name">Michael & Lisa Chen</div>
-          <div class="msg-time">昨日</div>
-        </div>
-        <div class="msg-preview unread">Sure, let's talk more in messages this weekend!</div>
-      </div>
-      <div class="msg-unread-dot"></div>
-    </div>
-    <div class="msg-item" onclick="openChat('emily')">
-      <div class="msg-avatar av3">👩</div>
-      <div class="msg-content">
-        <div class="msg-row1">
-          <div class="msg-name">Emily Williams</div>
-          <div class="msg-time">月曜</div>
-        </div>
-        <div class="msg-preview">The room is available from May 1st. Let me know!</div>
-      </div>
-    </div>
-    <div class="msg-item" onclick="openChat('robert')">
-      <div class="msg-avatar av4">👨</div>
-      <div class="msg-content">
-        <div class="msg-row1">
-          <div class="msg-name">Robert & Mary Davis</div>
-          <div class="msg-time">4/5</div>
-        </div>
-        <div class="msg-preview">We usually have dinner together on weekdays 🍽️</div>
-      </div>
-    </div>
+    <div class="hm-empty-result">メッセージを読み込み中...</div>
   </div>
 </div>
 
@@ -7373,6 +7332,9 @@
   let currentSupabaseChatMode = '';
   let isOpeningSupabaseChat = false;
   let isSendingSupabaseMessage = false;
+  let currentSupabaseGuestConversationRows = [];
+  let isLoadingSupabaseGuestConversations = false;
+  let supabaseGuestConversationLoadSeq = 0;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -9302,6 +9264,220 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    syncGuestServiceContext(guestMessageService);
 	  }
 
+	  function formatConversationListTime(value) {
+	    const date = new Date(value || Date.now());
+	    if (Number.isNaN(date.getTime())) return '';
+	    const now = new Date();
+	    const sameDay = date.getFullYear() === now.getFullYear()
+	      && date.getMonth() === now.getMonth()
+	      && date.getDate() === now.getDate();
+	    if (sameDay) return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+	    return `${date.getMonth() + 1}/${date.getDate()}`;
+	  }
+
+	  function latestMessagesByConversation(messages = []) {
+	    const map = new Map();
+	    (Array.isArray(messages) ? messages : []).forEach(message => {
+	      if (!message?.conversation_id) return;
+	      const current = map.get(message.conversation_id);
+	      if (!current || new Date(message.created_at || 0) > new Date(current.created_at || 0)) {
+	        map.set(message.conversation_id, message);
+	      }
+	    });
+	    return map;
+	  }
+
+	  function indexConversationReadsByConversation(reads = []) {
+	    const map = new Map();
+	    (Array.isArray(reads) ? reads : []).forEach(read => {
+	      if (read?.conversation_id) map.set(read.conversation_id, read);
+	    });
+	    return map;
+	  }
+
+	  function ensureHomestayConversationHostObject(conversation, profile = {}, listing = {}) {
+	    const listingId = conversation?.listing_id;
+	    if (!listingId || HOSTS[listingId]) return;
+	    HOSTS[listingId] = {
+	      id: listingId,
+	      name: hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Host' : 'ホスト'),
+	      avatar: '🧑',
+	      avatarUrl: profile.avatar_url || '',
+	      avClass: '',
+	      city: hostDisplayValue(listing.city, ''),
+	      state: listing.country_code === 'CA' ? 'Canada' : '',
+	      stateShort: listing.country_code || '',
+	      country: listing.country_code === 'CA' ? '🇨🇦' : '',
+	      price: null,
+	      photos: [],
+	      tags: [],
+	      rules: [],
+	      room: [],
+	      chatMessages: []
+	    };
+	  }
+
+	  async function loadSupabaseGuestConversations() {
+	    const userId = window._currentUser?.id || '';
+	    if (!userId || !window._supabase?.from) return [];
+	    const { data: conversations, error: conversationsError } = await window._supabase
+	      .from('conversations')
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .eq('initiator_id', userId);
+	    if (conversationsError) throw conversationsError;
+
+	    const rows = Array.isArray(conversations) ? conversations : [];
+	    if (!rows.length) return [];
+
+	    const hostIds = [...new Set(rows.map(row => row.listing_owner_id).filter(Boolean))];
+	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
+	    const conversationIds = rows.map(row => row.id).filter(Boolean);
+	    const [profilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
+	      hostIds.length
+	        ? window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', hostIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      listingIds.length
+	        ? window._supabase.from('listings').select('id, owner_id, listing_type, title, city, status').in('id', listingIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      conversationIds.length
+	        ? window._supabase.from('messages').select('id, conversation_id, sender_id, body, created_at').in('conversation_id', conversationIds).order('created_at', { ascending: true })
+	        : Promise.resolve({ data: [], error: null }),
+	      conversationIds.length
+	        ? window._supabase.from('conversation_reads').select('conversation_id, user_id, last_read_at').in('conversation_id', conversationIds).eq('user_id', userId)
+	        : Promise.resolve({ data: [], error: null })
+	    ]);
+	    if (profilesResult.error) throw profilesResult.error;
+	    if (listingsResult.error) throw listingsResult.error;
+	    if (messagesResult.error) throw messagesResult.error;
+	    if (readsResult.error) throw readsResult.error;
+
+	    const profilesById = indexRowsBy(profilesResult.data, 'id');
+	    const listingsById = indexRowsBy(listingsResult.data, 'id');
+	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
+	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
+	    const enriched = rows.map(conversation => {
+	      const profile = profilesById.get(conversation.listing_owner_id) || {};
+	      const listing = listingsById.get(conversation.listing_id) || {};
+	      if (listing.listing_type && listing.listing_type !== 'homestay') return null;
+	      ensureHomestayConversationHostObject(conversation, profile, listing);
+	      const latestMessage = latestByConversation.get(conversation.id) || null;
+	      const read = readsByConversation.get(conversation.id) || null;
+	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
+	      const unread = !!latestMessage
+	        && latestMessage.sender_id !== userId
+	        && (!read?.last_read_at || new Date(latestMessage.created_at) > new Date(read.last_read_at));
+	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
+	    }).filter(Boolean);
+	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
+	    currentSupabaseGuestConversationRows = enriched;
+	    return enriched;
+	  }
+
+	  function renderSupabaseGuestConversationRows(rows = []) {
+	    const list = document.getElementById('guest-message-list');
+	    if (!list) return;
+	    if (!rows.length) {
+	      list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'No messages yet.' : 'まだメッセージはありません'}</div>`;
+	      return;
+	    }
+	    const userId = window._currentUser?.id || '';
+	    list.innerHTML = rows.map(row => {
+	      const conversation = row.conversation;
+	      const profile = row.profile || {};
+	      const listing = row.listing || {};
+	      const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Host' : 'ホスト');
+	      const latest = row.latestMessage;
+	      const previewPrefix = latest?.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
+	      const preview = latest?.body
+	        ? `${previewPrefix}${latest.body}`
+	        : (currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません');
+	      const time = formatConversationListTime(row.latestAt);
+	      const avatarHtml = profile.avatar_url
+	        ? `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`
+	        : '🧑';
+	      const subtitle = [listing.city, listing.status === 'published' ? (currentLang === 'en' ? 'Published' : '公開中') : ''].filter(Boolean).join(' · ');
+	      return `
+	        <div class="msg-item${row.unread ? ' unread' : ''}" onclick="openSupabaseGuestConversation('${escapeHtml(conversation.id)}')">
+	          <div class="msg-avatar" style="background:var(--bg);overflow:hidden;">${avatarHtml}</div>
+	          <div class="msg-content">
+	            <div class="msg-row1">
+	              <div class="msg-name">${escapeHtml(name)}</div>
+	              <div class="msg-time">${escapeHtml(time)}</div>
+	            </div>
+	            ${subtitle ? `<div style="font-size:11px;color:var(--light);font-weight:700;margin-top:1px;">${escapeHtml(subtitle)}</div>` : ''}
+	            <div class="msg-preview${row.unread ? ' unread' : ''}">${escapeHtml(preview)}</div>
+	          </div>
+	          ${row.unread ? '<div class="msg-unread-dot"></div>' : ''}
+	        </div>
+	      `;
+	    }).join('');
+	  }
+
+	  async function renderSupabaseGuestMessages() {
+	    const list = document.getElementById('guest-message-list');
+	    const seq = ++supabaseGuestConversationLoadSeq;
+	    if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Loading messages...' : 'メッセージを読み込み中...'}</div>`;
+	    isLoadingSupabaseGuestConversations = true;
+	    try {
+	      const rows = await loadSupabaseGuestConversations();
+	      if (seq !== supabaseGuestConversationLoadSeq) return;
+	      renderSupabaseGuestConversationRows(rows);
+	    } catch (error) {
+	      console.error('Supabase guest conversations load error:', error);
+	      if (seq === supabaseGuestConversationLoadSeq && list) {
+	        list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages.' : 'メッセージを読み込めませんでした'}</div>`;
+	      }
+	    } finally {
+	      if (seq === supabaseGuestConversationLoadSeq) isLoadingSupabaseGuestConversations = false;
+	    }
+	  }
+
+	  async function openSupabaseGuestConversation(conversationId) {
+	    const id = String(conversationId || '').trim();
+	    if (!id) return;
+	    try {
+	      let row = currentSupabaseGuestConversationRows.find(item => item.conversation?.id === id);
+	      if (!row) {
+	        const rows = await loadSupabaseGuestConversations();
+	        row = rows.find(item => item.conversation?.id === id);
+	      }
+	      if (!row?.conversation?.id) throw new Error('Conversation was not found');
+	      const conversation = row.conversation;
+	      ensureHomestayConversationHostObject(conversation, row.profile || {}, row.listing || {});
+	      currentHost = conversation.listing_id;
+	      currentListing = makeHomestayListing(currentHost) || {
+	        type: 'homestay',
+	        id: conversation.listing_id,
+	        name: hostDisplayValue(row.profile?.display_name, currentLang === 'en' ? 'Host' : 'ホスト'),
+	        detailScreen: 'detail',
+	        label: 'ホスト'
+	      };
+	      currentApplicationId = null;
+	      currentChatApplicant = null;
+	      chatBackScreen = 'messages';
+	      chatDetailMode = 'host';
+	      currentSupabaseConversation = conversation;
+	      currentSupabaseConversationId = conversation.id;
+	      currentSupabaseChatListingId = conversation.listing_id;
+	      currentSupabaseChatOtherUserId = conversation.listing_owner_id;
+	      currentSupabaseChatMode = 'homestay';
+	      setGuestMessageService('homestay');
+	      applySupabaseHomestayChatHeader(conversation.listing_id);
+	      const messages = await loadSupabaseConversationMessages(conversation.id);
+	      renderSupabaseHomestayMessages(messages);
+	      await markSupabaseConversationRead(conversation.id);
+	      navigate(currentScreen, 'chat');
+	      updateBlockedUi();
+	      const area = document.querySelector('.chat-messages');
+	      setTimeout(() => {
+	        if (area) area.scrollTop = area.scrollHeight;
+	      }, 50);
+	    } catch (error) {
+	      console.error('Supabase guest conversation open error:', error);
+	      showToast(currentLang === 'en' ? 'Could not open messages. Please try again.' : 'メッセージを開けませんでした。もう一度お試しください。');
+	    }
+	  }
+
   function renderGuestMessages() {
 	    const list = document.getElementById('guest-message-list');
 	    if (!list) return;
@@ -9330,26 +9506,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return;
 	    }
 
-	    list.innerHTML = `
-	      <div class="msg-item unread" onclick="openChat('sarah')">
-	        <div class="msg-avatar av1">👩</div>
-	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Sarah Johnson</div><div class="msg-time">14:32</div></div><div class="msg-preview unread">Hi! Thank you for your interest. I'd love to tell you more about the room 😊</div></div>
-	        <div class="msg-unread-dot"></div>
-	      </div>
-	      <div class="msg-item unread" onclick="openChat('michael')">
-	        <div class="msg-avatar av2">👨</div>
-	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Michael & Lisa Chen</div><div class="msg-time">${localizeText('昨日')}</div></div><div class="msg-preview unread">Sure, let's talk more in messages this weekend!</div></div>
-	        <div class="msg-unread-dot"></div>
-	      </div>
-	      <div class="msg-item" onclick="openChat('emily')">
-	        <div class="msg-avatar av3">👩</div>
-	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Emily Williams</div><div class="msg-time">${localizeText('月曜')}</div></div><div class="msg-preview">The room is available from May 1st. Let me know!</div></div>
-	      </div>
-	      <div class="msg-item" onclick="openChat('robert')">
-	        <div class="msg-avatar av4">👨</div>
-	        <div class="msg-content"><div class="msg-row1"><div class="msg-name">Robert & Mary Davis</div><div class="msg-time">4/5</div></div><div class="msg-preview">We usually have dinner together on weekdays 🍽️</div></div>
-	      </div>
-	    `;
+	    if (window._currentUser?.id && window._supabase?.from) {
+	      renderSupabaseGuestMessages();
+	      return;
+	    }
+
+	    list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Please log in to view messages.' : 'メッセージを見るにはログインしてください'}</div>`;
+	    return;
 	  }
 
 	  function renderHostMessagesForService() {
