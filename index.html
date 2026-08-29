@@ -5315,7 +5315,7 @@
       <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
       <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
       <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
-      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
       <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-available-start" type="date" value="2026-07-01" /></div>
       <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-available-end" type="date" value="2026-12-31" /></div>
       <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-min-stay" type="number" min="1" inputmode="numeric" value="1" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -6364,7 +6364,7 @@
 	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
 	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
-	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-profile-available-start" type="date" value="2026-07-01" /></div><div><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-profile-available-end" type="date" value="2026-12-31" /></div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
 	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
@@ -12964,29 +12964,108 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      && longitude <= 180;
 	  }
 
-	  async function geocodeHomestayPrivateAddress(address) {
+	  function extractCanadianPostalCode(address) {
+	    const match = String(address || '').match(/\b([ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z])[ -]?(\d[ABCEGHJ-NPRSTV-Z]\d)\b/i);
+	    return match ? `${match[1].toUpperCase()} ${match[2].toUpperCase()}` : '';
+	  }
+
+	  function normalizeCanadianPostalCode(value) {
+	    const compact = String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+	    return /^[ABCEGHJ-NPRSTVXY]\d[ABCEGHJ-NPRSTV-Z]\d[ABCEGHJ-NPRSTV-Z]\d$/.test(compact)
+	      ? `${compact.slice(0, 3)} ${compact.slice(3)}`
+	      : '';
+	  }
+
+	  function textContainsCanadianPostalCode(text, postalCode) {
+	    const normalizedPostal = normalizeCanadianPostalCode(postalCode).replace(/\s/g, '');
+	    if (!normalizedPostal) return false;
+	    return String(text || '').toUpperCase().replace(/[^A-Z0-9]/g, '').includes(normalizedPostal);
+	  }
+
+	  function normalizeHomestayCityName(value) {
+	    const text = String(value || '').trim().toLowerCase();
+	    if (!text) return '';
+	    if (text.includes('vancouver') || text.includes('バンクーバー')) return 'vancouver';
+	    if (text.includes('toronto') || text.includes('トロント')) return 'toronto';
+	    return text;
+	  }
+
+	  function homestayNominatimResultCity(row = {}) {
+	    const address = row.address || {};
+	    return [
+	      address.city,
+	      address.town,
+	      address.village,
+	      address.municipality,
+	      address.county,
+	      row.display_name
+	    ].filter(Boolean).join(' ');
+	  }
+
+	  function homestayGeocodeCandidateFromRows(rows = [], options = {}) {
+	    const postalCode = normalizeCanadianPostalCode(options.postalCode || '');
+	    const city = normalizeHomestayCityName(options.city || '');
+	    const candidates = Array.isArray(rows) ? rows : [];
+	    for (const row of candidates) {
+	      if (!validHomestayCoordinate(row?.lat, row?.lon)) continue;
+	      if (postalCode) {
+	        const resultPostcode = normalizeCanadianPostalCode(row?.address?.postcode || '');
+	        const postcodeMatches = resultPostcode
+	          ? resultPostcode === postalCode
+	          : textContainsCanadianPostalCode(row?.display_name, postalCode);
+	        if (!postcodeMatches) continue;
+	      } else if (city) {
+	        const candidateCity = normalizeHomestayCityName(homestayNominatimResultCity(row));
+	        if (!candidateCity || (!candidateCity.includes(city) && !city.includes(candidateCity))) continue;
+	      }
+	      return row;
+	    }
+	    return null;
+	  }
+
+	  async function fetchHomestayNominatimCandidates(params, signal) {
+	    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+	      headers: { Accept: 'application/json' },
+	      signal
+	    });
+	    if (!response.ok) throw new Error(`Nominatim HTTP ${response.status}`);
+	    const results = await response.json();
+	    return Array.isArray(results) ? results : [];
+	  }
+
+	  async function geocodeHomestayPrivateAddress(address, options = {}) {
 	    const fullAddress = String(address || '').trim();
 	    if (!fullAddress || !window.fetch) return null;
 	    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
 	    const timeoutId = controller ? setTimeout(() => controller.abort(), 8000) : null;
 	    try {
-	      const params = new URLSearchParams({
-	        format: 'jsonv2',
-	        limit: '1',
-	        countrycodes: 'ca',
-	        q: fullAddress
-	      });
-	      const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
-	        headers: { Accept: 'application/json' },
-	        signal: controller?.signal
-	      });
-	      if (!response.ok) throw new Error(`Nominatim HTTP ${response.status}`);
-	      const results = await response.json();
-	      const first = Array.isArray(results) ? results[0] : null;
-	      if (!first || !validHomestayCoordinate(first.lat, first.lon)) return null;
+	      const postalCode = extractCanadianPostalCode(fullAddress);
+	      let candidate = null;
+	      if (postalCode) {
+	        const postalParams = new URLSearchParams({
+	          format: 'jsonv2',
+	          limit: '5',
+	          countrycodes: 'ca',
+	          postalcode: postalCode,
+	          addressdetails: '1'
+	        });
+	        const postalResults = await fetchHomestayNominatimCandidates(postalParams, controller?.signal);
+	        candidate = homestayGeocodeCandidateFromRows(postalResults, { postalCode });
+	      } else {
+	        const addressParams = new URLSearchParams({
+	          format: 'jsonv2',
+	          limit: '5',
+	          countrycodes: 'ca',
+	          addressdetails: '1',
+	          q: fullAddress
+	        });
+	        const addressResults = await fetchHomestayNominatimCandidates(addressParams, controller?.signal);
+	        candidate = homestayGeocodeCandidateFromRows(addressResults, { city: options.city });
+	      }
+	      if (!candidate || !validHomestayCoordinate(candidate.lat, candidate.lon)) return null;
 	      return {
-	        latitude: blurHomestayCoordinate(first.lat),
-	        longitude: blurHomestayCoordinate(first.lon),
+	        latitude: blurHomestayCoordinate(candidate.lat),
+	        longitude: blurHomestayCoordinate(candidate.lon),
 	        radiusM: 1000
 	      };
 	    } catch (error) {
@@ -12999,11 +13078,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  async function homestayApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
 	    const fullAddress = String(address || '').trim();
-	    const previousAddress = String(options.previousAddress || '').trim();
-	    const currentListing = options.currentListing || {};
-	    const hasExistingApprox = validHomestayCoordinate(currentListing.approximate_latitude, currentListing.approximate_longitude);
-	    const addressChanged = fullAddress !== previousAddress;
-	    const shouldGeocode = !!fullAddress && (options.force || addressChanged || !hasExistingApprox);
 	    if (!fullAddress) {
 	      return {
 	        payload: {
@@ -13014,9 +13088,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        warning: ''
 	      };
 	    }
-	    if (!shouldGeocode) return { payload: {}, warning: '' };
 
-	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress);
+	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress, { city: options.city });
 	    if (geocoded && validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
 	      return {
 	        payload: {
@@ -13027,15 +13100,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        warning: ''
 	      };
 	    }
-	    const clearStaleLocation = addressChanged || !hasExistingApprox;
 	    return {
-	      payload: clearStaleLocation
-	        ? {
-	            approximate_latitude: null,
-	            approximate_longitude: null,
-	            approximate_radius_m: 1000
-	          }
-	        : {},
+	      payload: {
+	        approximate_latitude: null,
+	        approximate_longitude: null,
+	        approximate_radius_m: 1000
+	      },
 	      warning: currentLang === 'en'
 	        ? 'Address was saved, but the approximate location could not be updated.'
 	        : '住所は保存されましたが、概略位置を更新できませんでした。'
@@ -13372,7 +13442,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['Vancouver','Toronto'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
 	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
-	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
 	      <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="${startId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="${endId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="${prefix}-min-stay" type="number" min="1" inputmode="numeric" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -15568,7 +15638,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (validationErrors.length) {
 	      return { ok: false, message: validationErrors[0] };
 	    }
-	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { force: true });
+	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city });
 	    const listingPayload = {
 	      ...baseListingPayload,
 	      ...approximateLocation.payload
@@ -15664,10 +15734,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (validationErrors.length) {
 	      return { ok: false, message: validationErrors[0] };
 	    }
-	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, {
-	      previousAddress: currentHomestayHostLoadedFullAddress,
-	      currentListing: currentHomestayListing
-	    });
+	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city });
 	    const listingPayload = {
 	      ...baseListingPayload,
 	      ...approximateLocation.payload
