@@ -7504,6 +7504,11 @@
   let currentBlockTarget = null;
   let homestayHostListType = 'new';
   let favorites = new Set(['michael', 'thompson']);
+  let currentSupabaseFavoriteListingIds = new Set();
+  let supabaseFavoriteCacheUserId = '';
+  let supabaseFavoritesLoaded = false;
+  let supabaseFavoriteLoadingPromise = null;
+  const pendingSupabaseFavoriteListingIds = new Set();
   const hostProfileInfo = {
     sarah: { age: '43歳', nationality: 'アメリカ', gender: '女性', religion: '回答しない', englishLevel: 'ネイティブレベル' },
     michael: { age: '45歳・43歳', nationality: 'アメリカ', gender: '男性・女性', religion: 'キリスト教', englishLevel: 'ネイティブレベル' },
@@ -7750,7 +7755,7 @@
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
           <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
-          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favoriteHeartForHost(hostId)}</div>
         </div>
         <div class="match-card-body">
           <div class="match-card-row1">
@@ -9119,7 +9124,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     ).join('');
 
     // Save btn
-    document.getElementById('detail-save').textContent = favorites.has(hostId) ? '❤️' : '🤍';
+    document.getElementById('detail-save').textContent = favoriteHeartForHost(hostId);
 
     // Host info
     const detailAvatar = document.getElementById('detail-avatar');
@@ -9302,8 +9307,119 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   })();
 
   /* ===== FAVORITES ===== */
-  function toggleFavorite(hostId, event) {
+  function isSupabasePublishedFavoriteTarget(listingId) {
+    const id = String(listingId || '').trim();
+    const selected = publishedHomestaySearchHostByListingId(id);
+    return !!(id && selected?.listing?.id === id && selected.listing.status === 'published');
+  }
+
+  function isSupabaseListingFavorited(listingId) {
+    return currentSupabaseFavoriteListingIds.has(String(listingId || ''));
+  }
+
+  function favoriteHeartForHost(hostId) {
+    return isSupabasePublishedFavoriteTarget(hostId)
+      ? (isSupabaseListingFavorited(hostId) ? '❤️' : '🤍')
+      : (favorites.has(hostId) ? '❤️' : '🤍');
+  }
+
+  function clearSupabaseFavoriteCache() {
+    currentSupabaseFavoriteListingIds = new Set();
+    supabaseFavoriteCacheUserId = '';
+    supabaseFavoritesLoaded = false;
+    supabaseFavoriteLoadingPromise = null;
+    pendingSupabaseFavoriteListingIds.clear();
+    window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
+  }
+
+  async function loadCurrentUserFavorites({ force = false } = {}) {
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.from) {
+      clearSupabaseFavoriteCache();
+      return currentSupabaseFavoriteListingIds;
+    }
+    if (!force && supabaseFavoritesLoaded && supabaseFavoriteCacheUserId === userId) return currentSupabaseFavoriteListingIds;
+    if (supabaseFavoriteLoadingPromise && supabaseFavoriteCacheUserId === userId) return await supabaseFavoriteLoadingPromise;
+
+    supabaseFavoriteCacheUserId = userId;
+    supabaseFavoriteLoadingPromise = (async () => {
+      try {
+        const { data, error } = await window._supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', userId);
+        if (error) throw error;
+        currentSupabaseFavoriteListingIds = new Set((Array.isArray(data) ? data : []).map(row => row.listing_id).filter(Boolean));
+        supabaseFavoritesLoaded = true;
+        window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
+        updateFavIcons();
+        return currentSupabaseFavoriteListingIds;
+      } catch (error) {
+        console.error('Supabase favorites load error:', error);
+        currentSupabaseFavoriteListingIds = new Set();
+        supabaseFavoritesLoaded = false;
+        window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
+        updateFavIcons();
+        if (typeof showToast === 'function') showToast(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。');
+        return currentSupabaseFavoriteListingIds;
+      } finally {
+        supabaseFavoriteLoadingPromise = null;
+      }
+    })();
+    return await supabaseFavoriteLoadingPromise;
+  }
+
+  async function saveSupabaseFavoriteListing(listingId, shouldFavorite) {
+    const userId = window._currentUser?.id || '';
+    const id = String(listingId || '').trim();
+    if (!userId || !id || !window._supabase?.from || !isSupabasePublishedFavoriteTarget(id)) return false;
+    if (pendingSupabaseFavoriteListingIds.has(id)) return false;
+    pendingSupabaseFavoriteListingIds.add(id);
+
+    const wasFavorite = currentSupabaseFavoriteListingIds.has(id);
+    if (shouldFavorite) currentSupabaseFavoriteListingIds.add(id);
+    else currentSupabaseFavoriteListingIds.delete(id);
+    updateFavIcons();
+
+    try {
+      if (shouldFavorite) {
+        const { error } = await window._supabase
+          .from('favorites')
+          .insert({ user_id: userId, listing_id: id });
+        if (error && error.code !== '23505') throw error;
+      } else {
+        const { error } = await window._supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('listing_id', id);
+        if (error) throw error;
+      }
+      supabaseFavoritesLoaded = true;
+      supabaseFavoriteCacheUserId = userId;
+      window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
+      updateFavIcons();
+      if (currentScreen === 'favorites') renderFavorites();
+      return true;
+    } catch (error) {
+      console.error('Supabase favorite update error:', error);
+      if (wasFavorite) currentSupabaseFavoriteListingIds.add(id);
+      else currentSupabaseFavoriteListingIds.delete(id);
+      updateFavIcons();
+      if (currentScreen === 'favorites') renderFavorites();
+      if (typeof showToast === 'function') showToast(currentLang === 'en' ? 'Could not update saved listing.' : 'お気に入りを更新できませんでした。');
+      return false;
+    } finally {
+      pendingSupabaseFavoriteListingIds.delete(id);
+    }
+  }
+
+  async function toggleFavorite(hostId, event) {
     if (event) event.stopPropagation();
+    if (isSupabasePublishedFavoriteTarget(hostId)) {
+      await saveSupabaseFavoriteListing(hostId, !isSupabaseListingFavorited(hostId));
+      return;
+    }
     if (favorites.has(hostId)) {
       favorites.delete(hostId);
     } else {
@@ -9311,11 +9427,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     }
     updateFavIcons();
   }
+  window.loadCurrentUserFavorites = loadCurrentUserFavorites;
+  window.clearSupabaseFavoriteCache = clearSupabaseFavoriteCache;
 
   function toggleDetailFav() {
     if (!currentHost) return;
     toggleFavorite(currentHost);
-    document.getElementById('detail-save').textContent = favorites.has(currentHost) ? '❤️' : '🤍';
+    document.getElementById('detail-save').textContent = favoriteHeartForHost(currentHost);
   }
 
   function toggleSharehouseFavorite(id, event) {
@@ -9335,7 +9453,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const card = el.closest('.match-card');
       const listingId = card?.dataset?.listingId;
       if (listingId) {
-        el.textContent = favorites.has(listingId) ? '❤️' : '🤍';
+        el.textContent = favoriteHeartForHost(listingId);
         return;
       }
       if (!card) return;
@@ -9345,16 +9463,48 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const sh = onclick && onclick.match(/openSharehouseDetail\('([^']+)'\)/);
       if (sh) el.textContent = favorites.has('sh:' + sh[1]) ? '❤️' : '🤍';
     });
+    const detailSave = document.getElementById('detail-save');
+    if (detailSave && currentHost) detailSave.textContent = favoriteHeartForHost(currentHost);
   }
 
   function renderFavorites() {
     const list = document.querySelector('.fav-list');
-    if (favorites.size === 0) {
+    if (!list) return;
+    if (window._currentUser?.id && window._supabase?.from && !supabaseFavoritesLoaded && !supabaseFavoriteLoadingPromise) {
+      loadCurrentUserFavorites().then(() => {
+        if (currentScreen === 'favorites') renderFavorites();
+      });
+    }
+    const supabaseFavoriteIds = Array.from(currentSupabaseFavoriteListingIds).filter(id => isSupabasePublishedFavoriteTarget(id) && HOSTS[id]);
+    const demoFavoriteIds = Array.from(favorites).filter(id => !isSupabasePublishedFavoriteTarget(id));
+    if (supabaseFavoriteIds.length === 0 && demoFavoriteIds.length === 0) {
       list.innerHTML = '<div class="fav-empty"><div class="fav-empty-icon">🤍</div><div class="fav-empty-text">お気に入りはまだありません</div></div>';
       return;
     }
     list.innerHTML = '';
-    favorites.forEach(id => {
+    supabaseFavoriteIds.forEach(id => {
+      const h = HOSTS[id];
+      const image = h.photos?.[0] || neutralHomestayListingPhotoUrl();
+      const currency = h.currency || 'CAD';
+      const priceLabel = Number.isFinite(Number(h.price))
+        ? (currency === 'CAD' ? `C$${Number(h.price).toLocaleString()}` : `${escapeHtml(currency)} ${Number(h.price).toLocaleString()}`)
+        : localizeText('未設定');
+      list.innerHTML += `
+        <div class="match-card" onclick="openPublishedHomestayListingDetail('${escapeHtml(id)}','favorites')">
+          <div class="match-card-img">
+            <img src="${image}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+            <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
+            <div class="match-card-flag">📍 ${escapeHtml(h.city || '')}</div>
+            <div class="match-card-save" onclick="toggleFavorite('${escapeHtml(id)}',event)">❤️</div>
+          </div>
+          <div class="match-card-body">
+            <div class="match-card-row1"><div class="match-card-name">${escapeHtml(h.name || '')}</div></div>
+            <div class="match-card-location">${[localizeText(h.roomType || ''), h.stateShort || ''].filter(Boolean).join(' · ')}</div>
+            <div class="match-card-footer"><div class="match-card-price"><strong>${priceLabel}</strong><span> ${currentLang === 'ja' ? '/月〜' : '/mo+'}</span></div><div class="match-card-meals">${localizeText(h.mealsTag || '')}</div></div>
+          </div>
+        </div>`;
+    });
+    demoFavoriteIds.forEach(id => {
       if (String(id).startsWith('sh:')) {
         const shId = String(id).replace('sh:', '');
         const profile = sharehouseListingProfile(shId);
@@ -11545,7 +11695,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${summary}</div>
           <div class="match-card-flag">📍 ${localizeText(hmHostMeta(result.hostId).area || h.city)}</div>
-          <div class="match-card-save" onclick="toggleFavorite('${hostId}',event)">${favorites.has(result.hostId) ? '❤️' : '🤍'}</div>
+          <div class="match-card-save" onclick="toggleFavorite('${hostId}',event)">${favoriteHeartForHost(result.hostId)}</div>
         </div>
         <div class="match-card-body">
           <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
@@ -14078,8 +14228,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  async function loadPublishedHomestayListingsForGuest({ force = false } = {}) {
 	    if (!window._supabase?.from) return [];
 	    const currentUserId = window._currentUser?.id || '';
-	    if (!force && publishedHomestayHostsLoaded && publishedHomestayHostsCacheUserId === currentUserId) return publishedHomestaySearchHosts;
+	    if (!force && publishedHomestayHostsLoaded && publishedHomestayHostsCacheUserId === currentUserId) {
+	      if (!supabaseFavoritesLoaded || supabaseFavoriteCacheUserId !== currentUserId) await loadCurrentUserFavorites();
+	      return publishedHomestaySearchHosts;
+	    }
 	    publishedHomestayHostsLoadFailed = false;
+	    await loadCurrentUserFavorites({ force });
 
 	    const { data: listingRows, error: listingsError } = await window._supabase
 	      .from('listings')
@@ -21064,6 +21218,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentSupabaseHostConversationRows = [];
     window._lastRestoredUserMode = null;
     window._registrationStartScreenActive = false;
+    if (typeof clearSupabaseFavoriteCache === 'function') clearSupabaseFavoriteCache();
     if (typeof setMessageUnreadDotVisible === 'function') {
       setMessageUnreadDotVisible('guest', false);
       setMessageUnreadDotVisible('host', false);
@@ -22150,7 +22305,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          <img src="${h.photos?.[0] || neutralHomestayListingPhotoUrl()}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
 	          <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
 	          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
-	          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favorites.has(hostId) ? '❤️' : '🤍'}</div>
+	          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favoriteHeartForHost(hostId)}</div>
 	        </div>
 	        <div class="match-card-body">
 	          <div class="match-card-row1"><div class="match-card-name">${h.name}</div></div>
