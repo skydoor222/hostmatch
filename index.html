@@ -7366,6 +7366,13 @@
   let currentChatApplicant = null;
   let chatBackScreen = 'messages';
   let chatDetailMode = 'host';
+  let currentSupabaseConversationId = '';
+  let currentSupabaseConversation = null;
+  let currentSupabaseChatListingId = '';
+  let currentSupabaseChatOtherUserId = '';
+  let currentSupabaseChatMode = '';
+  let isOpeningSupabaseChat = false;
+  let isSendingSupabaseMessage = false;
   let notificationBackScreen = 'mypage';
   let supportBackScreen = 'mypage';
   let privacyBackScreen = 'mypage';
@@ -9373,9 +9380,190 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }).join('');
 	  }
 
+	  function isSupabaseHomestayChatActive() {
+	    return currentSupabaseChatMode === 'homestay'
+	      && !!currentSupabaseConversationId
+	      && chatDetailMode === 'host'
+	      && !!currentSupabaseChatListingId;
+	  }
+
+	  function resetSupabaseChatState() {
+	    currentSupabaseConversationId = '';
+	    currentSupabaseConversation = null;
+	    currentSupabaseChatListingId = '';
+	    currentSupabaseChatOtherUserId = '';
+	    currentSupabaseChatMode = '';
+	  }
+
+	  function formatChatMessageTime(value) {
+	    const date = new Date(value || Date.now());
+	    if (Number.isNaN(date.getTime())) return '';
+	    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+	  }
+
+	  function renderSupabaseHomestayMessages(rows = []) {
+	    const area = document.querySelector('.chat-messages');
+	    if (!area) return;
+	    const messages = Array.isArray(rows) ? rows : [];
+	    const bodyHtml = messages.length
+	      ? messages.map(message => {
+	        const mine = message.sender_id === window._currentUser?.id;
+	        const side = mine ? 'me' : 'them';
+	        return `
+	          <div class="bubble-wrap ${side}">
+	            <div class="bubble ${side}">${escapeHtml(message.body)}</div>
+	            <div class="bubble-time">${escapeHtml(formatChatMessageTime(message.created_at))}</div>
+	          </div>
+	        `;
+	      }).join('')
+	      : `<div class="date-label">${currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません'}</div>`;
+	    area.innerHTML = `<div class="date-label">${t('conversation_history')}</div>${bodyHtml}`;
+	  }
+
+	  async function loadSupabaseConversationMessages(conversationId) {
+	    const { data, error } = await window._supabase
+	      .from('messages')
+	      .select('id, conversation_id, sender_id, body, created_at')
+	      .eq('conversation_id', conversationId)
+	      .order('created_at', { ascending: true });
+	    if (error) throw error;
+	    return Array.isArray(data) ? data : [];
+	  }
+
+	  async function markSupabaseConversationRead(conversationId) {
+	    const userId = window._currentUser?.id;
+	    if (!conversationId || !userId || !window._supabase?.from) return false;
+	    const { error } = await window._supabase
+	      .from('conversation_reads')
+	      .upsert({
+	        conversation_id: conversationId,
+	        user_id: userId,
+	        last_read_at: new Date().toISOString()
+	      }, { onConflict: 'conversation_id,user_id' });
+	    if (error) {
+	      console.error('Supabase conversation_reads upsert error:', error);
+	      return false;
+	    }
+	    return true;
+	  }
+
+	  async function findSupabaseHomestayConversation(listingId, guestUserId, hostUserId) {
+	    const { data, error } = await window._supabase
+	      .from('conversations')
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .eq('listing_id', listingId)
+	      .eq('initiator_id', guestUserId)
+	      .eq('listing_owner_id', hostUserId)
+	      .maybeSingle();
+	    if (error) throw error;
+	    return data || null;
+	  }
+
+	  async function ensureSupabaseHomestayConversation(hostId) {
+	    if (!window._supabase?.from) throw new Error('Supabase is not available');
+	    const listingId = String(hostId || currentHost || '').trim();
+	    const selected = publishedHomestaySearchHostByListingId(listingId);
+	    const listing = selected?.listing || {};
+	    const guestUserId = window._currentUser?.id || '';
+	    const hostUserId = listing.owner_id || '';
+	    if (!listingId || !selected || !listing.id) throw new Error('Published homestay listing was not found');
+	    if (!guestUserId) throw new Error('Current user is missing');
+	    if (!hostUserId) throw new Error('Listing owner is missing');
+	    if (guestUserId === hostUserId) throw new Error('Cannot start a conversation with your own listing');
+
+	    const existing = await findSupabaseHomestayConversation(listing.id, guestUserId, hostUserId);
+	    if (existing?.id) return existing;
+
+	    const payload = {
+	      listing_id: listing.id,
+	      initiator_id: guestUserId,
+	      listing_owner_id: hostUserId
+	    };
+	    const { data, error } = await window._supabase
+	      .from('conversations')
+	      .insert(payload)
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .single();
+	    if (!error) return data;
+	    if (error.code === '23505') {
+	      const raced = await findSupabaseHomestayConversation(listing.id, guestUserId, hostUserId);
+	      if (raced?.id) return raced;
+	    }
+	    throw error;
+	  }
+
+	  function applySupabaseHomestayChatHeader(hostId) {
+	    const h = HOSTS[hostId];
+	    const selected = publishedHomestaySearchHostByListingId(hostId);
+	    const listing = selected?.listing || {};
+	    const header = document.querySelector('.chat-header');
+	    if (!header || !h) return;
+	    const avatar = header.querySelector('.chat-avatar');
+	    if (avatar) {
+	      avatar.className = 'chat-avatar';
+	      avatar.style.background = 'var(--bg)';
+	      if (h.avatarUrl) {
+	        avatar.innerHTML = `<img src="${escapeHtml(h.avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`;
+	      } else {
+	        avatar.textContent = h.avatar || '🧑';
+	      }
+	    }
+	    header.querySelector('.chat-title').textContent = h.name || (currentLang === 'en' ? 'Host' : 'ホスト');
+	    header.querySelector('.chat-subtitle').textContent = [listing.city || h.city, listing.country_code || h.stateShort].filter(Boolean).join(', ');
+	    document.getElementById('chat-banner-name').textContent = h.name || (currentLang === 'en' ? 'Host' : 'ホスト');
+	    document.querySelector('.chat-banner-sub').textContent = t('chat_detail_apply');
+	  }
+
+	  async function openSupabaseHomestayChat(hostId) {
+	    if (isOpeningSupabaseChat) return;
+	    isOpeningSupabaseChat = true;
+	    const detailMessage = document.getElementById('detail-message-btn');
+	    if (detailMessage) detailMessage.disabled = true;
+	    try {
+	      const listingId = String(hostId || currentHost || '').trim();
+	      const h = HOSTS[listingId];
+	      if (!h) throw new Error('Host data was not found');
+	      const conversation = await ensureSupabaseHomestayConversation(listingId);
+	      currentHost = listingId;
+	      currentListing = makeHomestayListing(currentHost);
+	      currentApplicationId = null;
+	      currentChatApplicant = null;
+	      chatBackScreen = 'messages';
+	      chatDetailMode = 'host';
+	      currentSupabaseConversation = conversation;
+	      currentSupabaseConversationId = conversation.id;
+	      currentSupabaseChatListingId = conversation.listing_id;
+	      currentSupabaseChatOtherUserId = conversation.listing_owner_id;
+	      currentSupabaseChatMode = 'homestay';
+	      setGuestMessageService('homestay');
+	      applySupabaseHomestayChatHeader(listingId);
+	      const rows = await loadSupabaseConversationMessages(conversation.id);
+	      renderSupabaseHomestayMessages(rows);
+	      await markSupabaseConversationRead(conversation.id);
+	      navigate(currentScreen, 'chat');
+	      updateBlockedUi();
+	      const area = document.querySelector('.chat-messages');
+	      setTimeout(() => {
+	        if (area) area.scrollTop = area.scrollHeight;
+	      }, 50);
+	    } catch (error) {
+	      console.error('Supabase homestay chat open error:', error);
+	      showToast(currentLang === 'en' ? 'Could not open messages. Please try again.' : 'メッセージを開けませんでした。もう一度お試しください。');
+	    } finally {
+	      isOpeningSupabaseChat = false;
+	      if (detailMessage) detailMessage.disabled = false;
+	    }
+	  }
+
 	  function openChat(hostId) {
+	    const requestedHostId = hostId || currentHost;
+	    if (requestedHostId && isPublishedHomestayDetailHost(requestedHostId)) {
+	      openSupabaseHomestayChat(requestedHostId);
+	      return;
+	    }
 	    const h = HOSTS[hostId || currentHost];
 	    if (!h) return;
+	    resetSupabaseChatState();
     currentHost = hostId || currentHost;
     currentListing = makeHomestayListing(currentHost);
     currentApplicationId = currentListing.type + ':' + currentListing.id;
@@ -9386,8 +9574,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
     // Header
     const header = document.querySelector('.chat-header');
-    header.querySelector('.chat-avatar').className = 'chat-avatar ' + h.avClass;
-    header.querySelector('.chat-avatar').textContent = h.avatar;
+    const avatar = header.querySelector('.chat-avatar');
+    avatar.className = 'chat-avatar ' + h.avClass;
+    avatar.style.background = '';
+    avatar.textContent = h.avatar;
     header.querySelector('.chat-title').textContent = h.name;
     header.querySelector('.chat-subtitle').textContent = h.country + ' ' + h.city + ', ' + h.stateShort;
 
@@ -9428,6 +9618,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function openSharehouseChat(listingId) {
+	    resetSupabaseChatState();
 	    const listing = listingId && SHAREHOUSE_LISTINGS[listingId]
 	      ? SHAREHOUSE_LISTINGS[listingId]
 	      : currentListing?.type === 'sharehouse'
@@ -9476,6 +9667,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
   function openHostApplicantChat(applicantId) {
+    resetSupabaseChatState();
     const service = serviceModeForCurrentContext();
     const applicant = getApplicantForService(applicantId, service);
     if (!applicant) return;
@@ -9524,10 +9716,59 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    openDetail(currentHost);
 	  }
 
-  function sendMessage() {
+  async function sendMessage() {
     const input = document.querySelector('.chat-input');
     const text = input.value.trim();
     if (!text) return;
+
+    if (isSupabaseHomestayChatActive()) {
+      if (isSendingSupabaseMessage) return;
+      if (text.length > 5000) {
+        showToast(currentLang === 'en' ? 'Messages must be 5000 characters or fewer.' : 'メッセージは5000文字以内で入力してください。');
+        return;
+      }
+      if (isCurrentTargetBlocked()) {
+        showToast(currentLang === 'en' ? 'You cannot send messages to this user.' : 'このユーザーにはメッセージを送信できません。');
+        return;
+      }
+      const send = document.querySelector('.chat-send');
+      isSendingSupabaseMessage = true;
+      if (send) {
+        send.disabled = true;
+        send.style.opacity = '.45';
+        send.style.cursor = 'not-allowed';
+      }
+      try {
+        const { data, error } = await window._supabase
+          .from('messages')
+          .insert({
+            conversation_id: currentSupabaseConversationId,
+            sender_id: window._currentUser.id,
+            body: text
+          })
+          .select('id, conversation_id, sender_id, body, created_at')
+          .single();
+        if (error) throw error;
+        input.value = '';
+        const rows = await loadSupabaseConversationMessages(currentSupabaseConversationId);
+        renderSupabaseHomestayMessages(rows.length ? rows : (data ? [data] : []));
+        await markSupabaseConversationRead(currentSupabaseConversationId);
+        const area = document.querySelector('.chat-messages');
+        if (area) area.scrollTop = area.scrollHeight;
+      } catch (error) {
+        console.error('Supabase message insert error:', error);
+        showToast(currentLang === 'en' ? 'Could not send your message. Please try again.' : 'メッセージを送信できませんでした。もう一度お試しください。');
+      } finally {
+        isSendingSupabaseMessage = false;
+        if (send) {
+          send.disabled = false;
+          send.style.opacity = '';
+          send.style.cursor = 'pointer';
+        }
+        updateBlockedUi();
+      }
+      return;
+    }
 
     const area = document.querySelector('.chat-messages');
     const now = new Date();
