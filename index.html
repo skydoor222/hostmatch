@@ -6864,6 +6864,7 @@
   function showRegistrationStartScreen() {
     clearRestoredModeLock();
     window._lastRestoredUserMode = null;
+    window._lastUserModeRestoreStatus = { status: 'empty' };
     window._registrationStartScreenActive = true;
     if (typeof renderRegistrationStartOptions === 'function') renderRegistrationStartOptions();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -6878,14 +6879,44 @@
     return true;
   }
 
+  function setUserModeRestoreStatus(status, detail = {}) {
+    window._lastUserModeRestoreStatus = { status, ...detail };
+    return window._lastUserModeRestoreStatus;
+  }
+
+  function showAuthenticatedEntryError(message) {
+    const text = message || (typeof currentLang !== 'undefined' && currentLang === 'en'
+      ? 'Could not load your account information. Please try again.'
+      : 'アカウント情報を読み込めませんでした。もう一度お試しください。');
+    const loading = document.getElementById('app-loading');
+    if (loading) loading.style.display = 'none';
+    if (window._lastUserModeRestoreStatus) {
+      window._lastUserModeRestoreStatus = { ...window._lastUserModeRestoreStatus, notified: true };
+    }
+    if (typeof showToast === 'function') {
+      showToast(text);
+      return;
+    }
+    if (typeof showLoginError === 'function') showLoginError(text);
+  }
+
   async function restoreUserModeFromUserModes(user) {
     const modes = await loadCurrentUserModes(user);
     if (!modes) {
+      setUserModeRestoreStatus('error', { reason: 'user_modes_select_failed' });
+      showAuthenticatedEntryError();
+      return false;
+    }
+    if (modes.length === 0) {
+      setUserModeRestoreStatus('empty', { modes: [] });
       showRegistrationStartScreen();
       return false;
     }
     if (modes.length !== 1) {
-      showRegistrationStartScreen();
+      setUserModeRestoreStatus('multiple', { count: modes.length, modes });
+      showAuthenticatedEntryError(typeof currentLang !== 'undefined' && currentLang === 'en'
+        ? 'Multiple account modes were found. Please choose how to continue.'
+        : '複数の登録モードが見つかりました。続行方法を確認してください。');
       return false;
     }
 
@@ -6898,11 +6929,15 @@
       window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housing_type : null;
       if (typeof window.applyPendingUserModeRestore === 'function') return await window.applyPendingUserModeRestore();
       if (mode.role === 'guest' && typeof window.applyPendingGuestModeRestore === 'function') return window.applyPendingGuestModeRestore();
-      showRegistrationStartScreen();
+      setUserModeRestoreStatus('error', { reason: 'restore_handler_unavailable', mode });
+      showAuthenticatedEntryError();
       return false;
     }
 
-    showRegistrationStartScreen();
+    setUserModeRestoreStatus('unsupported', { mode });
+    showAuthenticatedEntryError(typeof currentLang !== 'undefined' && currentLang === 'en'
+      ? 'This account mode is not supported yet.'
+      : 'この登録モードはまだ対応していません。');
     return false;
   }
 
@@ -6922,6 +6957,9 @@
   let activeUserModeRestoreUserId = '';
   let lastRestoredUserModeUserId = '';
   let lastRestoredUserModeAt = 0;
+  let activeAuthenticatedEntryPromise = null;
+  let activeAuthenticatedEntryUserId = '';
+  let authenticatedEntryVersion = 0;
 
   async function restoreUserModeOnce(user) {
     if (!user?.id) return false;
@@ -6953,11 +6991,81 @@
     }
   }
 
-  function showLoggedOutScreen() {
-    window._currentProfile = null;
-    clearRestoredModeLock();
+  function resetAuthenticatedEntryState() {
+    authenticatedEntryVersion += 1;
+    activeAuthenticatedEntryPromise = null;
+    activeAuthenticatedEntryUserId = '';
+    activeUserModeRestorePromise = null;
+    activeUserModeRestoreUserId = '';
     lastRestoredUserModeUserId = '';
     lastRestoredUserModeAt = 0;
+    window._pendingUserModeRestore = null;
+    window._pendingGuestModeRestore = null;
+    window._lastRestoredUserMode = null;
+    window._lastUserModeRestoreStatus = null;
+    window._registrationStartScreenActive = false;
+    clearRestoredModeLock();
+  }
+
+  async function enterAuthenticatedUserApp(user, options = {}) {
+    if (!user?.id) return false;
+    if (activeAuthenticatedEntryPromise && activeAuthenticatedEntryUserId === user.id) {
+      return await activeAuthenticatedEntryPromise;
+    }
+
+    const entryVersion = ++authenticatedEntryVersion;
+    activeAuthenticatedEntryUserId = user.id;
+    activeAuthenticatedEntryPromise = (async () => {
+      window._currentUser = user;
+      applyCurrentUserProfile(user, window._currentProfile);
+      await loadCurrentUserProfile(user);
+      if (entryVersion !== authenticatedEntryVersion) return false;
+
+      const shouldRestoreMode = options.forceRestoreMode
+        || !window.currentScreen
+        || window.currentScreen === 'login'
+        || (window.currentScreen === 'role-select' && window._registrationStartScreenActive);
+      if (!shouldRestoreMode) {
+        const loading = document.getElementById('app-loading');
+        if (loading) loading.style.display = 'none';
+        return true;
+      }
+
+      const restoredMode = await restoreUserModeOnce(user);
+      if (entryVersion !== authenticatedEntryVersion) return false;
+
+      const loading = document.getElementById('app-loading');
+      if (loading) loading.style.display = 'none';
+      if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
+        window._registrationStartScreenActive = false;
+        window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
+        return true;
+      }
+      if (window._lastUserModeRestoreStatus?.status !== 'empty' && !window._lastUserModeRestoreStatus?.notified) {
+        showAuthenticatedEntryError();
+      }
+      return false;
+    })();
+
+    try {
+      return await activeAuthenticatedEntryPromise;
+    } finally {
+      if (activeAuthenticatedEntryUserId === user.id) {
+        activeAuthenticatedEntryPromise = null;
+        activeAuthenticatedEntryUserId = '';
+      }
+    }
+  }
+
+  window.setUserModeRestoreStatus = setUserModeRestoreStatus;
+  window.showAuthenticatedEntryError = showAuthenticatedEntryError;
+  window.restoreUserModeOnce = restoreUserModeOnce;
+  window.resetAuthenticatedEntryState = resetAuthenticatedEntryState;
+  window.enterAuthenticatedUserApp = enterAuthenticatedUserApp;
+
+  function showLoggedOutScreen() {
+    window._currentProfile = null;
+    resetAuthenticatedEntryState();
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-login').classList.add('active');
@@ -6967,19 +7075,7 @@
   }
 
   async function showLoggedInEntry(user, options = {}) {
-    const { forceRestoreMode = false } = options;
-    window._currentUser = user;
-    applyCurrentUserProfile(user, window._currentProfile);
-    await loadCurrentUserProfile(user);
-    const shouldRestoreMode = forceRestoreMode || !window.currentScreen || window.currentScreen === 'login';
-    let restoredMode = false;
-    if (shouldRestoreMode) {
-      restoredMode = await restoreUserModeOnce(user);
-    }
-    document.getElementById('app-loading').style.display = 'none';
-    if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
-      window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
-    }
+    return await enterAuthenticatedUserApp(user, options);
   }
 
   function isPasswordRecoveryUrl() {
@@ -7021,6 +7117,11 @@
       return;
     }
     if (event === 'SIGNED_OUT') {
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        await showLoggedInEntry(data.session.user, { forceRestoreMode: true });
+        return;
+      }
       document.getElementById('app-loading').style.display = 'none';
       showLoggedOutScreen();
       return;
@@ -17393,29 +17494,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   if (window._pendingPasswordRecovery) openPasswordUpdateScreen();
 
   async function afterLoginSuccess(user) {
+    if (typeof window.enterAuthenticatedUserApp === 'function') {
+      await window.enterAuthenticatedUserApp(user, { forceRestoreMode: true });
+      return;
+    }
     window._currentUser = user;
-    const profile = window.loadCurrentUserProfile ? await window.loadCurrentUserProfile(user) : null;
-    const name = profile?.display_name || user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
-    const email = user?.email || '';
-    const el = document.getElementById('mypage-username');
-    if (el) el.textContent = name;
-    const el2 = document.getElementById('mypage-useremail');
-    if (el2) el2.textContent = email;
-    const el3 = document.getElementById('mypage-joindate');
-    if (el3) {
-      const d = user?.created_at ? new Date(user.created_at) : new Date();
-      el3.textContent = 'メンバー登録日：' + d.getFullYear() + '年' + (d.getMonth()+1) + '月';
-    }
-    const pn = document.getElementById('prof-name');
-    if (pn) pn.value = name;
-    const pe = document.getElementById('prof-email');
-    if (pe) pe.value = email;
-
-    if (typeof restoreUserModeOnce === 'function') {
-      const restored = await restoreUserModeOnce(user);
-      if (restored) return;
-    }
-    if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
   }
 
   function supabaseAuthErrorMessage(error, mode) {
@@ -17495,6 +17578,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   async function doLogout() {
+    if (typeof window.resetAuthenticatedEntryState === 'function') window.resetAuthenticatedEntryState();
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     try {
       if (window._supabase?.auth) await window._supabase.auth.signOut();
@@ -20839,7 +20923,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       if (housingType === 'homestay') {
         const loaded = await loadRegisteredHomestayGuestDataForRestore();
         if (!loaded) {
-          if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
+          if (typeof window.setUserModeRestoreStatus === 'function') {
+            window.setUserModeRestoreStatus('error', { reason: 'homestay_guest_data_missing', mode: pendingMode });
+          }
+          if (typeof window.showAuthenticatedEntryError === 'function') window.showAuthenticatedEntryError();
           return false;
         }
       }
@@ -20854,7 +20941,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       window._serviceType = 'homestay';
       const loaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
       if (!loaded) {
-        if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
+        if (typeof window.setUserModeRestoreStatus === 'function') {
+          window.setUserModeRestoreStatus('error', { reason: 'homestay_host_data_missing', mode: pendingMode });
+        }
+        if (typeof window.showAuthenticatedEntryError === 'function') window.showAuthenticatedEntryError();
         return false;
       }
       window._lastRestoredUserMode = { housingType, role };
@@ -20871,7 +20961,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return true;
     }
 
-    if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
+    if (typeof window.setUserModeRestoreStatus === 'function') {
+      window.setUserModeRestoreStatus('unsupported', { mode: pendingMode });
+    }
+    if (typeof window.showAuthenticatedEntryError === 'function') window.showAuthenticatedEntryError();
     return false;
   }
 
