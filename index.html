@@ -5312,10 +5312,10 @@
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
       <div class="form-section-title">🏠 家・滞在情報</div>
-      <div class="form-group"><div class="form-label">エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div></div>
+      <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
       <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
       <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
-      <div class="form-group"><div class="form-label">住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
+      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
       <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-available-start" type="date" value="2026-07-01" /></div>
       <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-available-end" type="date" value="2026-12-31" /></div>
       <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-min-stay" type="number" min="1" inputmode="numeric" value="1" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -6361,10 +6361,10 @@
 	      <div class="homestay-profile-only" style="border-top:1px solid var(--border);padding-top:16px;">
 	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">家・滞在情報</div>
 	        <div style="display:flex;flex-direction:column;gap:14px;">
-	          <div><div class="form-label">エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div></div>
+	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
 	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
-	          <div><div class="form-label">住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /></div>
+	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-profile-available-start" type="date" value="2026-07-01" /></div><div><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-profile-available-end" type="date" value="2026-12-31" /></div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
 	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
@@ -12934,6 +12934,18 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return values;
 	  }
 
+	  function hostPublicAreaDbValue(value) {
+	    const text = String(value || '').trim();
+	    const map = { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' };
+	    return map[text] || text || null;
+	  }
+
+	  function hostPublicAreaUiValue(value) {
+	    const text = String(value || '').trim();
+	    const map = { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' };
+	    return map[text] || text;
+	  }
+
 	  function homestayHostProfilePayloadFromForm(scope, userId) {
 	    const householdTypeUi = selectedHostFormChipText(scope, 'household-type', '');
 	    const householdType = toHostProfileDbValue('household_type', householdTypeUi);
@@ -12970,7 +12982,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return {
 	      owner_id: userId,
 	      listing_type: 'homestay',
-	      city: selectedHostFormChipText(scope, 'area', '') || null,
+	      city: hostPublicAreaDbValue(selectedHostFormChipText(scope, 'area', '')),
 	      nearest_station: hostFormTextInput(scope, 'station'),
 	      station_walk_minutes: hostFormIntegerInput(scope, 'walk-min'),
 	      available_from: nullableText(document.getElementById(hostFormAvailableStartId(scope))?.value),
@@ -13261,10 +13273,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
 	    return `
 	      <div class="form-section-title">🏠 家・滞在情報</div>
-	      <div class="form-group"><div class="form-label">エリア</div>${hostChipRowHtml(`${prefix}-area`, ['バンクーバー','トロント'])}</div>
+	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['Vancouver','Toronto'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
 	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
-	      <div class="form-group"><div class="form-label">住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
+	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">一般公開しません</div></div>
 	      <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="${startId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="${endId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="${prefix}-min-stay" type="number" min="1" inputmode="numeric" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -13936,6 +13948,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  function publishedHomestayHostsCacheMatchesCurrentUser() {
 	    return publishedHomestayHostsCacheUserId === (window._currentUser?.id || '');
+	  }
+
+	  function invalidatePublishedHomestayGuestCache() {
+	    currentPublishedHomestayListings = [];
+	    publishedHomestaySearchHosts = [];
+	    currentPublishedHomestayHostFamilyMembers = [];
+	    currentPublishedHomestayHostStudents = [];
+	    publishedHomestayHostsLoaded = false;
+	    publishedHomestayHostsLoadFailed = false;
+	    publishedHomestayHostsCacheUserId = '';
+	    window._currentPublishedHomestayListings = currentPublishedHomestayListings;
+	    window._publishedHomestaySearchHosts = publishedHomestaySearchHosts;
+	    window._currentPublishedHomestayHostFamilyMembers = currentPublishedHomestayHostFamilyMembers;
+	    window._currentPublishedHomestayHostStudents = currentPublishedHomestayHostStudents;
 	  }
 
 	  function homestaySearchHostIds() {
@@ -15497,6 +15523,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode. Please try again.' : 'ホスト登録状態を保存できませんでした。もう一度お試しください。' };
 	    }
 
+	    invalidatePublishedHomestayGuestCache();
 	    return { ok: true, listingId };
 	  }
 
@@ -15585,6 +15612,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!reloaded) {
 	      return { ok: false, message: currentLang === 'en' ? 'Saved, but could not reload your listing information.' : '保存しましたが、登録情報の再読み込みに失敗しました。' };
 	    }
+	    invalidatePublishedHomestayGuestCache();
 	    return { ok: true, listingId };
 	  }
 
@@ -15854,7 +15882,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setMultiFormChipsWithOther('host-profile-hobbies', hostProfile.hobbies || [], 'host-profile-hobby-other', 'host-profile-hobby-other-wrap');
 	    setInputValueById('host-profile-note', hostProfile.bio || '');
 
-	    setSingleFormChip('host-profile-area', listing.city || '');
+	    setSingleFormChip('host-profile-area', hostPublicAreaUiValue(listing.city || ''));
 	    setInputValueById('host-profile-station', listing.nearest_station || '');
 	    setInputValueById('host-profile-walk-min', listing.station_walk_minutes ?? '');
 	    setInputValueById('host-profile-address', privateDetails.full_address || '');
