@@ -13073,22 +13073,44 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    for (const row of candidates) {
 	      if (!validHomestayCoordinate(row?.lat, row?.lon)) continue;
 	      if (!homestayNominatimResultIsCanada(row)) continue;
+	      let cityMatched = false;
+	      let streetMatched = false;
+	      let postcodeMatched = false;
+	      let fsaMatched = false;
 	      if (city) {
 	        const candidateCity = normalizeHomestayCityName(homestayNominatimResultCity(row));
 	        if (!candidateCity || (!candidateCity.includes(city) && !city.includes(candidateCity))) continue;
+	        cityMatched = true;
 	      }
-	      if (requireStreet && !homestayStreetMatchesCandidate(street, row)) continue;
+	      if (requireStreet) {
+	        if (!homestayStreetMatchesCandidate(street, row)) continue;
+	        streetMatched = true;
+	      }
 	      if (postalCode) {
 	        const resultPostcode = normalizeCanadianPostalCode(row?.address?.postcode || '');
 	        const resultFsa = canadianPostalCodeFsa(resultPostcode);
-	        const postcodeMatches = postalMode === 'fsa'
-	          ? (resultFsa ? resultFsa === postalFsa : textContainsCanadianPostalFsa(row?.display_name, postalFsa))
-	          : (resultPostcode
-	            ? (resultPostcode === postalCode || resultFsa === postalFsa)
-	            : (textContainsCanadianPostalCode(row?.display_name, postalCode) || (allowMissingPostcodeWithStreet && requireStreet)));
+	        let postcodeMatches = false;
+	        if (postalMode === 'fsa') {
+	          postcodeMatches = resultFsa ? resultFsa === postalFsa : textContainsCanadianPostalFsa(row?.display_name, postalFsa);
+	          fsaMatched = postcodeMatches;
+	        } else if (resultPostcode) {
+	          postcodeMatched = resultPostcode === postalCode;
+	          fsaMatched = !postcodeMatched && resultFsa === postalFsa;
+	          postcodeMatches = postcodeMatched || fsaMatched;
+	        } else {
+	          postcodeMatched = textContainsCanadianPostalCode(row?.display_name, postalCode);
+	          postcodeMatches = postcodeMatched || (allowMissingPostcodeWithStreet && requireStreet);
+	        }
 	        if (!postcodeMatches) continue;
 	      }
-	      return row;
+	      let matchType = 'area';
+	      if (streetMatched && cityMatched && postcodeMatched) matchType = 'street-city-postcode';
+	      else if (streetMatched && cityMatched && fsaMatched) matchType = 'street-city-postal-fsa';
+	      else if (streetMatched && cityMatched) matchType = 'street-city';
+	      else if (postcodeMatched) matchType = 'postal-exact';
+	      else if (fsaMatched) matchType = 'postal-fsa';
+	      else if (cityMatched) matchType = 'city';
+	      return { ...row, _homestayGeocodeMatchType: matchType };
 	    }
 	    return null;
 	  }
@@ -13127,7 +13149,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const rows = await fetchHomestayNominatimCandidates(params, signal);
 	      const candidate = homestayGeocodeCandidateFromRows(rows, validationOptions);
 	      if (!candidate) console.warn(`Homestay private address geocode stage failed: ${stageName}`);
-	      return candidate;
+	      return candidate ? { ...candidate, _homestayGeocodeSourceStage: stageName } : null;
 	    } catch (error) {
 	      console.warn(`Homestay private address geocode stage failed: ${stageName}`, error?.message || error);
 	      return null;
@@ -13219,7 +13241,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return {
 	        latitude: blurHomestayCoordinate(candidate.lat),
 	        longitude: blurHomestayCoordinate(candidate.lon),
-	        radiusM: 1000
+	        radiusM: 1000,
+	        sourceStage: candidate._homestayGeocodeSourceStage || '',
+	        matchType: candidate._homestayGeocodeMatchType || ''
 	      };
 	    } catch (error) {
 	      console.warn('Homestay private address geocode failed:', error?.message || error);
@@ -13227,6 +13251,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    } finally {
 	      if (timeoutId) clearTimeout(timeoutId);
 	    }
+	  }
+
+	  function homestayGeocodeDiagnosticMessage(geocoded) {
+	    const sourceStage = String(geocoded?.sourceStage || '').trim();
+	    if (!sourceStage) return '';
+	    const matchType = String(geocoded?.matchType || '').trim();
+	    const method = matchType ? `${sourceStage} / ${matchType}` : sourceStage;
+	    return currentLang === 'en'
+	      ? `Approximate location updated. Method: ${method}`
+	      : `概略位置を更新しました。取得方法: ${method}`;
 	  }
 
 	  async function homestayApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
@@ -13238,7 +13272,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          approximate_longitude: null,
 	          approximate_radius_m: 1000
 	        },
-	        warning: ''
+	        warning: '',
+	        diagnostic: ''
 	      };
 	    }
 
@@ -13250,7 +13285,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          approximate_longitude: geocoded.longitude,
 	          approximate_radius_m: geocoded.radiusM
 	        },
-	        warning: ''
+	        warning: '',
+	        diagnostic: homestayGeocodeDiagnosticMessage(geocoded)
 	      };
 	    }
 	    return {
@@ -13261,7 +13297,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      },
 	      warning: currentLang === 'en'
 	        ? 'Address was saved, but the approximate location could not be updated.'
-	        : '住所は保存されましたが、概略位置を更新できませんでした。'
+	        : '住所は保存されましたが、概略位置を更新できませんでした。',
+	      diagnostic: ''
 	    };
 	  }
 
@@ -15852,7 +15889,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 
 	    invalidatePublishedHomestayGuestCache();
-	    return { ok: true, listingId, warning: approximateLocation.warning || '' };
+	    return { ok: true, listingId, warning: approximateLocation.warning || '', diagnostic: approximateLocation.diagnostic || '' };
 	  }
 
 	  async function saveHomestayHostProfileEditToSupabase() {
@@ -15947,7 +15984,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return { ok: false, message: currentLang === 'en' ? 'Saved, but could not reload your listing information.' : '保存しましたが、登録情報の再読み込みに失敗しました。' };
 	    }
 	    invalidatePublishedHomestayGuestCache();
-	    return { ok: true, listingId, warning: approximateLocation.warning || '' };
+	    return { ok: true, listingId, warning: approximateLocation.warning || '', diagnostic: approximateLocation.diagnostic || '' };
 	  }
 
 	  function hostDisplayValue(value, fallback = '未設定') {
@@ -18060,7 +18097,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return;
 	    }
 	    updateHostDashboardListing();
-	    showToast(result.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
+	    showToast(result.warning || result.diagnostic || (currentLang === 'en' ? 'Saved' : '保存しました'));
 	    navigate(currentScreen, 'host-dashboard');
 	  }
 
@@ -22230,12 +22267,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
           btn.textContent = localizeText('登録完了 ✓');
         }
         return;
-      }
-      if (btn) btn.disabled = false;
-      navigate('host-onboarding', 'host-dashboard');
-      showToast(savedToSupabase.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
-    }
-  }
+	      }
+	      if (btn) btn.disabled = false;
+	      navigate('host-onboarding', 'host-dashboard');
+	      showToast(savedToSupabase.warning || savedToSupabase.diagnostic || (currentLang === 'en' ? 'Saved' : '保存しました'));
+	    }
+	  }
 
   function hostObBack() {
     if (hostObStep > 1) { hostObStep--; renderHostObStep(); }
