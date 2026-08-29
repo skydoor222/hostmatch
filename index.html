@@ -6989,6 +6989,7 @@
     window._pendingGuestModeRestore = null;
     window._lastRestoredUserMode = null;
     window._lastUserModeRestoreStatus = null;
+    window._authenticatedRouteRestored = false;
     window._registrationStartScreenActive = false;
     clearRestoredModeLock();
   }
@@ -7017,6 +7018,7 @@
         return true;
       }
 
+      window._authenticatedRouteRestored = false;
       const restoredMode = await restoreUserModeOnce(user);
       if (entryVersion !== authenticatedEntryVersion) return false;
 
@@ -7024,6 +7026,7 @@
       if (loading) loading.style.display = 'none';
       if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
         window._registrationStartScreenActive = false;
+        if (window._authenticatedRouteRestored) return true;
         window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
         return true;
       }
@@ -7051,6 +7054,7 @@
 
   function showLoggedOutScreen() {
     window._currentProfile = null;
+    if (typeof window.clearAuthenticatedRoute === 'function') window.clearAuthenticatedRoute();
     resetAuthenticatedEntryState();
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -7581,6 +7585,7 @@
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-listing','host-settings':'hbnav-host-settings'};
     if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
     if (typeof scheduleMessageUnreadDotRefresh === 'function') scheduleMessageUnreadDotRefresh();
+    if (typeof saveAuthenticatedRoute === 'function') saveAuthenticatedRoute();
   }
 
   function updateSharehouseManagerProfileCard() {
@@ -18564,6 +18569,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   async function doLogout() {
+    if (typeof window.clearAuthenticatedRoute === 'function') window.clearAuthenticatedRoute();
     if (typeof window.resetAuthenticatedEntryState === 'function') window.resetAuthenticatedEntryState();
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     try {
@@ -21802,6 +21808,257 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
   /* ===== 検索カテゴリ切り替え ===== */
   let currentSearchCat = 'homestay';
+  const AUTH_ROUTE_STORAGE_KEY = 'hostmatch_authenticated_route';
+  let isRestoringAuthenticatedRoute = false;
+
+  function authenticatedRouteRole() {
+    if (currentRole === 'host') return 'host';
+    if (currentRole === 'guest') return 'guest';
+    return 'resident';
+  }
+
+  function authenticatedRouteServiceType() {
+    return serviceModeForCurrentContext?.() || window._serviceType || currentSearchCat || 'homestay';
+  }
+
+  function authenticatedRouteForScreen(screen, extra = {}) {
+    const routeScreen = String(screen || currentScreen || '').trim();
+    if (!routeScreen || !window._currentUser?.id) return null;
+    const excluded = new Set([
+      'login',
+      'password-reset-request',
+      'password-update',
+      'onboarding',
+      'matching',
+      'role-select',
+      'service-select',
+      'host-onboarding',
+      'resident-onboarding'
+    ]);
+    if (excluded.has(routeScreen)) return null;
+    const guestScreens = new Set([
+      'search',
+      'favorites',
+      'detail',
+      'messages',
+      'chat',
+      'mypage',
+      'profile',
+      'lifestyle',
+      'notification-settings',
+      'support',
+      'privacy-security',
+      'blocked-users',
+      'ai-result',
+      'homestay-host-list'
+    ]);
+    const hostScreens = new Set([
+      'host-dashboard',
+      'host-profile',
+      'host-messages',
+      'chat',
+      'host-settings',
+      'notification-settings',
+      'support',
+      'privacy-security',
+      'blocked-users'
+    ]);
+    const routeRole = authenticatedRouteRole();
+    if (!['guest', 'host'].includes(routeRole)) return null;
+    if (routeRole === 'host' && !hostScreens.has(routeScreen)) return null;
+    if (routeRole === 'guest' && !guestScreens.has(routeScreen)) return null;
+
+    const serviceType = authenticatedRouteServiceType();
+    const route = {
+      userId: window._currentUser.id,
+      role: routeRole,
+      serviceType,
+      screen: routeScreen
+    };
+    if (routeScreen === 'detail') {
+      if (!currentHost || !isPublishedHomestayDetailHost(currentHost)) return null;
+      route.listingId = String(currentHost);
+      route.detailFrom = detailBackScreen || extra.detailFrom || 'search';
+    }
+    if (routeScreen === 'chat') {
+      if (!currentSupabaseConversationId || !['homestay', 'homestay-host'].includes(currentSupabaseChatMode)) return null;
+      route.conversationId = String(currentSupabaseConversationId);
+      route.chatMode = currentSupabaseChatMode || (routeRole === 'host' ? 'homestay-host' : 'homestay');
+    }
+    if (extra.listingId) route.listingId = String(extra.listingId);
+    if (extra.conversationId) route.conversationId = String(extra.conversationId);
+    if (extra.detailFrom) route.detailFrom = String(extra.detailFrom);
+    return route;
+  }
+
+  function saveAuthenticatedRoute(extra = {}) {
+    try {
+      const route = authenticatedRouteForScreen(window.currentScreen || currentScreen, extra);
+      if (!route) return false;
+      sessionStorage.setItem(AUTH_ROUTE_STORAGE_KEY, JSON.stringify(route));
+      return true;
+    } catch (error) {
+      console.warn('Authenticated route save failed:', error);
+      return false;
+    }
+  }
+
+  function readAuthenticatedRoute() {
+    try {
+      const raw = sessionStorage.getItem(AUTH_ROUTE_STORAGE_KEY);
+      if (!raw) return null;
+      const route = JSON.parse(raw);
+      return route && typeof route === 'object' ? route : null;
+    } catch (error) {
+      console.warn('Authenticated route read failed:', error);
+      clearAuthenticatedRoute();
+      return null;
+    }
+  }
+
+  function clearAuthenticatedRoute() {
+    try {
+      sessionStorage.removeItem(AUTH_ROUTE_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Authenticated route clear failed:', error);
+    }
+  }
+
+  function authenticatedRouteMatchesMode(route, mode) {
+    if (!route || !mode) return false;
+    if (route.serviceType && route.serviceType !== mode.housingType) return false;
+    if (route.role === 'host') return mode.role === 'host' && mode.housingType === 'homestay';
+    if (route.role === 'guest') return mode.role === 'guest' && ['homestay', 'sharehouse'].includes(mode.housingType);
+    return false;
+  }
+
+  function authenticatedRouteDefaultScreen(mode) {
+    return restoredHomeScreenForMode(mode) || (mode?.role === 'host' ? 'host-dashboard' : 'search');
+  }
+
+  function prepareAuthenticatedAuxiliaryBackScreen(screen, mode) {
+    const back = mode?.role === 'host' ? 'host-settings' : 'mypage';
+    if (screen === 'notification-settings') notificationBackScreen = back;
+    if (screen === 'support') supportBackScreen = back;
+    if (screen === 'privacy-security') privacyBackScreen = back;
+    if (screen === 'blocked-users') blockedUsersBackScreen = back;
+  }
+
+  async function restoreAuthenticatedRoute(user, mode) {
+    const route = readAuthenticatedRoute();
+    if (!route) return false;
+    window._authenticatedRouteRestored = false;
+    if (!user?.id || route.userId !== user.id || !authenticatedRouteMatchesMode(route, mode)) {
+      clearAuthenticatedRoute();
+      return false;
+    }
+    const fallbackScreen = authenticatedRouteDefaultScreen(mode);
+    try {
+      isRestoringAuthenticatedRoute = true;
+      const screen = String(route.screen || '');
+      if (mode.role === 'guest' && mode.housingType === 'homestay') {
+        currentRole = 'guest';
+        currentSearchCat = 'homestay';
+        window._serviceType = 'homestay';
+        if (screen === 'detail') {
+          const listingId = String(route.listingId || '').trim();
+          if (!listingId) throw new Error('Saved detail route is missing listingId');
+          await ensurePublishedHomestayListingsForGuest({ force: true });
+          if (!publishedHomestaySearchHostByListingId(listingId)) {
+            console.warn('Saved detail listing is no longer available:', { listingId });
+            navigate(currentScreen || 'login', 'search');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
+          await openPublishedHomestayListingDetail(listingId, route.detailFrom || 'search');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'favorites') {
+          await loadCurrentUserFavorites({ force: true });
+          await ensurePublishedHomestayListingsForGuest({ force: true });
+          navigate(currentScreen || 'login', 'favorites');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'messages') {
+          setGuestMessageService('homestay');
+          navigate(currentScreen || 'login', 'messages');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'chat') {
+          const conversationId = String(route.conversationId || '').trim();
+          if (!conversationId) throw new Error('Saved chat route is missing conversationId');
+          setGuestMessageService('homestay');
+          await openSupabaseGuestConversation(conversationId);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (['search', 'mypage', 'profile', 'lifestyle', 'notification-settings', 'support', 'privacy-security', 'blocked-users', 'ai-result', 'homestay-host-list'].includes(screen)) {
+          if (screen === 'search' || screen === 'ai-result' || screen === 'homestay-host-list') {
+            await ensurePublishedHomestayListingsForGuest({ force: true });
+          }
+          if (screen === 'profile') await updateGuestProfileMode();
+          if (screen === 'lifestyle') await updateGuestLifestyleMode();
+          prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
+          navigate(currentScreen || 'login', screen);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+      }
+
+      if (mode.role === 'host' && mode.housingType === 'homestay') {
+        currentRole = 'host';
+        currentSearchCat = 'homestay';
+        window._serviceType = 'homestay';
+        if (['host-dashboard', 'host-profile', 'host-settings'].includes(screen)) {
+          await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+          navigate(currentScreen || 'login', screen);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'host-messages') {
+          navigate(currentScreen || 'login', 'host-messages');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'chat') {
+          const conversationId = String(route.conversationId || '').trim();
+          if (!conversationId) throw new Error('Saved host chat route is missing conversationId');
+          await openSupabaseHostConversation(conversationId);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (['notification-settings', 'support', 'privacy-security', 'blocked-users'].includes(screen)) {
+          await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+          prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
+          navigate(currentScreen || 'login', screen);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+      }
+      navigate(currentScreen || 'login', fallbackScreen);
+      window._authenticatedRouteRestored = true;
+      return true;
+    } catch (error) {
+      console.error('Authenticated route restore failed:', error);
+      clearAuthenticatedRoute();
+      navigate(currentScreen || 'login', fallbackScreen);
+      return false;
+    } finally {
+      isRestoringAuthenticatedRoute = false;
+      saveAuthenticatedRoute();
+    }
+  }
+
+  window.saveAuthenticatedRoute = saveAuthenticatedRoute;
+  window.readAuthenticatedRoute = readAuthenticatedRoute;
+  window.clearAuthenticatedRoute = clearAuthenticatedRoute;
+  window.restoreAuthenticatedRoute = restoreAuthenticatedRoute;
+  window.addEventListener('beforeunload', () => {
+    saveAuthenticatedRoute();
+  });
 
   function clearRuntimeSessionState() {
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
@@ -21928,6 +22185,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         }
       }
       window._lastRestoredUserMode = { housingType, role };
+      if (typeof window.restoreAuthenticatedRoute === 'function') {
+        const restoredRoute = await window.restoreAuthenticatedRoute(window._currentUser, window._lastRestoredUserMode);
+        if (restoredRoute) return true;
+      }
       ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
       return true;
     }
@@ -21945,6 +22206,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         return false;
       }
       window._lastRestoredUserMode = { housingType, role };
+      if (typeof window.restoreAuthenticatedRoute === 'function') {
+        const restoredRoute = await window.restoreAuthenticatedRoute(window._currentUser, window._lastRestoredUserMode);
+        if (restoredRoute) return true;
+      }
       ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
       return true;
     }
@@ -21954,6 +22219,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
       window._lastRestoredUserMode = { housingType, role };
+      if (typeof window.restoreAuthenticatedRoute === 'function') {
+        const restoredRoute = await window.restoreAuthenticatedRoute(window._currentUser, window._lastRestoredUserMode);
+        if (restoredRoute) return true;
+      }
       ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
       return true;
     }
