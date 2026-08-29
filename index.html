@@ -8590,64 +8590,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    `;
 	  }
 
-	  const availabilityCalendarState = {};
-
-	  function availabilityCalendar(range, key = 'detail') {
-	    if (!availabilityCalendarState[key]) availabilityCalendarState[key] = { offset: 0, range };
-	    availabilityCalendarState[key].range = range;
-	    return `<div id="availability-calendar-${key}">${availabilityCalendarContent(key)}</div>`;
-	  }
-
-	  function shiftAvailabilityMonth(key, dir) {
-	    const state = availabilityCalendarState[key];
-	    if (!state) return;
-	    state.offset += dir;
-	    const target = document.getElementById('availability-calendar-' + key);
-	    if (target) target.innerHTML = availabilityCalendarContent(key);
-	  }
-
-	  function availabilityCalendarContent(key) {
-	    const range = availabilityCalendarState[key].range;
-	    const start = new Date(range.start + 'T00:00:00');
-	    const end = new Date(range.end + 'T00:00:00');
-	    const viewDate = new Date(start.getFullYear(), start.getMonth() + (availabilityCalendarState[key].offset || 0), 1);
-	    const year = viewDate.getFullYear();
-	    const month = viewDate.getMonth();
-	    const firstDay = new Date(year, month, 1).getDay();
-	    const daysInMonth = new Date(year, month + 1, 0).getDate();
-	    const monthLabel = currentLang === 'ja'
-	      ? `${year}年 ${month + 1}月`
-	      : new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(start);
-	    const weekdays = currentLang === 'ja'
-	      ? ['日','月','火','水','木','金','土']
-	      : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-	    const blanks = Array.from({ length: firstDay }, () => '<div></div>').join('');
-	    const days = Array.from({ length: daysInMonth }, (_, i) => {
-	      const day = i + 1;
-	      const current = new Date(year, month, day);
-	      const available = current >= start && current <= end;
-	      return `<div style="height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:${available ? '#E8F7EF' : 'white'};color:${available ? '#167A45' : 'var(--light)'};border:1px solid ${available ? '#BFE8D1' : 'var(--border)'};">${day}</div>`;
-	    }).join('');
-	    return `
-	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;">
-	        <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px;">
-	          <div style="font-size:13px;font-weight:900;color:var(--dark);">${localizeText('受け入れ可能日')}</div>
-	          <div style="font-size:12px;color:var(--mid);font-weight:800;">${escapeHtml(range.start.replaceAll('-', '/'))} - ${escapeHtml(range.end.replaceAll('-', '/'))}</div>
-	        </div>
-	        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-	          <button type="button" onclick="shiftAvailabilityMonth('${key}', -1)" aria-label="前の月" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;font-weight:900;cursor:pointer;">‹</button>
-	          <div style="font-size:13px;font-weight:900;text-align:center;">${escapeHtml(monthLabel)}</div>
-	          <button type="button" onclick="shiftAvailabilityMonth('${key}', 1)" aria-label="次の月" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;font-weight:900;cursor:pointer;">›</button>
-	        </div>
-	        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:4px;">
-	          ${weekdays.map(w => `<div style="font-size:10px;color:var(--light);font-weight:800;">${w}</div>`).join('')}
-	        </div>
-	        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">${blanks}${days}</div>
-	        <div style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12px;color:var(--mid);font-weight:700;"><span style="width:12px;height:12px;border-radius:4px;background:#E8F7EF;border:1px solid #BFE8D1;"></span>${localizeText('受け入れ可能')}</div>
-	      </div>
-	    `;
-	  }
-
 	  const sharehouseMatchProfiles = {
 	    sh1: {
 	      name: '田中 あおい',
@@ -8789,7 +8731,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        ? (currentLang === 'ja' ? `あなたの条件と${shBadgeMatched}/${shBadgeTotal}項目一致` : `${shBadgeMatched} of ${shBadgeTotal} conditions match`)
 	        : t('condition_comparison');
 	      if (shMeta) shMeta.textContent = `📍 ${localizeText(profile.stay.area)} · ${localizeText('月額料金')} ${localizeText(profile.stay.budget)} · ${localizeText(profile.stay.room)}`;
-		      availabilityCalendarState.sharehouse = { offset: 0, range: profile.available };
 		      renderDetailInfoGrid('sharehouse-basic-profile', [
 		        { label: '名前', value: profile.basic.name },
 		        { label: '年齢', value: profile.basic.age },
@@ -9108,7 +9049,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: 'ゲストとの交流頻度', value: mealInfo.guestFrequency || meta.frequency || '食事の時など時々' }
     ]);
 
-    availabilityCalendarState.homestay = { offset: 0, range: availability };
     renderDetailInfoGrid('detail-stay-room-info', [
       { label: 'エリア', value: stayInfo.area || meta.area || h.city },
       { label: '最寄り駅', value: detailData.station },
@@ -9120,10 +9060,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: '月額料金（CAD）', value: `C$${(h.price || 1500).toLocaleString()}` },
       ...detailRooms.map(r => ({ label: r.label, value: r.val }))
     ]);
-    const stayRoomInfo = document.getElementById('detail-stay-room-info');
-    if (stayRoomInfo) {
-      stayRoomInfo.insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1;">${availabilityCalendar(availability, 'homestay')}</div>`);
-    }
 
     // Rules
     document.querySelector('#screen-detail .rule-list').innerHTML = detailRules.map(r => renderRuleRow(r)).join('');
