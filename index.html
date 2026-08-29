@@ -6866,12 +6866,177 @@
     }
   }
 
+  function restoreDiagnosticErrorText(error) {
+    if (!error) return 'なし';
+    return [
+      error.code ? `code=${error.code}` : '',
+      error.message ? `message=${error.message}` : '',
+      error.details ? `details=${error.details}` : '',
+      error.hint ? `hint=${error.hint}` : ''
+    ].filter(Boolean).join(' / ') || String(error);
+  }
+
+  function restoreDiagnosticValue(value) {
+    if (value === null || value === undefined || value === '') return 'なし';
+    if (Array.isArray(value)) return value.length ? value.join(', ') : '[]';
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  }
+
+  function restoreDiagnosticActiveScreens() {
+    return Array.from(document.querySelectorAll('.screen.active')).map(el => el.id);
+  }
+
+  function ensureRestoreDiagnosticPanel() {
+    const typeSelect = document.getElementById('screen-type-select');
+    if (!typeSelect) return null;
+    let panel = document.getElementById('restore-diagnostic-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'restore-diagnostic-panel';
+      panel.style.cssText = 'width:calc(100% - 32px);max-width:390px;margin:18px auto 0;background:#111827;color:white;border-radius:14px;padding:14px;text-align:left;font-size:12px;line-height:1.55;box-shadow:0 12px 32px rgba(0,0,0,.18);';
+      typeSelect.appendChild(panel);
+    }
+    return panel;
+  }
+
+  function renderRestoreDiagnosticPanel(rows) {
+    const panel = ensureRestoreDiagnosticPanel();
+    if (!panel) return;
+    panel.innerHTML = `
+      <div style="font-size:14px;font-weight:900;margin-bottom:8px;">復元診断</div>
+      ${rows.map(row => `
+        <div style="display:grid;grid-template-columns:128px minmax(0,1fr);gap:8px;border-top:1px solid rgba(255,255,255,.14);padding:6px 0;">
+          <div style="color:rgba(255,255,255,.68);font-weight:800;">${row.label}</div>
+          <div style="font-weight:800;overflow-wrap:anywhere;">${restoreDiagnosticValue(row.value)}</div>
+        </div>
+      `).join('')}
+    `;
+  }
+
+  function removeRestoreDiagnosticPanel() {
+    const panel = document.getElementById('restore-diagnostic-panel');
+    if (panel) panel.remove();
+  }
+
+  async function runRestoreDiagnosticPanel(reason = 'type-select-visible') {
+    const typeSelect = document.getElementById('screen-type-select');
+    const isTypeSelectVisible = !!typeSelect?.classList.contains('active');
+    const client = window._supabase || supabase;
+    let authUser = window._currentUser || null;
+    try {
+      if (!authUser && client?.auth?.getUser) {
+        const { data } = await client.auth.getUser();
+        authUser = data?.user || null;
+      }
+    } catch (error) {
+      console.warn('Restore diagnostic auth user fetch error:', error);
+    }
+    if (!isTypeSelectVisible || !authUser?.id) {
+      removeRestoreDiagnosticPanel();
+      return;
+    }
+
+    renderRestoreDiagnosticPanel([
+      { label: '状態', value: '診断中...' },
+      { label: 'reason', value: reason },
+      { label: 'Auth email', value: authUser.email },
+      { label: 'Auth user id', value: authUser.id }
+    ]);
+
+    const rows = [
+      { label: 'reason', value: reason },
+      { label: 'Auth email', value: authUser.email },
+      { label: 'Auth user id', value: authUser.id }
+    ];
+
+    let modes = [];
+    let modesError = null;
+    try {
+      const { data, error } = await client
+        .from('user_modes')
+        .select('housing_type, role')
+        .eq('user_id', authUser.id);
+      modesError = error || null;
+      modes = Array.isArray(data) ? data : [];
+    } catch (error) {
+      modesError = error;
+    }
+    rows.push({ label: 'user_modes件数', value: modesError ? '取得失敗' : modes.length });
+    rows.push({ label: 'user_modes', value: modesError ? 'なし' : modes.map(mode => `${mode.housing_type || 'なし'} / ${mode.role || 'なし'}`).join(' | ') });
+    rows.push({ label: 'user_modes error', value: restoreDiagnosticErrorText(modesError) });
+
+    let hostProfile = null;
+    let hostProfileError = null;
+    try {
+      const { data, error } = await client
+        .from('homestay_host_profiles')
+        .select('user_id')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      hostProfileError = error || null;
+      hostProfile = data || null;
+    } catch (error) {
+      hostProfileError = error;
+    }
+    rows.push({ label: 'Host profile', value: hostProfileError ? '取得失敗' : hostProfile ? 'あり' : 'なし' });
+    rows.push({ label: 'Host profile error', value: restoreDiagnosticErrorText(hostProfileError) });
+
+    let listing = null;
+    let listingError = null;
+    try {
+      const { data, error } = await client
+        .from('listings')
+        .select('id, status')
+        .eq('owner_id', authUser.id)
+        .eq('listing_type', 'homestay')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      listingError = error || null;
+      listing = data || null;
+    } catch (error) {
+      listingError = error;
+    }
+    rows.push({ label: 'Listing', value: listingError ? '取得失敗' : listing ? 'あり' : 'なし' });
+    rows.push({ label: 'Listing id', value: listing?.id || '' });
+    rows.push({ label: 'Listing status', value: listing?.status || '' });
+    rows.push({ label: 'Listing error', value: restoreDiagnosticErrorText(listingError) });
+
+    rows.push({ label: 'currentRole', value: typeof currentRole === 'undefined' ? '未定義' : currentRole });
+    rows.push({ label: 'serviceType', value: window._serviceType });
+    rows.push({ label: 'currentScreen', value: typeof currentScreen === 'undefined' ? '未定義' : currentScreen });
+    rows.push({ label: 'window.currentScreen', value: window.currentScreen });
+    rows.push({ label: 'active screens', value: restoreDiagnosticActiveScreens() });
+    rows.push({ label: 'last restored mode', value: window._lastRestoredUserMode || null });
+
+    renderRestoreDiagnosticPanel(rows);
+  }
+
+  function scheduleRestoreDiagnosticPanel(reason) {
+    window.clearTimeout(window._restoreDiagnosticPanelTimer);
+    window._restoreDiagnosticPanelTimer = window.setTimeout(() => {
+      runRestoreDiagnosticPanel(reason);
+    }, 120);
+  }
+
+  function installRestoreDiagnosticObserver() {
+    if (window._restoreDiagnosticObserverInstalled) return;
+    const typeSelect = document.getElementById('screen-type-select');
+    if (!typeSelect || typeof MutationObserver === 'undefined') return;
+    window._restoreDiagnosticObserverInstalled = true;
+    const observer = new MutationObserver(() => scheduleRestoreDiagnosticPanel('type-select-mutation'));
+    observer.observe(typeSelect, { attributes: true, attributeFilter: ['class', 'style'] });
+    window._restoreDiagnosticObserver = observer;
+  }
+
   function showTypeSelectScreen() {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-type-select').classList.add('active');
     window.currentScreen = 'type-select';
     if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
     if (typeof applyLang === 'function') applyLang();
+    scheduleRestoreDiagnosticPanel('showTypeSelectScreen');
   }
 
   async function restoreUserModeFromUserModes(user) {
@@ -6906,8 +7071,11 @@
   window.applyCurrentUserProfile = applyCurrentUserProfile;
   window.loadCurrentUserModes = loadCurrentUserModes;
   window.showTypeSelectScreen = showTypeSelectScreen;
+  window.runRestoreDiagnosticPanel = runRestoreDiagnosticPanel;
+  window.scheduleRestoreDiagnosticPanel = scheduleRestoreDiagnosticPanel;
   window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
   window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
+  installRestoreDiagnosticObserver();
   let activeUserModeRestorePromise = null;
   let activeUserModeRestoreUserId = '';
   let lastRestoredUserModeUserId = '';
@@ -6969,6 +7137,7 @@
     if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
       window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
     }
+    scheduleRestoreDiagnosticPanel('showLoggedInEntry-complete');
   }
 
   function isPasswordRecoveryUrl() {
