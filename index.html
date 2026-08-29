@@ -5334,7 +5334,7 @@
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
       <div class="form-section-title">🏠 家・滞在情報</div>
-      <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+      <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
       <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
       <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
       <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('ob')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -6391,7 +6391,7 @@
 	      <div class="homestay-profile-only" style="border-top:1px solid var(--border);padding-top:16px;">
 	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">家・滞在情報</div>
 	        <div style="display:flex;flex-direction:column;gap:14px;">
-	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
 	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
 	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('profile')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -7807,7 +7807,7 @@
 	    const comparisonText = comparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
 	      : t('condition_comparison');
-	    const locationParts = [h.city, localizeText(h.roomType)];
+	    const locationParts = [homestayAreaDisplayValue(h.city), localizeText(h.roomType)];
 	    if (!isPublishedListing && h.years !== null && h.years !== undefined && h.years !== '') {
 	      locationParts.push(t('host_years').replace('{years}', h.years));
 	    }
@@ -7816,7 +7816,7 @@
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
-          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
+          <div class="match-card-flag">${h.country} ${homestayAreaDisplayValue(h.city)}, ${h.stateShort}</div>
           <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favoriteHeartForHost(hostId)}</div>
         </div>
         <div class="match-card-body">
@@ -9202,7 +9202,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    document.getElementById('detail-match-badge').textContent = detailFallbackComparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${detailFallbackComparison.matchedTotal}/${detailFallbackComparison.activeTotal}項目一致` : `${detailFallbackComparison.matchedTotal} of ${detailFallbackComparison.activeTotal} conditions match`)
 	      : t('condition_comparison');
-	    const detailMetaParts = [`${h.country || ''} ${h.city || ''}${h.state ? `, ${h.state}` : ''}`.trim()];
+	    const detailMetaParts = [`${h.country || ''} ${homestayAreaDisplayValue(h.city)}${h.state ? `, ${h.state}` : ''}`.trim()];
 	    if (!isPublishedHost && h.years !== null && h.years !== undefined && h.years !== '') {
 	      detailMetaParts.push(t('host_years').replace('{years}', h.years));
 	    }
@@ -9319,7 +9319,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     ]);
 
     renderDetailInfoGrid('detail-stay-room-info', [
-	      { label: 'エリア', value: stayInfo.area || meta.area || h.city },
+	      { label: 'エリア', value: homestayAreaDisplayValue(stayInfo.area || meta.area || h.city) },
 	      { label: '最寄り駅', value: detailData.station },
 	      { label: '徒歩', value: detailData.walkMin === '未設定' ? '未設定' : `${detailData.walkMin}分` },
 	      { label: '受け入れ可能期間', value: availabilityText },
@@ -9563,7 +9563,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         <div class="match-card-img">
           <img src="${image}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
-          <div class="match-card-flag">📍 ${escapeHtml(h.city || '')}</div>
+          <div class="match-card-flag">📍 ${escapeHtml(homestayAreaDisplayValue(h.city))}</div>
           <div class="match-card-save" onclick="toggleFavorite('${id}',event)">❤️</div>
         </div>
         <div class="match-card-body">
@@ -11129,7 +11129,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   }
 
   const FILTER_VALUE_ALIASES = {
-    'hmf-area': { 'Vancouver': 'バンクーバー', 'Toronto': 'トロント' },
+    'hmf-area': { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto', 'vancouver': 'Vancouver', 'toronto': 'Toronto' },
     'hmf-meal': {
       '不要': '食事なし',
       'なし': '食事なし',
@@ -11688,7 +11688,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     };
     const pref = near;
 
-    hard(filters.area, filters.area, meta.area === filters.area);
+    hard(
+      filters.area,
+      homestayAreaDisplayValue(filters.area),
+      normalizeHomestayArea(meta.area) === normalizeHomestayArea(filters.area)
+    );
     if (filters.start || filters.end) {
       const range = getHostAvailability(hostId);
       const guestRange = { start: filters.start, end: filters.end };
@@ -11847,7 +11851,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      ? (currentLang === 'ja' ? `あなたの条件と${result.matchedTotal}/${result.activeTotal}項目一致` : `${result.matchedTotal} of ${result.activeTotal} conditions match`)
 	      : localizeText('全ホスト表示');
 	    const locationParts = [
-	      localizeText(hmHostMeta(result.hostId).area || h.city),
+	      homestayAreaDisplayValue(hmHostMeta(result.hostId).area || h.city),
 	      localizeText(h.roomType)
 	    ];
 	    if (!isPublishedListing && h.years !== null && h.years !== undefined && h.years !== '') {
@@ -11863,7 +11867,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${summary}</div>
-          <div class="match-card-flag">📍 ${localizeText(hmHostMeta(result.hostId).area || h.city)}</div>
+          <div class="match-card-flag">📍 ${homestayAreaDisplayValue(hmHostMeta(result.hostId).area || h.city)}</div>
           <div class="match-card-save" onclick="toggleFavorite('${hostId}',event)">${favoriteHeartForHost(result.hostId)}</div>
         </div>
         <div class="match-card-body">
@@ -13114,15 +13118,28 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function hostPublicAreaDbValue(value) {
-	    const text = String(value || '').trim();
-	    const map = { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' };
-	    return map[text] || text || null;
+	    return normalizeHomestayArea(value) || null;
 	  }
 
 	  function hostPublicAreaUiValue(value) {
 	    const text = String(value || '').trim();
-	    const map = { 'バンクーバー': 'Vancouver', 'トロント': 'Toronto' };
-	    return map[text] || text;
+	    const canonical = normalizeHomestayArea(text);
+	    const map = { Vancouver: 'バンクーバー', Toronto: 'トロント' };
+	    return map[canonical] || text;
+	  }
+
+	  function normalizeHomestayArea(value) {
+	    const text = String(value || '').trim();
+	    if (!text) return '';
+	    const normalized = text.toLowerCase();
+	    if (normalized === 'vancouver' || text === 'バンクーバー') return 'Vancouver';
+	    if (normalized === 'toronto' || text === 'トロント') return 'Toronto';
+	    return text;
+	  }
+
+	  function homestayAreaDisplayValue(value) {
+	    const uiValue = hostPublicAreaUiValue(value);
+	    return localizeText(uiValue);
 	  }
 
 	  function homestayApproximateLocationRadiusM() {
@@ -13990,7 +14007,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
 	    return `
 	      <div class="form-section-title">🏠 家・滞在情報</div>
-	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['Vancouver','Toronto'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['バンクーバー','トロント'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
 	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
 	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('${scope}')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -14821,7 +14838,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!listing.id) return null;
 	    const hostId = listing.id;
 	    const name = hostDisplayValue(profile.display_name);
-	    const city = hostDisplayValue(listing.city);
+	    const city = normalizeHomestayArea(listing.city) || hostDisplayValue(listing.city);
 	    const roomType = hostDisplayValue(fromHomestayListingDetailDbValue('room_type', details.room_type));
 	    const mealPlan = fromHomestayListingDetailDbValue('meal_plan', details.meal_plan);
 	    const mealStyle = fromHomestayListingDetailDbValue('meal_style', details.meal_style);
@@ -16464,7 +16481,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	    const host = HOSTS.sarah;
 	    const name = hostDisplayValue(profile.display_name);
-	    const city = hostDisplayValue(listing.city);
+	    const city = normalizeHomestayArea(listing.city) || hostDisplayValue(listing.city);
 	    const roomType = hostDisplayValue(fromHomestayListingDetailDbValue('room_type', details.room_type));
 	    const mealPlan = fromHomestayListingDetailDbValue('meal_plan', details.meal_plan);
 	    const mealStyle = fromHomestayListingDetailDbValue('meal_style', details.meal_style);
@@ -16589,7 +16606,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	    const cityEl = document.getElementById('host-dashboard-city');
 	    const priceEl = document.getElementById('host-dashboard-price');
-	    if (cityEl) cityEl.textContent = localizeText(hostDisplayValue(listing.city));
+	    if (cityEl) cityEl.textContent = homestayAreaDisplayValue(listing.city);
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
 	    if (typeof refreshHostDashboardFavoriteCount === 'function') refreshHostDashboardFavoriteCount();
 	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
@@ -23148,7 +23165,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return {
 	        center: [Number(h.approximateLatitude), Number(h.approximateLongitude)],
 	        radius: Number.isFinite(Number(h.approximateRadiusM)) ? Number(h.approximateRadiusM) : homestayApproximateLocationRadiusM(),
-	        label: h.city || h.hostStayInfo?.area || 'Approximate area'
+	        label: homestayAreaDisplayValue(h.city || h.hostStayInfo?.area || 'Approximate area')
 	      };
 	    }
 	    const areaText = [h.hostStayInfo?.area, h.city, h.state].filter(Boolean).join(' ');
@@ -23163,7 +23180,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!h) return '';
 	    if (isPublishedHost) {
 	      const parts = [];
-	      if (h.hostStayInfo?.area || h.city) parts.push(h.hostStayInfo?.area || h.city);
+	      if (h.hostStayInfo?.area || h.city) parts.push(homestayAreaDisplayValue(h.hostStayInfo?.area || h.city));
 	      if (h.hostStayInfo?.station) {
 	        const walk = h.hostStayInfo?.walkMin;
 	        const stationText = walk ? `${h.hostStayInfo.station} 徒歩${walk}分` : `最寄り駅：${h.hostStayInfo.station}`;
@@ -23428,7 +23445,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const comparisonText = comparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
 	      : t('condition_comparison');
-	    const locationParts = [h.city, localizeText(h.roomType)];
+	    const locationParts = [homestayAreaDisplayValue(h.city), localizeText(h.roomType)];
 	    if (!isPublishedListing && h.years !== null && h.years !== undefined && h.years !== '') {
 	      locationParts.push(t('host_years').replace('{years}', h.years));
 	    }
@@ -23445,7 +23462,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        <div class="match-card-img">
 	          <img src="${h.photos?.[0] || neutralHomestayListingPhotoUrl()}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
 	          <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
-	          <div class="match-card-flag">${h.country} ${h.city}, ${h.stateShort}</div>
+	          <div class="match-card-flag">${h.country} ${homestayAreaDisplayValue(h.city)}, ${h.stateShort}</div>
 	          <div class="match-card-save" onclick="toggleFavorite('${safeHostId}',event)">${favoriteHeartForHost(hostId)}</div>
 	        </div>
 	        <div class="match-card-body">
