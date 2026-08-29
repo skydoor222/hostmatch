@@ -3837,7 +3837,7 @@
     <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_form">フォームで問い合わせ</span><span class="mypage-item-arrow">›</span></a>
 
     <div class="mypage-section-title" data-i18n="service">サービス</div>
-    <div class="mypage-item" onclick="navigate(currentScreen,'type-select',{forceTypeSelect:true})"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
+    <div class="mypage-item" onclick="showRegistrationStartScreen()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span style="font-size:11px;background:var(--bg);padding:3px 8px;border-radius:8px;color:var(--light);margin-right:4px;" id="mypage-current-type">ホームステイ</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" style="color:var(--primary);" onclick="doLogout()"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
   </div>
 </div>
@@ -5794,33 +5794,6 @@
   </div>
 </div>
 
-<!-- ==================== サービス種別選択画面（type-select） ==================== -->
-<div class="screen" id="screen-type-select">
-  <div class="role-screen">
-    <div class="role-logo">🏠</div>
-    <div class="role-brand">HostMatch</div>
-    <div class="role-sub">どんな暮らしを探していますか？</div>
-    <div class="role-cards">
-      <div class="role-card guest" onclick="chooseType('homestay')">
-        <div class="role-card-icon">🏡</div>
-        <div class="role-card-text">
-          <div class="role-card-title">ホームステイ</div>
-          <div class="role-card-desc">ホストファミリーと一緒に暮らす</div>
-        </div>
-        <div class="role-card-arrow">›</div>
-      </div>
-      <div class="role-card host" onclick="chooseType('sharehouse')">
-        <div class="role-card-icon">🏢</div>
-        <div class="role-card-text">
-          <div class="role-card-title">シェアハウス</div>
-          <div class="role-card-desc">ライフスタイルが合う人と住む</div>
-        </div>
-        <div class="role-card-arrow">›</div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ==================== ロール選択画面 ==================== -->
 <div class="screen" id="screen-role-select">
   <div class="role-screen">
@@ -5831,7 +5804,7 @@
       <!-- JSで動的に生成 -->
     </div>
     <div style="margin-top:20px;">
-      <button onclick="navigate(currentScreen,'type-select',{forceTypeSelect:true})" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 戻る</button>
+      <button onclick="showRegistrationStartScreen()" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 登録方法を選ぶ</button>
     </div>
   </div>
 </div>
@@ -6866,195 +6839,6 @@
     }
   }
 
-  function restoreDiagnosticErrorText(error) {
-    if (!error) return 'なし';
-    return [
-      error.code ? `code=${error.code}` : '',
-      error.message ? `message=${error.message}` : '',
-      error.details ? `details=${error.details}` : '',
-      error.hint ? `hint=${error.hint}` : ''
-    ].filter(Boolean).join(' / ') || String(error);
-  }
-
-  function restoreDiagnosticValue(value) {
-    if (value === null || value === undefined || value === '') return 'なし';
-    if (Array.isArray(value)) return value.length ? value.join(', ') : '[]';
-    if (typeof value === 'object') return JSON.stringify(value);
-    return String(value);
-  }
-
-  function restoreDiagnosticActiveScreens() {
-    return Array.from(document.querySelectorAll('.screen.active')).map(el => el.id);
-  }
-
-  function ensureRestoreDiagnosticPanel() {
-    const typeSelect = document.getElementById('screen-type-select');
-    if (!typeSelect) return null;
-    let panel = document.getElementById('restore-diagnostic-panel');
-    if (!panel) {
-      panel = document.createElement('div');
-      panel.id = 'restore-diagnostic-panel';
-      panel.style.cssText = 'width:calc(100% - 32px);max-width:390px;margin:18px auto 0;background:#111827;color:white;border-radius:14px;padding:14px;text-align:left;font-size:12px;line-height:1.55;box-shadow:0 12px 32px rgba(0,0,0,.18);';
-      typeSelect.appendChild(panel);
-    }
-    return panel;
-  }
-
-  function renderRestoreDiagnosticPanel(rows) {
-    const panel = ensureRestoreDiagnosticPanel();
-    if (!panel) return;
-    panel.innerHTML = `
-      <div style="font-size:14px;font-weight:900;margin-bottom:8px;">復元診断</div>
-      ${rows.map(row => `
-        <div style="display:grid;grid-template-columns:128px minmax(0,1fr);gap:8px;border-top:1px solid rgba(255,255,255,.14);padding:6px 0;">
-          <div style="color:rgba(255,255,255,.68);font-weight:800;">${row.label}</div>
-          <div style="font-weight:800;overflow-wrap:anywhere;">${restoreDiagnosticValue(row.value)}</div>
-        </div>
-      `).join('')}
-    `;
-  }
-
-  function removeRestoreDiagnosticPanel() {
-    const panel = document.getElementById('restore-diagnostic-panel');
-    if (panel) panel.remove();
-  }
-
-  async function runRestoreDiagnosticPanel(reason = 'type-select-visible') {
-    const typeSelect = document.getElementById('screen-type-select');
-    const isTypeSelectVisible = !!typeSelect?.classList.contains('active');
-    const client = window._supabase || supabase;
-    let authUser = window._currentUser || null;
-    try {
-      if (!authUser && client?.auth?.getUser) {
-        const { data } = await client.auth.getUser();
-        authUser = data?.user || null;
-      }
-    } catch (error) {
-      console.warn('Restore diagnostic auth user fetch error:', error);
-    }
-    if (!isTypeSelectVisible || !authUser?.id) {
-      removeRestoreDiagnosticPanel();
-      return;
-    }
-
-    renderRestoreDiagnosticPanel([
-      { label: '状態', value: '診断中...' },
-      { label: 'reason', value: reason },
-      { label: 'Auth email', value: authUser.email },
-      { label: 'Auth user id', value: authUser.id }
-    ]);
-
-    const rows = [
-      { label: 'reason', value: reason },
-      { label: 'Auth email', value: authUser.email },
-      { label: 'Auth user id', value: authUser.id }
-    ];
-
-    let modes = [];
-    let modesError = null;
-    try {
-      const { data, error } = await client
-        .from('user_modes')
-        .select('housing_type, role')
-        .eq('user_id', authUser.id);
-      modesError = error || null;
-      modes = Array.isArray(data) ? data : [];
-    } catch (error) {
-      modesError = error;
-    }
-    rows.push({ label: 'user_modes件数', value: modesError ? '取得失敗' : modes.length });
-    rows.push({ label: 'user_modes', value: modesError ? 'なし' : modes.map(mode => `${mode.housing_type || 'なし'} / ${mode.role || 'なし'}`).join(' | ') });
-    rows.push({ label: 'user_modes error', value: restoreDiagnosticErrorText(modesError) });
-
-    let hostProfile = null;
-    let hostProfileError = null;
-    try {
-      const { data, error } = await client
-        .from('homestay_host_profiles')
-        .select('user_id')
-        .eq('user_id', authUser.id)
-        .maybeSingle();
-      hostProfileError = error || null;
-      hostProfile = data || null;
-    } catch (error) {
-      hostProfileError = error;
-    }
-    rows.push({ label: 'Host profile', value: hostProfileError ? '取得失敗' : hostProfile ? 'あり' : 'なし' });
-    rows.push({ label: 'Host profile error', value: restoreDiagnosticErrorText(hostProfileError) });
-
-    let listing = null;
-    let listingError = null;
-    try {
-      const { data, error } = await client
-        .from('listings')
-        .select('id, status')
-        .eq('owner_id', authUser.id)
-        .eq('listing_type', 'homestay')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      listingError = error || null;
-      listing = data || null;
-    } catch (error) {
-      listingError = error;
-    }
-    rows.push({ label: 'Listing', value: listingError ? '取得失敗' : listing ? 'あり' : 'なし' });
-    rows.push({ label: 'Listing id', value: listing?.id || '' });
-    rows.push({ label: 'Listing status', value: listing?.status || '' });
-    rows.push({ label: 'Listing error', value: restoreDiagnosticErrorText(listingError) });
-
-    rows.push({ label: 'currentRole', value: typeof currentRole === 'undefined' ? '未定義' : currentRole });
-    rows.push({ label: 'serviceType', value: window._serviceType });
-    rows.push({ label: 'currentScreen', value: typeof currentScreen === 'undefined' ? '未定義' : currentScreen });
-    rows.push({ label: 'window.currentScreen', value: window.currentScreen });
-    rows.push({ label: 'active screens', value: restoreDiagnosticActiveScreens() });
-    rows.push({ label: 'last restored mode', value: window._lastRestoredUserMode || null });
-
-    renderRestoreDiagnosticPanel(rows);
-  }
-
-  function scheduleRestoreDiagnosticPanel(reason) {
-    window.clearTimeout(window._restoreDiagnosticPanelTimer);
-    window._restoreDiagnosticPanelTimer = window.setTimeout(() => {
-      runRestoreDiagnosticPanel(reason);
-    }, 120);
-  }
-
-  function installRestoreDiagnosticObserver() {
-    if (window._restoreDiagnosticObserverInstalled) return;
-    const typeSelect = document.getElementById('screen-type-select');
-    if (!typeSelect || typeof MutationObserver === 'undefined') return;
-    window._restoreDiagnosticObserverInstalled = true;
-    const observer = new MutationObserver(() => scheduleRestoreDiagnosticPanel('type-select-mutation'));
-    observer.observe(typeSelect, { attributes: true, attributeFilter: ['class', 'style'] });
-    window._restoreDiagnosticObserver = observer;
-  }
-
-  function currentRestoredModeLock() {
-    const lock = window._restoredModeLock;
-    const userId = window._currentUser?.id;
-    if (!lock || !userId || lock.userId !== userId || !lock.homeScreen) return null;
-    return lock;
-  }
-
-  function shouldBlockRestoredModeTypeSelect(options = {}) {
-    return !options.force && !!currentRestoredModeLock();
-  }
-
-  function keepRestoredModeHomeScreen(reason = 'blocked-type-select') {
-    const lock = currentRestoredModeLock();
-    if (!lock) return false;
-    console.warn('Blocked type-select navigation after restored mode:', { reason, lock });
-    const mode = { housingType: lock.housingType, role: lock.role };
-    if (typeof window.ensureRestoredUserHomeScreen === 'function') {
-      return window.ensureRestoredUserHomeScreen(mode);
-    }
-    if (typeof window.enforceOnlyActiveScreen === 'function') {
-      return window.enforceOnlyActiveScreen(lock.homeScreen);
-    }
-    return false;
-  }
-
   function setRestoredModeLock(mode) {
     const homeScreen = typeof window.restoredHomeScreenForMode === 'function'
       ? window.restoredHomeScreenForMode(mode)
@@ -7077,29 +6861,31 @@
     window._restoredModeLock = null;
   }
 
-  function showTypeSelectScreen(options = {}) {
-    if (shouldBlockRestoredModeTypeSelect(options)) {
-      keepRestoredModeHomeScreen('showTypeSelectScreen');
-      return false;
-    }
-    if (options.force) clearRestoredModeLock();
+  function showRegistrationStartScreen() {
+    clearRestoredModeLock();
+    window._lastRestoredUserMode = null;
+    window._registrationStartScreenActive = true;
+    if (typeof renderRegistrationStartOptions === 'function') renderRegistrationStartOptions();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-    document.getElementById('screen-type-select').classList.add('active');
-    window.currentScreen = 'type-select';
-    if (typeof currentScreen !== 'undefined') currentScreen = 'type-select';
+    document.getElementById('screen-role-select').classList.add('active');
+    window.currentScreen = 'role-select';
+    if (typeof currentScreen !== 'undefined') currentScreen = 'role-select';
+    const bottomNav = document.getElementById('bottom-nav');
+    const hostNav = document.getElementById('host-bottom-nav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    if (hostNav) hostNav.style.display = 'none';
     if (typeof applyLang === 'function') applyLang();
-    scheduleRestoreDiagnosticPanel('showTypeSelectScreen');
     return true;
   }
 
   async function restoreUserModeFromUserModes(user) {
     const modes = await loadCurrentUserModes(user);
     if (!modes) {
-      showTypeSelectScreen();
+      showRegistrationStartScreen();
       return false;
     }
     if (modes.length !== 1) {
-      showTypeSelectScreen({ force: true });
+      showRegistrationStartScreen();
       return false;
     }
 
@@ -7112,11 +6898,11 @@
       window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housing_type : null;
       if (typeof window.applyPendingUserModeRestore === 'function') return await window.applyPendingUserModeRestore();
       if (mode.role === 'guest' && typeof window.applyPendingGuestModeRestore === 'function') return window.applyPendingGuestModeRestore();
-      showTypeSelectScreen();
+      showRegistrationStartScreen();
       return false;
     }
 
-    showTypeSelectScreen({ force: true });
+    showRegistrationStartScreen();
     return false;
   }
 
@@ -7127,17 +6913,11 @@
   window.loadCurrentUserProfile = loadCurrentUserProfile;
   window.applyCurrentUserProfile = applyCurrentUserProfile;
   window.loadCurrentUserModes = loadCurrentUserModes;
-  window.showTypeSelectScreen = showTypeSelectScreen;
-  window.runRestoreDiagnosticPanel = runRestoreDiagnosticPanel;
-  window.scheduleRestoreDiagnosticPanel = scheduleRestoreDiagnosticPanel;
-  window.currentRestoredModeLock = currentRestoredModeLock;
-  window.shouldBlockRestoredModeTypeSelect = shouldBlockRestoredModeTypeSelect;
-  window.keepRestoredModeHomeScreen = keepRestoredModeHomeScreen;
+  window.showRegistrationStartScreen = showRegistrationStartScreen;
   window.setRestoredModeLock = setRestoredModeLock;
   window.clearRestoredModeLock = clearRestoredModeLock;
   window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
   window.restoreGuestModeFromUserModes = restoreGuestModeFromUserModes;
-  installRestoreDiagnosticObserver();
   let activeUserModeRestorePromise = null;
   let activeUserModeRestoreUserId = '';
   let lastRestoredUserModeUserId = '';
@@ -7200,7 +6980,6 @@
     if (restoredMode && typeof window.ensureRestoredUserHomeScreen === 'function') {
       window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
     }
-    scheduleRestoreDiagnosticPanel('showLoggedInEntry-complete');
   }
 
   function isPasswordRecoveryUrl() {
@@ -7643,18 +7422,11 @@
   };
 
   /* ===== NAVIGATION ===== */
-  function navigate(from, to, options = {}) {
+  function navigate(from, to) {
     if (to === 'sharehouse') {
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
       to = 'search';
-    }
-    if (to === 'type-select' && window.shouldBlockRestoredModeTypeSelect?.({ force: options.forceTypeSelect === true })) {
-      window.keepRestoredModeHomeScreen?.('navigate-type-select');
-      return;
-    }
-    if (to === 'type-select' && options.forceTypeSelect === true) {
-      window.clearRestoredModeLock?.();
     }
     if (to !== 'detail' && to !== 'sharehouse-detail') hostPreviewMode = false;
     if (to === 'support') supportBackScreen = from || 'mypage';
@@ -7667,7 +7439,7 @@
     if (bnav) bnav.classList.add('active');
     const bottomNav = document.getElementById('bottom-nav');
     const hostNav = document.getElementById('host-bottom-nav');
-    const noNav = ['detail','chat','profile','lifestyle','preferences','notification-settings','map','login','password-reset-request','password-update','onboarding','matching','ai-result','support','privacy-security','blocked-users','type-select','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
+    const noNav = ['detail','chat','profile','lifestyle','preferences','notification-settings','map','login','password-reset-request','password-update','onboarding','matching','ai-result','support','privacy-security','blocked-users','role-select','service-select','host-onboarding','resident-onboarding','sharehouse-detail','homestay-host-list'];
     const hostScreens = ['host-dashboard','host-applicants','host-applicant-detail','host-messages','host-calendar','host-revenue','host-profile','host-settings','sharehouse','roommate'];
     const isHostScreen = hostScreens.includes(to);
     bottomNav.style.display = (noNav.includes(to) || isHostScreen) ? 'none' : 'flex';
@@ -17643,7 +17415,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       const restored = await restoreUserModeOnce(user);
       if (restored) return;
     }
-    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
+    if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
   }
 
   function supabaseAuthErrorMessage(error, mode) {
@@ -20830,7 +20602,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      renderHostObStep();
 	    }
 	    if (currentScreen === 'ai-result') renderAiResult();
-	    if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
+	    if (currentScreen === 'role-select' && window._registrationStartScreenActive) renderRegistrationStartOptions();
+	    else if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
 	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
 	    if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
 	    updateListingActionButtons();
@@ -20847,8 +20620,35 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     setLanguage(currentLang === 'ja' ? 'en' : 'ja');
   }
 
+  function renderRegistrationStartOptions() {
+    const emoji = document.getElementById('role-select-emoji');
+    const brand = document.getElementById('role-select-brand');
+    const container = document.getElementById('role-cards-container');
+    if (emoji) emoji.textContent = '🏠';
+    if (brand) brand.textContent = currentLang === 'ja' ? '登録をはじめる' : 'Start registration';
+    if (container) container.innerHTML = `
+      <div class="role-card guest" onclick="chooseType('homestay')">
+        <div class="role-card-icon">🏡</div>
+        <div class="role-card-text">
+          <div class="role-card-title">${t('homestay')}</div>
+          <div class="role-card-desc">${t('svc_homestay_guest')}</div>
+        </div>
+        <div class="role-card-arrow">›</div>
+      </div>
+      <div class="role-card host" onclick="chooseType('sharehouse')">
+        <div class="role-card-icon">🏢</div>
+        <div class="role-card-text">
+          <div class="role-card-title">${t('sharehouse')}</div>
+          <div class="role-card-desc">${t('choose_by_roommate_profile')}</div>
+        </div>
+        <div class="role-card-arrow">›</div>
+      </div>
+    `;
+  }
+
   /* ===== サービス種別選択 ===== */
   function chooseType(type) {
+    window._registrationStartScreenActive = false;
     window._serviceType = type;
     const emoji = document.getElementById('role-select-emoji');
     const brand = document.getElementById('role-select-brand');
@@ -20900,13 +20700,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     // マイページ種別ラベル更新
     const typeLabel = document.getElementById('mypage-current-type');
     if (typeLabel) typeLabel.textContent = type === 'homestay' ? t('homestay') : t('sharehouse');
-    navigate('type-select', 'role-select');
+    navigate(currentScreen || 'login', 'role-select');
   }
 
   /* ===== ロール選択 ===== */
   let currentRole = 'guest'; // 'guest' | 'host' | 'resident'
 
   function chooseRole(role) {
+    window._registrationStartScreenActive = false;
     currentRole = role;
     if (role === 'guest') {
       navigate('role-select', 'onboarding');
@@ -20959,6 +20760,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentSupabaseGuestConversationRows = [];
     currentSupabaseHostConversationRows = [];
     window._lastRestoredUserMode = null;
+    window._registrationStartScreenActive = false;
   }
 
   async function loadRegisteredHomestayGuestDataForRestore() {
@@ -21012,7 +20814,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     const activeScreens = Array.from(document.querySelectorAll('.screen.active')).map(el => el.id);
     const alreadyCorrect = targetEl?.classList.contains('active') && activeScreens.length === 1;
     if (!alreadyCorrect || currentScreen !== screen || window.currentScreen !== screen) {
-      navigate(currentScreen || 'type-select', screen);
+      navigate(currentScreen || 'login', screen);
     }
     if (typeof window.setRestoredModeLock === 'function') window.setRestoredModeLock(mode);
     return enforceOnlyActiveScreen(screen);
@@ -21037,7 +20839,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       if (housingType === 'homestay') {
         const loaded = await loadRegisteredHomestayGuestDataForRestore();
         if (!loaded) {
-          if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
+          if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
           return false;
         }
       }
@@ -21052,7 +20854,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       window._serviceType = 'homestay';
       const loaded = await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
       if (!loaded) {
-        if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
+        if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
         return false;
       }
       window._lastRestoredUserMode = { housingType, role };
@@ -21069,7 +20871,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return true;
     }
 
-    if (typeof window.showTypeSelectScreen === 'function') window.showTypeSelectScreen({ force: true });
+    if (typeof window.showRegistrationStartScreen === 'function') window.showRegistrationStartScreen();
     return false;
   }
 
