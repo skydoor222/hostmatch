@@ -7563,6 +7563,10 @@
   let hostPreviewMode = false;
   const blockedUsers = new Map();
   let currentBlockTarget = null;
+  let supabaseBlocksLoaded = false;
+  let supabaseBlocksLoading = false;
+  let supabaseBlocksCacheUserId = '';
+  const pendingSupabaseBlockIds = new Set();
   let homestayHostListType = 'new';
   let favorites = new Set(['michael', 'thompson']);
   let currentSupabaseFavoriteListingIds = new Set();
@@ -7660,6 +7664,12 @@
     if (to === 'homestay-host-list') renderHomestayHostList();
     if (to === 'notification-settings' && typeof loadCurrentNotificationPreferences === 'function' && !notificationPreferencesLoading) {
       loadCurrentNotificationPreferences({ showError: true });
+    }
+    if (to === 'blocked-users' && typeof loadCurrentUserBlocks === 'function' && isSupabaseBlocksContext() && !supabaseBlocksLoading) {
+      loadCurrentUserBlocks({ force: true, render: true, showError: true });
+    }
+    if (['detail', 'chat', 'homestay-guest-detail'].includes(to) && typeof loadCurrentUserBlocks === 'function' && isSupabaseBlocksContext() && !supabaseBlocksLoading) {
+      loadCurrentUserBlocks().then(() => updateBlockedUi()).catch(error => console.error('Supabase blocks refresh error:', error));
     }
     if (to === 'host-onboarding' || to === 'host-profile') {
       renderHostFamilyEditors();
@@ -8224,16 +8234,57 @@
     setLegalView('terms');
   }
 
-  function openBlockedUsers() {
+  async function openBlockedUsers() {
     blockedUsersBackScreen = currentScreen === 'host-settings' ? 'host-settings' : 'mypage';
-    renderBlockedUsersList();
+    if (isSupabaseBlocksContext()) supabaseBlocksLoading = true;
+    renderBlockedUsersList({ loading: isSupabaseBlocksContext() && !supabaseBlocksLoaded });
     navigate(currentScreen, 'blocked-users');
+    if (isSupabaseBlocksContext()) await loadCurrentUserBlocks({ force: true, render: true, showError: true });
+  }
+
+  function isSupabaseBlocksContext() {
+    return !!window._currentUser?.id && !!window._supabase?.from;
+  }
+
+  function supabaseBlockCacheKey(blockedId) {
+    const id = String(blockedId || '').trim();
+    return id ? `user:${id}` : '';
+  }
+
+  function clearSupabaseBlockCache() {
+    blockedUsers.clear();
+    supabaseBlocksLoaded = false;
+    supabaseBlocksLoading = false;
+    supabaseBlocksCacheUserId = '';
+    pendingSupabaseBlockIds.clear();
+  }
+
+  function targetFromSupabaseUser(userId, profile = {}) {
+    const blockedId = String(userId || '').trim();
+    const name = profile.display_name || (currentLang === 'en' ? 'User' : 'ユーザー');
+    return {
+      id: supabaseBlockCacheKey(blockedId),
+      blockedId,
+      name,
+      type: 'user',
+      avatar: '👤',
+      avatarUrl: profile.avatar_url || ''
+    };
   }
 
   function getCurrentUserTarget() {
     if (currentScreen === 'homestay-guest-detail' && currentHomestayGuestDetailGuestUserId) {
-      const name = currentHomestayGuestDetailData?.profile?.display_name || document.getElementById('homestay-guest-detail-name')?.textContent || currentHomestayGuestDetailGuestUserId;
-      return { id: `guest:homestay:${currentHomestayGuestDetailGuestUserId}`, name, type: 'homestay-guest', avatar: '🧑' };
+      const name = currentHomestayGuestDetailData?.profile?.display_name || document.getElementById('homestay-guest-detail-name')?.textContent || (currentLang === 'en' ? 'Guest' : 'ゲスト');
+      return { ...targetFromSupabaseUser(currentHomestayGuestDetailGuestUserId, { display_name: name }), type: 'homestay-guest', avatar: '🧑' };
+    }
+    if (isSupabaseHomestayChatActive() && currentSupabaseChatOtherUserId) {
+      const name = document.querySelector('#screen-chat .chat-title')?.textContent || (currentLang === 'en' ? 'User' : 'ユーザー');
+      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: currentSupabaseChatMode === 'homestay-host' ? 'homestay-guest' : 'homestay-host' };
+    }
+    if (currentScreen === 'detail' && isPublishedHomestayDetailHost(currentHost)) {
+      const selected = publishedHomestaySearchHostByListingId(currentHost);
+      const blockedId = selected?.listing?.owner_id || '';
+      return { ...targetFromSupabaseUser(blockedId, { display_name: selected?.name, avatar_url: selected?.avatarUrl }), type: 'homestay-host', avatar: selected?.avatar || '🧑' };
     }
     if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
       const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
@@ -8251,7 +8302,7 @@
 
   function isCurrentTargetBlocked() {
     const target = getCurrentUserTarget();
-    return blockedUsers.has(target.id);
+    return blockedUsers.has(target.id) || (target.blockedId && blockedUsers.has(supabaseBlockCacheKey(target.blockedId)));
   }
 
   function toggleUserActionMenu(id) {
@@ -8277,36 +8328,157 @@
     if (modal) modal.style.display = 'none';
   }
 
-  function confirmBlockCurrentUser() {
+  async function confirmBlockCurrentUser() {
     const target = currentBlockTarget || getCurrentUserTarget();
-    blockedUsers.set(target.id, target);
     closeBlockModal();
+    if (!target?.id) return;
+    if (!isSupabaseBlocksContext() || !target.blockedId) {
+      if (isSupabaseBlocksContext() && String(target.type || '').includes('homestay')) {
+        showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+        return;
+      }
+      blockedUsers.set(target.id, target);
+      renderBlockedUsersList();
+      updateBlockedUi();
+      showToast(t('blocked_by_you_notice'));
+      return;
+    }
+    const blockerId = window._currentUser.id;
+    const blockedId = String(target.blockedId || '').trim();
+    if (!blockedId || blockedId === blockerId) {
+      showToast(currentLang === 'en' ? 'You cannot block yourself.' : '自分自身はブロックできません。');
+      return;
+    }
+    const key = supabaseBlockCacheKey(blockedId);
+    if (pendingSupabaseBlockIds.has(key)) return;
+    pendingSupabaseBlockIds.add(key);
+    const previous = blockedUsers.get(key) || null;
+    blockedUsers.set(key, { ...target, id: key, blockedId });
     renderBlockedUsersList();
     updateBlockedUi();
-    showToast(t('blocked_by_you_notice'));
+    try {
+      const { error } = await window._supabase
+        .from('blocks')
+        .insert({ blocker_id: blockerId, blocked_id: blockedId });
+      if (error && error.code !== '23505') throw error;
+      supabaseBlocksLoaded = true;
+      supabaseBlocksCacheUserId = blockerId;
+      showToast(currentLang === 'en' ? 'User blocked' : 'ブロックしました');
+    } catch (error) {
+      console.error('Supabase blocks insert error:', error);
+      if (previous) blockedUsers.set(key, previous);
+      else blockedUsers.delete(key);
+      renderBlockedUsersList();
+      updateBlockedUi();
+      showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+    } finally {
+      pendingSupabaseBlockIds.delete(key);
+    }
   }
 
-  function unblockUser(id) {
-    blockedUsers.delete(id);
+  async function unblockUser(id) {
+    const key = String(id || '').trim();
+    const existing = blockedUsers.get(key);
+    if (!existing) return;
+    if (!isSupabaseBlocksContext() || !existing.blockedId) {
+      blockedUsers.delete(key);
+      renderBlockedUsersList();
+      updateBlockedUi();
+      showToast(t('unblocked_toast'));
+      return;
+    }
+    if (pendingSupabaseBlockIds.has(key)) return;
+    pendingSupabaseBlockIds.add(key);
+    blockedUsers.delete(key);
     renderBlockedUsersList();
     updateBlockedUi();
-    showToast(t('unblocked_toast'));
+    try {
+      const { error } = await window._supabase
+        .from('blocks')
+        .delete()
+        .eq('blocker_id', window._currentUser.id)
+        .eq('blocked_id', existing.blockedId);
+      if (error) throw error;
+      showToast(currentLang === 'en' ? 'User unblocked' : 'ブロックを解除しました');
+    } catch (error) {
+      console.error('Supabase blocks delete error:', error);
+      blockedUsers.set(key, existing);
+      renderBlockedUsersList();
+      updateBlockedUi();
+      showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+    } finally {
+      pendingSupabaseBlockIds.delete(key);
+    }
   }
 
   function toggleBlockedUsersList() {
     openBlockedUsers();
   }
 
-  function renderBlockedUsersList() {
+  async function loadCurrentUserBlocks(options = {}) {
+    const { force = false, render = false, showError = false } = options;
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.from) return false;
+    if (!force && supabaseBlocksLoaded && supabaseBlocksCacheUserId === userId) {
+      if (render) renderBlockedUsersList();
+      return true;
+    }
+    supabaseBlocksLoading = true;
+    if (render) renderBlockedUsersList({ loading: true });
+    try {
+      const { data: rows, error } = await window._supabase
+        .from('blocks')
+        .select('blocked_id, created_at')
+        .eq('blocker_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const blockedIds = [...new Set((Array.isArray(rows) ? rows : []).map(row => row.blocked_id).filter(Boolean))];
+      const profilesResult = blockedIds.length
+        ? await window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', blockedIds)
+        : { data: [], error: null };
+      if (profilesResult.error) throw profilesResult.error;
+      const profilesById = indexRowsBy(profilesResult.data, 'id');
+      blockedUsers.clear();
+      blockedIds.forEach(blockedId => {
+        const profile = profilesById.get(blockedId) || {};
+        const target = targetFromSupabaseUser(blockedId, profile);
+        blockedUsers.set(target.id, target);
+      });
+      supabaseBlocksLoaded = true;
+      supabaseBlocksCacheUserId = userId;
+      if (render) renderBlockedUsersList();
+      updateBlockedUi();
+      return true;
+    } catch (error) {
+      console.error('Supabase blocks load error:', error);
+      supabaseBlocksLoaded = false;
+      supabaseBlocksCacheUserId = userId;
+      if (render) renderBlockedUsersList({ error: true });
+      if (showError) showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+      return false;
+    } finally {
+      supabaseBlocksLoading = false;
+    }
+  }
+
+  function renderBlockedUsersList(options = {}) {
     const list = document.getElementById('blocked-users-page-list');
     if (!list) return;
+    if (options.loading || supabaseBlocksLoading) {
+      list.innerHTML = `<div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;font-size:13px;color:var(--light);font-weight:800;">${currentLang === 'en' ? 'Loading blocked users...' : 'ブロックしたユーザーを読み込み中...'}</div>`;
+      return;
+    }
+    if (options.error) {
+      list.innerHTML = `<div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;font-size:13px;color:#B42318;font-weight:800;">${currentLang === 'en' ? 'Could not load blocked users.' : 'ブロックしたユーザーを読み込めませんでした'}</div>`;
+      return;
+    }
     if (!blockedUsers.size) {
       list.innerHTML = `<div style="background:white;border:1px solid var(--border);border-radius:16px;padding:18px;font-size:13px;color:var(--light);font-weight:800;" data-i18n="no_blocked_users">${t('no_blocked_users')}</div>`;
       return;
     }
     list.innerHTML = Array.from(blockedUsers.values()).map(user => `
       <div style="background:white;border:1px solid var(--border);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;">
-        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${escapeHtml(user.avatar || '👤')}</div>
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--bg);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${user.avatarUrl ? `<img src="${escapeHtml(user.avatarUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />` : escapeHtml(user.avatar || '👤')}</div>
         <div style="font-size:14px;font-weight:900;color:var(--dark);flex:1;min-width:0;">${escapeHtml(user.name)}</div>
         <button type="button" onclick="unblockUser('${escapeHtml(user.id)}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:900;cursor:pointer;flex-shrink:0;">${t('unblock')}</button>
       </div>
@@ -11830,6 +12002,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         showToast(currentLang === 'en' ? 'Messages must be 5000 characters or fewer.' : 'メッセージは5000文字以内で入力してください。');
         return;
       }
+      await loadCurrentUserBlocks();
       if (isCurrentTargetBlocked()) {
         showToast(currentLang === 'en' ? 'You cannot send messages to this user.' : 'このユーザーにはメッセージを送信できません。');
         return;
@@ -23597,6 +23770,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (typeof resetSupabaseChatState === 'function') resetSupabaseChatState();
     currentSupabaseGuestConversationRows = [];
     currentSupabaseHostConversationRows = [];
+    if (typeof clearSupabaseBlockCache === 'function') clearSupabaseBlockCache();
     currentHomestayGuestDetailConversationId = '';
     currentHomestayGuestDetailGuestUserId = '';
     currentHomestayGuestDetailBackScreen = 'host-messages';
