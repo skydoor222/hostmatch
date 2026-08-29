@@ -12949,7 +12949,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  function blurHomestayCoordinate(value) {
 	    const number = Number(value);
-	    return Number.isFinite(number) ? Math.round(number * 100) / 100 : null;
+	    if (!Number.isFinite(number)) return null;
+	    const step = 0.005;
+	    return Number((Math.round(number / step) * step).toFixed(3));
 	  }
 
 	  function validHomestayCoordinate(lat, lng) {
