@@ -20717,7 +20717,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     ,'特になし':'None'
     ,'おおよその位置':'Approximate location'
     ,'正確な住所はプライバシー保護のため表示していません':'The exact address is not shown for privacy reasons.'
-    ,'円はホストが確認した住居地点を中心にしたおおよその居住エリアです。正確な住所は公開されません。':'The circle shows the approximate living area around the home location confirmed by the host. The exact address is not public.'
+    ,'円はおおよその居住エリアです。':'The circle is the approximate living area.'
     ,'面談リクエスト':'Interview Request'
     ,'面談予約':'Interview Booking'
     ,'面談リクエストを送る':'Send Interview Request'
@@ -22728,7 +22728,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const loc = getHomestayApproxLocation(hostId);
 	    if (stationNote) stationNote.textContent = getHomestayStationWalkText(hostId);
 	    if (privacyNote) privacyNote.textContent = loc
-	      ? localizeText('円はホストが確認した住居地点を中心にしたおおよその居住エリアです。正確な住所は公開されません。')
+	      ? localizeText('円はおおよその居住エリアです。')
 	      : localizeText('正確な住所はプライバシー保護のため表示していません');
 	    mapEl.setAttribute('aria-label', localizeText('おおよその位置'));
 
