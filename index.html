@@ -5149,6 +5149,31 @@
 <!-- 保存完了トースト -->
 <div class="form-saved-toast" id="saved-toast">保存しました ✓</div>
 
+<!-- 部屋写真 表示範囲調整モーダル -->
+<div id="room-photo-crop-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.62);z-index:4000;align-items:center;justify-content:center;padding:18px;">
+  <div style="width:min(720px,100%);max-height:calc(100vh - 36px);overflow:auto;background:white;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.28);padding:18px;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:17px;font-weight:900;color:var(--dark);">写真の表示範囲を調整</div>
+        <div style="font-size:12px;color:var(--light);font-weight:700;margin-top:4px;">ドラッグして位置を調整できます</div>
+      </div>
+      <button type="button" onclick="cancelHomestayRoomPhotoCrop()" aria-label="閉じる" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;line-height:1;cursor:pointer;">×</button>
+    </div>
+    <div id="room-photo-crop-frame" style="position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:14px;background:#111827;touch-action:none;cursor:grab;">
+      <img id="room-photo-crop-image" alt="Room photo preview" draggable="false" style="position:absolute;left:50%;top:50%;user-select:none;-webkit-user-drag:none;max-width:none;max-height:none;" />
+    </div>
+    <div style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--light);font-weight:800;margin-bottom:6px;"><span>拡大率</span><span id="room-photo-crop-zoom-label">100%</span></div>
+      <input id="room-photo-crop-zoom" type="range" min="1" max="3" step="0.01" value="1" oninput="updateHomestayRoomPhotoCropZoom(this.value)" style="width:100%;" />
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
+      <button type="button" onclick="resetHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">リセット</button>
+      <button type="button" onclick="cancelHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">キャンセル</button>
+      <button type="button" onclick="confirmHomestayRoomPhotoCrop()" style="flex:1;min-width:150px;background:var(--primary);color:white;border:none;border-radius:12px;padding:12px;font-weight:900;cursor:pointer;">この表示で決定</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== ホストオンボーディング ==================== -->
 <div class="screen" id="screen-host-onboarding">
   <div class="onboard-header">
@@ -11452,6 +11477,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
 	  const LISTING_PHOTO_MAX_SIZE = 10 * 1024 * 1024;
 	  const HOMESTAY_ROOM_PHOTO_MAX_COUNT = 10;
+	  const HOMESTAY_ROOM_PHOTO_ASPECT_RATIO = 16 / 10;
+	  const HOMESTAY_ROOM_PHOTO_OUTPUT_WIDTH = 1600;
+	  let homestayRoomPhotoCropEditorState = null;
 
   function nullableText(value) {
     const trimmed = String(value || '').trim();
@@ -12450,6 +12478,60 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return visibleHomestayListingPhotoCount() + pendingHomestayRoomPhotoFiles[key].length;
 	  }
 
+	  function defaultHomestayRoomPhotoCropState() {
+	    return {
+	      zoom: 1,
+	      offsetX: 0,
+	      offsetY: 0,
+	      naturalWidth: 0,
+	      naturalHeight: 0,
+	      adjusted: false
+	    };
+	  }
+
+	  function clampHomestayRoomPhotoCrop(item) {
+	    if (!item?.crop) return;
+	    item.crop.zoom = Math.min(3, Math.max(1, Number(item.crop.zoom) || 1));
+	    item.crop.offsetX = Math.min(1, Math.max(-1, Number(item.crop.offsetX) || 0));
+	    item.crop.offsetY = Math.min(1, Math.max(-1, Number(item.crop.offsetY) || 0));
+	  }
+
+	  function pendingRoomPhotoImageStyle(item) {
+	    const crop = item?.crop || defaultHomestayRoomPhotoCropState();
+	    const naturalWidth = Number(crop.naturalWidth) || 1;
+	    const naturalHeight = Number(crop.naturalHeight) || 1;
+	    const imageAspect = naturalWidth / naturalHeight;
+	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
+	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
+	      ? (imageAspect / HOMESTAY_ROOM_PHOTO_ASPECT_RATIO) * 100
+	      : 100;
+	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
+	      ? 100
+	      : (HOMESTAY_ROOM_PHOTO_ASPECT_RATIO / imageAspect) * 100;
+	    const width = baseWidth * zoom;
+	    const height = baseHeight * zoom;
+	    const maxOffsetX = Math.max(0, (width - 100) / 2);
+	    const maxOffsetY = Math.max(0, (height - 100) / 2);
+	    const left = 50 + (Number(crop.offsetX) || 0) * maxOffsetX;
+	    const top = 50 + (Number(crop.offsetY) || 0) * maxOffsetY;
+	    return `width:${width}%;height:${height}%;left:${left}%;top:${top}%;transform:translate(-50%,-50%);object-fit:fill;`;
+	  }
+
+	  function loadHomestayRoomPhotoNaturalSize(item) {
+	    if (!item?.previewUrl) return;
+	    const image = new Image();
+	    image.onload = () => {
+	      item.crop = {
+	        ...(item.crop || defaultHomestayRoomPhotoCropState()),
+	        naturalWidth: image.naturalWidth || 0,
+	        naturalHeight: image.naturalHeight || 0
+	      };
+	      renderHomestayHostRoomPhotoPreview(item.scope || 'ob');
+	      if (homestayRoomPhotoCropEditorState?.item === item) renderHomestayRoomPhotoCropEditorImage();
+	    };
+	    image.src = item.previewUrl;
+	  }
+
 	  function handleHomestayHostRoomPhotoSelection(event, scope) {
 	    const key = homestayHostPhotoScope(scope);
 	    const input = event?.target;
@@ -12488,10 +12570,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      return;
 	    }
 
-	    pendingHomestayRoomPhotoFiles[key].push(...uniqueFiles.map(file => ({
+	    const newItems = uniqueFiles.map(file => ({
 	      file,
-	      previewUrl: URL.createObjectURL(file)
-	    })));
+	      previewUrl: URL.createObjectURL(file),
+	      crop: defaultHomestayRoomPhotoCropState(),
+	      scope: key
+	    }));
+	    pendingHomestayRoomPhotoFiles[key].push(...newItems);
+	    newItems.forEach(loadHomestayRoomPhotoNaturalSize);
 	    if (input) input.value = '';
 	    renderHomestayHostRoomPhotoPreview(key);
 	  }
@@ -12525,29 +12611,231 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      const url = homestayListingPhotoPublicUrl(photo.storage_path);
 	      if (!url) return '';
 	      return `
-	        <div style="position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
+	        <div style="position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
 	          <img src="${escapeHtml(url)}" alt="Room photo" style="width:100%;height:100%;object-fit:cover;display:block;">
 	          <button type="button" onclick="markHomestayListingPhotoForDelete('${escapeHtml(photo.id)}','${key}')" aria-label="写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
 	        </div>
 	      `;
 	    }).join('');
 	    const pendingHtml = pendingHomestayRoomPhotoFiles[key].map((item, index) => `
-	      <div style="position:relative;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
-	        <img src="${escapeHtml(item.previewUrl)}" alt="New room photo" style="width:100%;height:100%;object-fit:cover;display:block;">
-	        <button type="button" onclick="removePendingHomestayRoomPhoto('${key}',${index})" aria-label="選択写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	      <div style="display:flex;flex-direction:column;gap:6px;">
+	        <div style="position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
+	          <img src="${escapeHtml(item.previewUrl)}" alt="New room photo" style="position:absolute;max-width:none;max-height:none;${pendingRoomPhotoImageStyle(item)}">
+	          <button type="button" onclick="removePendingHomestayRoomPhoto('${key}',${index})" aria-label="選択写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	        </div>
+	        <button type="button" onclick="openHomestayRoomPhotoCropEditor('${key}',${index})" style="width:100%;border:1px solid var(--border);background:white;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
 	      </div>
 	    `).join('');
 	    container.innerHTML = existingHtml + pendingHtml;
 	  }
 
+	  function cloneHomestayRoomPhotoCrop(crop) {
+	    return {
+	      ...defaultHomestayRoomPhotoCropState(),
+	      ...(crop || {})
+	    };
+	  }
+
+	  function openHomestayRoomPhotoCropEditor(scope, index) {
+	    const key = homestayHostPhotoScope(scope);
+	    const item = pendingHomestayRoomPhotoFiles[key][index];
+	    if (!item) return;
+	    homestayRoomPhotoCropEditorState = {
+	      scope: key,
+	      index,
+	      item,
+	      draft: cloneHomestayRoomPhotoCrop(item.crop),
+	      pointerId: null,
+	      startX: 0,
+	      startY: 0,
+	      startOffsetX: 0,
+	      startOffsetY: 0
+	    };
+	    const modal = document.getElementById('room-photo-crop-modal');
+	    const image = document.getElementById('room-photo-crop-image');
+	    const frame = document.getElementById('room-photo-crop-frame');
+	    if (image) {
+	      image.onload = () => {
+	        item.crop = {
+	          ...(item.crop || defaultHomestayRoomPhotoCropState()),
+	          naturalWidth: image.naturalWidth || item.crop?.naturalWidth || 0,
+	          naturalHeight: image.naturalHeight || item.crop?.naturalHeight || 0
+	        };
+	        if (homestayRoomPhotoCropEditorState?.item === item) {
+	          homestayRoomPhotoCropEditorState.draft.naturalWidth = item.crop.naturalWidth;
+	          homestayRoomPhotoCropEditorState.draft.naturalHeight = item.crop.naturalHeight;
+	          renderHomestayRoomPhotoCropEditorImage();
+	        }
+	      };
+	      image.src = item.previewUrl;
+	    }
+	    if (frame) {
+	      frame.onpointerdown = startHomestayRoomPhotoCropDrag;
+	      frame.onpointermove = moveHomestayRoomPhotoCropDrag;
+	      frame.onpointerup = endHomestayRoomPhotoCropDrag;
+	      frame.onpointercancel = endHomestayRoomPhotoCropDrag;
+	    }
+	    renderHomestayRoomPhotoCropEditorImage();
+	    if (modal) modal.style.display = 'flex';
+	  }
+
+	  function renderHomestayRoomPhotoCropEditorImage() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    const image = document.getElementById('room-photo-crop-image');
+	    const slider = document.getElementById('room-photo-crop-zoom');
+	    const label = document.getElementById('room-photo-crop-zoom-label');
+	    if (!state || !image) return;
+	    const previewItem = { ...state.item, crop: state.draft };
+	    image.setAttribute('style', `position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;${pendingRoomPhotoImageStyle(previewItem)}`);
+	    if (slider) slider.value = String(state.draft.zoom || 1);
+	    if (label) label.textContent = `${Math.round((state.draft.zoom || 1) * 100)}%`;
+	  }
+
+	  function cropDragBounds() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    const frame = document.getElementById('room-photo-crop-frame');
+	    if (!state || !frame) return { maxX: 0, maxY: 0 };
+	    const rect = frame.getBoundingClientRect();
+	    const crop = state.draft || defaultHomestayRoomPhotoCropState();
+	    const naturalWidth = Number(crop.naturalWidth) || 1;
+	    const naturalHeight = Number(crop.naturalHeight) || 1;
+	    const imageAspect = naturalWidth / naturalHeight;
+	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
+	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? rect.height * imageAspect : rect.width;
+	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? rect.height : rect.width / imageAspect;
+	    return {
+	      maxX: Math.max(0, (baseWidth * zoom - rect.width) / 2),
+	      maxY: Math.max(0, (baseHeight * zoom - rect.height) / 2)
+	    };
+	  }
+
+	  function startHomestayRoomPhotoCropDrag(event) {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state) return;
+	    state.pointerId = event.pointerId;
+	    state.startX = event.clientX;
+	    state.startY = event.clientY;
+	    state.startOffsetX = Number(state.draft.offsetX) || 0;
+	    state.startOffsetY = Number(state.draft.offsetY) || 0;
+	    event.currentTarget?.setPointerCapture?.(event.pointerId);
+	    event.preventDefault();
+	  }
+
+	  function moveHomestayRoomPhotoCropDrag(event) {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state || state.pointerId !== event.pointerId) return;
+	    const bounds = cropDragBounds();
+	    const deltaX = event.clientX - state.startX;
+	    const deltaY = event.clientY - state.startY;
+	    state.draft.offsetX = bounds.maxX ? state.startOffsetX + (deltaX / bounds.maxX) : 0;
+	    state.draft.offsetY = bounds.maxY ? state.startOffsetY + (deltaY / bounds.maxY) : 0;
+	    clampHomestayRoomPhotoCrop({ crop: state.draft });
+	    renderHomestayRoomPhotoCropEditorImage();
+	    event.preventDefault();
+	  }
+
+	  function endHomestayRoomPhotoCropDrag(event) {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state || state.pointerId !== event.pointerId) return;
+	    event.currentTarget?.releasePointerCapture?.(event.pointerId);
+	    state.pointerId = null;
+	  }
+
+	  function updateHomestayRoomPhotoCropZoom(value) {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state) return;
+	    state.draft.zoom = Math.min(3, Math.max(1, Number(value) || 1));
+	    clampHomestayRoomPhotoCrop({ crop: state.draft });
+	    renderHomestayRoomPhotoCropEditorImage();
+	  }
+
+	  function resetHomestayRoomPhotoCrop() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state) return;
+	    state.draft = {
+	      ...defaultHomestayRoomPhotoCropState(),
+	      naturalWidth: state.item.crop?.naturalWidth || 0,
+	      naturalHeight: state.item.crop?.naturalHeight || 0
+	    };
+	    renderHomestayRoomPhotoCropEditorImage();
+	  }
+
+	  function closeHomestayRoomPhotoCropModal() {
+	    const modal = document.getElementById('room-photo-crop-modal');
+	    if (modal) modal.style.display = 'none';
+	    homestayRoomPhotoCropEditorState = null;
+	  }
+
+	  function cancelHomestayRoomPhotoCrop() {
+	    closeHomestayRoomPhotoCropModal();
+	  }
+
+	  function confirmHomestayRoomPhotoCrop() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (!state?.item) return;
+	    state.item.crop = {
+	      ...cloneHomestayRoomPhotoCrop(state.draft),
+	      adjusted: true
+	    };
+	    const scope = state.scope;
+	    closeHomestayRoomPhotoCropModal();
+	    renderHomestayHostRoomPhotoPreview(scope);
+	  }
+
+	  function imageFromUrl(src) {
+	    return new Promise((resolve, reject) => {
+	      const image = new Image();
+	      image.onload = () => resolve(image);
+	      image.onerror = () => reject(new Error('Could not load room photo for crop'));
+	      image.src = src;
+	    });
+	  }
+
+	  async function croppedHomestayRoomPhotoBlob(item) {
+	    const image = await imageFromUrl(item.previewUrl);
+	    const naturalWidth = image.naturalWidth || item.crop?.naturalWidth || 1;
+	    const naturalHeight = image.naturalHeight || item.crop?.naturalHeight || 1;
+	    const outputWidth = Math.max(1, Math.floor(Math.min(
+	      HOMESTAY_ROOM_PHOTO_OUTPUT_WIDTH,
+	      naturalWidth,
+	      naturalHeight * HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
+	    )));
+	    const outputHeight = Math.max(1, Math.round(outputWidth / HOMESTAY_ROOM_PHOTO_ASPECT_RATIO));
+	    const canvas = document.createElement('canvas');
+	    canvas.width = outputWidth;
+	    canvas.height = outputHeight;
+	    const context = canvas.getContext('2d');
+	    if (!context) throw new Error('Could not create room photo crop canvas');
+	    const crop = {
+	      ...defaultHomestayRoomPhotoCropState(),
+	      ...(item.crop || {}),
+	      naturalWidth,
+	      naturalHeight
+	    };
+	    const imageAspect = naturalWidth / naturalHeight;
+	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
+	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? outputHeight * imageAspect : outputWidth;
+	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? outputHeight : outputWidth / imageAspect;
+	    const drawWidth = baseWidth * zoom;
+	    const drawHeight = baseHeight * zoom;
+	    const maxOffsetX = Math.max(0, (drawWidth - outputWidth) / 2);
+	    const maxOffsetY = Math.max(0, (drawHeight - outputHeight) / 2);
+	    const drawX = (outputWidth - drawWidth) / 2 + (Number(crop.offsetX) || 0) * maxOffsetX;
+	    const drawY = (outputHeight - drawHeight) / 2 + (Number(crop.offsetY) || 0) * maxOffsetY;
+	    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+	    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9));
+	    if (!blob) throw new Error('Could not create cropped room photo blob');
+	    return blob;
+	  }
+
 	  async function uploadHomestayListingPhotoFileToSupabase(userId, listingId, file, index) {
 	    if (!userId || !listingId || !window._supabase?.storage) throw new Error('Missing user or listing for room photo upload');
-	    const path = `${userId}/${listingId}/room-${Date.now()}-${index}.${profileAvatarExtension(file.type)}`;
+	    const path = `${userId}/${listingId}/room-${Date.now()}-${index}.webp`;
 	    const { error } = await window._supabase.storage
 	      .from('listing-photos')
 	      .upload(path, file, {
 	        cacheControl: '3600',
-	        contentType: file.type,
+	        contentType: file.type || 'image/webp',
 	        upsert: false
 	      });
 	    if (error) throw error;
@@ -12626,7 +12914,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	      const remainingCount = photosForListing.filter(photo => !pendingHomestayListingPhotoDeleteIds.has(photo.id)).length;
 	      for (const [index, item] of pendingPhotos.entries()) {
-	        const storagePath = await uploadHomestayListingPhotoFileToSupabase(userId, listingId, item.file, index);
+	        const croppedBlob = await croppedHomestayRoomPhotoBlob(item);
+	        const uploadFile = new File([croppedBlob], `room-${Date.now()}-${index}.webp`, { type: 'image/webp' });
+	        const storagePath = await uploadHomestayListingPhotoFileToSupabase(userId, listingId, uploadFile, index);
 	        try {
 	          await insertHomestayListingPhotoMetadata(listingId, storagePath, remainingCount + index, remainingCount === 0 && index === 0);
 	        } catch (metadataError) {
