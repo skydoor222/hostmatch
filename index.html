@@ -7558,14 +7558,17 @@
     const safeHostId = escapeHtml(hostId);
     const isPublishedListing = !!publishedHomestaySearchHostByListingId(hostId);
     const openAction = isPublishedListing
-      ? `openPublishedHomestayListingDetail('${safeHostId}','homestay-host-list')`
+      ? ''
       : `openDetail('${safeHostId}','homestay-host-list')`;
+    const clickAttrs = isPublishedListing
+      ? `data-listing-id="${safeHostId}" data-back-screen="homestay-host-list" data-published-homestay-card="true"`
+      : `onclick="${openAction}"`;
     const comparison = hmEvaluateHost(hostId, homestayInitialFilters());
     const comparisonText = comparison.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
       : t('condition_comparison');
     return `
-      <div class="match-card" data-listing-id="${safeHostId}" onclick="${openAction}">
+      <div class="match-card" ${clickAttrs}>
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
@@ -10506,8 +10509,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       : `${escapeHtml(currency)} ${(h.price || 0).toLocaleString()}`;
     const isPublishedListing = !!publishedHomestaySearchHostByListingId(result.hostId);
     const openAction = isPublishedListing
-      ? `openPublishedHomestayListingDetail('${hostId}')`
+      ? ''
       : `openDetail('${hostId}')`;
+    const clickAttrs = isPublishedListing
+      ? `data-listing-id="${hostId}" data-back-screen="search" data-published-homestay-card="true"`
+      : `onclick="${openAction}"`;
     const summary = result.activeTotal
       ? (currentLang === 'ja' ? `あなたの条件と${result.matchedTotal}/${result.activeTotal}項目一致` : `${result.matchedTotal} of ${result.activeTotal} conditions match`)
       : localizeText('全ホスト表示');
@@ -10517,7 +10523,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       return `<div class="${cls}">${mark} ${localizeText(item.label)}</div>`;
     }).join('') : `<div class="hm-match-ok">✓ ${localizeText('条件未選択')}</div>`;
     return `
-      <div class="match-card" data-listing-id="${hostId}" onclick="${openAction}">
+      <div class="match-card" ${clickAttrs}>
         <div class="match-card-img">
           <img src="${image}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
           <div class="match-badge">${summary}</div>
@@ -12932,6 +12938,32 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 	    openDetail(id, backScreen);
 	  }
+
+	  function handlePublishedHomestayCardClick(event) {
+	    const card = event.target.closest('[data-published-homestay-card="true"][data-listing-id]');
+	    if (!card) return;
+	    if (event.target.closest('.match-card-save, button, a, input, select, textarea, [data-card-action]')) return;
+	    const listingId = card.dataset.listingId;
+	    const backScreen = card.dataset.backScreen || 'search';
+	    if (!listingId) {
+	      console.error('Published homestay card click did not include a listing id:', { card });
+	      showToast(currentLang === 'en' ? 'Could not open this listing.' : '掲載情報を開けませんでした。');
+	      return;
+	    }
+	    console.debug('Published homestay card clicked:', { listingId, backScreen });
+	    openPublishedHomestayListingDetail(listingId, backScreen);
+	  }
+
+	  function setupPublishedHomestayCardClickDelegation() {
+	    ['hm-filter-results', 'homestay-host-list-cards', 'ai-result-list'].forEach(containerId => {
+	      const container = document.getElementById(containerId);
+	      if (!container || container.dataset.publishedHomestayClickAttached === 'true') return;
+	      container.addEventListener('click', handlePublishedHomestayCardClick);
+	      container.dataset.publishedHomestayClickAttached = 'true';
+	    });
+	  }
+
+	  window.openPublishedHomestayListingDetail = openPublishedHomestayListingDetail;
 
 	  function clearPendingHomestayRoomPhotos(scope) {
 	    const key = homestayHostPhotoScope(scope);
@@ -20546,8 +20578,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const safeHostId = escapeHtml(hostId);
 	    const isPublishedListing = !!publishedHomestaySearchHostByListingId(hostId);
 	    const openAction = isPublishedListing
-	      ? `openPublishedHomestayListingDetail('${safeHostId}','ai-result')`
+	      ? ''
 	      : `openDetail('${safeHostId}','ai-result')`;
+	    const clickAttrs = isPublishedListing
+	      ? `data-listing-id="${safeHostId}" data-back-screen="ai-result" data-published-homestay-card="true"`
+	      : `onclick="${openAction}"`;
 	    const comparison = matchInfo?.activeTotal ? matchInfo : hmEvaluateHost(hostId, homestayInitialFilters());
 	    const comparisonText = comparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${comparison.matchedTotal}/${comparison.activeTotal}項目一致` : `${comparison.matchedTotal} of ${comparison.activeTotal} conditions match`)
@@ -20560,7 +20595,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const availabilityLabel = currentLang === 'ja' ? '受け入れ可能期間' : 'Available dates';
 	    const opacity = matchInfo.available ? '1' : '.72';
 	    return `
-	      <div class="match-card" data-listing-id="${safeHostId}" onclick="${openAction}" style="opacity:${opacity};">
+	      <div class="match-card" ${clickAttrs} style="opacity:${opacity};">
 	        <div class="match-card-img">
 	          <img src="${h.photos?.[0] || neutralHomestayListingPhotoUrl()}" alt="部屋" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
 	          <div class="match-badge"><span class="match-badge-icon"></span> ${comparisonText}</div>
@@ -20772,6 +20807,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
   });
   applyLang();
   setLoginMode(isSignupMode, true);
+  setupPublishedHomestayCardClickDelegation();
   updateFavIcons();
   // 初期画面はSupabase AuthのgetSession / onAuthStateChangeで制御
 </script>
