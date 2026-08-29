@@ -3864,7 +3864,6 @@
     <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label" data-i18n="lifestyle_settings">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="settings">設定</div>
-    <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="notifications">通知設定</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
     <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
@@ -6636,7 +6635,6 @@
   <div class="mypage-sub-body" style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
     <div style="background:white;border:1px solid var(--border);border-radius:16px;overflow:hidden;">
       <div class="mypage-item" onclick="navigate(currentScreen,'host-profile')"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="edit_listing">掲載を編集</span><span class="mypage-item-arrow">›</span></div>
-      <div class="mypage-item" onclick="openNotificationSettings()"><span class="mypage-item-icon">🔔</span><span class="mypage-item-label" data-i18n="new_message_notifications">メッセージ受信通知</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
@@ -23601,7 +23599,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       'mypage',
       'profile',
       'lifestyle',
-      'notification-settings',
       'support',
       'privacy-security',
       'blocked-users',
@@ -23615,7 +23612,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       'chat',
       'homestay-guest-detail',
       'host-settings',
-      'notification-settings',
       'support',
       'privacy-security',
       'blocked-users'
@@ -23758,7 +23754,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           window._authenticatedRouteRestored = true;
           return true;
         }
-        if (['search', 'mypage', 'profile', 'lifestyle', 'notification-settings', 'support', 'privacy-security', 'blocked-users', 'ai-result', 'homestay-host-list'].includes(screen)) {
+        if (screen === 'notification-settings') {
+          navigate(currentScreen || 'login', 'mypage');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (['search', 'mypage', 'profile', 'lifestyle', 'support', 'privacy-security', 'blocked-users', 'ai-result', 'homestay-host-list'].includes(screen)) {
           if (screen === 'search' || screen === 'ai-result' || screen === 'homestay-host-list') {
             await ensurePublishedHomestayListingsForGuest({ force: true });
           }
@@ -23800,7 +23801,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           window._authenticatedRouteRestored = true;
           return true;
         }
-        if (['notification-settings', 'support', 'privacy-security', 'blocked-users'].includes(screen)) {
+        if (screen === 'notification-settings') {
+          await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+          navigate(currentScreen || 'login', 'host-settings');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (['support', 'privacy-security', 'blocked-users'].includes(screen)) {
           await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
           prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
           navigate(currentScreen || 'login', screen);
