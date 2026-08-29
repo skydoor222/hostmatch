@@ -7485,6 +7485,7 @@
   let sharehouseDetailMap = null;
   let homestayHostApproxLocationMaps = {};
   let currentHomestayApproxLocationDraft = { ob: null, profile: null };
+  let currentHomestayPrivateHousePoint = { ob: null, profile: null };
   let hostPreviewMode = false;
   const blockedUsers = new Map();
   let currentBlockTarget = null;
@@ -13002,16 +13003,32 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (!validHomestayCoordinate(anchorLat, anchorLng)) return null;
 	    const latitude = Number(anchorLat);
 	    const longitude = Number(anchorLng);
-	    const angle = homestaySecureRandomUnit() * Math.PI * 2;
-	    const distanceM = 100 + homestaySecureRandomUnit() * 50;
 	    const earthRadiusM = 6378137;
-	    const latOffset = (distanceM * Math.cos(angle)) / earthRadiusM * (180 / Math.PI);
-	    const lngOffset = (distanceM * Math.sin(angle)) / (earthRadiusM * Math.cos(latitude * Math.PI / 180)) * (180 / Math.PI);
-	    return {
-	      latitude: formatHomestayPublicCoordinate(latitude + latOffset),
-	      longitude: formatHomestayPublicCoordinate(longitude + lngOffset),
-	      offsetDistanceM: distanceM
-	    };
+	    for (let attempt = 0; attempt < 8; attempt += 1) {
+	      const angle = homestaySecureRandomUnit() * Math.PI * 2;
+	      const distanceM = 80 + homestaySecureRandomUnit() * 40;
+	      const latOffset = (distanceM * Math.cos(angle)) / earthRadiusM * (180 / Math.PI);
+	      const lngOffset = (distanceM * Math.sin(angle)) / (earthRadiusM * Math.cos(latitude * Math.PI / 180)) * (180 / Math.PI);
+	      const center = {
+	        latitude: formatHomestayPublicCoordinate(latitude + latOffset),
+	        longitude: formatHomestayPublicCoordinate(longitude + lngOffset),
+	        offsetDistanceM: distanceM
+	      };
+	      const actualDistance = distanceMetersBetweenCoordinates(latitude, longitude, center.latitude, center.longitude);
+	      if (Number.isFinite(actualDistance) && actualDistance <= 150) return center;
+	    }
+	    return null;
+	  }
+
+	  function distanceMetersBetweenCoordinates(lat1, lng1, lat2, lng2) {
+	    if (!validHomestayCoordinate(lat1, lng1) || !validHomestayCoordinate(lat2, lng2)) return Infinity;
+	    const earthRadiusM = 6371000;
+	    const toRad = value => Number(value) * Math.PI / 180;
+	    const dLat = toRad(lat2) - toRad(lat1);
+	    const dLng = toRad(lng2) - toRad(lng1);
+	    const a = Math.sin(dLat / 2) ** 2
+	      + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+	    return earthRadiusM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 	  }
 
 	  function validHomestayCoordinate(lat, lng) {
@@ -13320,10 +13337,23 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      && draft.confirmed === true
 	      && validHomestayCoordinate(draft.publicLatitude, draft.publicLongitude)
 	      && String(draft.sourceAddress || '').trim() === fullAddress) {
+	      const safeDraft = ensurePrivacySafeHomestayApproxLocationDraft(scope);
+	      if (!safeDraft || !validHomestayCoordinate(safeDraft.publicLatitude, safeDraft.publicLongitude)) {
+	        return {
+	          payload: {
+	            approximate_latitude: null,
+	            approximate_longitude: null,
+	            approximate_radius_m: homestayApproximateLocationRadiusM()
+	          },
+	          warning: currentLang === 'en'
+	            ? 'Address was saved, but the approximate location could not be updated.'
+	            : '住所は保存されましたが、概略位置を更新できませんでした。'
+	        };
+	      }
 	      return {
 	        payload: {
-	          approximate_latitude: formatHomestayPublicCoordinate(draft.publicLatitude),
-	          approximate_longitude: formatHomestayPublicCoordinate(draft.publicLongitude),
+	          approximate_latitude: formatHomestayPublicCoordinate(safeDraft.publicLatitude),
+	          approximate_longitude: formatHomestayPublicCoordinate(safeDraft.publicLongitude),
 	          approximate_radius_m: homestayApproximateLocationRadiusM()
 	        },
 	        warning: ''
@@ -13383,6 +13413,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function clearHomestayHostApproxLocationDraft(scope) {
 	    const key = scope || 'profile';
 	    currentHomestayApproxLocationDraft[key] = null;
+	    currentHomestayPrivateHousePoint[key] = null;
 	    clearHomestayHostApproxLocationMap(key);
 	    renderHomestayHostApproxLocationMap(key);
 	  }
@@ -13391,11 +13422,13 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const key = scope || 'profile';
 	    if (!validHomestayCoordinate(latitude, longitude)) {
 	      currentHomestayApproxLocationDraft[key] = null;
+	      currentHomestayPrivateHousePoint[key] = null;
 	      return null;
 	    }
+	    const hasAnchor = options.hasAnchor !== false;
 	    const draft = {
-	      anchorLatitude: options.hasAnchor === false ? null : Number(latitude),
-	      anchorLongitude: options.hasAnchor === false ? null : Number(longitude),
+	      anchorLatitude: hasAnchor ? Number(latitude) : null,
+	      anchorLongitude: hasAnchor ? Number(longitude) : null,
 	      publicLatitude: Number(options.publicLatitude ?? latitude),
 	      publicLongitude: Number(options.publicLongitude ?? longitude),
 	      sourceAddress: String(options.sourceAddress || hostApproxLocationAddressValue(key) || '').trim(),
@@ -13403,6 +13436,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      manual: options.manual === true
 	    };
 	    currentHomestayApproxLocationDraft[key] = draft;
+	    currentHomestayPrivateHousePoint[key] = hasAnchor
+	      ? { latitude: draft.anchorLatitude, longitude: draft.anchorLongitude }
+	      : null;
 	    return draft;
 	  }
 
@@ -13429,6 +13465,26 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      hasAnchor: false,
 	      confirmed: options.confirmed !== false
 	    });
+	  }
+
+	  function ensurePrivacySafeHomestayApproxLocationDraft(scope) {
+	    const key = scope || 'profile';
+	    const draft = currentHomestayApproxLocationDraft[key];
+	    if (!draft || draft.confirmed !== true || !validHomestayCoordinate(draft.publicLatitude, draft.publicLongitude)) return null;
+	    if (!validHomestayCoordinate(draft.anchorLatitude, draft.anchorLongitude)) return draft;
+	    const distance = distanceMetersBetweenCoordinates(
+	      draft.anchorLatitude,
+	      draft.anchorLongitude,
+	      draft.publicLatitude,
+	      draft.publicLongitude
+	    );
+	    if (Number.isFinite(distance) && distance <= 150) return draft;
+	    const publicCenter = createPrivacySafeHomestayCircleCenter(draft.anchorLatitude, draft.anchorLongitude);
+	    if (!publicCenter) return null;
+	    draft.publicLatitude = publicCenter.latitude;
+	    draft.publicLongitude = publicCenter.longitude;
+	    currentHomestayApproxLocationDraft[key] = draft;
+	    return draft;
 	  }
 
 	  function setHomestayHostApproxLocationMessage(scope, message = '') {
@@ -13543,9 +13599,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const draft = currentHomestayApproxLocationDraft[key];
 	    const address = hostApproxLocationAddressValue(key);
 	    if (draft && String(draft.sourceAddress || '').trim() !== String(address || '').trim()) {
+	      currentHomestayApproxLocationDraft[key] = null;
+	      currentHomestayPrivateHousePoint[key] = null;
+	      renderHomestayHostApproxLocationMap(key);
 	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
-	        ? 'Address changed. Get the approximate location again, or click the map to adjust the center.'
-	        : '住所が変更されました。位置を再取得するか、地図上をクリックして中心を調整してください。');
+	        ? 'Address changed. Get the approximate location again, then click the actual home location.'
+	        : '住所が変更されました。位置を再取得してから、実際の住居位置をクリックしてください。');
 	    }
 	  }
 
@@ -21872,6 +21931,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentHomestayHostDataLoaded = false;
     Object.keys(homestayHostApproxLocationMaps || {}).forEach(scope => clearHomestayHostApproxLocationMap(scope));
     currentHomestayApproxLocationDraft = { ob: null, profile: null };
+    currentHomestayPrivateHousePoint = { ob: null, profile: null };
     window._currentHomestayHostProfile = null;
     window._currentHomestayListing = null;
     window._currentHomestayListingDetails = null;
