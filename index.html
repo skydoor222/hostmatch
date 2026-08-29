@@ -5154,8 +5154,8 @@
   <div style="width:min(720px,100%);max-height:calc(100vh - 36px);overflow:auto;background:white;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.28);padding:18px;">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;">
       <div>
-        <div style="font-size:17px;font-weight:900;color:var(--dark);">写真の表示範囲を調整</div>
-        <div style="font-size:12px;color:var(--light);font-weight:700;margin-top:4px;">ドラッグして位置を調整できます</div>
+        <div id="room-photo-crop-title" style="font-size:17px;font-weight:900;color:var(--dark);">写真の表示範囲を調整</div>
+        <div id="room-photo-crop-subtitle" style="font-size:12px;color:var(--light);font-weight:700;margin-top:4px;">ドラッグして位置を調整できます</div>
       </div>
       <button type="button" onclick="cancelHomestayRoomPhotoCrop()" aria-label="閉じる" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;font-size:20px;line-height:1;cursor:pointer;">×</button>
     </div>
@@ -5196,6 +5196,7 @@
 	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
 	          <input id="host-ob-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'ob')" style="display:none;" />
 	        </label>
+	        <button id="host-ob-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('ob')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
 	        <div id="host-ob-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	      <div class="form-group">
@@ -11471,6 +11472,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  let currentHomestayHostDataLoaded = false;
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
+	  const pendingHomestayHostAvatarCrops = { ob: null, profile: null };
 	  const pendingHomestayRoomPhotoFiles = { ob: [], profile: [] };
 	  const pendingHomestayListingPhotoDeleteIds = new Set();
 	  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -11479,6 +11481,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  const HOMESTAY_ROOM_PHOTO_MAX_COUNT = 10;
 	  const HOMESTAY_ROOM_PHOTO_ASPECT_RATIO = 16 / 10;
 	  const HOMESTAY_ROOM_PHOTO_OUTPUT_WIDTH = 1600;
+	  const HOMESTAY_HOST_AVATAR_ASPECT_RATIO = 1;
+	  const HOMESTAY_HOST_AVATAR_OUTPUT_SIZE = 800;
 	  let homestayRoomPhotoCropEditorState = null;
 
   function nullableText(value) {
@@ -11734,6 +11738,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
 	          <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="display:none;" />
 	        </label>
+	        <button id="${prefix}-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('${scope}')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
 	        <div id="${prefix}-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	    `;
@@ -12376,6 +12381,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function clearPendingHomestayHostAvatar(scope) {
 	    const key = homestayHostPhotoScope(scope);
 	    pendingHomestayHostAvatarFiles[key] = null;
+	    pendingHomestayHostAvatarCrops[key] = null;
 	    if (pendingHomestayHostAvatarPreviewUrls[key]) {
 	      URL.revokeObjectURL(pendingHomestayHostAvatarPreviewUrls[key]);
 	      pendingHomestayHostAvatarPreviewUrls[key] = '';
@@ -12385,8 +12391,42 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function renderHomestayHostAvatarPreview(scope) {
 	    const key = homestayHostPhotoScope(scope);
 	    const prefix = hostFormPrefix(key);
-	    const avatarUrl = pendingHomestayHostAvatarPreviewUrls[key] || window._currentProfile?.avatar_url || '';
-	    window.renderAvatarElement(document.getElementById(`${prefix}-avatar-preview`), avatarUrl);
+	    const preview = document.getElementById(`${prefix}-avatar-preview`);
+	    const adjustBtn = document.getElementById(`${prefix}-avatar-adjust`);
+	    const pendingUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    if (adjustBtn) adjustBtn.style.display = pendingUrl ? 'block' : 'none';
+	    if (pendingUrl && preview) {
+	      preview.textContent = '';
+	      const img = document.createElement('img');
+	      img.src = pendingUrl;
+	      img.alt = 'Profile photo preview';
+	      img.setAttribute('style', `position:absolute;max-width:none;max-height:none;${pendingHostAvatarImageStyle(key)}`);
+	      preview.style.position = 'relative';
+	      preview.appendChild(img);
+	      return;
+	    }
+	    window.renderAvatarElement(preview, window._currentProfile?.avatar_url || '');
+	  }
+
+	  function loadHomestayHostAvatarNaturalSize(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const previewUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    if (!previewUrl) return;
+	    const image = new Image();
+	    image.onload = () => {
+	      pendingHomestayHostAvatarCrops[key] = {
+	        ...(pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()),
+	        naturalWidth: image.naturalWidth || 0,
+	        naturalHeight: image.naturalHeight || 0
+	      };
+	      renderHomestayHostAvatarPreview(key);
+	      if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key) {
+	        homestayRoomPhotoCropEditorState.draft.naturalWidth = image.naturalWidth || 0;
+	        homestayRoomPhotoCropEditorState.draft.naturalHeight = image.naturalHeight || 0;
+	        renderHomestayRoomPhotoCropEditorImage();
+	      }
+	    };
+	    image.src = previewUrl;
 	  }
 
 	  function handleHomestayHostAvatarSelection(event, scope) {
@@ -12414,7 +12454,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    }
 
 	    pendingHomestayHostAvatarFiles[key] = file;
+	    pendingHomestayHostAvatarCrops[key] = defaultHomestayRoomPhotoCropState();
 	    pendingHomestayHostAvatarPreviewUrls[key] = URL.createObjectURL(file);
+	    loadHomestayHostAvatarNaturalSize(key);
 	    renderHomestayHostAvatarPreview(key);
 	  }
 
@@ -12423,7 +12465,20 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const file = pendingHomestayHostAvatarFiles[key];
 	    if (!file) return true;
 
-	    const publicUrl = await uploadProfileAvatarFileToSupabase(file, message => setHomestayHostAvatarMessage(key, message));
+	    let uploadFile = file;
+	    try {
+	      const croppedBlob = await croppedHomestayPhotoBlob({
+	        previewUrl: pendingHomestayHostAvatarPreviewUrls[key],
+	        crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	      }, HOMESTAY_HOST_AVATAR_ASPECT_RATIO, HOMESTAY_HOST_AVATAR_OUTPUT_SIZE);
+	      uploadFile = new File([croppedBlob], `avatar-${Date.now()}.webp`, { type: 'image/webp' });
+	    } catch (error) {
+	      console.error('Supabase homestay host profile photo crop error:', error);
+	      setHomestayHostAvatarMessage(key, currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。');
+	      return false;
+	    }
+
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(key, message));
 	    if (!publicUrl) {
 	      console.error('Supabase homestay host profile photo save error:', new Error('Profile photo upload returned no public URL'));
 	      return false;
@@ -12496,18 +12551,18 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    item.crop.offsetY = Math.min(1, Math.max(-1, Number(item.crop.offsetY) || 0));
 	  }
 
-	  function pendingRoomPhotoImageStyle(item) {
+	  function croppedPreviewImageStyle(item, aspectRatio) {
 	    const crop = item?.crop || defaultHomestayRoomPhotoCropState();
 	    const naturalWidth = Number(crop.naturalWidth) || 1;
 	    const naturalHeight = Number(crop.naturalHeight) || 1;
 	    const imageAspect = naturalWidth / naturalHeight;
 	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
-	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
-	      ? (imageAspect / HOMESTAY_ROOM_PHOTO_ASPECT_RATIO) * 100
+	    const baseWidth = imageAspect > aspectRatio
+	      ? (imageAspect / aspectRatio) * 100
 	      : 100;
-	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
+	    const baseHeight = imageAspect > aspectRatio
 	      ? 100
-	      : (HOMESTAY_ROOM_PHOTO_ASPECT_RATIO / imageAspect) * 100;
+	      : (aspectRatio / imageAspect) * 100;
 	    const width = baseWidth * zoom;
 	    const height = baseHeight * zoom;
 	    const maxOffsetX = Math.max(0, (width - 100) / 2);
@@ -12515,6 +12570,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const left = 50 + (Number(crop.offsetX) || 0) * maxOffsetX;
 	    const top = 50 + (Number(crop.offsetY) || 0) * maxOffsetY;
 	    return `width:${width}%;height:${height}%;left:${left}%;top:${top}%;transform:translate(-50%,-50%);object-fit:fill;`;
+	  }
+
+	  function pendingRoomPhotoImageStyle(item) {
+	    return croppedPreviewImageStyle(item, HOMESTAY_ROOM_PHOTO_ASPECT_RATIO);
+	  }
+
+	  function pendingHostAvatarImageStyle(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    return croppedPreviewImageStyle({
+	      crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	    }, HOMESTAY_HOST_AVATAR_ASPECT_RATIO);
 	  }
 
 	  function loadHomestayRoomPhotoNaturalSize(item) {
@@ -12641,6 +12707,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const item = pendingHomestayRoomPhotoFiles[key][index];
 	    if (!item) return;
 	    homestayRoomPhotoCropEditorState = {
+	      kind: 'room',
 	      scope: key,
 	      index,
 	      item,
@@ -12652,8 +12719,12 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      startOffsetY: 0
 	    };
 	    const modal = document.getElementById('room-photo-crop-modal');
+	    const title = document.getElementById('room-photo-crop-title');
+	    const subtitle = document.getElementById('room-photo-crop-subtitle');
 	    const image = document.getElementById('room-photo-crop-image');
 	    const frame = document.getElementById('room-photo-crop-frame');
+	    if (title) title.textContent = '写真の表示範囲を調整';
+	    if (subtitle) subtitle.textContent = 'ドラッグして位置を調整できます';
 	    if (image) {
 	      image.onload = () => {
 	        item.crop = {
@@ -12670,6 +12741,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      image.src = item.previewUrl;
 	    }
 	    if (frame) {
+	      frame.style.aspectRatio = '16 / 10';
+	      frame.style.borderRadius = '14px';
 	      frame.onpointerdown = startHomestayRoomPhotoCropDrag;
 	      frame.onpointermove = moveHomestayRoomPhotoCropDrag;
 	      frame.onpointerup = endHomestayRoomPhotoCropDrag;
@@ -12679,6 +12752,64 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (modal) modal.style.display = 'flex';
 	  }
 
+	  function openHomestayHostAvatarCropEditor(scope) {
+	    const key = homestayHostPhotoScope(scope);
+	    const previewUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    if (!previewUrl) return;
+	    homestayRoomPhotoCropEditorState = {
+	      kind: 'avatar',
+	      scope: key,
+	      index: null,
+	      item: {
+	        previewUrl,
+	        crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	      },
+	      draft: cloneHomestayRoomPhotoCrop(pendingHomestayHostAvatarCrops[key]),
+	      pointerId: null,
+	      startX: 0,
+	      startY: 0,
+	      startOffsetX: 0,
+	      startOffsetY: 0
+	    };
+	    const modal = document.getElementById('room-photo-crop-modal');
+	    const title = document.getElementById('room-photo-crop-title');
+	    const subtitle = document.getElementById('room-photo-crop-subtitle');
+	    const image = document.getElementById('room-photo-crop-image');
+	    const frame = document.getElementById('room-photo-crop-frame');
+	    if (title) title.textContent = 'プロフィール写真の表示範囲を調整';
+	    if (subtitle) subtitle.textContent = '丸いプロフィール画像として見える範囲を調整できます';
+	    if (image) {
+	      image.onload = () => {
+	        pendingHomestayHostAvatarCrops[key] = {
+	          ...(pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()),
+	          naturalWidth: image.naturalWidth || pendingHomestayHostAvatarCrops[key]?.naturalWidth || 0,
+	          naturalHeight: image.naturalHeight || pendingHomestayHostAvatarCrops[key]?.naturalHeight || 0
+	        };
+	        if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key) {
+	          homestayRoomPhotoCropEditorState.draft.naturalWidth = pendingHomestayHostAvatarCrops[key].naturalWidth;
+	          homestayRoomPhotoCropEditorState.draft.naturalHeight = pendingHomestayHostAvatarCrops[key].naturalHeight;
+	          homestayRoomPhotoCropEditorState.item.crop = pendingHomestayHostAvatarCrops[key];
+	          renderHomestayRoomPhotoCropEditorImage();
+	        }
+	      };
+	      image.src = previewUrl;
+	    }
+	    if (frame) {
+	      frame.style.aspectRatio = '1 / 1';
+	      frame.style.borderRadius = '50%';
+	      frame.onpointerdown = startHomestayRoomPhotoCropDrag;
+	      frame.onpointermove = moveHomestayRoomPhotoCropDrag;
+	      frame.onpointerup = endHomestayRoomPhotoCropDrag;
+	      frame.onpointercancel = endHomestayRoomPhotoCropDrag;
+	    }
+	    renderHomestayRoomPhotoCropEditorImage();
+	    if (modal) modal.style.display = 'flex';
+	  }
+
+	  function cropAspectForEditorState(state = homestayRoomPhotoCropEditorState) {
+	    return state?.kind === 'avatar' ? HOMESTAY_HOST_AVATAR_ASPECT_RATIO : HOMESTAY_ROOM_PHOTO_ASPECT_RATIO;
+	  }
+
 	  function renderHomestayRoomPhotoCropEditorImage() {
 	    const state = homestayRoomPhotoCropEditorState;
 	    const image = document.getElementById('room-photo-crop-image');
@@ -12686,7 +12817,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const label = document.getElementById('room-photo-crop-zoom-label');
 	    if (!state || !image) return;
 	    const previewItem = { ...state.item, crop: state.draft };
-	    image.setAttribute('style', `position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;${pendingRoomPhotoImageStyle(previewItem)}`);
+	    image.setAttribute('style', `position:absolute;max-width:none;max-height:none;user-select:none;-webkit-user-drag:none;${croppedPreviewImageStyle(previewItem, cropAspectForEditorState(state))}`);
 	    if (slider) slider.value = String(state.draft.zoom || 1);
 	    if (label) label.textContent = `${Math.round((state.draft.zoom || 1) * 100)}%`;
 	  }
@@ -12701,8 +12832,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const naturalHeight = Number(crop.naturalHeight) || 1;
 	    const imageAspect = naturalWidth / naturalHeight;
 	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
-	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? rect.height * imageAspect : rect.width;
-	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? rect.height : rect.width / imageAspect;
+	    const aspectRatio = cropAspectForEditorState(state);
+	    const baseWidth = imageAspect > aspectRatio ? rect.height * imageAspect : rect.width;
+	    const baseHeight = imageAspect > aspectRatio ? rect.height : rect.width / imageAspect;
 	    return {
 	      maxX: Math.max(0, (baseWidth * zoom - rect.width) / 2),
 	      maxY: Math.max(0, (baseHeight * zoom - rect.height) / 2)
@@ -12773,13 +12905,19 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function confirmHomestayRoomPhotoCrop() {
 	    const state = homestayRoomPhotoCropEditorState;
 	    if (!state?.item) return;
-	    state.item.crop = {
+	    const nextCrop = {
 	      ...cloneHomestayRoomPhotoCrop(state.draft),
 	      adjusted: true
 	    };
+	    if (state.kind === 'avatar') {
+	      pendingHomestayHostAvatarCrops[state.scope] = nextCrop;
+	    } else {
+	      state.item.crop = nextCrop;
+	    }
 	    const scope = state.scope;
 	    closeHomestayRoomPhotoCropModal();
-	    renderHomestayHostRoomPhotoPreview(scope);
+	    if (state.kind === 'avatar') renderHomestayHostAvatarPreview(scope);
+	    else renderHomestayHostRoomPhotoPreview(scope);
 	  }
 
 	  function imageFromUrl(src) {
@@ -12791,21 +12929,21 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    });
 	  }
 
-	  async function croppedHomestayRoomPhotoBlob(item) {
+	  async function croppedHomestayPhotoBlob(item, aspectRatio, maxOutputWidth) {
 	    const image = await imageFromUrl(item.previewUrl);
 	    const naturalWidth = image.naturalWidth || item.crop?.naturalWidth || 1;
 	    const naturalHeight = image.naturalHeight || item.crop?.naturalHeight || 1;
 	    const outputWidth = Math.max(1, Math.floor(Math.min(
-	      HOMESTAY_ROOM_PHOTO_OUTPUT_WIDTH,
+	      maxOutputWidth,
 	      naturalWidth,
-	      naturalHeight * HOMESTAY_ROOM_PHOTO_ASPECT_RATIO
+	      naturalHeight * aspectRatio
 	    )));
-	    const outputHeight = Math.max(1, Math.round(outputWidth / HOMESTAY_ROOM_PHOTO_ASPECT_RATIO));
+	    const outputHeight = Math.max(1, Math.round(outputWidth / aspectRatio));
 	    const canvas = document.createElement('canvas');
 	    canvas.width = outputWidth;
 	    canvas.height = outputHeight;
 	    const context = canvas.getContext('2d');
-	    if (!context) throw new Error('Could not create room photo crop canvas');
+	    if (!context) throw new Error('Could not create photo crop canvas');
 	    const crop = {
 	      ...defaultHomestayRoomPhotoCropState(),
 	      ...(item.crop || {}),
@@ -12814,8 +12952,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    };
 	    const imageAspect = naturalWidth / naturalHeight;
 	    const zoom = Math.min(3, Math.max(1, Number(crop.zoom) || 1));
-	    const baseWidth = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? outputHeight * imageAspect : outputWidth;
-	    const baseHeight = imageAspect > HOMESTAY_ROOM_PHOTO_ASPECT_RATIO ? outputHeight : outputWidth / imageAspect;
+	    const baseWidth = imageAspect > aspectRatio ? outputHeight * imageAspect : outputWidth;
+	    const baseHeight = imageAspect > aspectRatio ? outputHeight : outputWidth / imageAspect;
 	    const drawWidth = baseWidth * zoom;
 	    const drawHeight = baseHeight * zoom;
 	    const maxOffsetX = Math.max(0, (drawWidth - outputWidth) / 2);
@@ -12824,8 +12962,16 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    const drawY = (outputHeight - drawHeight) / 2 + (Number(crop.offsetY) || 0) * maxOffsetY;
 	    context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
 	    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.9));
-	    if (!blob) throw new Error('Could not create cropped room photo blob');
+	    if (!blob) throw new Error('Could not create cropped photo blob');
 	    return blob;
+	  }
+
+	  async function croppedHomestayRoomPhotoBlob(item) {
+	    return croppedHomestayPhotoBlob(
+	      item,
+	      HOMESTAY_ROOM_PHOTO_ASPECT_RATIO,
+	      HOMESTAY_ROOM_PHOTO_OUTPUT_WIDTH
+	    );
 	  }
 
 	  async function uploadHomestayListingPhotoFileToSupabase(userId, listingId, file, index) {
