@@ -729,6 +729,28 @@
       font-weight: 900;
       padding: 4px 10px;
     }
+    .host-private-map {
+      width: 100%;
+      height: 260px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      background: #E8F0E9;
+      position: relative;
+      z-index: 1;
+    }
+    .host-private-map-empty {
+      min-height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 14px;
+      color: var(--light);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
 
     .detail-info-card {
       background: var(--bg);
@@ -5315,7 +5337,8 @@
       <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
       <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
       <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
-      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('ob')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+      <div class="form-group"><div class="form-label">概略位置を確認</div><div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:8px;">ゲストには円で囲まれた概略エリアのみ表示されます。実際の住居が円の中心付近に入るよう調整してください。ゲストには正確な位置は表示されません。</div><button type="button" onclick="refreshHomestayHostApproxLocationFromAddress('ob')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;">住所から位置を取得</button><div id="host-ob-approx-location-map" class="host-private-map" aria-label="概略位置を確認"><div class="host-private-map-empty">住所を入力して概略位置を取得してください。</div></div><div id="host-ob-approx-location-message" style="font-size:12px;color:var(--light);font-weight:700;line-height:1.5;margin-top:8px;"></div></div>
       <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-available-start" type="date" value="2026-07-01" /></div>
       <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-available-end" type="date" value="2026-12-31" /></div>
       <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="host-ob-min-stay" type="number" min="1" inputmode="numeric" value="1" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -6364,7 +6387,8 @@
 	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">Vancouver</div><div class="form-chip" onclick="toggleChip(this)">Toronto</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
 	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
-	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('profile')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	          <div><div class="form-label">概略位置を確認</div><div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:8px;">ゲストには円で囲まれた概略エリアのみ表示されます。実際の住居が円の中心付近に入るよう調整してください。ゲストには正確な位置は表示されません。</div><button type="button" onclick="refreshHomestayHostApproxLocationFromAddress('profile')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;">住所から位置を取得</button><div id="host-profile-approx-location-map" class="host-private-map" aria-label="概略位置を確認"><div class="host-private-map-empty">住所を入力して概略位置を取得してください。</div></div><div id="host-profile-approx-location-message" style="font-size:12px;color:var(--light);font-weight:700;line-height:1.5;margin-top:8px;"></div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="host-profile-available-start" type="date" value="2026-07-01" /></div><div><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="host-profile-available-end" type="date" value="2026-12-31" /></div></div>
 	          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-min-stay" type="number" min="1" inputmode="numeric" value="1" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div><div><div class="form-label">最長滞在期間</div><div style="display:flex;align-items:center;gap:8px;"><input class="form-input" id="host-profile-max-stay" type="number" min="1" inputmode="numeric" value="12" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div></div>
 	          <div><div class="form-label">長期滞在</div><div class="form-chip-row" id="host-profile-long-stay"><div class="form-chip selected" onclick="toggleChip(this)">長期滞在可能</div><div class="form-chip" onclick="toggleChip(this)">長期滞在不可</div></div></div>
@@ -7459,6 +7483,8 @@
   let guestMessageService = 'homestay';
   let homestayDetailMap = null;
   let sharehouseDetailMap = null;
+  let homestayHostApproxLocationMaps = {};
+  let currentHomestayApproxLocationDraft = { ob: null, profile: null };
   let hostPreviewMode = false;
   const blockedUsers = new Map();
   let currentBlockTarget = null;
@@ -12954,6 +12980,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    return Number((Math.round(number / step) * step).toFixed(4));
 	  }
 
+	  function homestayApproximateLocationRadiusM() {
+	    return 500;
+	  }
+
 	  function validHomestayCoordinate(lat, lng) {
 	    if (lat === null || lat === undefined || lat === '' || lng === null || lng === undefined || lng === '') return false;
 	    const latitude = Number(lat);
@@ -13238,9 +13268,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	      if (!candidate || !validHomestayCoordinate(candidate.lat, candidate.lon)) return null;
 	      return {
-	        latitude: blurHomestayCoordinate(candidate.lat),
-	        longitude: blurHomestayCoordinate(candidate.lon),
-	        radiusM: 600,
+	        latitude: Number(candidate.lat),
+	        longitude: Number(candidate.lon),
+	        radiusM: homestayApproximateLocationRadiusM(),
 	        sourceStage: candidate._homestayGeocodeSourceStage || '',
 	        matchType: candidate._homestayGeocodeMatchType || ''
 	      };
@@ -13254,12 +13284,24 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	  async function homestayApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
 	    const fullAddress = String(address || '').trim();
+	    const scope = options.scope || '';
+	    const draft = scope ? currentHomestayApproxLocationDraft?.[scope] : null;
+	    if (draft && validHomestayCoordinate(draft.latitude, draft.longitude) && String(draft.sourceAddress || '').trim() === fullAddress) {
+	      return {
+	        payload: {
+	          approximate_latitude: blurHomestayCoordinate(draft.latitude),
+	          approximate_longitude: blurHomestayCoordinate(draft.longitude),
+	          approximate_radius_m: homestayApproximateLocationRadiusM()
+	        },
+	        warning: ''
+	      };
+	    }
 	    if (!fullAddress) {
 	      return {
 	        payload: {
 	          approximate_latitude: null,
 	          approximate_longitude: null,
-	          approximate_radius_m: 600
+	          approximate_radius_m: homestayApproximateLocationRadiusM()
 	        },
 	        warning: ''
 	      };
@@ -13267,10 +13309,17 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 
 	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress, { city: options.city });
 	    if (geocoded && validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
+	      if (scope) {
+	        setHomestayHostApproxLocationDraft(scope, geocoded.latitude, geocoded.longitude, {
+	          sourceAddress: fullAddress,
+	          manual: false
+	        });
+	        renderHomestayHostApproxLocationMap(scope);
+	      }
 	      return {
 	        payload: {
-	          approximate_latitude: geocoded.latitude,
-	          approximate_longitude: geocoded.longitude,
+	          approximate_latitude: blurHomestayCoordinate(geocoded.latitude),
+	          approximate_longitude: blurHomestayCoordinate(geocoded.longitude),
 	          approximate_radius_m: geocoded.radiusM
 	        },
 	        warning: ''
@@ -13280,12 +13329,172 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      payload: {
 	        approximate_latitude: null,
 	        approximate_longitude: null,
-	        approximate_radius_m: 600
+	        approximate_radius_m: homestayApproximateLocationRadiusM()
 	      },
 	      warning: currentLang === 'en'
 	        ? 'Address was saved, but the approximate location could not be updated.'
 	        : '住所は保存されましたが、概略位置を更新できませんでした。'
 	    };
+	  }
+
+	  function hostApproxLocationPrefix(scope) {
+	    return hostFormPrefix(scope);
+	  }
+
+	  function hostApproxLocationAddressValue(scope) {
+	    return hostFormTextInput(scope, 'address');
+	  }
+
+	  function clearHomestayHostApproxLocationMap(scope) {
+	    const key = scope || 'profile';
+	    const map = homestayHostApproxLocationMaps?.[key];
+	    if (map) {
+	      map.remove();
+	      delete homestayHostApproxLocationMaps[key];
+	    }
+	  }
+
+	  function clearHomestayHostApproxLocationDraft(scope) {
+	    const key = scope || 'profile';
+	    currentHomestayApproxLocationDraft[key] = null;
+	    clearHomestayHostApproxLocationMap(key);
+	    renderHomestayHostApproxLocationMap(key);
+	  }
+
+	  function setHomestayHostApproxLocationDraft(scope, latitude, longitude, options = {}) {
+	    const key = scope || 'profile';
+	    if (!validHomestayCoordinate(latitude, longitude)) {
+	      currentHomestayApproxLocationDraft[key] = null;
+	      return null;
+	    }
+	    const draft = {
+	      latitude: Number(latitude),
+	      longitude: Number(longitude),
+	      sourceAddress: String(options.sourceAddress || hostApproxLocationAddressValue(key) || '').trim(),
+	      manual: options.manual === true
+	    };
+	    currentHomestayApproxLocationDraft[key] = draft;
+	    return draft;
+	  }
+
+	  function setHomestayHostApproxLocationMessage(scope, message = '') {
+	    const prefix = hostApproxLocationPrefix(scope);
+	    const el = document.getElementById(`${prefix}-approx-location-message`);
+	    if (el) el.textContent = message;
+	  }
+
+	  function renderHomestayHostApproxLocationMap(scope) {
+	    const key = scope || 'profile';
+	    const prefix = hostApproxLocationPrefix(key);
+	    const mapEl = document.getElementById(`${prefix}-approx-location-map`);
+	    if (!mapEl) return;
+	    const draft = currentHomestayApproxLocationDraft[key];
+	    clearHomestayHostApproxLocationMap(key);
+	    if (!draft || !validHomestayCoordinate(draft.latitude, draft.longitude)) {
+	      mapEl.innerHTML = `<div class="host-private-map-empty">${localizeText('位置を取得できませんでした')}</div>`;
+	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
+	        ? 'Enter an address and get the approximate location.'
+	        : '住所を入力して概略位置を取得してください。');
+	      return;
+	    }
+	    setHomestayHostApproxLocationMessage(key, currentLang === 'en'
+	      ? 'Click the map if you want to move the approximate area center.'
+	      : '円の中心を変更したい場合は、地図上をクリックしてください。');
+
+	    if (!window.L) {
+	      mapEl.innerHTML = `<div class="host-private-map-empty">${localizeText('おおよその位置')}</div>`;
+	      return;
+	    }
+
+	    mapEl.innerHTML = '';
+	    const center = [Number(draft.latitude), Number(draft.longitude)];
+	    const map = L.map(mapEl, {
+	      zoomControl: true,
+	      scrollWheelZoom: true,
+	      dragging: true,
+	      touchZoom: true,
+	      tap: true
+	    }).setView(center, 14);
+	    homestayHostApproxLocationMaps[key] = map;
+
+	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	      maxZoom: 19,
+	      attribution: '&copy; OpenStreetMap contributors'
+	    }).addTo(map);
+
+	    const circle = L.circle(center, {
+	      radius: homestayApproximateLocationRadiusM(),
+	      color: '#FF5A5F',
+	      weight: 2,
+	      fillColor: '#FF5A5F',
+	      fillOpacity: 0.14
+	    }).addTo(map);
+
+	    const marker = L.marker(center, { draggable: true }).addTo(map);
+	    const updateDraftCenter = latlng => {
+	      if (!validHomestayCoordinate(latlng?.lat, latlng?.lng)) return;
+	      setHomestayHostApproxLocationDraft(key, latlng.lat, latlng.lng, {
+	        sourceAddress: hostApproxLocationAddressValue(key),
+	        manual: true
+	      });
+	      const nextCenter = [Number(latlng.lat), Number(latlng.lng)];
+	      circle.setLatLng(nextCenter);
+	      marker.setLatLng(nextCenter);
+	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
+	        ? 'Approximate area center adjusted.'
+	        : '概略エリアの中心を調整しました。');
+	    };
+	    map.on('click', event => updateDraftCenter(event.latlng));
+	    marker.on('dragend', event => updateDraftCenter(event.target.getLatLng()));
+	    map.fitBounds(circle.getBounds(), { padding: [18, 18], maxZoom: 15 });
+	    setTimeout(() => map.invalidateSize(), 120);
+	  }
+
+	  async function refreshHomestayHostApproxLocationFromAddress(scope) {
+	    const key = scope || 'profile';
+	    const address = hostApproxLocationAddressValue(key);
+	    if (!address) {
+	      clearHomestayHostApproxLocationDraft(key);
+	      return;
+	    }
+	    setHomestayHostApproxLocationMessage(key, currentLang === 'en' ? 'Getting approximate location...' : '概略位置を取得しています...');
+	    const geocoded = await geocodeHomestayPrivateAddress(address, {
+	      city: hostPublicAreaDbValue(selectedHostFormChipText(key, 'area', ''))
+	    });
+	    if (!geocoded || !validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
+	      clearHomestayHostApproxLocationDraft(key);
+	      setHomestayHostApproxLocationMessage(key, currentLang === 'en' ? 'Could not get the approximate location.' : '位置を取得できませんでした。');
+	      return;
+	    }
+	    setHomestayHostApproxLocationDraft(key, geocoded.latitude, geocoded.longitude, {
+	      sourceAddress: address,
+	      manual: false
+	    });
+	    renderHomestayHostApproxLocationMap(key);
+	  }
+
+	  function handleHomestayHostApproxAddressInput(scope) {
+	    const key = scope || 'profile';
+	    const draft = currentHomestayApproxLocationDraft[key];
+	    const address = hostApproxLocationAddressValue(key);
+	    if (draft && String(draft.sourceAddress || '').trim() !== String(address || '').trim()) {
+	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
+	        ? 'Address changed. Get the approximate location again, or click the map to adjust the center.'
+	        : '住所が変更されました。位置を再取得するか、地図上をクリックして中心を調整してください。');
+	    }
+	  }
+
+	  function hostApproxLocationMapHtml(scope) {
+	    const prefix = hostApproxLocationPrefix(scope);
+	    return `
+	      <div class="form-group">
+	        <div class="form-label">概略位置を確認</div>
+	        <div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:8px;">ゲストには円で囲まれた概略エリアのみ表示されます。実際の住居が円の中心付近に入るよう調整してください。ゲストには正確な位置は表示されません。</div>
+	        <button type="button" onclick="refreshHomestayHostApproxLocationFromAddress('${scope}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;">住所から位置を取得</button>
+	        <div id="${prefix}-approx-location-map" class="host-private-map" aria-label="概略位置を確認"><div class="host-private-map-empty">住所を入力して概略位置を取得してください。</div></div>
+	        <div id="${prefix}-approx-location-message" style="font-size:12px;color:var(--light);font-weight:700;line-height:1.5;margin-top:8px;"></div>
+	      </div>
+	    `;
 	  }
 
 	  function homestayHostProfilePayloadFromForm(scope, userId) {
@@ -13618,7 +13827,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['Vancouver','Toronto'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
 	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
-	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('${scope}')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
+	      ${hostApproxLocationMapHtml(scope)}
 	      <div class="form-group"><div class="form-label">受け入れ可能開始日</div><input class="form-input" id="${startId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">受け入れ可能終了日</div><input class="form-input" id="${endId}" type="date" /></div>
 	      <div class="form-group"><div class="form-label">最短滞在期間</div><div style="display:flex;align-items:center;gap:10px;"><input class="form-input" id="${prefix}-min-stay" type="number" min="1" inputmode="numeric" style="flex:1;" /><span style="font-size:13px;font-weight:800;color:var(--light);">ヶ月</span></div></div>
@@ -15814,7 +16024,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (validationErrors.length) {
 	      return { ok: false, message: validationErrors[0] };
 	    }
-	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city });
+	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city, scope: 'ob' });
 	    const listingPayload = {
 	      ...baseListingPayload,
 	      ...approximateLocation.payload
@@ -15910,7 +16120,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (validationErrors.length) {
 	      return { ok: false, message: validationErrors[0] };
 	    }
-	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city });
+	    const approximateLocation = await homestayApproximateLocationPayloadFromPrivateAddress(privateAddress, { city: baseListingPayload.city, scope: 'profile' });
 	    const listingPayload = {
 	      ...baseListingPayload,
 	      ...approximateLocation.payload
@@ -16243,6 +16453,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    setInputValueById('host-profile-station', listing.nearest_station || '');
 	    setInputValueById('host-profile-walk-min', listing.station_walk_minutes ?? '');
 	    setInputValueById('host-profile-address', privateDetails.full_address || '');
+	    if (validHomestayCoordinate(listing.approximate_latitude, listing.approximate_longitude)) {
+	      setHomestayHostApproxLocationDraft('profile', listing.approximate_latitude, listing.approximate_longitude, {
+	        sourceAddress: privateDetails.full_address || '',
+	        manual: false
+	      });
+	    } else {
+	      currentHomestayApproxLocationDraft.profile = null;
+	    }
+	    renderHomestayHostApproxLocationMap('profile');
 	    setInputValueById('host-profile-available-start', listing.available_from || '');
 	    setInputValueById('host-profile-available-end', listing.available_until || '');
 	    setInputValueById('host-profile-min-stay', listing.minimum_stay_months ?? '');
@@ -21586,6 +21805,8 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     currentHomestayHostStudents = [];
     currentHomestayListingPhotos = [];
     currentHomestayHostDataLoaded = false;
+    Object.keys(homestayHostApproxLocationMaps || {}).forEach(scope => clearHomestayHostApproxLocationMap(scope));
+    currentHomestayApproxLocationDraft = { ob: null, profile: null };
     window._currentHomestayHostProfile = null;
     window._currentHomestayListing = null;
     window._currentHomestayListingDetails = null;
@@ -22223,7 +22444,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
     if (hostObStep === 1) renderHomestayHostAvatarPreview('ob');
-    if (hostObStep === 2) renderHomestayHostRoomPhotoPreview('ob');
+    if (hostObStep === 2) {
+      renderHomestayHostRoomPhotoPreview('ob');
+      setTimeout(() => renderHomestayHostApproxLocationMap('ob'), 0);
+    }
   }
 
   async function hostObNext() {
@@ -22450,7 +22674,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      if (!validHomestayCoordinate(h.approximateLatitude, h.approximateLongitude)) return null;
 	      return {
 	        center: [Number(h.approximateLatitude), Number(h.approximateLongitude)],
-	        radius: Number.isFinite(Number(h.approximateRadiusM)) ? Number(h.approximateRadiusM) : 600,
+	        radius: Number.isFinite(Number(h.approximateRadiusM)) ? Number(h.approximateRadiusM) : homestayApproximateLocationRadiusM(),
 	        label: h.city || h.hostStayInfo?.area || 'Approximate area'
 	      };
 	    }
