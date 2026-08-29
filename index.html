@@ -15433,22 +15433,38 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      applyCurrentHomestayHostDataToHostProfileScreen();
 	      return true;
 	    }
+	    let profile = null;
 	    try {
-	      const { data: profile, error: profileError } = await window._supabase
+	      const { data, error } = await window._supabase
 	        .from('profiles')
 	        .select('id, display_name, avatar_url, preferred_language')
 	        .eq('id', userId)
 	        .maybeSingle();
-	      if (profileError) throw profileError;
+	      if (error) throw error;
+	      profile = data || null;
+	    } catch (error) {
+	      console.error('Supabase homestay host optional profiles load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load part of your profile information.' : 'プロフィール情報の一部を読み込めませんでした。');
+	    }
 
-	      const { data: hostProfile, error: hostProfileError } = await window._supabase
+	    let hostProfile = null;
+	    let listing = null;
+	    try {
+	      const { data, error } = await window._supabase
 	        .from('homestay_host_profiles')
 	        .select('user_id, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio')
 	        .eq('user_id', userId)
 	        .maybeSingle();
-	      if (hostProfileError) throw hostProfileError;
+	      if (error) throw error;
+	      hostProfile = data || null;
+	    } catch (error) {
+	      console.error('Supabase homestay host core profile load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your registration information.' : '登録情報を読み込めませんでした。');
+	      return true;
+	    }
 
-	      const { data: listing, error: listingError } = await window._supabase
+	    try {
+	      const { data, error } = await window._supabase
 	        .from('listings')
 	        .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, created_at')
 	        .eq('owner_id', userId)
@@ -15456,76 +15472,114 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	        .order('created_at', { ascending: false })
 	        .limit(1)
 	        .maybeSingle();
-	      if (listingError) throw listingError;
+	      if (error) throw error;
+	      listing = data || null;
+	    } catch (error) {
+	      console.error('Supabase homestay host core listing load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your registration information.' : '登録情報を読み込めませんでした。');
+	      return true;
+	    }
 
-	      const { data: students, error: studentsError } = await window._supabase
+	    if (!hostProfile || !listing) {
+	      currentHomestayHostDataLoaded = false;
+	      return false;
+	    }
+
+	    let students = [];
+	    try {
+	      const { data, error } = await window._supabase
 	        .from('homestay_host_students')
 	        .select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at')
 	        .eq('host_user_id', userId)
 	        .order('sort_order', { ascending: true })
 	        .order('created_at', { ascending: true });
-	      if (studentsError) throw studentsError;
+	      if (error) throw error;
+	      students = Array.isArray(data) ? data : [];
+	    } catch (error) {
+	      console.error('Supabase homestay host optional students load error:', error);
+	      students = [];
+	    }
 
-	      const { data: familyMembers, error: familyMembersError } = await window._supabase
+	    let familyMembers = [];
+	    try {
+	      const { data, error } = await window._supabase
 	        .from('homestay_host_family_members')
 	        .select('id, host_user_id, name, age, gender, nationality, wake_time, bedtime, hobbies, note, sort_order, created_at, updated_at')
 	        .eq('host_user_id', userId)
 	        .order('sort_order', { ascending: true })
 	        .order('created_at', { ascending: true });
-	      if (familyMembersError) throw familyMembersError;
+	      if (error) throw error;
+	      familyMembers = Array.isArray(data) ? data : [];
+	    } catch (error) {
+	      console.error('Supabase homestay host optional family members load error:', error);
+	      familyMembers = [];
+	    }
 
-	      let details = null;
-	      let privateDetails = null;
-	      let listingPhotos = [];
-	      if (listing?.id) {
-	        const { data: listingDetails, error: detailsError } = await window._supabase
-	          .from('homestay_listing_details')
-	          .select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules')
-	          .eq('listing_id', listing.id)
-	          .maybeSingle();
-	        if (detailsError) throw detailsError;
-	        details = listingDetails;
+	    let details = null;
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('homestay_listing_details')
+	        .select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules')
+	        .eq('listing_id', listing.id)
+	        .maybeSingle();
+	      if (error) throw error;
+	      details = data || null;
+	    } catch (error) {
+	      console.error('Supabase homestay host optional listing details load error:', error);
+	      details = null;
+	    }
 
-	        const { data: listingPrivateDetails, error: privateError } = await window._supabase
-	          .from('listing_private_details')
-	          .select('listing_id, full_address')
-	          .eq('listing_id', listing.id)
-	          .maybeSingle();
-	        if (privateError) throw privateError;
-	        privateDetails = listingPrivateDetails;
+	    let privateDetails = null;
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('listing_private_details')
+	        .select('listing_id, full_address')
+	        .eq('listing_id', listing.id)
+	        .maybeSingle();
+	      if (error) throw error;
+	      privateDetails = data || null;
+	    } catch (error) {
+	      console.error('Supabase homestay host optional private details load error:', error);
+	      privateDetails = null;
+	    }
 
-	        const { data: photos, error: photosError } = await window._supabase
-	          .from('listing_photos')
-	          .select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at')
-	          .eq('listing_id', listing.id)
-	          .order('sort_order', { ascending: true })
-	          .order('created_at', { ascending: true });
-	        if (photosError) throw photosError;
-	        listingPhotos = Array.isArray(photos) ? photos : [];
-	      }
+	    let listingPhotos = [];
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('listing_photos')
+	        .select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at')
+	        .eq('listing_id', listing.id)
+	        .order('sort_order', { ascending: true })
+	        .order('created_at', { ascending: true });
+	      if (error) throw error;
+	      listingPhotos = Array.isArray(data) ? data : [];
+	    } catch (error) {
+	      console.error('Supabase homestay host optional listing photos load error:', error);
+	      listingPhotos = [];
+	    }
 
-	      if (profile) {
-	        window._currentProfile = { ...(window._currentProfile || {}), ...profile };
-	      }
-	      currentHomestayHostProfile = hostProfile || null;
-	      currentHomestayListing = listing || null;
-	      currentHomestayListingDetails = details || null;
-	      currentHomestayListingPrivateDetails = privateDetails || null;
-	      currentHomestayHostFamilyMembers = Array.isArray(familyMembers) ? familyMembers : [];
-	      currentHomestayHostStudents = Array.isArray(students) ? students : [];
-	      currentHomestayListingPhotos = listingPhotos;
-	      window._currentHomestayHostProfile = currentHomestayHostProfile;
-	      window._currentHomestayListing = currentHomestayListing;
-	      window._currentHomestayListingDetails = currentHomestayListingDetails;
-	      window._currentHomestayListingPrivateDetails = currentHomestayListingPrivateDetails;
-	      window._currentHomestayHostFamilyMembers = currentHomestayHostFamilyMembers;
-	      window._currentHomestayHostStudents = currentHomestayHostStudents;
-	      window._currentHomestayListingPhotos = currentHomestayListingPhotos;
+	    if (profile) {
+	      window._currentProfile = { ...(window._currentProfile || {}), ...profile };
+	    }
+	    currentHomestayHostProfile = hostProfile || null;
+	    currentHomestayListing = listing || null;
+	    currentHomestayListingDetails = details || null;
+	    currentHomestayListingPrivateDetails = privateDetails || null;
+	    currentHomestayHostFamilyMembers = Array.isArray(familyMembers) ? familyMembers : [];
+	    currentHomestayHostStudents = Array.isArray(students) ? students : [];
+	    currentHomestayListingPhotos = listingPhotos;
+	    window._currentHomestayHostProfile = currentHomestayHostProfile;
+	    window._currentHomestayListing = currentHomestayListing;
+	    window._currentHomestayListingDetails = currentHomestayListingDetails;
+	    window._currentHomestayListingPrivateDetails = currentHomestayListingPrivateDetails;
+	    window._currentHomestayHostFamilyMembers = currentHomestayHostFamilyMembers;
+	    window._currentHomestayHostStudents = currentHomestayHostStudents;
+	    window._currentHomestayListingPhotos = currentHomestayListingPhotos;
+	    currentHomestayHostDataLoaded = !!(hostProfile && listing);
+
+	    try {
 	      replaceHostFamilyMembersFromDb(currentHomestayHostFamilyMembers);
 	      replaceHostInternationalStudentsFromDb(currentHomestayHostStudents);
-	      currentHomestayHostDataLoaded = !!(hostProfile || listing);
-
-	      if (!currentHomestayHostDataLoaded) return false;
 	      syncHomestayHostDataToDemoObjects({
 	        profile: window._currentProfile || {},
 	        hostProfile: currentHomestayHostProfile,
@@ -15538,12 +15592,11 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      });
 	      updateHostDashboardFromCurrentHomestayData();
 	      applyCurrentHomestayHostDataToHostProfileScreen();
-	      return true;
 	    } catch (error) {
-	      console.error('Supabase homestay host data load error:', error);
-	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your listing information.' : '登録情報の読み込みに失敗しました。');
-	      return false;
+	      console.error('Homestay host dashboard render after load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Loaded your registration, but could not render part of the screen.' : '登録情報は読み込みましたが、画面の一部を表示できませんでした。');
 	    }
+	    return true;
 	  }
 
 	  function refreshHomestayHostDataForScreen(screenName) {
