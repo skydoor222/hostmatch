@@ -5961,16 +5961,16 @@
             <div>
               <div style="font-size:13px;font-weight:900;color:var(--light);text-transform:uppercase;letter-spacing:.04em;" data-i18n="listing_status">掲載状況</div>
               <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-                <span id="host-listing-status-dot" style="width:10px;height:10px;border-radius:50%;background:#00A699;"></span>
-                <span id="host-listing-status-label" style="font-size:24px;font-weight:900;" data-i18n="listing_active">公開中</span>
+                <span id="host-listing-status-dot" style="width:10px;height:10px;border-radius:50%;background:#CBD5E1;"></span>
+                <span id="host-listing-status-label" style="font-size:24px;font-weight:900;">—</span>
               </div>
-              <div id="host-listing-status-note" style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:6px;" data-i18n="listing_visible_note">ゲストの検索結果に表示されています。</div>
+              <div id="host-listing-status-note" style="font-size:13px;color:var(--mid);line-height:1.6;margin-top:6px;">掲載情報を読み込み中です。</div>
             </div>
-            <div id="host-listing-pill" style="background:#F0FFF8;color:#00875A;border:1px solid #B2EFE4;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;" data-i18n="listing_platform_label">掲載中</div>
+            <div id="host-listing-pill" style="background:#F3F4F6;color:#4B5563;border:1px solid #E5E7EB;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:900;">—</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px;">
-            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="area">エリア</div><div id="host-dashboard-city" style="font-size:15px;font-weight:900;margin-top:4px;">Vancouver</div></div>
-            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="monthly_rent_cad">月額料金（CAD）</div><div id="host-dashboard-price" style="font-size:15px;font-weight:900;margin-top:4px;">C$1,500 / 月</div></div>
+            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="area">エリア</div><div id="host-dashboard-city" style="font-size:15px;font-weight:900;margin-top:4px;">—</div></div>
+            <div style="background:var(--bg);border-radius:14px;padding:12px;"><div style="font-size:11px;color:var(--light);font-weight:800;" data-i18n="monthly_rent_cad">月額料金（CAD）</div><div id="host-dashboard-price" style="font-size:15px;font-weight:900;margin-top:4px;">—</div></div>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button onclick="navigate(currentScreen,'host-profile')" style="flex:1;min-width:120px;background:var(--primary);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="edit_listing">掲載を編集</button>
@@ -5981,7 +5981,7 @@
 
         <div style="background:white;border:1px solid var(--border);border-radius:20px;padding:18px;">
           <div style="font-size:15px;font-weight:900;margin-bottom:12px;" data-i18n="availability">受け入れ可能期間</div>
-          <div style="font-size:22px;font-weight:900;color:var(--dark);" id="host-dashboard-availability">2026年7月1日 ～ 2026年12月31日</div>
+          <div style="font-size:22px;font-weight:900;color:var(--dark);" id="host-dashboard-availability">—</div>
           <div style="font-size:12px;color:var(--light);line-height:1.6;margin-top:8px;" data-i18n="availability_note">ゲストには受け入れ可能期間として表示されます。</div>
           <button onclick="navigate(currentScreen,'host-profile')" style="width:100%;margin-top:14px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:13px;font-size:14px;font-weight:900;cursor:pointer;" data-i18n="edit_availability">受け入れ期間を編集</button>
         </div>
@@ -7607,32 +7607,86 @@
     return localStorage.getItem('hostmatch_host_listing_paused') === '1';
   }
 
+  function hostDashboardAvailabilityText(listing = {}) {
+    const start = listing.available_from || '';
+    const end = listing.available_until || '';
+    if (!start && !end) return '—';
+    const format = currentLang === 'ja' ? formatDateJa : formatDateEn;
+    if (start && end) return currentLang === 'ja'
+      ? `${format(start)} ～ ${format(end)}`
+      : `${format(start)} – ${format(end)}`;
+    return currentLang === 'ja'
+      ? `${start ? format(start) : '—'} ～ ${end ? format(end) : '—'}`
+      : `${start ? format(start) : '—'} – ${end ? format(end) : '—'}`;
+  }
+
+  function setHostDashboardListingNeutral(noteText) {
+    const statusLabel = document.getElementById('host-listing-status-label');
+    const statusNote = document.getElementById('host-listing-status-note');
+    const statusDot = document.getElementById('host-listing-status-dot');
+    const pauseBtn = document.getElementById('host-listing-pause-btn');
+    const pill = document.getElementById('host-listing-pill');
+    const cityEl = document.getElementById('host-dashboard-city');
+    const priceEl = document.getElementById('host-dashboard-price');
+    const availabilityEl = document.getElementById('host-dashboard-availability');
+    if (statusLabel) statusLabel.textContent = '—';
+    if (statusNote) statusNote.textContent = noteText || (currentLang === 'en' ? 'Loading listing information.' : '掲載情報を読み込み中です。');
+    if (statusDot) statusDot.style.background = '#CBD5E1';
+    if (pauseBtn) {
+      pauseBtn.disabled = true;
+      pauseBtn.style.opacity = '.55';
+    }
+    if (pill) {
+      pill.textContent = '—';
+      pill.style.background = '#F3F4F6';
+      pill.style.color = '#4B5563';
+      pill.style.borderColor = '#E5E7EB';
+    }
+    if (cityEl) cityEl.textContent = '—';
+    if (priceEl) priceEl.textContent = '—';
+    if (availabilityEl) availabilityEl.textContent = '—';
+    if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
+    if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
+  }
+
   function updateHostDashboardListing() {
-    const dbStatus = currentHomestayListing?.status || '';
-    const paused = dbStatus ? dbStatus === 'paused' : isHostListingPaused();
+    const listing = currentHomestayListing;
+    if (!listing?.id) {
+      setHostDashboardListingNeutral();
+      return;
+    }
+    const dbStatus = listing.status || '';
+    const paused = dbStatus === 'paused';
     const draft = dbStatus === 'draft';
     const statusLabel = document.getElementById('host-listing-status-label');
     const statusNote = document.getElementById('host-listing-status-note');
     const statusDot = document.getElementById('host-listing-status-dot');
     const pauseBtn = document.getElementById('host-listing-pause-btn');
     const pill = document.getElementById('host-listing-pill');
-    const statusText = draft ? '下書き' : paused ? '一時停止中' : '公開中';
-    const noteText = draft ? '掲載は下書きとして保存されています。' : paused ? '現在ゲストの検索結果には表示されていません。' : 'ゲストの検索結果に表示されています。';
+    const statusText = draft ? '下書き' : paused ? '一時停止中' : dbStatus === 'published' ? '公開中' : '未設定';
+    const noteText = draft
+      ? '掲載は下書きとして保存されています。'
+      : paused
+        ? '現在ゲストの検索結果には表示されていません。'
+        : dbStatus === 'published'
+          ? 'ゲストの検索結果に表示されています。'
+          : '掲載状況が未設定です。';
     if (statusLabel) statusLabel.textContent = localizeText(statusText);
     if (statusNote) statusNote.textContent = localizeText(noteText);
-    if (statusDot) statusDot.style.background = draft ? '#6B7280' : paused ? '#B26A00' : '#00A699';
-    if (pauseBtn) pauseBtn.textContent = localizeText(paused ? '掲載を再開' : '掲載を一時停止');
+    if (statusDot) statusDot.style.background = draft ? '#6B7280' : paused ? '#B26A00' : dbStatus === 'published' ? '#00A699' : '#CBD5E1';
+    if (pauseBtn) {
+      pauseBtn.disabled = false;
+      pauseBtn.style.opacity = '1';
+      pauseBtn.textContent = localizeText(paused ? '掲載を再開' : '掲載を一時停止');
+    }
     if (pill) {
       pill.textContent = localizeText(statusText);
-      pill.style.background = draft ? '#F3F4F6' : paused ? '#FFF8E6' : '#F0FFF8';
-      pill.style.color = draft ? '#4B5563' : paused ? '#B26A00' : '#00875A';
-      pill.style.borderColor = draft ? '#E5E7EB' : paused ? '#FFE1A6' : '#B2EFE4';
+      pill.style.background = draft ? '#F3F4F6' : paused ? '#FFF8E6' : dbStatus === 'published' ? '#F0FFF8' : '#F3F4F6';
+      pill.style.color = draft ? '#4B5563' : paused ? '#B26A00' : dbStatus === 'published' ? '#00875A' : '#4B5563';
+      pill.style.borderColor = draft ? '#E5E7EB' : paused ? '#FFE1A6' : dbStatus === 'published' ? '#B2EFE4' : '#E5E7EB';
     }
-    const availability = HOST_AVAILABILITY.sarah || { start: '2026-07-01', end: '2026-12-31' };
     const availabilityEl = document.getElementById('host-dashboard-availability');
-    if (availabilityEl) availabilityEl.textContent = currentLang === 'ja'
-      ? `${formatDateJa(availability.start)} ～ ${formatDateJa(availability.end)}`
-      : `${formatDateEn(availability.start)} – ${formatDateEn(availability.end)}`;
+    if (availabilityEl) availabilityEl.textContent = hostDashboardAvailabilityText(listing);
     updateHostDashboardFromCurrentHomestayData();
   }
 
@@ -11635,15 +11689,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     const pref = near;
 
     hard(filters.area, filters.area, meta.area === filters.area);
-    if (filters.start && filters.end) {
+    if (filters.start || filters.end) {
       const range = getHostAvailability(hostId);
       const guestRange = { start: filters.start, end: filters.end };
       activeHard++;
-      const coversGuestRange = isDateRangeCovered(guestRange, range);
+      const overlapsGuestRange = dateRangesOverlap(range.start, range.end, guestRange.start, guestRange.end);
       const stayMonthsOk = homestayGuestStayMonthsWithinHostLimits(guestRange, h);
-      if (!coversGuestRange) {
+      if (!overlapsGuestRange) {
         hardPass = false;
-        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), false);
+        hmAddCondition(items, filters, true, currentLang === 'ja' ? '期間重複なし' : 'No overlapping dates', false);
       } else if (!stayMonthsOk) {
         hardPass = false;
         hmAddCondition(items, filters, true, '滞在期間がホストの受け入れ条件外', false);
@@ -11651,8 +11705,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         matchedHard++;
         hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), true);
       }
-    } else if (filters.start || filters.end) {
-      near(true, '滞在期間を確認', true);
     }
 	    const hostPrice = Number(h.price);
 	    hard(filters.budgetOnly, '予算内', Number.isFinite(hostPrice) && hostPrice <= filters.budget);
@@ -16536,8 +16588,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function updateHostDashboardFromCurrentHomestayData() {
 	    const listing = currentHomestayListing;
 	    if (!listing) {
-	      if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
-	      if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
+	      if (typeof setHostDashboardListingNeutral === 'function') setHostDashboardListingNeutral();
 	      return;
 	    }
 	    const cityEl = document.getElementById('host-dashboard-city');
@@ -16699,6 +16750,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    } catch (error) {
 	      console.error('Supabase homestay host core profile load error:', error);
 	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your registration information.' : '登録情報を読み込めませんでした。');
+	      if (currentScreen === 'host-dashboard') setHostDashboardListingNeutral(currentLang === 'en' ? 'Could not load listing information.' : '掲載情報を読み込めませんでした。');
 	      return true;
 	    }
 
@@ -16716,12 +16768,14 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    } catch (error) {
 	      console.error('Supabase homestay host core listing load error:', error);
 	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your registration information.' : '登録情報を読み込めませんでした。');
+	      if (currentScreen === 'host-dashboard') setHostDashboardListingNeutral(currentLang === 'en' ? 'Could not load listing information.' : '掲載情報を読み込めませんでした。');
 	      return true;
 	    }
 
 	    if (!hostProfile || !listing) {
 	      currentHomestayHostDataLoaded = false;
 	      currentHomestayHostLoadedFullAddress = '';
+	      if (currentScreen === 'host-dashboard') setHostDashboardListingNeutral(currentLang === 'en' ? 'Listing information was not found.' : '掲載情報が見つかりませんでした。');
 	      return false;
 	    }
 
@@ -23291,13 +23345,34 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 		    return availability;
 		  }
 
+	  function normalizeIsoDateForComparison(value) {
+	    const text = String(value || '').trim();
+	    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+	  }
+
+	  function dateRangesOverlap(hostStart, hostEnd, guestStart, guestEnd) {
+	    const hs = normalizeIsoDateForComparison(hostStart);
+	    const he = normalizeIsoDateForComparison(hostEnd);
+	    const gs = normalizeIsoDateForComparison(guestStart);
+	    const ge = normalizeIsoDateForComparison(guestEnd);
+	    if (hs && ge && hs > ge) return false;
+	    if (he && gs && he < gs) return false;
+	    return true;
+	  }
+
 	  function isDateRangeCovered(guestRange, hostRange) {
-	    return guestRange.start >= hostRange.start && guestRange.end <= hostRange.end;
+	    const gs = normalizeIsoDateForComparison(guestRange?.start);
+	    const ge = normalizeIsoDateForComparison(guestRange?.end);
+	    const hs = normalizeIsoDateForComparison(hostRange?.start);
+	    const he = normalizeIsoDateForComparison(hostRange?.end);
+	    if (gs && hs && gs < hs) return false;
+	    if (ge && he && ge > he) return false;
+	    return true;
 	  }
 
 	  function isDateRangeOverlapping(guestRange, hostRange) {
-	    if (!guestRange?.start || !guestRange?.end || !hostRange?.start || !hostRange?.end) return true;
-	    return hostRange.start <= guestRange.end && hostRange.end >= guestRange.start;
+	    return dateRangesOverlap(hostRange?.start, hostRange?.end, guestRange?.start, guestRange?.end);
 	  }
 
 	  function homestayStayMonthsFromDateRange(range) {
@@ -23335,7 +23410,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  }
 
 	  function formatDateRange(range) {
-	    return range.start.replaceAll('-', '/') + ' - ' + range.end.replaceAll('-', '/');
+	    const start = normalizeIsoDateForComparison(range?.start);
+	    const end = normalizeIsoDateForComparison(range?.end);
+	    if (!start && !end) return currentLang === 'ja' ? '期間未設定' : 'Dates not set';
+	    return `${start ? start.replaceAll('-', '/') : '—'} - ${end ? end.replaceAll('-', '/') : '—'}`;
 	  }
 
 	  function renderHomestayAiCard(hostId, matchInfo) {
