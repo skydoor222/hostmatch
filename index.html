@@ -7562,6 +7562,8 @@
   let currentHomestayPrivateHousePoint = { ob: null, profile: null };
   let hostPreviewMode = false;
   const blockedUsers = new Map();
+  const blockedByMeUserIds = new Set();
+  const blockedRelationshipUserIds = new Set();
   let currentBlockTarget = null;
   let supabaseBlocksLoaded = false;
   let supabaseBlocksLoading = false;
@@ -8253,6 +8255,8 @@
 
   function clearSupabaseBlockCache() {
     blockedUsers.clear();
+    blockedByMeUserIds.clear();
+    blockedRelationshipUserIds.clear();
     supabaseBlocksLoaded = false;
     supabaseBlocksLoading = false;
     supabaseBlocksCacheUserId = '';
@@ -8302,7 +8306,24 @@
 
   function isCurrentTargetBlocked() {
     const target = getCurrentUserTarget();
-    return blockedUsers.has(target.id) || (target.blockedId && blockedUsers.has(supabaseBlockCacheKey(target.blockedId)));
+    return blockedUsers.has(target.id) || isUserBlockedRelationship(target.blockedId);
+  }
+
+  function isCurrentTargetBlockedByMe() {
+    const target = getCurrentUserTarget();
+    const blockedId = String(target?.blockedId || '').trim();
+    return blockedUsers.has(target.id) || (!!blockedId && blockedByMeUserIds.has(blockedId));
+  }
+
+  function isUserBlockedRelationship(userId) {
+    const id = String(userId || '').trim();
+    return !!id && blockedRelationshipUserIds.has(id);
+  }
+
+  function shouldHideSupabaseConversationForBlocks(conversation, role) {
+    if (!conversation) return false;
+    const otherUserId = role === 'host' ? conversation.initiator_id : conversation.listing_owner_id;
+    return isUserBlockedRelationship(otherUserId);
   }
 
   function toggleUserActionMenu(id) {
@@ -8353,7 +8374,11 @@
     if (pendingSupabaseBlockIds.has(key)) return;
     pendingSupabaseBlockIds.add(key);
     const previous = blockedUsers.get(key) || null;
+    const hadBlockedByMe = blockedByMeUserIds.has(blockedId);
+    const hadRelationship = blockedRelationshipUserIds.has(blockedId);
     blockedUsers.set(key, { ...target, id: key, blockedId });
+    blockedByMeUserIds.add(blockedId);
+    blockedRelationshipUserIds.add(blockedId);
     renderBlockedUsersList();
     updateBlockedUi();
     try {
@@ -8364,10 +8389,17 @@
       supabaseBlocksLoaded = true;
       supabaseBlocksCacheUserId = blockerId;
       showToast(currentLang === 'en' ? 'User blocked' : 'ブロックしました');
+      if (currentScreen === 'chat' && currentSupabaseChatOtherUserId === blockedId) {
+        const backScreen = currentSupabaseChatMode === 'homestay-host' ? 'host-messages' : 'messages';
+        resetSupabaseChatState();
+        navigate('chat', backScreen);
+      }
     } catch (error) {
       console.error('Supabase blocks insert error:', error);
       if (previous) blockedUsers.set(key, previous);
       else blockedUsers.delete(key);
+      if (!hadBlockedByMe) blockedByMeUserIds.delete(blockedId);
+      if (!hadRelationship) blockedRelationshipUserIds.delete(blockedId);
       renderBlockedUsersList();
       updateBlockedUi();
       showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
@@ -8390,6 +8422,8 @@
     if (pendingSupabaseBlockIds.has(key)) return;
     pendingSupabaseBlockIds.add(key);
     blockedUsers.delete(key);
+    blockedByMeUserIds.delete(existing.blockedId);
+    blockedRelationshipUserIds.delete(existing.blockedId);
     renderBlockedUsersList();
     updateBlockedUi();
     try {
@@ -8400,12 +8434,18 @@
         .eq('blocked_id', existing.blockedId);
       if (error) throw error;
       showToast(currentLang === 'en' ? 'User unblocked' : 'ブロックを解除しました');
+      await loadCurrentUserBlocks({ force: true, render: currentScreen === 'blocked-users' });
+      if (currentScreen === 'messages') renderGuestMessages();
+      if (currentScreen === 'host-messages') renderHostMessagesForService();
+      refreshMessageUnreadDot({ role: messageUnreadRoleForCurrentContext() });
     } catch (error) {
       console.error('Supabase blocks delete error:', error);
       blockedUsers.set(key, existing);
+      blockedByMeUserIds.add(existing.blockedId);
+      blockedRelationshipUserIds.add(existing.blockedId);
       renderBlockedUsersList();
       updateBlockedUi();
-      showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+      showToast(currentLang === 'en' ? 'Could not unblock user' : 'ブロックを解除できませんでした');
     } finally {
       pendingSupabaseBlockIds.delete(key);
     }
@@ -8419,6 +8459,12 @@
     const { force = false, render = false, showError = false } = options;
     const userId = window._currentUser?.id || '';
     if (!userId || !window._supabase?.from) return false;
+    if (supabaseBlocksCacheUserId && supabaseBlocksCacheUserId !== userId) {
+      blockedUsers.clear();
+      blockedByMeUserIds.clear();
+      blockedRelationshipUserIds.clear();
+      supabaseBlocksLoaded = false;
+    }
     if (!force && supabaseBlocksLoaded && supabaseBlocksCacheUserId === userId) {
       if (render) renderBlockedUsersList();
       return true;
@@ -8428,17 +8474,33 @@
     try {
       const { data: rows, error } = await window._supabase
         .from('blocks')
-        .select('blocked_id, created_at')
-        .eq('blocker_id', userId)
+        .select('blocker_id, blocked_id, created_at')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      const blockedIds = [...new Set((Array.isArray(rows) ? rows : []).map(row => row.blocked_id).filter(Boolean))];
+      const byMeIds = [];
+      const relationshipIds = [];
+      (Array.isArray(rows) ? rows : []).forEach(row => {
+        const blockerId = String(row?.blocker_id || '').trim();
+        const blockedId = String(row?.blocked_id || '').trim();
+        if (blockerId === userId && blockedId) {
+          byMeIds.push(blockedId);
+          relationshipIds.push(blockedId);
+        } else if (blockedId === userId && blockerId) {
+          relationshipIds.push(blockerId);
+        }
+      });
+      const blockedIds = [...new Set(byMeIds)];
+      const relationshipUserIds = [...new Set(relationshipIds)];
       const profilesResult = blockedIds.length
         ? await window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', blockedIds)
         : { data: [], error: null };
       if (profilesResult.error) throw profilesResult.error;
       const profilesById = indexRowsBy(profilesResult.data, 'id');
       blockedUsers.clear();
+      blockedByMeUserIds.clear();
+      blockedRelationshipUserIds.clear();
+      blockedIds.forEach(blockedId => blockedByMeUserIds.add(blockedId));
+      relationshipUserIds.forEach(userId => blockedRelationshipUserIds.add(userId));
       blockedIds.forEach(blockedId => {
         const profile = profilesById.get(blockedId) || {};
         const target = targetFromSupabaseUser(blockedId, profile);
@@ -8446,6 +8508,7 @@
       });
       supabaseBlocksLoaded = true;
       supabaseBlocksCacheUserId = userId;
+      supabaseBlocksLoading = false;
       if (render) renderBlockedUsersList();
       updateBlockedUi();
       return true;
@@ -8453,8 +8516,9 @@
       console.error('Supabase blocks load error:', error);
       supabaseBlocksLoaded = false;
       supabaseBlocksCacheUserId = userId;
+      supabaseBlocksLoading = false;
       if (render) renderBlockedUsersList({ error: true });
-      if (showError) showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+      if (showError) showToast(currentLang === 'en' ? 'Could not load blocked users' : 'ブロックしたユーザーを読み込めませんでした');
       return false;
     } finally {
       supabaseBlocksLoading = false;
@@ -8487,21 +8551,22 @@
 
   function updateBlockedUi() {
     const blocked = isCurrentTargetBlocked();
+    const blockedByMe = isCurrentTargetBlockedByMe();
     const detailNotice = document.getElementById('detail-blocked-notice');
     const shNotice = document.getElementById('sharehouse-blocked-notice');
     const applicantNotice = document.getElementById('applicant-blocked-notice');
     const guestDetailNotice = document.getElementById('homestay-guest-detail-blocked-notice');
-    if (detailNotice) detailNotice.style.display = blocked && currentScreen === 'detail' ? 'block' : 'none';
-    if (shNotice) shNotice.style.display = blocked && currentScreen === 'sharehouse-detail' ? 'block' : 'none';
-    if (applicantNotice) applicantNotice.style.display = blocked && currentScreen === 'host-applicant-detail' ? 'block' : 'none';
-    if (guestDetailNotice) guestDetailNotice.style.display = blocked && currentScreen === 'homestay-guest-detail' ? 'block' : 'none';
+    if (detailNotice) detailNotice.style.display = blockedByMe && currentScreen === 'detail' ? 'block' : 'none';
+    if (shNotice) shNotice.style.display = blockedByMe && currentScreen === 'sharehouse-detail' ? 'block' : 'none';
+    if (applicantNotice) applicantNotice.style.display = blockedByMe && currentScreen === 'host-applicant-detail' ? 'block' : 'none';
+    if (guestDetailNotice) guestDetailNotice.style.display = blockedByMe && currentScreen === 'homestay-guest-detail' ? 'block' : 'none';
     let notice = document.getElementById('chat-blocked-notice');
     const messageArea = document.querySelector('#screen-chat .chat-messages');
     if (!notice && messageArea) {
       messageArea.insertAdjacentHTML('afterbegin', `<div class="blocked-notice" id="chat-blocked-notice" data-i18n="blocked_by_you_notice">${t('blocked_by_you_notice')}</div>`);
       notice = document.getElementById('chat-blocked-notice');
     }
-    if (notice) notice.style.display = blocked && currentScreen === 'chat' ? 'block' : 'none';
+    if (notice) notice.style.display = blockedByMe && currentScreen === 'chat' ? 'block' : 'none';
     const input = document.querySelector('#screen-chat .chat-input');
     const send = document.querySelector('#screen-chat .chat-send');
     if (input) {
@@ -10721,7 +10786,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (!listing || listing.listing_type !== 'homestay') return false;
 	      return role === 'host' ? listing.owner_id === userId : true;
 	    });
-	    const conversationIds = homestayRows.map(row => row.id).filter(Boolean);
+	    await loadCurrentUserBlocks();
+	    const visibleHomestayRows = homestayRows.filter(row => !shouldHideSupabaseConversationForBlocks(row, role));
+	    const conversationIds = visibleHomestayRows.map(row => row.id).filter(Boolean);
 	    if (!conversationIds.length) return false;
 
 	    const [messagesResult, readsResult] = await Promise.all([
@@ -10889,6 +10956,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  async function loadSupabaseGuestConversations() {
 	    const userId = window._currentUser?.id || '';
 	    if (!userId || !window._supabase?.from) return [];
+	    await loadCurrentUserBlocks();
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
@@ -10929,6 +10997,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
+	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) return null;
 	      const profile = profilesById.get(conversation.listing_owner_id) || {};
 	      const listing = listingsById.get(conversation.listing_id) || {};
 	      if (listing.listing_type && listing.listing_type !== 'homestay') return null;
@@ -10987,6 +11056,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  async function loadSupabaseHostConversations() {
 	    const userId = window._currentUser?.id || '';
 	    if (!userId || !window._supabase?.from) return [];
+	    await loadCurrentUserBlocks();
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
@@ -11027,6 +11097,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
+	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
 	      const listing = listingsById.get(conversation.listing_id);
 	      if (!listing || listing.owner_id !== userId || listing.listing_type !== 'homestay') return null;
 	      const profile = profilesById.get(conversation.initiator_id) || {};
@@ -11310,6 +11381,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const row = await loadHomestayGuestDetailConversation(id);
 	      const guestUserId = row.conversation?.initiator_id || '';
 	      if (!guestUserId) throw new Error('Conversation is missing guest user id');
+	      await loadCurrentUserBlocks();
+	      if (isUserBlockedRelationship(guestUserId)) {
+	        navigate(currentScreen, 'host-messages');
+	        return false;
+	      }
 	      currentHomestayGuestDetailConversationId = id;
 	      currentHomestayGuestDetailGuestUserId = guestUserId;
 	      currentHomestayGuestDetailBackScreen = fromScreen === 'chat' ? 'chat' : 'host-messages';
@@ -11396,8 +11472,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        const rows = await loadSupabaseHostConversations();
 	        row = rows.find(item => item.conversation?.id === id);
 	      }
-	      if (!row?.conversation?.id) throw new Error('Conversation was not found');
+	      if (!row?.conversation?.id) {
+	        navigate(currentScreen, 'host-messages');
+	        return;
+	      }
 	      const conversation = row.conversation;
+	      await loadCurrentUserBlocks();
+	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) {
+	        navigate(currentScreen, 'host-messages');
+	        return;
+	      }
 	      currentHost = conversation.listing_id;
 	      currentListing = {
 	        type: 'homestay',
@@ -11463,8 +11547,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        const rows = await loadSupabaseGuestConversations();
 	        row = rows.find(item => item.conversation?.id === id);
 	      }
-	      if (!row?.conversation?.id) throw new Error('Conversation was not found');
+	      if (!row?.conversation?.id) {
+	        navigate(currentScreen, 'messages');
+	        return;
+	      }
 	      const conversation = row.conversation;
+	      await loadCurrentUserBlocks();
+	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) {
+	        navigate(currentScreen, 'messages');
+	        return;
+	      }
 	      ensureHomestayConversationHostObject(conversation, row.profile || {}, row.listing || {});
 	      currentHost = conversation.listing_id;
 	      currentListing = makeHomestayListing(currentHost) || {
@@ -11734,6 +11826,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!guestUserId) throw new Error('Current user is missing');
 	    if (!hostUserId) throw new Error('Listing owner is missing');
 	    if (guestUserId === hostUserId) throw new Error('Cannot start a conversation with your own listing');
+	    await loadCurrentUserBlocks();
+	    if (isUserBlockedRelationship(hostUserId)) throw new Error('Conversation is blocked');
 
 	    const existing = await findSupabaseHomestayConversation(listing.id, guestUserId, hostUserId);
 	    if (existing?.id) return existing;
