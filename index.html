@@ -3802,7 +3802,6 @@
       <div>
         <div class="mypage-name" id="mypage-username">---</div>
         <div class="mypage-meta" id="mypage-useremail">---</div>
-        <div style="font-size:12px;color:var(--light);margin-top:4px;" id="mypage-joindate">メンバー登録日：---</div>
       </div>
     </div>
 
@@ -9298,7 +9297,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
         { label: '就寝時間', value: m.sleep || m.bedtime || '未設定' },
         { label: '趣味', value: Array.isArray(m.hobbies) ? m.hobbies.join('、') : (m.hobbiesText || m.hobbies || '未設定') }
       ];
-      if (m.note) memberRows.push({ label: '一言', value: m.note });
+      if (m.note) memberRows.push({ label: '一言', value: m.note, raw: true });
       return detailMemberCard(familyTitle, m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑', memberRows);
     }));
 	    const students = Array.isArray(household.students)
@@ -9321,10 +9320,10 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
       { label: '起床時間', value: meta.wake || h.lifestyle.wake },
       { label: '就寝時間', value: meta.sleep || h.lifestyle.sleep },
       { label: 'ゲストとの会話頻度', value: mealInfo.guestTalk || meta.talk || h.lifestyle.talk },
-	      { label: 'ゲストとどのくらい一緒に過ごしたいですか？', value: mealInfo.guestFrequency || meta.frequency || (isPublishedHost ? '未設定' : '食事の時など時々') },
+      { label: 'ゲストとどのくらい一緒に過ごしたいですか？', value: mealInfo.guestFrequency || meta.frequency || (isPublishedHost ? '未設定' : '食事の時など時々') },
 	      { label: '喫煙', value: household.smokingStatus || (isPublishedHost ? '未設定' : '吸わない') },
       { label: '趣味', value: detailExtra.hobbies },
-      { label: '一言', value: detailExtra.note }
+      { label: '一言', value: detailExtra.note, raw: true }
     ]);
 
 	    const mealPlan = mealInfo.mealPlan || meta.meal || (isPublishedHost ? '' : '朝食あり');
@@ -16443,8 +16442,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	  function hostMonthlyPriceText(listing = {}) {
 	    const currency = listing.currency || 'CAD';
 	    const price = Number(listing.monthly_price);
-	    if (!Number.isFinite(price)) return '未設定';
-	    return currency === 'CAD' ? `C$${price.toLocaleString()} / 月` : `${currency} ${price.toLocaleString()} / 月`;
+	    if (!Number.isFinite(price)) return localizeText('未設定');
+	    const suffix = currentLang === 'ja' ? '/ 月' : '/ mo';
+	    return currency === 'CAD' ? `C$${price.toLocaleString()} ${suffix}` : `${currency} ${price.toLocaleString()} ${suffix}`;
 	  }
 
 	  function hostMealTagFromPlan(mealPlanUi) {
@@ -18181,7 +18181,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      .map(row => `
 	        <div class="detail-info-item">
 	          <div class="detail-info-label">${localizeText(row.label)}</div>
-	          <div class="detail-info-value">${Array.isArray(row.value) ? row.value.map(v => localizeText(v)).join(currentLang === 'ja' ? '、' : ', ') : localizeText(String(row.value))}</div>
+	          <div class="detail-info-value">${row.raw ? escapeHtml(String(row.value)) : (Array.isArray(row.value) ? row.value.map(v => localizeText(v)).join(currentLang === 'ja' ? '、' : ', ') : localizeText(String(row.value)))}</div>
 	        </div>
 	      `).join('');
 	  }
@@ -20083,7 +20083,6 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     '部屋の広さと、バスルームを何人でシェアするか教えてください。':'Could you tell me the room size and how many people share the bathroom?',
     'ありがとうございます！朝食は毎日ありますか？':'Thank you! Is breakfast available every day?',
     'お気に入りはまだありません':'No saved hosts yet',
-    'メンバー登録日：':'Member since: ',
     '希望エリア（複数可）':'Preferred Area (multiple selections allowed)',
     '滞在期間':'Stay Period',
     '数日':'A few days',
@@ -21735,18 +21734,145 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     '入居・部屋情報':'Move-in & Room Information',
     '家・入居情報':'Home & Move-in Information'
   });
+  Object.assign(autoTextTranslations, {
+    '未設定':'Not set',
+    '部屋':'Room',
+    '写真':'Photo',
+    'プロフィール写真を選択':'Choose profile photo',
+    'JPG / PNG / WebP、5MBまで保存できます':'JPG / PNG / WebP, up to 5MB',
+    '自分の簡単な情報':'Basic Information',
+    '生年月日':'Date of Birth',
+    '希望エリア・期間・予算':'Preferred Area, Period, and Budget',
+    '滞在開始日':'Stay Start Date',
+    '滞在終了日':'Stay End Date',
+    'カレンダーから選択してください':'Please choose from the calendar',
+    '下限':'Minimum',
+    '上限':'Maximum',
+    '保存する':'Save',
+    '生活スタイル・希望条件':'Lifestyle & Preferences',
+    '一言／自己紹介':'About Me',
+    '自己紹介':'About Me',
+    'ホスト・家族情報':'Host & Family Information',
+    '基本プロフィール':'Basic Profile',
+    '食事・交流':'Meals & Interaction',
+    '滞在・部屋情報':'Stay & Room Information',
+    '現在一緒に住んでいる家族':'Current Household',
+    '同居している留学生':'International Students in the Home',
+    '話せる言語':'Languages Spoken',
+    '家で使用する言語':'Languages Used at Home',
+    'ホスト名':'Host Name',
+    '国籍':'Nationality',
+    '性別':'Gender',
+    '宗教':'Religion',
+    '英語レベル':'English Level',
+    'パートナー':'Partner',
+    '家族':'Family Member',
+    '起床時間':'Wake-up Time',
+    '就寝時間':'Bedtime',
+    '趣味':'Hobbies',
+    'ゲストとの会話頻度':'Conversation with Guest',
+    'ゲストとの交流頻度':'Time with Guest',
+    'ゲストとどのくらい一緒に過ごしたいですか？':'How much time would you like to spend with the guest?',
+    '月額料金（CAD）':'Monthly Rent (CAD)',
+    '最寄り駅':'Nearest Station',
+    '徒歩':'Walk',
+    '最短滞在期間':'Minimum Stay',
+    '最長滞在期間':'Maximum Stay',
+    '長期滞在':'Long Stay',
+    '長期滞在可能':'Long stay allowed',
+    '食事提供なし':'No meals provided',
+    '朝食のみ':'Breakfast only',
+    '朝・夕食':'Breakfast and dinner',
+    '3食':'Three meals',
+    'ゲストとの食事スタイル':'Dining Style with Guest',
+    '朝・夕食あり':'Breakfast and dinner included',
+    '朝食あり':'Breakfast included',
+    '食事なし':'No meals',
+    '対応できる食事制限':'Dietary Restrictions Supported',
+    '対応できるアレルギー内容':'Allergy Support Details',
+    '朝食の内容':'Breakfast Details',
+    '昼食の内容':'Lunch Details',
+    '夕食の内容':'Dinner Details',
+    'エリア':'Area',
+    'ロケーション':'Location',
+    'おおよその位置':'Approximate location',
+    '円はおおよその居住エリアです。':'The circle shows the approximate residential area.',
+    '正確な住所はプライバシー保護のため表示していません':'The exact address is not shown for privacy.',
+    '公開中のホームステイを読み込んでいます。':'Loading published homestays.',
+    '公開中のホームステイを読み込めませんでした。時間をおいてもう一度お試しください。':'Could not load published homestays. Please try again later.',
+    'ホスト情報を読み込み中です':'Loading hosts',
+    'ホスト情報を読み込めませんでした':'Could not load hosts',
+    '公開中のホームステイ':'Published homestays',
+    '現在公開中のホームステイはありません。':'There are no published homestays right now.',
+    'すべてのホスト':'All hosts',
+    '保存済み':'Saved',
+    '読み込み中...':'Loading...',
+    'メッセージを読み込み中...':'Loading messages...',
+    'メッセージを見るにはログインしてください':'Please log in to view messages.',
+    'まだメッセージはありません':'No messages yet',
+    'あなた: ':'You: ',
+    '公開中':'Published',
+    'プロフィール編集':'Edit Profile',
+    '通知設定':'Notification Settings',
+    '言語':'Language',
+    '利用規約・プライバシーポリシー':'Terms of Use & Privacy Policy',
+    'ブロックしたユーザー':'Blocked Users',
+    'サポート':'Support',
+    'よくある質問（FAQ）':'FAQ',
+    'よくある質問':'FAQ',
+    'フォームで問い合わせ':'Contact Form',
+    'サービス':'Service',
+    'ホームステイ／シェアハウスを変更':'Change Homestay / Share House',
+    'ホームステイ':'Homestay',
+    'シェアハウス':'Share House',
+    'ログアウト':'Log Out',
+    '気になる相手にはどう連絡しますか？':'How do I contact someone I am interested in?',
+    '相手の詳細画面からMessageを送れます。契約・支払い等は当事者間でご確認ください。':'You can send a Message from the detail page. Please arrange agreements and payments directly between users.',
+    '契約や支払いはHostMatch上で行いますか？':'Are agreements or payments handled on HostMatch?',
+    'HostMatchは掲載・検索・条件比較・メッセージのためのプラットフォームです。契約・支払い等は当事者間でご確認ください。':'HostMatch is a platform for listings, search, condition comparison, and messages. Please arrange agreements and payments directly between users.',
+    '設定画面の独立したお問い合わせ項目からご連絡ください。':'Please contact us from the contact form in settings.',
+    'トラブルが起きたときは？':'What should I do if trouble occurs?',
+    'このユーザーをブロックしています':'You have blocked this user',
+    'ブロック':'Block',
+    '通報':'Report',
+    '詳細を見る':'View Details',
+    '条件比較では、会話希望・食事制限・交流頻度・NG条件の一致状況を表示します。':'Condition comparison shows matches for conversation preferences, dietary restrictions, interaction frequency, and no-go conditions.',
+    '比較できる登録条件がありません':'There are no registered conditions to compare.',
+    '希望期間すべて受け入れ可能':'Dates overlap with your preferred stay',
+    '期間重複なし':'No overlapping dates',
+    '予算内':'Within budget',
+    '会話量が近い':'Conversation preference is close',
+    '交流頻度が近い':'Time together preference is close',
+    '起床時間が近い':'Wake-up time is close',
+    '就寝時間が近い':'Bedtime is close',
+    '⑮ 門限について':'⑮ Curfew',
+    '⑯ 友人などの来客について':'⑯ Visitors',
+    '⑰ シャワーの利用時間について':'⑰ Shower Time Limit',
+    '⑱ キッチン利用について':'⑱ Kitchen Use',
+    '⑲ 共有スペースの掃除について':'⑲ Shared Space Cleaning',
+    '⑳ 友人・パートナーなどの宿泊について':'⑳ Overnight Guests',
+    '検索結果':'Search Results',
+    '結果':'Results'
+  });
   let currentLang = localStorage.getItem('hostmatch_lang') || 'ja';
   let autoTranslating = false;
   let autoTranslateTimer = null;
 
   function t(key) {
-    return i18n[currentLang]?.[key] || i18n.ja[key] || key;
+    if (i18n[currentLang]?.[key]) return i18n[currentLang][key];
+    if (currentLang === 'en') {
+      return String(key || '')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+    }
+    return i18n.ja[key] || key;
   }
 
   function shouldSkipAutoTranslate(node) {
     const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!el) return true;
     if (el.closest('script,style,svg,.hm-filter-shell,[data-i18n],[data-i18n-html],[data-lang-option]')) return true;
+    if (el.closest('.bubble,.msg-name,.msg-preview,.chat-title,.chat-subtitle,.chat-banner-name,.match-card-name,.detail-info-value,#detail-name,#mypage-username,#mypage-useremail')) return true;
     return false;
   }
 
@@ -21851,15 +21977,15 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
     document.documentElement.lang = currentLang;
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if (i18n[currentLang][key]) el.textContent = t(key);
+      if (i18n[currentLang][key] || currentLang === 'en') el.textContent = t(key);
     });
     document.querySelectorAll('[data-i18n-html]').forEach(el => {
       const key = el.getAttribute('data-i18n-html');
-      if (i18n[currentLang][key]) el.innerHTML = t(key);
+      if (i18n[currentLang][key] || currentLang === 'en') el.innerHTML = t(key);
     });
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
       const key = el.getAttribute('data-i18n-placeholder');
-      if (i18n[currentLang][key]) el.placeholder = t(key);
+      if (i18n[currentLang][key] || currentLang === 'en') el.placeholder = t(key);
     });
     document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.langOption === currentLang);
@@ -21911,6 +22037,7 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
 	    if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
 	    updateListingActionButtons();
+	    applyAutoTextTranslations();
 	  }
 
   function setLanguage(lang) {
@@ -23210,7 +23337,9 @@ BC PIPAも、合理的な通知による同意撤回を原則として認めて�
 	      if (h.hostStayInfo?.area || h.city) parts.push(homestayAreaDisplayValue(h.hostStayInfo?.area || h.city));
 	      if (h.hostStayInfo?.station) {
 	        const walk = h.hostStayInfo?.walkMin;
-	        const stationText = walk ? `${h.hostStayInfo.station} 徒歩${walk}分` : `最寄り駅：${h.hostStayInfo.station}`;
+	        const stationText = walk
+	          ? (currentLang === 'ja' ? `${h.hostStayInfo.station} 徒歩${walk}分` : `${walk} min walk from ${h.hostStayInfo.station}`)
+	          : (currentLang === 'ja' ? `最寄り駅：${h.hostStayInfo.station}` : `Nearest station: ${h.hostStayInfo.station}`);
 	        parts.push(stationText);
 	      }
 	      return parts.length ? parts.join(' · ') : localizeText('未設定');
