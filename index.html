@@ -15469,43 +15469,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  async function sharehouseApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
-	    const fullAddress = String(address || '').trim();
-	    const failure = () => ({
-	      payload: {
-	        approximate_latitude: null,
-	        approximate_longitude: null,
-	        approximate_radius_m: homestayApproximateLocationRadiusM()
-	      },
+	    const result = await homestayApproximateLocationPayloadFromPrivateAddress(address, {
+	      city: options.city
+	    });
+	    if (!result?.warning) return result;
+	    return {
+	      ...result,
 	      warning: currentLang === 'en'
 	        ? 'The address was saved, but the approximate location could not be updated.'
 	        : '住所は保存されましたが、概略位置を更新できませんでした。'
-	    });
-	    if (!fullAddress) {
-	      return {
-	        payload: {
-	          approximate_latitude: null,
-	          approximate_longitude: null,
-	          approximate_radius_m: homestayApproximateLocationRadiusM()
-	        },
-	        warning: ''
-	      };
-	    }
-	    const parts = homestayStructuredAddressParts(fullAddress, { city: options.city });
-	    if (!homestayHouseNumberFromText(parts.street) || !homestayStreetWithoutHouseNumber(parts.street)) {
-	      return failure();
-	    }
-	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress, { city: options.city });
-	    if (geocoded && validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
-	      return {
-	        payload: {
-	          approximate_latitude: formatHomestayPublicCoordinate(geocoded.latitude),
-	          approximate_longitude: formatHomestayPublicCoordinate(geocoded.longitude),
-	          approximate_radius_m: homestayApproximateLocationRadiusM()
-	        },
-	        warning: ''
-	      };
-	    }
-	    return failure();
+	    };
 	  }
 
 	  function hostApproxLocationPrefix(scope) {
