@@ -7923,6 +7923,7 @@
     const title = document.querySelector('#screen-host-profile .mypage-sub-title');
     if (title) title.textContent = localizeText('掲載情報を編集');
     if (!isSharehouse && body) {
+      clearSharehouseHostLocationEditorMap('share-profile');
       body.innerHTML = homestayHostProfileEditBodyHtml();
       renderHostFamilyEditors();
       renderHostStudentEditors();
@@ -15002,6 +15003,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  let currentSharehouseListingPhotos = [];
 	  let currentSharehouseHostLoadedFullAddress = '';
 	  let currentSharehouseHostDataLoaded = false;
+	  const currentSharehouseLocationDraft = { res: null, 'share-profile': null };
+	  const sharehouseHostLocationEditorMaps = {};
+	  const sharehouseHostLocationEditorMarkers = {};
+	  const sharehouseHostLocationEditorCircles = {};
 	  let currentPublishedHomestayListings = [];
 	  let publishedHomestaySearchHosts = [];
 	  let publishedHomestayHostsLoaded = false;
@@ -15469,16 +15474,267 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  async function sharehouseApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
-	    const result = await homestayApproximateLocationPayloadFromPrivateAddress(address, {
-	      city: options.city
-	    });
-	    if (!result?.warning) return result;
+	    const fullAddress = String(address || '').trim();
+	    const scope = options.scope || '';
+	    const draft = scope ? currentSharehouseLocationDraft?.[scope] : null;
+	    const radiusM = homestayApproximateLocationRadiusM();
+	    const emptyPayload = {
+	      approximate_latitude: null,
+	      approximate_longitude: null,
+	      approximate_radius_m: radiusM
+	    };
+	    if (!fullAddress) return { payload: emptyPayload, warning: '' };
+	    if (draft
+	      && validHomestayCoordinate(draft.latitude, draft.longitude)
+	      && (draft.manuallyAdjusted === true || draft.confirmed === true)
+	      && String(draft.sourceAddress || '').trim() === fullAddress) {
+	      return {
+	        payload: {
+	          approximate_latitude: Number(draft.latitude),
+	          approximate_longitude: Number(draft.longitude),
+	          approximate_radius_m: radiusM
+	        },
+	        warning: ''
+	      };
+	    }
+	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress, { city: options.city });
+	    if (geocoded && validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
+	      if (scope) {
+	        setSharehouseHostLocationDraft(scope, geocoded.latitude, geocoded.longitude, {
+	          sourceAddress: fullAddress,
+	          manuallyAdjusted: false,
+	          confirmed: true
+	        });
+	        renderSharehouseHostLocationEditorMap(scope);
+	      }
+	      return {
+	        payload: {
+	          approximate_latitude: Number(geocoded.latitude),
+	          approximate_longitude: Number(geocoded.longitude),
+	          approximate_radius_m: radiusM
+	        },
+	        warning: ''
+	      };
+	    }
 	    return {
-	      ...result,
+	      payload: emptyPayload,
 	      warning: currentLang === 'en'
 	        ? 'The address was saved, but the approximate location could not be updated.'
 	        : '住所は保存されましたが、概略位置を更新できませんでした。'
 	    };
+	  }
+
+	  function sharehouseHostLocationAddressValue(scope) {
+	    return String(document.getElementById(`${scope}-address`)?.value || '').trim();
+	  }
+
+	  function sharehouseHostLocationAreaValue(scope) {
+	    return selectedChipText(`${scope}-area`, '');
+	  }
+
+	  function sharehouseHostLocationStartCenter(scope) {
+	    const area = sharehouseHostLocationAreaValue(scope);
+	    return homestayApproxLocationFromPublicArea(area)?.center || [49.2827, -123.1207];
+	  }
+
+	  function setSharehouseHostLocationMessage(scope, message = '') {
+	    const el = document.getElementById(`${scope}-sharehouse-location-editor-message`);
+	    if (el) el.textContent = message;
+	  }
+
+	  function clearSharehouseHostLocationEditorMap(scope) {
+	    const key = scope || 'profile';
+	    if (sharehouseHostLocationEditorMaps[key]) {
+	      sharehouseHostLocationEditorMaps[key].remove();
+	      sharehouseHostLocationEditorMaps[key] = null;
+	    }
+	    sharehouseHostLocationEditorMarkers[key] = null;
+	    sharehouseHostLocationEditorCircles[key] = null;
+	  }
+
+	  function setSharehouseHostLocationDraft(scope, latitude, longitude, options = {}) {
+	    const key = scope || 'profile';
+	    if (!validHomestayCoordinate(latitude, longitude)) {
+	      currentSharehouseLocationDraft[key] = null;
+	      return null;
+	    }
+	    const draft = {
+	      latitude: Number(latitude),
+	      longitude: Number(longitude),
+	      radiusM: homestayApproximateLocationRadiusM(),
+	      sourceAddress: String(options.sourceAddress || sharehouseHostLocationAddressValue(key) || '').trim(),
+	      confirmed: options.confirmed !== false,
+	      manuallyAdjusted: options.manuallyAdjusted === true
+	    };
+	    currentSharehouseLocationDraft[key] = draft;
+	    return draft;
+	  }
+
+	  function clearSharehouseHostLocationDraft(scope) {
+	    currentSharehouseLocationDraft[scope || 'profile'] = null;
+	    clearSharehouseHostLocationEditorMap(scope);
+	  }
+
+	  function sharehouseHostLocationEditorHtml(prefix) {
+	    const title = currentLang === 'en' ? 'Set Approximate Area' : '概略エリアを設定';
+	    const body = currentLang === 'en'
+	      ? 'Click near your residence on the map or drag the pin to adjust the location. Guests will not see the pin or your exact address.'
+	      : 'マップ上で住居付近をクリックするか、ピンを移動して位置を調整してください。ゲストにはピンや正確な住所は表示されません。';
+	    const button = currentLang === 'en' ? 'Get location from address' : '住所から位置を取得';
+	    const empty = currentLang === 'en' ? 'Click the map to set the approximate area.' : 'マップ上で概略エリアを設定してください。';
+	    return `
+	      <div class="form-group">
+	        <div class="form-label">${escapeHtml(title)}</div>
+	        <div style="font-size:12px;color:var(--light);line-height:1.5;margin-bottom:8px;">${escapeHtml(body)}</div>
+	        <button type="button" onclick="refreshSharehouseHostLocationFromAddress('${prefix}')" style="background:white;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:10px;">${escapeHtml(button)}</button>
+	        <div id="${prefix}-sharehouse-location-editor-map" class="host-private-map" aria-label="${escapeHtml(title)}"><div class="host-private-map-empty">${escapeHtml(empty)}</div></div>
+	        <div id="${prefix}-sharehouse-location-editor-message" style="font-size:12px;color:var(--light);font-weight:700;line-height:1.5;margin-top:8px;"></div>
+	      </div>
+	    `;
+	  }
+
+	  function renderSharehouseHostLocationEditorMap(scope) {
+	    const key = scope || 'profile';
+	    const mapEl = document.getElementById(`${key}-sharehouse-location-editor-map`);
+	    if (!mapEl) return;
+	    const draft = currentSharehouseLocationDraft[key];
+	    const hasDraft = draft && validHomestayCoordinate(draft.latitude, draft.longitude);
+	    const startCenter = hasDraft
+	      ? [Number(draft.latitude), Number(draft.longitude)]
+	      : sharehouseHostLocationStartCenter(key);
+	    clearSharehouseHostLocationEditorMap(key);
+
+	    if (!window.L) {
+	      mapEl.innerHTML = `<div class="host-private-map-empty">${currentLang === 'en' ? 'Approximate area map' : '概略エリアマップ'}</div>`;
+	      return;
+	    }
+
+	    mapEl.innerHTML = '';
+	    const map = L.map(mapEl, {
+	      zoomControl: true,
+	      scrollWheelZoom: true,
+	      dragging: true,
+	      touchZoom: true,
+	      tap: true
+	    }).setView(startCenter, hasDraft ? 14 : 12);
+	    sharehouseHostLocationEditorMaps[key] = map;
+
+	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	      maxZoom: 19,
+	      attribution: '&copy; OpenStreetMap contributors'
+	    }).addTo(map);
+
+	    const updateDraftCenter = latlng => {
+	      if (!validHomestayCoordinate(latlng?.lat, latlng?.lng)) return;
+	      const nextDraft = setSharehouseHostLocationDraft(key, latlng.lat, latlng.lng, {
+	        sourceAddress: sharehouseHostLocationAddressValue(key),
+	        manuallyAdjusted: true,
+	        confirmed: true
+	      });
+	      if (!nextDraft) return;
+	      const center = [Number(nextDraft.latitude), Number(nextDraft.longitude)];
+	      if (!sharehouseHostLocationEditorCircles[key]) {
+	        sharehouseHostLocationEditorCircles[key] = L.circle(center, {
+	          radius: homestayApproximateLocationRadiusM(),
+	          color: '#FF5A5F',
+	          weight: 2,
+	          fillColor: '#FF5A5F',
+	          fillOpacity: 0.14
+	        }).addTo(map);
+	      } else {
+	        sharehouseHostLocationEditorCircles[key].setLatLng(center);
+	      }
+	      if (!sharehouseHostLocationEditorMarkers[key]) {
+	        sharehouseHostLocationEditorMarkers[key] = L.marker(center, { draggable: true }).addTo(map);
+	        sharehouseHostLocationEditorMarkers[key].on('dragend', event => updateDraftCenter(event.target.getLatLng()));
+	      } else {
+	        sharehouseHostLocationEditorMarkers[key].setLatLng(center);
+	      }
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Approximate area set. Guests see only the 500m circle, not the pin.'
+	        : '概略エリアを設定しました。ゲストには500mの円だけが表示され、ピンは表示されません。');
+	    };
+
+	    if (hasDraft) {
+	      const center = [Number(draft.latitude), Number(draft.longitude)];
+	      sharehouseHostLocationEditorCircles[key] = L.circle(center, {
+	        radius: homestayApproximateLocationRadiusM(),
+	        color: '#FF5A5F',
+	        weight: 2,
+	        fillColor: '#FF5A5F',
+	        fillOpacity: 0.14
+	      }).addTo(map);
+	      sharehouseHostLocationEditorMarkers[key] = L.marker(center, { draggable: true }).addTo(map);
+	      sharehouseHostLocationEditorMarkers[key].on('dragend', event => updateDraftCenter(event.target.getLatLng()));
+	      map.fitBounds(sharehouseHostLocationEditorCircles[key].getBounds(), { padding: [18, 18], maxZoom: 15 });
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Approximate area set. Guests see only the 500m circle, not the pin.'
+	        : '概略エリアを設定しました。ゲストには500mの円だけが表示され、ピンは表示されません。');
+	    } else {
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Could not get the address point automatically. Click near your residence on the map.'
+	        : '住所地点を自動取得できない場合は、マップ上で住居付近をクリックしてください。');
+	    }
+
+	    map.on('click', event => updateDraftCenter(event.latlng));
+	    setTimeout(() => map.invalidateSize(), 120);
+	  }
+
+	  function initializeSharehouseHostLocationEditor(scope, profile = null) {
+	    const key = scope || 'profile';
+	    const uiProfile = profile || sharehouseCurrentHostUiProfile?.() || null;
+	    if (!currentSharehouseLocationDraft[key] && validHomestayCoordinate(uiProfile?.approximateLatitude, uiProfile?.approximateLongitude)) {
+	      setSharehouseHostLocationDraft(key, uiProfile.approximateLatitude, uiProfile.approximateLongitude, {
+	        sourceAddress: uiProfile?.stay?.address || sharehouseHostLocationAddressValue(key),
+	        manuallyAdjusted: false,
+	        confirmed: true
+	      });
+	    }
+	    setTimeout(() => renderSharehouseHostLocationEditorMap(key), 0);
+	  }
+
+	  async function refreshSharehouseHostLocationFromAddress(scope) {
+	    const key = scope || 'profile';
+	    const address = sharehouseHostLocationAddressValue(key);
+	    if (!address) {
+	      clearSharehouseHostLocationDraft(key);
+	      renderSharehouseHostLocationEditorMap(key);
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Enter an address, or click near your residence on the map.'
+	        : '住所を入力するか、マップ上で住居付近をクリックしてください。');
+	      return;
+	    }
+	    setSharehouseHostLocationMessage(key, currentLang === 'en' ? 'Getting location...' : '位置を取得しています...');
+	    const geocoded = await geocodeHomestayPrivateAddress(address, {
+	      city: sharehouseHostLocationAreaValue(key)
+	    });
+	    if (!geocoded || !validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
+	      currentSharehouseLocationDraft[key] = null;
+	      renderSharehouseHostLocationEditorMap(key);
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Could not get the address point automatically. Click near your residence on the map.'
+	        : '住所地点を自動取得できませんでした。マップ上で住居付近をクリックしてください。');
+	      return;
+	    }
+	    setSharehouseHostLocationDraft(key, geocoded.latitude, geocoded.longitude, {
+	      sourceAddress: address,
+	      manuallyAdjusted: false,
+	      confirmed: true
+	    });
+	    renderSharehouseHostLocationEditorMap(key);
+	  }
+
+	  function handleSharehouseHostLocationAddressInput(scope) {
+	    const key = scope || 'profile';
+	    const draft = currentSharehouseLocationDraft[key];
+	    const address = sharehouseHostLocationAddressValue(key);
+	    if (draft && String(draft.sourceAddress || '').trim() !== String(address || '').trim()) {
+	      currentSharehouseLocationDraft[key] = null;
+	      renderSharehouseHostLocationEditorMap(key);
+	      setSharehouseHostLocationMessage(key, currentLang === 'en'
+	        ? 'Address changed. Get the location again, or click near your residence on the map.'
+	        : '住所が変更されました。位置を再取得するか、マップ上で住居付近をクリックしてください。');
+	    }
 	  }
 
 	  function hostApproxLocationPrefix(scope) {
@@ -20393,7 +20649,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return [
 	      shHostSection('家・入居情報', [
 	        shHostField('エリア', shHostChipRow(prefix, 'area', ['Vancouver','Toronto'], profile.stay.area)),
-	        shHostField('住所', shHostTextInput(`${prefix}-address`, profile.stay.address, '住所'), '正確な住所は一般公開されません'),
+	        shHostField('住所', `<input class="form-input" id="${prefix}-address" type="text" value="${escapeHtml(profile.stay.address)}" placeholder="${localizeText('住所')}" oninput="handleSharehouseHostLocationAddressInput('${prefix}')" />`, '正確な住所は一般公開されません'),
+	        sharehouseHostLocationEditorHtml(prefix),
 	        shHostField('最寄り駅', shHostTextInput(`${prefix}-station`, profile.stay.station, '最寄り駅')),
 	        shHostField('最寄り駅まで徒歩何分', shHostTextInput(`${prefix}-walk-min`, profile.stay.walkMin, '8', 'number')),
 	        shHostField('入居可能期間', `<div class="form-range-row">${shHostTextInput(`${prefix}-available-start`, profile.stay.availableStart, '', 'date')}${shHostTextInput(`${prefix}-available-end`, profile.stay.availableEnd, '', 'date')}</div>`),
@@ -20487,7 +20744,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function renderSharehouseHostProfileEdit(options = {}) {
 	    const section = document.querySelector('#screen-host-profile .sharehouse-profile-section');
 	    if (!section) return;
-	    const profile = sharehouseHostDefaults();
+	    const profile = sharehouseCurrentHostUiProfile() || sharehouseHostDefaults();
 	    const stateMessage = options.loadFailed
 	      ? (currentLang === 'en' ? 'Could not load the latest sharehouse listing.' : '最新のシェアハウス掲載情報を読み込めませんでした。')
 	      : options.loading
@@ -20503,6 +20760,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    bindHostPhotoInputs('share-profile');
 	    renderHomestayHostAvatarPreview('share-profile');
 	    renderHomestayHostRoomPhotoPreview('share-profile');
+	    initializeSharehouseHostLocationEditor('share-profile', profile);
 	  }
 
 	  function shHostValueMap(value, map, fallback = value) {
@@ -21359,7 +21617,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!displayName) {
 	      return { ok: false, message: currentLang === 'en' ? 'Please enter a display name.' : '名前を入力してください。' };
 	    }
-	    const approximateLocation = await sharehouseApproximateLocationPayloadFromPrivateAddress(profile.stay.address, { city: profile.stay.area });
+	    const approximateLocation = await sharehouseApproximateLocationPayloadFromPrivateAddress(profile.stay.address, { city: profile.stay.area, scope: prefix });
 	    const listingPayload = sharehouseListingPayloadFromProfile(profile, userId, {
 	      status: currentSharehouseListing?.status || 'published',
 	      ...approximateLocation.payload
@@ -21746,6 +22004,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    setInputValueById('share-profile-rule-other', profile.rules.other);
 	    shHostTogglePetFields('share-profile');
 	    shHostToggleKitchenFields('share-profile');
+	    initializeSharehouseHostLocationEditor('share-profile', profile);
 	  }
 
 	  async function loadCurrentSharehouseHostData(options = {}) {
@@ -26653,9 +26912,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('res-next-btn').textContent = resStep === resTotal
       ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
       : (currentLang === 'en' ? 'Next →' : '次へ →');
-    if (resStep === 1) renderHomestayHostAvatarPreview('res');
-    if (resStep === 2) renderHomestayHostRoomPhotoPreview('res');
-  }
+	    if (resStep === 1) {
+	      renderHomestayHostAvatarPreview('res');
+	      clearSharehouseHostLocationEditorMap('res');
+	    }
+	    if (resStep === 2) {
+	      renderHomestayHostRoomPhotoPreview('res');
+	      initializeSharehouseHostLocationEditor('res');
+	    }
+	  }
 
   async function resOnboardNext() {
     if (resStep < resTotal) {
