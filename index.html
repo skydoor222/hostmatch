@@ -8521,7 +8521,7 @@
     }
     if (isSupabaseHomestayChatActive() && currentSupabaseChatOtherUserId) {
       const name = document.querySelector('#screen-chat .chat-title')?.textContent || (currentLang === 'en' ? 'User' : 'ユーザー');
-      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: currentSupabaseChatMode === 'homestay-host' ? 'homestay-guest' : 'homestay-host' };
+      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: isSupabaseHostChatMode() ? `${serviceModeForCurrentContext()}-guest` : 'homestay-host' };
     }
     if (currentScreen === 'detail' && isPublishedHomestayDetailHost(currentHost)) {
       const selected = publishedHomestaySearchHostByListingId(currentHost);
@@ -8628,7 +8628,7 @@
       supabaseBlocksCacheUserId = blockerId;
       showToast(currentLang === 'en' ? 'User blocked' : 'ブロックしました');
       if (currentScreen === 'chat' && currentSupabaseChatOtherUserId === blockedId) {
-        const backScreen = currentSupabaseChatMode === 'homestay-host' ? 'host-messages' : 'messages';
+        const backScreen = isSupabaseHostChatMode() ? 'host-messages' : 'messages';
         resetSupabaseChatState();
         navigate('chat', backScreen);
       }
@@ -11003,16 +11003,39 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function messageUnreadRoleForCurrentContext() {
-	    if (currentRole === 'host' && serviceModeForCurrentContext() === 'homestay') return 'host';
+	    const service = serviceModeForCurrentContext();
+	    if ((currentRole === 'host' || currentRole === 'resident') && ['homestay', 'sharehouse'].includes(service)) return 'host';
 	    if (currentRole === 'guest' && (window._serviceType || currentSearchCat || 'homestay') === 'homestay') return 'guest';
 	    return '';
 	  }
 
-	  async function hasSupabaseHomestayUnreadMessages(role) {
+	  function currentHostMessageListingContext() {
+	    const service = serviceModeForCurrentContext();
+	    if (service === 'sharehouse') {
+	      return { service, listingType: 'sharehouse', listing: currentSharehouseListing || null };
+	    }
+	    return { service: 'homestay', listingType: 'homestay', listing: currentHomestayListing || null };
+	  }
+
+	  function supabaseHostChatModeForListingType(listingType) {
+	    return listingType === 'sharehouse' ? 'sharehouse-host' : 'homestay-host';
+	  }
+
+	  function isSupabaseHostChatMode(mode = currentSupabaseChatMode) {
+	    return mode === 'homestay-host' || mode === 'sharehouse-host';
+	  }
+
+	  function isSupabaseGuestChatMode(mode = currentSupabaseChatMode) {
+	    return mode === 'homestay';
+	  }
+
+	  async function hasSupabaseConversationUnreadMessages(role, options = {}) {
 	    const userId = window._currentUser?.id || '';
 	    if (!userId || !window._supabase?.from) return false;
 	    const column = role === 'host' ? 'listing_owner_id' : role === 'guest' ? 'initiator_id' : '';
 	    if (!column) return false;
+	    const listingType = options.listingType || (role === 'host' ? currentHostMessageListingContext().listingType : 'homestay');
+	    const listingId = options.listingId || (role === 'host' ? currentHostMessageListingContext().listing?.id : '');
 
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
@@ -11030,14 +11053,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      : { data: [], error: null };
 	    if (listingsError) throw listingsError;
 	    const listingsById = indexRowsBy(listings, 'id');
-	    const homestayRows = rows.filter(row => {
+	    const visibleRows = rows.filter(row => {
 	      const listing = listingsById.get(row.listing_id);
-	      if (!listing || listing.listing_type !== 'homestay') return false;
+	      if (!listing || listing.listing_type !== listingType) return false;
+	      if (listingId && listing.id !== listingId) return false;
 	      return role === 'host' ? listing.owner_id === userId : true;
 	    });
 	    await loadCurrentUserBlocks();
-	    const visibleHomestayRows = homestayRows.filter(row => !shouldHideSupabaseConversationForBlocks(row, role));
-	    const conversationIds = visibleHomestayRows.map(row => row.id).filter(Boolean);
+	    const unblockedRows = visibleRows.filter(row => !shouldHideSupabaseConversationForBlocks(row, role));
+	    const conversationIds = unblockedRows.map(row => row.id).filter(Boolean);
 	    if (!conversationIds.length) return false;
 
 	    const [messagesResult, readsResult] = await Promise.all([
@@ -11056,12 +11080,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
-	    return homestayRows.some(conversation => conversationHasUnreadForUser(
+	    return unblockedRows.some(conversation => conversationHasUnreadForUser(
 	      conversation.id,
 	      messagesByConversation.get(conversation.id) || [],
 	      readsByConversation,
 	      userId
 	    ));
+	  }
+
+	  async function hasSupabaseHomestayUnreadMessages(role) {
+	    return hasSupabaseConversationUnreadMessages(role, { listingType: 'homestay' });
 	  }
 
 	  async function refreshMessageUnreadDot(options = {}) {
@@ -11073,7 +11101,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    const target = role === 'host' ? 'host' : 'guest';
 	    try {
-	      const hasUnread = await hasSupabaseHomestayUnreadMessages(target);
+	      const hasUnread = await hasSupabaseConversationUnreadMessages(target);
 	      setMessageUnreadDotVisible(target, hasUnread);
 	      if (target === 'guest') setMessageUnreadDotVisible('host', false);
 	      if (target === 'host') setMessageUnreadDotVisible('guest', false);
@@ -11142,9 +11170,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
-	  async function countCurrentHomestayHostConversations() {
+	  async function countCurrentHostConversations() {
 	    const userId = window._currentUser?.id || '';
-	    const listingId = currentHomestayListing?.id || '';
+	    const { listing } = currentHostMessageListingContext();
+	    const listingId = listing?.id || '';
 	    if (!userId || !listingId || !window._supabase?.from) return null;
 	    const { count, error } = await window._supabase
 	      .from('conversations')
@@ -11156,12 +11185,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return Number.isFinite(numericCount) ? numericCount : 0;
 	  }
 
+	  async function countCurrentHomestayHostConversations() {
+	    return countCurrentHostConversations();
+	  }
+
 	  async function refreshHostDashboardConversationCount() {
 	    const seq = ++hostDashboardConversationCountSeq;
 	    setHostDashboardConversationCount(null);
-	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') return null;
+	    if (!['host', 'resident'].includes(currentRole) || !['homestay', 'sharehouse'].includes(serviceModeForCurrentContext())) return null;
 	    try {
-	      const count = await countCurrentHomestayHostConversations();
+	      const count = await countCurrentHostConversations();
 	      if (seq !== hostDashboardConversationCountSeq) return null;
 	      setHostDashboardConversationCount(count);
 	      return count;
@@ -11302,14 +11335,36 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }).join('');
 	  }
 
-	  async function loadSupabaseHostConversations() {
+	  async function ensureCurrentHostMessageListingLoaded() {
+	    const context = currentHostMessageListingContext();
+	    if (context.listing?.id) return context;
+	    if (context.listingType === 'sharehouse' && typeof loadCurrentSharehouseHostData === 'function') {
+	      await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+	      return currentHostMessageListingContext();
+	    }
+	    if (context.listingType === 'homestay' && typeof loadCurrentHomestayHostData === 'function') {
+	      await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+	      return currentHostMessageListingContext();
+	    }
+	    return context;
+	  }
+
+	  async function loadSupabaseHostConversations(options = {}) {
 	    const userId = window._currentUser?.id || '';
 	    if (!userId || !window._supabase?.from) return [];
+	    const context = await ensureCurrentHostMessageListingLoaded();
+	    const listingType = options.listingType || context.listingType || 'homestay';
+	    const targetListingId = options.listingId || context.listing?.id || '';
+	    if (!targetListingId) {
+	      currentSupabaseHostConversationRows = [];
+	      return [];
+	    }
 	    await loadCurrentUserBlocks();
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
-	      .eq('listing_owner_id', userId);
+	      .eq('listing_owner_id', userId)
+	      .eq('listing_id', targetListingId);
 	    if (conversationsError) throw conversationsError;
 
 	    const rows = Array.isArray(conversations) ? conversations : [];
@@ -11348,13 +11403,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
 	      const listing = listingsById.get(conversation.listing_id);
-	      if (!listing || listing.owner_id !== userId || listing.listing_type !== 'homestay') return null;
+	      if (!listing || listing.owner_id !== userId || listing.listing_type !== listingType || listing.id !== targetListingId) return null;
 	      const profile = profilesById.get(conversation.initiator_id) || {};
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
-	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
+	      return { conversation, profile, listing, latestMessage, read, latestAt, unread, listingType };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
 	    currentSupabaseHostConversationRows = enriched;
@@ -11373,6 +11428,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const conversation = row.conversation;
 	      const profile = row.profile || {};
 	      const listing = row.listing || {};
+	      const listingType = listing.listing_type || row.listingType || 'homestay';
 	      const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Guest' : 'ゲスト');
 	      const latest = row.latestMessage;
 	      const previewPrefix = latest?.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
@@ -11395,7 +11451,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	            ${subtitle ? `<div style="font-size:11px;color:var(--light);font-weight:700;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(subtitle)}</div>` : ''}
 	            <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;font-weight:${row.unread ? '800' : '500'};">${escapeHtml(preview)}</div>
 	          </div>
-	          <button onclick="event.stopPropagation();openHomestayGuestDetailFromConversation('${escapeHtml(conversation.id)}','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${localizeText('詳細を見る')}</button>
+	          ${listingType === 'homestay' ? `<button onclick="event.stopPropagation();openHomestayGuestDetailFromConversation('${escapeHtml(conversation.id)}','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${localizeText('詳細を見る')}</button>` : ''}
 	          ${row.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' : ''}
 	        </div>
 	      `;
@@ -11764,6 +11820,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function applySupabaseHostChatHeader(row) {
 	    const profile = row?.profile || {};
 	    const listing = row?.listing || {};
+	    const listingType = listing.listing_type || row?.listingType || 'homestay';
 	    const header = document.querySelector('.chat-header');
 	    if (!header) return;
 	    const avatar = header.querySelector('.chat-avatar');
@@ -11780,7 +11837,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    header.querySelector('.chat-title').textContent = name;
 	    header.querySelector('.chat-subtitle').textContent = [listing.title, listing.city].filter(Boolean).join(' · ');
 	    document.getElementById('chat-banner-name').textContent = name;
-	    document.querySelector('.chat-banner-sub').textContent = currentLang === 'en' ? 'Conversation about this homestay' : 'このホームステイについてのメッセージ';
+	    document.querySelector('.chat-banner-sub').textContent = listingType === 'sharehouse'
+	      ? (currentLang === 'en' ? 'Conversation about this sharehouse' : 'このシェアハウスについてのメッセージ')
+	      : (currentLang === 'en' ? 'Conversation about this homestay' : 'このホームステイについてのメッセージ');
 	  }
 
 	  async function openSupabaseHostConversation(conversationId) {
@@ -11802,12 +11861,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        navigate(currentScreen, 'host-messages');
 	        return;
 	      }
+	      const listingType = row.listing?.listing_type || row.listingType || 'homestay';
+	      const expectedContext = await ensureCurrentHostMessageListingLoaded();
+	      if (row.listing?.owner_id !== window._currentUser?.id || row.listing?.id !== expectedContext.listing?.id || row.listing?.listing_type !== expectedContext.listingType) {
+	        console.error('Supabase host conversation ownership mismatch:', { conversationId: id, listingType });
+	        navigate(currentScreen, 'host-messages');
+	        return;
+	      }
 	      currentHost = conversation.listing_id;
 	      currentListing = {
-	        type: 'homestay',
+	        type: listingType,
 	        id: conversation.listing_id,
-	        name: row.listing?.title || row.listing?.city || (currentLang === 'en' ? 'Homestay' : 'ホームステイ'),
-	        detailScreen: 'detail',
+	        name: row.listing?.title || row.listing?.city || (listingType === 'sharehouse' ? (currentLang === 'en' ? 'Sharehouse' : 'シェアハウス') : (currentLang === 'en' ? 'Homestay' : 'ホームステイ')),
+	        detailScreen: listingType === 'sharehouse' ? 'sharehouse-detail' : 'detail',
 	        label: currentLang === 'en' ? 'Listing' : '掲載'
 	      };
 	      currentApplicationId = null;
@@ -11818,7 +11884,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSupabaseConversationId = conversation.id;
 	      currentSupabaseChatListingId = conversation.listing_id;
 	      currentSupabaseChatOtherUserId = conversation.initiator_id;
-	      currentSupabaseChatMode = 'homestay-host';
+	      currentSupabaseChatMode = supabaseHostChatModeForListingType(listingType);
 	      applySupabaseHostChatHeader(row);
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
 	      renderSupabaseHomestayMessages(messages);
@@ -11955,40 +12021,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const body = document.querySelector('#screen-host-messages .mypage-sub-body');
 	    if (!body) return;
 	    const service = serviceModeForCurrentContext();
-	    if (service === 'homestay' && window._currentUser?.id && window._supabase?.from) {
+	    if (['homestay', 'sharehouse'].includes(service) && window._currentUser?.id && window._supabase?.from) {
 	      renderSupabaseHostMessages();
 	      return;
 	    }
-	    if (service === 'homestay') {
-	      body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Please log in to view messages.' : 'メッセージを見るにはログインしてください'}</div>`;
-	      return;
-	    }
-	    const ids = ['sakura', 'minjun', 'emma'];
-	    body.innerHTML = ids.map((id, index) => {
-	      const applicant = getApplicantForService(id, service);
-	      const preview = service === 'sharehouse'
-	        ? (currentLang === 'ja' ? 'シェアハウスの入居条件について相談したいです。' : 'I would like to ask about the sharehouse move-in conditions.')
-	        : (applicant.chatMessages?.[0]?.text || '入居日について確認したいのですが...');
-	      const time = index === 0 ? '14:32' : index === 1 ? localizeText('昨日') : '4/5';
-	      return `
-	        <div style="background:white;border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;border:1px solid var(--border);cursor:pointer;" onclick="openHostApplicantChat('${id}')">
-	          <div style="width:46px;height:46px;border-radius:50%;background:${applicant.avatarBg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${applicant.avatar}</div>
-	          <div style="flex:1;min-width:0;">
-	            <div style="display:flex;justify-content:space-between;gap:8px;">
-	              <div style="font-size:14px;font-weight:800;">${escapeHtml(localizeText(applicant.name))}</div>
-	              <div style="font-size:11px;color:var(--light);">${time}</div>
-	            </div>
-	            <div style="font-size:13px;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px;">${escapeHtml(localizeText(preview))}</div>
-	          </div>
-	          <button onclick="event.stopPropagation();openApplicantDetail('${id}','host-messages')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">${localizeText('詳細を見る')}</button>
-	          ${index === 0 ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;"></div>' : ''}
-	        </div>
-	      `;
-	    }).join('');
+	    body.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Please log in to view messages.' : 'メッセージを見るにはログインしてください'}</div>`;
 	  }
 
 	  function isSupabaseHomestayChatActive() {
-	    return (currentSupabaseChatMode === 'homestay' || currentSupabaseChatMode === 'homestay-host')
+	    return (currentSupabaseChatMode === 'homestay' || isSupabaseHostChatMode())
 	      && !!currentSupabaseConversationId
 	      && chatDetailMode === 'host'
 	      && !!currentSupabaseChatListingId;
@@ -12034,7 +12075,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (seq !== supabaseRealtimeMessageRenderSeq || conversationId !== currentSupabaseConversationId || currentScreen !== 'chat') return;
 	      renderSupabaseHomestayMessages(rows);
 	      await markSupabaseConversationRead(conversationId);
-	      await refreshMessageUnreadDot({ role: currentSupabaseChatMode === 'homestay-host' ? 'host' : 'guest' });
+	      await refreshMessageUnreadDot({ role: isSupabaseHostChatMode() ? 'host' : 'guest' });
 	      const area = document.querySelector('.chat-messages');
 	      if (area) area.scrollTop = area.scrollHeight;
 	    } catch (error) {
@@ -12280,7 +12321,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function goBackFromChat() {
-	    if (currentSupabaseChatMode === 'homestay-host') {
+	    if (isSupabaseHostChatMode()) {
 	      chatBackScreen = 'host-messages';
 	      navigate(currentScreen, 'host-messages');
 	      return;
@@ -12394,6 +12435,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      openHomestayGuestDetailFromConversation(currentSupabaseConversationId, 'chat');
 	      return;
 	    }
+	    if (currentSupabaseChatMode === 'sharehouse-host' && currentSupabaseConversationId) {
+	      showToast(currentLang === 'en' ? 'Guest details are not available yet.' : 'Guest詳細はまだ表示できません。');
+	      return;
+	    }
 	    if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') && currentChatApplicant) {
 	      openApplicantDetail(currentChatApplicant, 'host-messages');
 	      return;
@@ -12443,7 +12488,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         const rows = await loadSupabaseConversationMessages(currentSupabaseConversationId);
         renderSupabaseHomestayMessages(rows.length ? rows : (data ? [data] : []));
         await markSupabaseConversationRead(currentSupabaseConversationId);
-        await refreshMessageUnreadDot({ role: currentSupabaseChatMode === 'homestay-host' ? 'host' : 'guest' });
+        await refreshMessageUnreadDot({ role: isSupabaseHostChatMode() ? 'host' : 'guest' });
         const area = document.querySelector('.chat-messages');
         if (area) area.scrollTop = area.scrollHeight;
       } catch (error) {
@@ -19385,7 +19430,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (availabilityEl) availabilityEl.textContent = hostDashboardAvailabilityText(listing);
 	    updateSharehouseManagerProfileCard();
 	    if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
-	    if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
+	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
 	  }
 
 	  function setSelectValueById(id, value) {
@@ -25934,11 +25979,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       route.listingId = String(currentHost);
       route.detailFrom = detailBackScreen || extra.detailFrom || 'search';
     }
-    if (routeScreen === 'chat') {
-      if (!currentSupabaseConversationId || !['homestay', 'homestay-host'].includes(currentSupabaseChatMode)) return null;
-      route.conversationId = String(currentSupabaseConversationId);
-      route.chatMode = currentSupabaseChatMode || (routeRole === 'host' ? 'homestay-host' : 'homestay');
-    }
+	    if (routeScreen === 'chat') {
+	      if (!currentSupabaseConversationId || !['homestay', 'homestay-host', 'sharehouse-host'].includes(currentSupabaseChatMode)) return null;
+	      route.conversationId = String(currentSupabaseConversationId);
+	      route.chatMode = currentSupabaseChatMode || (routeRole === 'host' ? 'homestay-host' : 'homestay');
+	    }
     if (routeScreen === 'homestay-guest-detail') {
       if (routeRole !== 'host' || !currentHomestayGuestDetailConversationId || !currentHomestayGuestDetailGuestUserId) return null;
       route.conversationId = String(currentHomestayGuestDetailConversationId);
@@ -26114,6 +26159,35 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         }
         if (['support', 'privacy-security', 'blocked-users'].includes(screen)) {
           await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
+          prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
+          navigate(currentScreen || 'login', screen);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+      }
+      if (mode.housingType === 'sharehouse' && (mode.role === 'host' || mode.role === 'resident')) {
+        currentRole = 'resident';
+        currentSearchCat = 'sharehouse';
+        window._serviceType = 'sharehouse';
+        await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+        if (['host-dashboard', 'host-profile', 'host-settings'].includes(screen)) {
+          navigate(currentScreen || 'login', screen);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'host-messages') {
+          navigate(currentScreen || 'login', 'host-messages');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'chat') {
+          const conversationId = String(route.conversationId || '').trim();
+          if (!conversationId) throw new Error('Saved sharehouse host chat route is missing conversationId');
+          await openSupabaseHostConversation(conversationId);
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (['support', 'privacy-security', 'blocked-users'].includes(screen)) {
           prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
           navigate(currentScreen || 'login', screen);
           window._authenticatedRouteRestored = true;
