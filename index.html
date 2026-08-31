@@ -10374,9 +10374,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		      }
 		      renderDetailInfoGrid('sharehouse-room-info', profile.roomInfo);
 		      const mapPin = document.getElementById('sharehouse-map-pin');
-		      if (mapPin) mapPin.textContent = `📍 ${localizeText(profile.mapPin || profile.stay.area)}`;
+		      if (mapPin) mapPin.textContent = profile.mapPin || profile.stay.area ? `📍 ${localizeText(profile.mapPin || profile.stay.area)}` : localizeText('位置未設定');
 		      const mapNote = document.getElementById('sharehouse-map-note');
-		      if (mapNote) mapNote.textContent = localizeText(profile.mapNote || '最寄り駅：Central Station 徒歩8分');
+		      if (mapNote) mapNote.textContent = profile.mapNote ? localizeText(profile.mapNote) : '';
 		      setTimeout(() => renderSharehouseLocationMap(profile), 80);
 	      return;
 	    }
@@ -15468,6 +15468,46 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
+	  async function sharehouseApproximateLocationPayloadFromPrivateAddress(address, options = {}) {
+	    const fullAddress = String(address || '').trim();
+	    const failure = () => ({
+	      payload: {
+	        approximate_latitude: null,
+	        approximate_longitude: null,
+	        approximate_radius_m: homestayApproximateLocationRadiusM()
+	      },
+	      warning: currentLang === 'en'
+	        ? 'The address was saved, but the approximate location could not be updated.'
+	        : '住所は保存されましたが、概略位置を更新できませんでした。'
+	    });
+	    if (!fullAddress) {
+	      return {
+	        payload: {
+	          approximate_latitude: null,
+	          approximate_longitude: null,
+	          approximate_radius_m: homestayApproximateLocationRadiusM()
+	        },
+	        warning: ''
+	      };
+	    }
+	    const parts = homestayStructuredAddressParts(fullAddress, { city: options.city });
+	    if (!homestayHouseNumberFromText(parts.street) || !homestayStreetWithoutHouseNumber(parts.street)) {
+	      return failure();
+	    }
+	    const geocoded = await geocodeHomestayPrivateAddress(fullAddress, { city: options.city });
+	    if (geocoded && validHomestayCoordinate(geocoded.latitude, geocoded.longitude)) {
+	      return {
+	        payload: {
+	          approximate_latitude: formatHomestayPublicCoordinate(geocoded.latitude),
+	          approximate_longitude: formatHomestayPublicCoordinate(geocoded.longitude),
+	          approximate_radius_m: homestayApproximateLocationRadiusM()
+	        },
+	        warning: ''
+	      };
+	    }
+	    return failure();
+	  }
+
 	  function hostApproxLocationPrefix(scope) {
 	    return hostFormPrefix(scope);
 	  }
@@ -17361,6 +17401,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const photosForUi = uiProfile.roomPhotos || [{ label: '部屋の写真', src: neutralHomestayListingPhotoUrl() }];
 	    const rentNumber = Number(listing.monthly_price);
 	    const priceValue = Number.isFinite(rentNumber) ? rentNumber : null;
+	    const hasApproxLocation = validHomestayCoordinate(listing.approximate_latitude, listing.approximate_longitude);
+	    const approximateLatitude = hasApproxLocation ? Number(listing.approximate_latitude) : null;
+	    const approximateLongitude = hasApproxLocation ? Number(listing.approximate_longitude) : null;
+	    const approximateRadiusM = Number.isFinite(Number(listing.approximate_radius_m)) ? Number(listing.approximate_radius_m) : null;
 	    SHAREHOUSE_LISTINGS[listingId] = {
 	      id: listingId,
 	      listingId,
@@ -17372,6 +17416,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      price: priceValue,
 	      currency: listing.currency || 'CAD',
 	      pricePrefix: listing.currency === 'CAD' || !listing.currency ? 'C$' : `${listing.currency} `,
+	      approximateLatitude,
+	      approximateLongitude,
+	      approximateRadiusM,
 	      detailScreen: 'sharehouse-detail',
 	      label: 'シェアハウス',
 	      published: true
@@ -17382,6 +17429,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      listingId,
 	      ownerId: listing.owner_id || '',
 	      isPublishedSharehouse: true,
+	      approximateLatitude,
+	      approximateLongitude,
+	      approximateRadiusM,
 	      name: uiProfile.basic.name,
 	      match: null,
 	      nationality: uiProfile.basic.nationality || '',
@@ -17437,7 +17487,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    publishedSharehouseListingsLoadFailed = false;
 	    const { data: listingRows, error: listingsError } = await window._supabase
 	      .from('listings')
-	      .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, created_at, updated_at')
+	      .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, approximate_latitude, approximate_longitude, approximate_radius_m, created_at, updated_at')
 	      .eq('listing_type', 'sharehouse')
 	      .eq('status', 'published')
 	      .order('created_at', { ascending: false });
@@ -20625,9 +20675,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        review: match.review,
 	        available: { start: profile.stay.availableStart, end: profile.stay.availableEnd },
 	        mapPin: profile.stay.area,
-	        mapNote: currentLang === 'en'
-	          ? `${profile.stay.walkMin} min walk from ${profile.stay.station}`
-	          : `${profile.stay.station} 徒歩${profile.stay.walkMin}分`,
+	        mapNote: profile.stay.station
+	          ? (currentLang === 'en'
+	            ? `${profile.stay.walkMin || '—'} min walk from ${profile.stay.station}`
+	            : `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分`)
+	          : '',
+	        approximateLatitude: validHomestayCoordinate(match.approximateLatitude, match.approximateLongitude) ? Number(match.approximateLatitude) : null,
+	        approximateLongitude: validHomestayCoordinate(match.approximateLatitude, match.approximateLongitude) ? Number(match.approximateLongitude) : null,
+	        approximateRadiusM: Number.isFinite(Number(match.approximateRadiusM)) ? Number(match.approximateRadiusM) : null,
 	        raw: match
 	      };
 	    }
@@ -21154,7 +21209,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      long_stay_allowed: booleanFromSelectedText(profile.stay.longStay, ['可能', 'Available', 'Allowed'], ['不可', 'Not available', 'Not allowed']),
 	      monthly_price: sharehouseHostFormInteger(profile.stay.monthlyRent),
 	      currency: 'CAD',
-	      status: options.status || 'published'
+	      status: options.status || 'published',
+	      approximate_latitude: options.approximate_latitude,
+	      approximate_longitude: options.approximate_longitude,
+	      approximate_radius_m: options.approximate_radius_m
 	    });
 	  }
 
@@ -21328,8 +21386,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!displayName) {
 	      return { ok: false, message: currentLang === 'en' ? 'Please enter a display name.' : '名前を入力してください。' };
 	    }
+	    const approximateLocation = await sharehouseApproximateLocationPayloadFromPrivateAddress(profile.stay.address, { city: profile.stay.area });
 	    const listingPayload = sharehouseListingPayloadFromProfile(profile, userId, {
-	      status: currentSharehouseListing?.status || 'published'
+	      status: currentSharehouseListing?.status || 'published',
+	      ...approximateLocation.payload
 	    });
 	    const validationErrors = validateSharehouseListingPayload(listingPayload);
 	    if (validationErrors.length) return { ok: false, message: validationErrors[0] };
@@ -21383,7 +21443,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return { ok: false, message: currentLang === 'en' ? 'Saved, but could not reload your sharehouse listing.' : '保存しましたが、シェアハウス掲載情報の再読み込みに失敗しました。' };
 	    }
 	    invalidatePublishedSharehouseGuestCache();
-	    return { ok: true, listingId };
+	    return { ok: true, listingId, warning: approximateLocation.warning || '' };
 	  }
 
 	  function saveSharehouseSettings(scope = 'res', options = {}) {
@@ -21560,7 +21620,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        quietHours: fromSharehouseListingDetailDbValue('quiet_hours_rule', details.quiet_hours_rule),
 	        cleaning: fromSharehouseListingDetailDbValue('cleaning_rule', details.cleaning_rule),
 	        other: details.other_house_rules || ''
-	      }
+	      },
+	      approximateLatitude: validHomestayCoordinate(listing.approximate_latitude, listing.approximate_longitude) ? Number(listing.approximate_latitude) : null,
+	      approximateLongitude: validHomestayCoordinate(listing.approximate_latitude, listing.approximate_longitude) ? Number(listing.approximate_longitude) : null,
+	      approximateRadiusM: Number.isFinite(Number(listing.approximate_radius_m)) ? Number(listing.approximate_radius_m) : null
 	    };
 	  }
 
@@ -21583,6 +21646,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      pricePrefix: currentSharehouseListing?.currency === 'CAD' || !currentSharehouseListing?.currency ? 'C$' : currentSharehouseListing.currency,
 	      currency: currentSharehouseListing?.currency || 'CAD',
 	      status: currentSharehouseListing?.status || '',
+	      approximateLatitude: profile.approximateLatitude,
+	      approximateLongitude: profile.approximateLongitude,
+	      approximateRadiusM: profile.approximateRadiusM,
 	      label: 'シェアハウス',
 	      isCurrentSharehouseHost: true
 	    };
@@ -21592,6 +21658,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      listingId,
 	      ownerId: currentSharehouseListing?.owner_id || window._currentUser?.id || '',
 	      isCurrentSharehouseHost: true,
+	      approximateLatitude: profile.approximateLatitude,
+	      approximateLongitude: profile.approximateLongitude,
+	      approximateRadiusM: profile.approximateRadiusM,
 	      name: profile.basic.name || currentSharehouseListing?.title || '—',
 	      match: null
 	    };
@@ -21749,7 +21818,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('listings')
-	        .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, created_at')
+	        .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, approximate_latitude, approximate_longitude, approximate_radius_m, created_at')
 	        .eq('owner_id', userId)
 	        .eq('listing_type', 'sharehouse')
 	        .order('created_at', { ascending: false })
@@ -21849,7 +21918,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        return;
 	      }
 	      updateHostDashboardListing();
-	      showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	      showToast(result.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
 	      navigate(currentScreen, 'host-dashboard');
 	      return;
 	    }
@@ -26634,12 +26703,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           btn.textContent = currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓';
         }
         return;
-      }
-      if (btn) btn.disabled = false;
-      navigate('resident-onboarding', 'host-dashboard');
-      showToast(currentLang === 'en' ? 'Saved' : '保存しました');
-    }
-  }
+	      }
+	      if (btn) btn.disabled = false;
+	      navigate('resident-onboarding', 'host-dashboard');
+	      showToast(result.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
+	    }
+	  }
 
   function resOnboardBack() {
     if (resStep > 1) { resStep--; renderResStep(); }
@@ -26883,6 +26952,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function getSharehouseApproxLocation(profile) {
+	    const isRealSharehouse = !!profile?.raw?.isPublishedSharehouse || !!profile?.raw?.isCurrentSharehouseHost;
+	    if (isRealSharehouse) {
+	      if (!validHomestayCoordinate(profile?.approximateLatitude, profile?.approximateLongitude)) return null;
+	      return {
+	        center: [Number(profile.approximateLatitude), Number(profile.approximateLongitude)],
+	        radius: Number.isFinite(Number(profile.approximateRadiusM)) ? Number(profile.approximateRadiusM) : homestayApproximateLocationRadiusM(),
+	        label: profile?.stay?.area || profile?.mapPin || ''
+	      };
+	    }
 	    const area = profile?.stay?.area || profile?.mapPin || 'Vancouver';
 	    if (String(area).toLowerCase().includes('toronto') || String(area).includes('トロント')) {
 	      return { center: [43.6538, -79.3839], radius: 850, label: 'Toronto' };
@@ -26897,15 +26975,35 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const privacyNote = document.getElementById('sharehouse-map-privacy');
 	    if (!mapEl) return;
 	    const loc = getSharehouseApproxLocation(profile);
-	    if (areaNote) areaNote.textContent = currentLang === 'ja' ? `おおよその位置：${loc.label}` : `Approximate location: ${loc.label}`;
-	    if (stationNote) stationNote.textContent = localizeText(profile?.mapNote || '最寄り駅：Central Station 徒歩8分');
-	    if (privacyNote) privacyNote.textContent = localizeText('正確な住所はプライバシー保護のため表示していません');
+	    const isRealSharehouse = !!profile?.raw?.isPublishedSharehouse || !!profile?.raw?.isCurrentSharehouseHost;
+	    const areaText = profile?.mapPin || profile?.stay?.area || '';
+	    if (areaNote) {
+	      areaNote.textContent = loc
+	        ? (currentLang === 'ja' ? `おおよその位置：${loc.label || areaText || '—'}` : `Approximate location: ${loc.label || areaText || '—'}`)
+	        : (areaText ? localizeText(areaText) : localizeText('位置未設定'));
+	    }
+	    if (stationNote) {
+	      stationNote.textContent = profile?.mapNote
+	        ? localizeText(profile.mapNote)
+	        : (isRealSharehouse ? '' : localizeText('最寄り駅：Central Station 徒歩8分'));
+	    }
+	    if (privacyNote) privacyNote.textContent = loc
+	      ? localizeText('円はおおよその居住エリアです。')
+	      : localizeText('正確な住所はプライバシー保護のため表示していません');
 	    mapEl.setAttribute('aria-label', localizeText('おおよその位置'));
 
 	    if (sharehouseDetailMap) {
 	      sharehouseDetailMap.remove();
 	      sharehouseDetailMap = null;
 	    }
+
+	    if (!loc) {
+	      mapEl.innerHTML = '';
+	      mapEl.style.display = 'none';
+	      return;
+	    }
+
+	    mapEl.style.display = '';
 
 	    if (!window.L) {
 	      mapEl.innerHTML = `<div style="height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--light);font-size:13px;font-weight:800;">${localizeText('おおよその位置')}</div>`;
@@ -26926,17 +27024,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      attribution: '&copy; OpenStreetMap contributors'
 	    }).addTo(sharehouseDetailMap);
 
-	    L.circle(loc.center, {
+	    const circle = L.circle(loc.center, {
 	      radius: loc.radius,
 	      color: '#FF5A5F',
 	      weight: 2,
 	      fillColor: '#FF5A5F',
 	      fillOpacity: 0.16
-	    }).addTo(sharehouseDetailMap).bindTooltip(localizeText('おおよその位置'), {
-	      permanent: true,
-	      direction: 'center',
-	      className: 'approx-location-label'
-	    }).openTooltip();
+	    }).addTo(sharehouseDetailMap);
+	    sharehouseDetailMap.fitBounds(circle.getBounds(), { padding: [18, 18], maxZoom: 14 });
 
 	    setTimeout(() => sharehouseDetailMap?.invalidateSize(), 120);
 	  }
