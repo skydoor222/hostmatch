@@ -4704,7 +4704,7 @@
           <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
             <span style="font-size:34px;">🧑</span>
             <span style="font-size:14px;font-weight:700;color:var(--dark);" data-i18n="upload_profile_photo">プロフィール写真をアップロード</span>
-            <span style="font-size:12px;color:var(--light);" data-i18n="demo_image_upload">画像保存は行わないデモUIです</span>
+            <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
             <input id="shg-profile-photo" type="file" accept="image/*" style="display:none;" />
           </label>
         </div>
@@ -5445,11 +5445,13 @@
 	      <div class="form-group">
 	        <div class="form-label">プロフィール写真</div>
 	        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-	          <span style="font-size:34px;">👤</span>
+	          <span id="res-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
 	          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
-	          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-	          <input type="file" accept="image/*" style="display:none;" />
+	          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+	          <input id="res-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'res')" style="display:none;" />
 	        </label>
+	        <button id="res-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('res')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
+	        <div id="res-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">部屋写真</div>
@@ -5457,8 +5459,11 @@
 	          <span style="font-size:28px;">🖼️</span>
 	          <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋写真をアップロード</span>
 	          <span style="font-size:12px;color:var(--light);">部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ</span>
-	          <input type="file" accept="image/*" multiple style="display:none;" />
+	          <input id="res-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'res')" style="display:none;" />
 	        </label>
+	        <div id="res-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	        <div id="res-room-photo-count" style="font-size:12px;color:var(--light);font-weight:800;margin-top:6px;">0枚</div>
+	        <div id="res-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">年齢</div>
@@ -6269,11 +6274,13 @@
 		      <div>
 		        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">プロフィール写真</div>
 		        <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
-		          <span style="font-size:34px;">👤</span>
+		          <span id="share-profile-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
 		          <span style="font-size:14px;font-weight:700;color:var(--dark);">顔写真をアップロード</span>
-		          <span style="font-size:12px;color:var(--light);">画像保存は行わないデモUIです</span>
-		          <input type="file" accept="image/*" style="display:none;" />
+		          <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+		          <input id="share-profile-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'share-profile')" style="display:none;" />
 		        </label>
+		        <button id="share-profile-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('share-profile')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
+		        <div id="share-profile-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">年齢</div>
@@ -6589,8 +6596,11 @@
               <span style="font-size:28px;">🖼️</span>
               <span style="font-size:14px;font-weight:700;color:var(--dark);">部屋写真をアップロード</span>
               <span style="font-size:12px;color:var(--light);">部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ</span>
-              <input type="file" accept="image/*" multiple style="display:none;" />
+              <input id="share-profile-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'share-profile')" style="display:none;" />
             </label>
+            <div id="share-profile-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+            <div id="share-profile-room-photo-count" style="font-size:12px;color:var(--light);font-weight:800;margin-top:6px;">0枚</div>
+            <div id="share-profile-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div>
           </div>
           <div>
             <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">House Rules</div>
@@ -16572,6 +16582,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window.renderAvatarElement(preview, window._currentProfile?.avatar_url || '');
 	  }
 
+	  function bindHostPhotoInputs(scope) {
+	    const info = hostPhotoScopeInfo(scope);
+	    const avatarInput = document.getElementById(`${info.prefix}-avatar-input`);
+	    if (avatarInput && !avatarInput.hasAttribute('onchange') && avatarInput.dataset.hostPhotoBound !== 'true') {
+	      avatarInput.addEventListener('change', event => handleHomestayHostAvatarSelection(event, scope));
+	      avatarInput.dataset.hostPhotoBound = 'true';
+	    }
+	    const roomInput = document.getElementById(`${info.prefix}-room-photo-input`);
+	    if (roomInput && !roomInput.hasAttribute('onchange') && roomInput.dataset.hostPhotoBound !== 'true') {
+	      roomInput.addEventListener('change', event => handleHomestayHostRoomPhotoSelection(event, scope));
+	      roomInput.dataset.hostPhotoBound = 'true';
+	    }
+	  }
+
 	  function loadHomestayHostAvatarNaturalSize(scope) {
 	    const info = hostPhotoScopeInfo(scope);
 	    const key = info.key;
@@ -18060,19 +18084,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (error) throw error;
 	  }
 
-	  async function normalizeHomestayListingPhotoOrder(listingId) {
+	  async function normalizeHomestayListingPhotoOrder(listingId, options = {}) {
+	    const { preserveExistingCover = false } = options;
 	    const { data, error } = await window._supabase
 	      .from('listing_photos')
-	      .select('id, sort_order, created_at')
+	      .select('id, sort_order, is_cover, created_at')
 	      .eq('listing_id', listingId)
 	      .order('sort_order', { ascending: true })
 	      .order('created_at', { ascending: true });
 	    if (error) throw error;
 	    const rows = Array.isArray(data) ? data : [];
+	    const preservedCoverId = preserveExistingCover
+	      ? rows.find(photo => photo.is_cover === true)?.id || ''
+	      : '';
 	    for (const [index, photo] of rows.entries()) {
 	      const { error: updateError } = await window._supabase
 	        .from('listing_photos')
-	        .update({ sort_order: index, is_cover: index === 0 })
+	        .update({ sort_order: index, is_cover: preservedCoverId ? photo.id === preservedCoverId : index === 0 })
 	        .eq('id', photo.id)
 	        .eq('listing_id', listingId);
 	      if (updateError) throw updateError;
@@ -18134,7 +18162,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        }
 	      }
 
-	      await normalizeHomestayListingPhotoOrder(listingId);
+	      await normalizeHomestayListingPhotoOrder(listingId, { preserveExistingCover: info.service === 'sharehouse' });
 	      deleteIds.clear();
 	      clearPendingHomestayRoomPhotos(scope);
 	      const input = document.getElementById(`${info.prefix}-room-photo-input`);
@@ -20308,6 +20336,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    `;
 	    body.dataset.sharehouseHostRedesign = '20260827';
 	    resRenderRoommateList();
+	    bindHostPhotoInputs('res');
+	    renderHomestayHostAvatarPreview('res');
+	    renderHomestayHostRoomPhotoPreview('res');
 	  }
 
 	  function renderSharehouseHostProfileEdit() {
@@ -20319,6 +20350,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ${sharehouseHostPageTwoHtml('share-profile', sharehouseHostDefaults())}
 	    `;
 	    resRenderRoommateList();
+	    bindHostPhotoInputs('share-profile');
 	    renderHomestayHostAvatarPreview('share-profile');
 	    renderHomestayHostRoomPhotoPreview('share-profile');
 	  }
@@ -21647,10 +21679,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  async function saveHostProfileScreen() {
 	    if (isSharehouseHostEditing()) {
+	      const saveBtn = document.querySelector('#screen-host-profile button[onclick="saveHostProfileScreen()"]');
+	      if (saveBtn?.disabled) return;
+	      if (saveBtn) {
+	        saveBtn.disabled = true;
+	        saveBtn.textContent = currentLang === 'en' ? 'Saving...' : '保存中...';
+	      }
 	      const result = await saveSharehouseHostDataToSupabase('profile');
 	      if (!result.ok) {
 	        console.error('Supabase sharehouse host profile edit failed:', result);
 	        showToast(result.message || (currentLang === 'en' ? 'Could not save the sharehouse listing.' : 'シェアハウスの掲載情報を保存できませんでした。'));
+	        if (saveBtn) {
+	          saveBtn.disabled = false;
+	          saveBtn.textContent = currentLang === 'en' ? 'Save' : '保存する';
+	        }
 	        return;
 	      }
 	      updateHostDashboardListing();
@@ -22529,7 +22571,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     name_plain:'名前',
     profile_photo:'プロフィール写真',
     upload_profile_photo:'プロフィール写真をアップロード',
-    demo_image_upload:'画像保存は行わないデモUIです',
     age:'年齢',
     nationality:'国籍',
     gender:'性別',
@@ -22885,7 +22926,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     name_plain:'Name',
     profile_photo:'Profile Photo',
     upload_profile_photo:'Upload Profile Photo',
-    demo_image_upload:'Demo upload UI only. Images are not saved.',
     age:'Age',
     nationality:'Nationality',
     gender:'Gender',
@@ -23847,7 +23887,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    ,'プロフィール写真を選択':'Choose a profile photo'
 	    ,'ホスト写真を選択':'Choose a host photo'
 	    ,'顔写真をアップロード':'Upload a face photo'
-	    ,'画像保存は行わないデモUIです':'Demo UI only. The image will not be saved.'
 	    ,'名前':'Name'
 	    ,'生年月日':'Date of Birth'
 	    ,'年齢':'Age'
@@ -24334,7 +24373,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '理想のシェア生活':'Ideal Shared Living',
     'プロフィール写真':'Profile Photo',
     'プロフィール写真をアップロード':'Upload Profile Photo',
-    '画像保存は行わないデモUIです':'Demo upload UI only. Images are not saved.',
     '渡航・滞在目的':'Purpose of Travel / Stay',
     '留学':'Study abroad',
     'ワーホリ':'Working holiday',
@@ -26406,6 +26444,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function renderResStep() {
     ensureSharehouseHostRegistrationUi();
+    bindHostPhotoInputs('res');
     document.getElementById('res-step-label').textContent = `STEP ${resStep} / ${resTotal}`;
     document.getElementById('res-progress').style.width = (resStep / resTotal * 100) + '%';
     document.getElementById('res-title').textContent = localizeText(resTitles[resStep - 1]);
