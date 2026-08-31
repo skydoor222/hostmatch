@@ -7717,12 +7717,12 @@
     const meta = document.getElementById('sharehouse-manager-meta');
     const profile = currentSharehouseHostProfile || {};
     if (avatar && typeof window.renderAvatarElement === 'function') window.renderAvatarElement(avatar, window._currentProfile?.avatar_url || '');
-    if (name) name.textContent = window._currentProfile?.display_name || currentSharehouseListing?.title || '—';
+    if (name) name.textContent = window._currentProfile?.display_name || '—';
     if (meta) {
       const parts = [
         profile.age !== null && profile.age !== undefined ? `${profile.age}歳` : '',
-        profile.nationality || '',
-        fromSharehouseHostProfileDbValue('gender', profile.gender)
+        profile.nationality ? localizeText(profile.nationality) : '',
+        localizeText(fromSharehouseHostProfileDbValue('gender', profile.gender))
       ].filter(Boolean);
       meta.textContent = parts.length ? parts.join(' · ') : '—';
     }
@@ -7867,7 +7867,15 @@
   async function previewHostListing() {
     hostPreviewMode = true;
     if (serviceModeForCurrentContext() === 'sharehouse') {
-      openSharehouseDetail('sh1', 'host-dashboard');
+      const loaded = await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+      const previewId = currentSharehouseListing?.id || '';
+      if (!loaded || !previewId) {
+        hostPreviewMode = false;
+        showToast(currentLang === 'en' ? 'Could not open the preview.' : 'プレビューを開けませんでした。');
+        return;
+      }
+      syncSharehouseHostDataToDemoObjects();
+      openSharehouseDetail(previewId, 'host-dashboard');
       return;
     }
     const previewId = await prepareCurrentHomestayHostPublicPreview();
@@ -7920,7 +7928,19 @@
     document.querySelectorAll('#screen-host-profile .sharehouse-profile-section').forEach(el => {
       el.style.display = isSharehouse ? 'block' : 'none';
     });
-    if (isSharehouse) renderSharehouseHostProfileEdit();
+    if (isSharehouse) {
+      const shouldFreshLoad = isSupabaseSharehouseHostContext();
+      renderSharehouseHostProfileEdit({ loading: shouldFreshLoad && !currentSharehouseHostDataLoaded });
+      if (shouldFreshLoad) {
+        const loadToken = String(Date.now());
+        if (body) body.dataset.sharehouseHostProfileLoadToken = loadToken;
+        loadCurrentSharehouseHostData({ force: true, showErrorToast: true }).then(ok => {
+          if (currentScreen !== 'host-profile' || serviceModeForCurrentContext() !== 'sharehouse') return;
+          if (body && body.dataset.sharehouseHostProfileLoadToken !== loadToken) return;
+          renderSharehouseHostProfileEdit({ loadFailed: !ok });
+        });
+      }
+    }
   }
 
   function updateGuestLifestyleMode() {
@@ -10274,7 +10294,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		      if (roommateBox) {
 		        const title = document.getElementById('sharehouse-members-title');
 		        if (title) title.textContent = `👥 ${localizeText('入居者メンバー')}`;
-		        const fallbackMembers = [
+		        const isRealSharehouseListing = !!match.isPublishedSharehouse || !!match.isCurrentSharehouseHost;
+		        const storedRoommates = Array.isArray(match.roommates) ? match.roommates : [];
+		        const fallbackMembers = isRealSharehouseListing ? [] : [
 		          {
 		            name: match.name,
 		            age: '20代',
@@ -10291,7 +10313,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		            mbti: profile.ideal.mbti === '回答しない' ? '未選択' : (profile.ideal.mbti || '未選択'),
 		            social: profile.ideal.roommateInteraction
 		          },
-		          ...match.roommates.map(r => ({
+		          ...storedRoommates.map(r => ({
 		            name: r.name,
 		            age: r.age || '20代',
 		            gender: r.gender || '回答しない',
@@ -10308,17 +10330,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		            social: r.social || 'たまに交流'
 		          }))
 		        ];
-		        const members = resRoommates.length ? resRoommates : fallbackMembers;
-		        roommateBox.innerHTML = members.map(member => detailMemberCard(member.name, member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑', [
-		          { label: '年齢', value: member.age },
-		          { label: '性別', value: member.gender },
-		          { label: '国籍', value: member.nationality || member.job },
-		          { label: '起床時間', value: member.wake },
-		          { label: '就寝時間', value: member.sleep },
-		          { label: '在宅時間', value: member.home },
-		          { label: '自炊頻度', value: member.cooking },
-		          { label: '趣味', value: member.hobbies || member.social }
-		        ])).join('');
+		        const localRoommates = match.isCurrentSharehouseHost && resRoommates.length ? resRoommates : [];
+		        const members = localRoommates.length ? localRoommates : (storedRoommates.length ? storedRoommates : fallbackMembers);
+		        if (!members.length) {
+		          roommateBox.innerHTML = `<div class="empty-list-message">${localizeText('まだ同居メンバーが追加されていません')}</div>`;
+		        } else {
+		          roommateBox.innerHTML = members.map(member => detailMemberCard(member.name || localizeText('同居メンバー'), member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑', [
+		            { label: '年齢', value: member.age },
+		            { label: '性別', value: member.gender },
+		            { label: '国籍', value: member.nationality || member.job },
+		            { label: '起床時間', value: member.wake },
+		            { label: '就寝時間', value: member.sleep },
+		            { label: '在宅時間', value: member.home },
+		            { label: '自炊頻度', value: member.cooking },
+		            { label: '趣味', value: member.hobbies || member.social }
+		          ])).join('');
+		        }
 		      }
 		      const ruleBox = document.getElementById('sharehouse-rules');
 		      if (ruleBox) {
@@ -20058,14 +20085,95 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const SH_HOST_COOKING_OPTIONS = ['ほぼ毎日','週に数回','たまに','ほとんどしない'];
 	  const SH_HOST_MBTI_OPTIONS = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP','わからない / 未診断','回答しない'];
 
+	  function isSupabaseSharehouseHostContext() {
+	    return !!window._currentUser?.id
+	      && !!window._supabase?.from
+	      && serviceModeForCurrentContext() === 'sharehouse'
+	      && (currentRole === 'host' || currentRole === 'resident');
+	  }
+
+	  function emptySharehouseHostFormProfile() {
+	    return {
+	      basic: {
+	        name: '',
+	        birthDate: '',
+	        age: '',
+	        nationality: '',
+	        gender: '',
+	        religion: '',
+	        languages: [],
+	        englishLevel: '',
+	        position: '',
+	        personalSmoking: '',
+	        personalAlcohol: '',
+	        hobbies: [],
+	        intro: ''
+	      },
+	      lifestyle: {
+	        wakeTime: '',
+	        bedtime: '',
+	        homeTime: '',
+	        cookingFrequency: ''
+	      },
+	      shareStyle: {
+	        roommateInteraction: '',
+	        cleanliness: '',
+	        cleaningFrequency: '',
+	        lifeNoise: '',
+	        smokingEnvironment: '',
+	        alcoholEnvironment: '',
+	        pets: '',
+	        petType: '',
+	        petCount: '',
+	        visitors: '',
+	        overnightGuests: '',
+	        quietHours: '',
+	        mbti: ''
+	      },
+	      stay: {
+	        area: '',
+	        address: '',
+	        station: '',
+	        walkMin: '',
+	        availableStart: '',
+	        availableEnd: '',
+	        minStay: '',
+	        maxStay: '',
+	        longStay: '',
+	        monthlyRent: '',
+	        roomType: '',
+	        furniture: '',
+	        floor: '',
+	        bathroom: '',
+	        amenities: [],
+	        amenityOther: '',
+	        kitchenRule: '',
+	        kitchenHours: '',
+	        residentsCount: ''
+	      },
+	      rules: {
+	        visitors: '',
+	        overnightGuests: '',
+	        smoking: '',
+	        alcohol: '',
+	        quietHours: '',
+	        cleaning: '',
+	        other: ''
+	      },
+	      members: []
+	    };
+	  }
+
 	  function sharehouseHostDefaults() {
 	    const currentProfile = sharehouseCurrentHostUiProfile();
 	    if (currentProfile) return currentProfile;
+	    if (isSupabaseSharehouseHostContext()) return emptySharehouseHostFormProfile();
 	    const match = sharehouseMatchProfiles.sh1 || {};
 	    const hp = match.hostProfile || {};
 	    return {
 	      basic: {
 	        name: hp.basic?.name || match.name || '田中 あおい',
+	        birthDate: hp.basic?.birthDate || '',
 	        age: hp.basic?.age || '24',
 	        nationality: hp.basic?.nationality || match.nationality || '日本',
 	        gender: hp.basic?.gender || match.gender || '女性',
@@ -20341,13 +20449,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    renderHomestayHostRoomPhotoPreview('res');
 	  }
 
-	  function renderSharehouseHostProfileEdit() {
+	  function renderSharehouseHostProfileEdit(options = {}) {
 	    const section = document.querySelector('#screen-host-profile .sharehouse-profile-section');
 	    if (!section) return;
+	    const profile = sharehouseHostDefaults();
+	    const stateMessage = options.loadFailed
+	      ? (currentLang === 'en' ? 'Could not load the latest sharehouse listing.' : '最新のシェアハウス掲載情報を読み込めませんでした。')
+	      : options.loading
+	        ? (currentLang === 'en' ? 'Loading your sharehouse listing...' : 'シェアハウス掲載情報を読み込み中です...')
+	        : '';
 	    section.innerHTML = `
 	      <div style="font-size:17px;font-weight:900;color:var(--dark);margin-bottom:14px;">${localizeText('掲載を編集')}</div>
-	      ${sharehouseHostPageOneHtml('share-profile', sharehouseHostDefaults())}
-	      ${sharehouseHostPageTwoHtml('share-profile', sharehouseHostDefaults())}
+	      ${stateMessage ? `<div style="font-size:13px;font-weight:800;color:var(--mid);margin:-4px 0 14px;">${escapeHtml(stateMessage)}</div>` : ''}
+	      ${sharehouseHostPageOneHtml('share-profile', profile)}
+	      ${sharehouseHostPageTwoHtml('share-profile', profile)}
 	    `;
 	    resRenderRoommateList();
 	    bindHostPhotoInputs('share-profile');
@@ -21261,6 +21376,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function saveSharehouseSettings(scope = 'res', options = {}) {
 	    const { showSavedToast = true } = options;
+	    if (isSupabaseSharehouseHostContext()) {
+	      if (showSavedToast) showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	      return;
+	    }
 	    const prefix = scope === 'profile' ? 'share-profile' : 'res';
 	    const listing = SHAREHOUSE_LISTINGS.sh1;
 	    const match = sharehouseMatchProfiles.sh1;
@@ -21327,7 +21446,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listing = currentSharehouseListing || {};
 	    const details = currentSharehouseListingDetails || {};
 	    const privateDetails = currentSharehouseListingPrivateDetails || {};
-	    const displayName = window._currentProfile?.display_name || listing.title || '';
+	    const displayName = window._currentProfile?.display_name || '';
 	    const petDetails = String(details.pet_details || '');
 	    const [petType, petCount] = petDetails.split('/').map(part => part.trim());
 	    const visitorShareUi = {
@@ -21435,31 +21554,53 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function syncSharehouseHostDataToDemoObjects() {
 	    const profile = sharehouseCurrentHostUiProfile();
-	    if (!profile || !SHAREHOUSE_LISTINGS.sh1 || !sharehouseMatchProfiles.sh1) return;
-	    const listing = SHAREHOUSE_LISTINGS.sh1;
-	    const match = sharehouseMatchProfiles.sh1;
+	    const listingId = currentSharehouseListing?.id || '';
+	    if (!profile || !listingId) return;
+	    const listing = SHAREHOUSE_LISTINGS[listingId] || {};
+	    const match = sharehouseMatchProfiles[listingId] || {};
 	    const rent = Number(profile.stay.monthlyRent) || 0;
-	    listing.name = profile.basic.name || listing.name;
-	    listing.price = rent || listing.price;
-	    listing.pricePrefix = 'C$';
-	    match.name = profile.basic.name || match.name;
-	    match.nationality = profile.basic.nationality || '';
-	    match.gender = profile.basic.gender || '';
-	    match.religion = profile.basic.religion || '';
-	    match.englishLevel = profile.basic.englishLevel || '';
-	    match.hobbies = (profile.basic.hobbies || []).join('、');
-	    match.note = profile.basic.intro || '';
-	    match.hostProfile = profile;
-	    match.available = { start: profile.stay.availableStart, end: profile.stay.availableEnd };
-	    match.rent = rent ? hostMonthlyPriceText({ monthly_price: rent, currency: 'CAD' }) : '';
-	    match.area = [profile.stay.area, profile.stay.station ? `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分` : ''].filter(Boolean).join(' · ');
-	    match.mapPin = profile.stay.area || '';
-	    match.mapNote = profile.stay.station
+	    SHAREHOUSE_LISTINGS[listingId] = {
+	      ...listing,
+	      id: listingId,
+	      listingId,
+	      ownerId: currentSharehouseListing?.owner_id || window._currentUser?.id || '',
+	      type: 'sharehouse',
+	      detailScreen: 'sharehouse-detail',
+	      name: profile.basic.name || currentSharehouseListing?.title || '—',
+	      price: rent || null,
+	      pricePrefix: currentSharehouseListing?.currency === 'CAD' || !currentSharehouseListing?.currency ? 'C$' : currentSharehouseListing.currency,
+	      currency: currentSharehouseListing?.currency || 'CAD',
+	      status: currentSharehouseListing?.status || '',
+	      label: 'シェアハウス',
+	      isCurrentSharehouseHost: true
+	    };
+	    sharehouseMatchProfiles[listingId] = {
+	      ...match,
+	      id: listingId,
+	      listingId,
+	      ownerId: currentSharehouseListing?.owner_id || window._currentUser?.id || '',
+	      isCurrentSharehouseHost: true,
+	      name: profile.basic.name || currentSharehouseListing?.title || '—',
+	      match: null
+	    };
+	    const syncedMatch = sharehouseMatchProfiles[listingId];
+	    syncedMatch.nationality = profile.basic.nationality || '';
+	    syncedMatch.gender = profile.basic.gender || '';
+	    syncedMatch.religion = profile.basic.religion || '';
+	    syncedMatch.englishLevel = profile.basic.englishLevel || '';
+	    syncedMatch.hobbies = (profile.basic.hobbies || []).join('、');
+	    syncedMatch.note = profile.basic.intro || '';
+	    syncedMatch.hostProfile = profile;
+	    syncedMatch.available = { start: profile.stay.availableStart, end: profile.stay.availableEnd };
+	    syncedMatch.rent = rent ? hostMonthlyPriceText(currentSharehouseListing || { monthly_price: rent, currency: 'CAD' }) : '';
+	    syncedMatch.area = [profile.stay.area, profile.stay.station ? `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分` : ''].filter(Boolean).join(' · ');
+	    syncedMatch.mapPin = profile.stay.area || '';
+	    syncedMatch.mapNote = profile.stay.station
 	      ? (currentLang === 'en'
 	        ? `${profile.stay.walkMin || '—'} min walk from ${profile.stay.station}`
 	        : `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分`)
 	      : '';
-	    match.roomType = [profile.stay.roomType, profile.stay.furniture, (profile.stay.amenities || []).slice(0, 3).join('・')].filter(Boolean).join(' · ');
+	    syncedMatch.roomType = [profile.stay.roomType, profile.stay.furniture, (profile.stay.amenities || []).slice(0, 3).join('・')].filter(Boolean).join(' · ');
 	    const photoUrls = (Array.isArray(currentSharehouseListingPhotos) ? currentSharehouseListingPhotos : [])
 	      .filter(photo => photo?.storage_path)
 	      .sort((a, b) => {
@@ -21471,21 +21612,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        src: homestayListingPhotoPublicUrl(photo.storage_path)
 	      }))
 	      .filter(photo => photo.src);
-	    if (photoUrls.length) match.roomPhotos = photoUrls;
-	    match.lifestyleCards = {
+	    syncedMatch.roomPhotos = photoUrls.length ? photoUrls : [{ label: '部屋の写真', src: neutralHomestayListingPhotoUrl() }];
+	    syncedMatch.lifestyleCards = {
 	      wake: profile.lifestyle.wakeTime || '',
 	      sleep: profile.lifestyle.bedtime || '',
 	      clean: profile.shareStyle.cleanliness || ''
 	    };
-	    match.shareLifestyle = {
+	    syncedMatch.shareLifestyle = {
 	      noise: profile.shareStyle.lifeNoise || '',
 	      cooking: profile.lifestyle.cookingFrequency || '',
 	      smoking: profile.shareStyle.smokingEnvironment || '',
 	      alcohol: profile.shareStyle.alcoholEnvironment || '',
 	      mbti: profile.shareStyle.mbti || ''
 	    };
-	    match.roommates = profile.members || [];
-	    match.rules = sharehouseHostRulesForDetail(profile);
+	    syncedMatch.roommates = profile.members || [];
+	    syncedMatch.rules = sharehouseHostRulesForDetail(profile);
 	  }
 
 	  function applyCurrentSharehouseHostDataToHostProfileScreen() {
