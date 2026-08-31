@@ -5998,11 +5998,11 @@
 	  <div style="padding:16px;display:flex;flex-direction:column;gap:16px;padding-bottom:100px;">
 	    <!-- シェアハウス管理者プロフィール -->
 		    <div id="sharehouse-manager-profile-card" style="background:white;border:1px solid var(--border);border-radius:16px;padding:16px;display:none;align-items:center;gap:14px;">
-	      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#84fab0,#8fd3f4);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;">👩</div>
+	      <div id="sharehouse-manager-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;">👤</div>
 	      <div style="flex:1;min-width:0;">
 	        <div style="font-size:12px;font-weight:800;color:var(--light);margin-bottom:4px;">プロフィール写真</div>
-	        <div style="font-size:16px;font-weight:900;color:var(--dark);">田中 あおい</div>
-	        <div style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;">24歳 · 日本 · 女性</div>
+	        <div id="sharehouse-manager-name" style="font-size:16px;font-weight:900;color:var(--dark);">—</div>
+	        <div id="sharehouse-manager-meta" style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;">—</div>
 	      </div>
 	      <button type="button" onclick="navigate(currentScreen,'host-profile')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;">編集</button>
 	    </div>
@@ -7701,6 +7701,21 @@
     const card = document.getElementById('sharehouse-manager-profile-card');
     if (!card) return;
     card.style.display = window._serviceType === 'sharehouse' ? 'flex' : 'none';
+    if (window._serviceType !== 'sharehouse') return;
+    const avatar = document.getElementById('sharehouse-manager-avatar');
+    const name = document.getElementById('sharehouse-manager-name');
+    const meta = document.getElementById('sharehouse-manager-meta');
+    const profile = currentSharehouseHostProfile || {};
+    if (avatar && typeof window.renderAvatarElement === 'function') window.renderAvatarElement(avatar, window._currentProfile?.avatar_url || '');
+    if (name) name.textContent = window._currentProfile?.display_name || currentSharehouseListing?.title || '—';
+    if (meta) {
+      const parts = [
+        profile.age !== null && profile.age !== undefined ? `${profile.age}歳` : '',
+        profile.nationality || '',
+        fromSharehouseHostProfileDbValue('gender', profile.gender)
+      ].filter(Boolean);
+      meta.textContent = parts.length ? parts.join(' · ') : '—';
+    }
   }
 
   function isHostListingPaused() {
@@ -7750,6 +7765,10 @@
   }
 
   function updateHostDashboardListing() {
+    if (serviceModeForCurrentContext() === 'sharehouse') {
+      updateHostDashboardFromCurrentSharehouseData();
+      return;
+    }
     const listing = currentHomestayListing;
     if (!listing?.id) {
       setHostDashboardListingNeutral();
@@ -10124,7 +10143,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  };
 
 	  function getSharehouseRoomPhotos(match) {
-	    return match?.roomPhotos || [
+	    if (match?.roomPhotos?.length) return match.roomPhotos;
+	    if (currentRole === 'resident' && serviceModeForCurrentContext() === 'sharehouse' && currentSharehouseListing?.id) {
+	      return [{ label: '部屋の写真', src: neutralHomestayListingPhotoUrl() }];
+	    }
+	    return [
 	      { label: '部屋全体', src: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80' },
 	      { label: 'ベッド周り', src: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80' },
 	      { label: '収納', src: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=800&q=80' },
@@ -14872,6 +14895,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  let currentSharehouseListing = null;
 	  let currentSharehouseListingDetails = null;
 	  let currentSharehouseListingPrivateDetails = null;
+	  let currentSharehouseListingPhotos = [];
 	  let currentSharehouseHostLoadedFullAddress = '';
 	  let currentSharehouseHostDataLoaded = false;
 	  let currentPublishedHomestayListings = [];
@@ -14888,6 +14912,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const pendingHomestayHostAvatarCrops = { ob: null, profile: null };
 	  const pendingHomestayRoomPhotoFiles = { ob: [], profile: [] };
 	  const pendingHomestayListingPhotoDeleteIds = new Set();
+	  const pendingSharehouseHostAvatarFiles = { res: null, profile: null };
+	  const pendingSharehouseHostAvatarPreviewUrls = { res: '', profile: '' };
+	  const pendingSharehouseHostAvatarCrops = { res: null, profile: null };
+	  const pendingSharehouseRoomPhotoFiles = { res: [], profile: [] };
+	  const pendingSharehouseListingPhotoDeleteIds = new Set();
 	  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
   const PROFILE_AVATAR_MAX_SIZE = 5 * 1024 * 1024;
 	  const LISTING_PHOTO_MAX_SIZE = 10 * 1024 * 1024;
@@ -15993,6 +16022,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  window.updateHomestayOnboardingAgeFromBirthDate = updateHomestayOnboardingAgeFromBirthDate;
 
+	  function updateSharehouseHostAgeFromBirthDate(prefix) {
+	    const birthDateInput = document.getElementById(`${prefix}-birth-date`);
+	    const ageInput = document.getElementById(`${prefix}-age`);
+	    if (!ageInput) return null;
+	    const value = birthDateInput?.value || '';
+	    if (!value || isFutureDateInputValue(value)) {
+	      ageInput.value = '';
+	      return null;
+	    }
+	    const age = calculateAgeFromBirthDate(value);
+	    ageInput.value = age === null ? '' : String(age);
+	    return age;
+	  }
+
+	  window.updateSharehouseHostAgeFromBirthDate = updateSharehouseHostAgeFromBirthDate;
+
   function setInputValueById(id, value) {
     const el = document.getElementById(id);
     if (el) el.value = value ?? '';
@@ -16379,44 +16424,86 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function homestayHostPhotoScope(scope) {
-	    return scope === 'profile' ? 'profile' : 'ob';
+	    const info = hostPhotoScopeInfo(scope);
+	    return info.key;
+	  }
+
+	  function hostPhotoScopeInfo(scope) {
+	    const raw = String(scope || '').trim();
+	    if (raw === 'res' || raw === 'share-ob') {
+	      return { service: 'sharehouse', key: 'res', prefix: 'res' };
+	    }
+	    if (raw === 'share-profile') {
+	      return { service: 'sharehouse', key: 'profile', prefix: 'share-profile' };
+	    }
+	    const key = raw === 'profile' ? 'profile' : 'ob';
+	    return { service: 'homestay', key, prefix: hostFormPrefix(key) };
+	  }
+
+	  function hostPhotoAvatarFiles(info) {
+	    return info.service === 'sharehouse' ? pendingSharehouseHostAvatarFiles : pendingHomestayHostAvatarFiles;
+	  }
+
+	  function hostPhotoAvatarPreviewUrls(info) {
+	    return info.service === 'sharehouse' ? pendingSharehouseHostAvatarPreviewUrls : pendingHomestayHostAvatarPreviewUrls;
+	  }
+
+	  function hostPhotoAvatarCrops(info) {
+	    return info.service === 'sharehouse' ? pendingSharehouseHostAvatarCrops : pendingHomestayHostAvatarCrops;
+	  }
+
+	  function hostPhotoRoomFiles(info) {
+	    return info.service === 'sharehouse' ? pendingSharehouseRoomPhotoFiles : pendingHomestayRoomPhotoFiles;
+	  }
+
+	  function hostPhotoDeleteIds(info) {
+	    return info.service === 'sharehouse' ? pendingSharehouseListingPhotoDeleteIds : pendingHomestayListingPhotoDeleteIds;
+	  }
+
+	  function hostPhotoListingPhotos(info) {
+	    return info.service === 'sharehouse' ? currentSharehouseListingPhotos : currentHomestayListingPhotos;
 	  }
 
 	  function setHomestayHostAvatarMessage(scope, message) {
-	    const prefix = hostFormPrefix(homestayHostPhotoScope(scope));
+	    const prefix = hostPhotoScopeInfo(scope).prefix;
 	    const el = document.getElementById(`${prefix}-avatar-message`);
 	    if (el) el.textContent = message || '';
 	  }
 
 	  function setHomestayRoomPhotoMessage(scope, message) {
-	    const prefix = hostFormPrefix(homestayHostPhotoScope(scope));
+	    const prefix = hostPhotoScopeInfo(scope).prefix;
 	    const el = document.getElementById(`${prefix}-room-photo-message`);
 	    if (el) el.textContent = message || '';
 	  }
 
 	  function clearPendingHomestayHostAvatar(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    pendingHomestayHostAvatarFiles[key] = null;
-	    pendingHomestayHostAvatarCrops[key] = null;
-	    if (pendingHomestayHostAvatarPreviewUrls[key]) {
-	      URL.revokeObjectURL(pendingHomestayHostAvatarPreviewUrls[key]);
-	      pendingHomestayHostAvatarPreviewUrls[key] = '';
+	    const info = hostPhotoScopeInfo(scope);
+	    const files = hostPhotoAvatarFiles(info);
+	    const crops = hostPhotoAvatarCrops(info);
+	    const urls = hostPhotoAvatarPreviewUrls(info);
+	    files[info.key] = null;
+	    crops[info.key] = null;
+	    if (urls[info.key]) {
+	      URL.revokeObjectURL(urls[info.key]);
+	      urls[info.key] = '';
 	    }
 	  }
 
 	  function renderHomestayHostAvatarPreview(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const prefix = hostFormPrefix(key);
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const prefix = info.prefix;
 	    const preview = document.getElementById(`${prefix}-avatar-preview`);
 	    const adjustBtn = document.getElementById(`${prefix}-avatar-adjust`);
-	    const pendingUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    const pendingUrl = hostPhotoAvatarPreviewUrls(info)[key];
 	    if (adjustBtn) adjustBtn.style.display = pendingUrl ? 'block' : 'none';
 	    if (pendingUrl && preview) {
 	      preview.textContent = '';
+	      preview.innerHTML = '';
 	      const img = document.createElement('img');
 	      img.src = pendingUrl;
 	      img.alt = 'Profile photo preview';
-	      img.setAttribute('style', `position:absolute;max-width:none;max-height:none;${pendingHostAvatarImageStyle(key)}`);
+	      img.setAttribute('style', `position:absolute;max-width:none;max-height:none;${pendingHostAvatarImageStyle(scope)}`);
 	      preview.style.position = 'relative';
 	      preview.appendChild(img);
 	      return;
@@ -16425,18 +16512,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function loadHomestayHostAvatarNaturalSize(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const previewUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const crops = hostPhotoAvatarCrops(info);
+	    const previewUrl = hostPhotoAvatarPreviewUrls(info)[key];
 	    if (!previewUrl) return;
 	    const image = new Image();
 	    image.onload = () => {
-	      pendingHomestayHostAvatarCrops[key] = {
-	        ...(pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()),
+	      crops[key] = {
+	        ...(crops[key] || defaultHomestayRoomPhotoCropState()),
 	        naturalWidth: image.naturalWidth || 0,
 	        naturalHeight: image.naturalHeight || 0
 	      };
-	      renderHomestayHostAvatarPreview(key);
-	      if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key) {
+	      renderHomestayHostAvatarPreview(scope);
+	      if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key && homestayRoomPhotoCropEditorState.service === info.service) {
 	        homestayRoomPhotoCropEditorState.draft.naturalWidth = image.naturalWidth || 0;
 	        homestayRoomPhotoCropEditorState.draft.naturalHeight = image.naturalHeight || 0;
 	        renderHomestayRoomPhotoCropEditorImage();
@@ -16446,64 +16535,72 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function handleHomestayHostAvatarSelection(event, scope) {
-	    const key = homestayHostPhotoScope(scope);
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
 	    const input = event?.target;
 	    const file = input?.files?.[0] || null;
-	    setHomestayHostAvatarMessage(key, '');
-	    clearPendingHomestayHostAvatar(key);
+	    const files = hostPhotoAvatarFiles(info);
+	    const crops = hostPhotoAvatarCrops(info);
+	    const urls = hostPhotoAvatarPreviewUrls(info);
+	    setHomestayHostAvatarMessage(scope, '');
+	    clearPendingHomestayHostAvatar(scope);
 
 	    if (!file) {
-	      renderHomestayHostAvatarPreview(key);
+	      renderHomestayHostAvatarPreview(scope);
 	      return;
 	    }
 	    if (!PROFILE_AVATAR_ALLOWED_TYPES.has(file.type)) {
 	      if (input) input.value = '';
-	      setHomestayHostAvatarMessage(key, profileAvatarErrorMessage('type'));
-	      renderHomestayHostAvatarPreview(key);
+	      setHomestayHostAvatarMessage(scope, profileAvatarErrorMessage('type'));
+	      renderHomestayHostAvatarPreview(scope);
 	      return;
 	    }
 	    if (file.size > PROFILE_AVATAR_MAX_SIZE) {
 	      if (input) input.value = '';
-	      setHomestayHostAvatarMessage(key, profileAvatarErrorMessage('size'));
-	      renderHomestayHostAvatarPreview(key);
+	      setHomestayHostAvatarMessage(scope, profileAvatarErrorMessage('size'));
+	      renderHomestayHostAvatarPreview(scope);
 	      return;
 	    }
 
-	    pendingHomestayHostAvatarFiles[key] = file;
-	    pendingHomestayHostAvatarCrops[key] = defaultHomestayRoomPhotoCropState();
-	    pendingHomestayHostAvatarPreviewUrls[key] = URL.createObjectURL(file);
-	    loadHomestayHostAvatarNaturalSize(key);
-	    renderHomestayHostAvatarPreview(key);
+	    files[key] = file;
+	    crops[key] = defaultHomestayRoomPhotoCropState();
+	    urls[key] = URL.createObjectURL(file);
+	    loadHomestayHostAvatarNaturalSize(scope);
+	    renderHomestayHostAvatarPreview(scope);
 	  }
 
 	  async function saveHomestayHostAvatarToSupabase(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const file = pendingHomestayHostAvatarFiles[key];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const files = hostPhotoAvatarFiles(info);
+	    const crops = hostPhotoAvatarCrops(info);
+	    const urls = hostPhotoAvatarPreviewUrls(info);
+	    const file = files[key];
 	    if (!file) return true;
 
 	    let uploadFile = file;
 	    try {
 	      const croppedBlob = await croppedHomestayPhotoBlob({
-	        previewUrl: pendingHomestayHostAvatarPreviewUrls[key],
-	        crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	        previewUrl: urls[key],
+	        crop: crops[key] || defaultHomestayRoomPhotoCropState()
 	      }, HOMESTAY_HOST_AVATAR_ASPECT_RATIO, HOMESTAY_HOST_AVATAR_OUTPUT_SIZE, HOMESTAY_HOST_AVATAR_MIN_ZOOM);
 	      uploadFile = new File([croppedBlob], `avatar-${Date.now()}.webp`, { type: 'image/webp' });
 	    } catch (error) {
-	      console.error('Supabase homestay host profile photo crop error:', error);
-	      setHomestayHostAvatarMessage(key, currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。');
+	      console.error('Supabase host profile photo crop error:', error);
+	      setHomestayHostAvatarMessage(scope, currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。');
 	      return false;
 	    }
 
-	    const publicUrl = await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(key, message));
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(scope, message));
 	    if (!publicUrl) {
-	      console.error('Supabase homestay host profile photo save error:', new Error('Profile photo upload returned no public URL'));
+	      console.error('Supabase host profile photo save error:', new Error('Profile photo upload returned no public URL'));
 	      return false;
 	    }
 
-	    clearPendingHomestayHostAvatar(key);
-	    const input = document.getElementById(`${hostFormPrefix(key)}-avatar-input`);
+	    clearPendingHomestayHostAvatar(scope);
+	    const input = document.getElementById(`${info.prefix}-avatar-input`);
 	    if (input) input.value = '';
-	    renderHomestayHostAvatarPreview(key);
+	    renderHomestayHostAvatarPreview(scope);
 	    return true;
 	  }
 
@@ -17043,11 +17140,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  window.openPublishedHomestayListingDetail = openPublishedHomestayListingDetail;
 
 	  function clearPendingHomestayRoomPhotos(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    pendingHomestayRoomPhotoFiles[key].forEach(item => {
+	    const info = hostPhotoScopeInfo(scope);
+	    const roomFiles = hostPhotoRoomFiles(info);
+	    roomFiles[info.key].forEach(item => {
 	      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
 	    });
-	    pendingHomestayRoomPhotoFiles[key] = [];
+	    roomFiles[info.key] = [];
 	  }
 
 	  function roomPhotoFileKey(file) {
@@ -17055,14 +17153,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function visibleHomestayListingPhotoCount() {
-	    return (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
-	      .filter(photo => photo?.id && !pendingHomestayListingPhotoDeleteIds.has(photo.id))
+	    const info = hostPhotoScopeInfo(arguments[0]);
+	    return (Array.isArray(hostPhotoListingPhotos(info)) ? hostPhotoListingPhotos(info) : [])
+	      .filter(photo => photo?.id && !hostPhotoDeleteIds(info).has(photo.id))
 	      .length;
 	  }
 
 	  function currentHomestayRoomPhotoCount(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    return visibleHomestayListingPhotoCount() + pendingHomestayRoomPhotoFiles[key].length;
+	    const info = hostPhotoScopeInfo(scope);
+	    return visibleHomestayListingPhotoCount(scope) + hostPhotoRoomFiles(info)[info.key].length;
 	  }
 
 	  function defaultHomestayRoomPhotoCropState() {
@@ -17111,9 +17210,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function pendingHostAvatarImageStyle(scope) {
-	    const key = homestayHostPhotoScope(scope);
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
 	    return croppedPreviewImageStyle({
-	      crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	      crop: hostPhotoAvatarCrops(info)[key] || defaultHomestayRoomPhotoCropState()
 	    }, HOMESTAY_HOST_AVATAR_ASPECT_RATIO, HOMESTAY_HOST_AVATAR_MIN_ZOOM);
 	  }
 
@@ -17133,40 +17233,42 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function handleHomestayHostRoomPhotoSelection(event, scope) {
-	    const key = homestayHostPhotoScope(scope);
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const roomFiles = hostPhotoRoomFiles(info);
 	    const input = event?.target;
 	    const files = Array.from(input?.files || []);
-	    setHomestayRoomPhotoMessage(key, '');
+	    setHomestayRoomPhotoMessage(scope, '');
 
 	    if (!files.length) {
 	      if (input) input.value = '';
-	      renderHomestayHostRoomPhotoPreview(key);
+	      renderHomestayHostRoomPhotoPreview(scope);
 	      return;
 	    }
 
 	    const invalidType = files.find(file => !PROFILE_AVATAR_ALLOWED_TYPES.has(file.type));
 	    if (invalidType) {
 	      if (input) input.value = '';
-	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('type', invalidType.name));
-	      renderHomestayHostRoomPhotoPreview(key);
+	      setHomestayRoomPhotoMessage(scope, listingPhotoErrorMessage('type', invalidType.name));
+	      renderHomestayHostRoomPhotoPreview(scope);
 	      return;
 	    }
 
 	    const tooLarge = files.find(file => file.size > LISTING_PHOTO_MAX_SIZE);
 	    if (tooLarge) {
 	      if (input) input.value = '';
-	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('size', tooLarge.name));
-	      renderHomestayHostRoomPhotoPreview(key);
+	      setHomestayRoomPhotoMessage(scope, listingPhotoErrorMessage('size', tooLarge.name));
+	      renderHomestayHostRoomPhotoPreview(scope);
 	      return;
 	    }
 
-	    const existingPendingKeys = new Set(pendingHomestayRoomPhotoFiles[key].map(item => roomPhotoFileKey(item.file)));
+	    const existingPendingKeys = new Set(roomFiles[key].map(item => roomPhotoFileKey(item.file)));
 	    const uniqueFiles = files.filter(file => !existingPendingKeys.has(roomPhotoFileKey(file)));
-	    const nextCount = visibleHomestayListingPhotoCount() + pendingHomestayRoomPhotoFiles[key].length + uniqueFiles.length;
-	    if (nextCount > HOMESTAY_ROOM_PHOTO_MAX_COUNT) {
+	    const nextCount = visibleHomestayListingPhotoCount(scope) + roomFiles[key].length + uniqueFiles.length;
+	    if (info.service === 'homestay' && nextCount > HOMESTAY_ROOM_PHOTO_MAX_COUNT) {
 	      if (input) input.value = '';
-	      setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('count'));
-	      renderHomestayHostRoomPhotoPreview(key);
+	      setHomestayRoomPhotoMessage(scope, listingPhotoErrorMessage('count'));
+	      renderHomestayHostRoomPhotoPreview(scope);
 	      return;
 	    }
 
@@ -17174,56 +17276,64 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      file,
 	      previewUrl: URL.createObjectURL(file),
 	      crop: defaultHomestayRoomPhotoCropState(),
-	      scope: key
+	      scope
 	    }));
-	    pendingHomestayRoomPhotoFiles[key].push(...newItems);
+	    roomFiles[key].push(...newItems);
 	    newItems.forEach(loadHomestayRoomPhotoNaturalSize);
 	    if (input) input.value = '';
-	    renderHomestayHostRoomPhotoPreview(key);
+	    renderHomestayHostRoomPhotoPreview(scope);
 	  }
 
 	  function removePendingHomestayRoomPhoto(scope, index) {
-	    const key = homestayHostPhotoScope(scope);
-	    const item = pendingHomestayRoomPhotoFiles[key][index];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const roomFiles = hostPhotoRoomFiles(info);
+	    const item = roomFiles[key][index];
 	    if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
-	    pendingHomestayRoomPhotoFiles[key].splice(index, 1);
-	    const input = document.getElementById(`${hostFormPrefix(key)}-room-photo-input`);
-	    if (input && pendingHomestayRoomPhotoFiles[key].length === 0) input.value = '';
-	    renderHomestayHostRoomPhotoPreview(key);
+	    roomFiles[key].splice(index, 1);
+	    const input = document.getElementById(`${info.prefix}-room-photo-input`);
+	    if (input && roomFiles[key].length === 0) input.value = '';
+	    renderHomestayHostRoomPhotoPreview(scope);
 	  }
 
 	  function markHomestayListingPhotoForDelete(photoId, scope = 'profile') {
 	    if (!photoId) return;
-	    pendingHomestayListingPhotoDeleteIds.add(photoId);
+	    const info = hostPhotoScopeInfo(scope);
+	    hostPhotoDeleteIds(info).add(photoId);
 	    renderHomestayHostRoomPhotoPreview(scope);
 	  }
 
 	  function renderHomestayHostRoomPhotoPreview(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const prefix = hostFormPrefix(key);
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const prefix = info.prefix;
+	    const roomFiles = hostPhotoRoomFiles(info);
+	    const deleteIds = hostPhotoDeleteIds(info);
 	    const container = document.getElementById(`${prefix}-room-photo-preview`);
 	    if (!container) return;
-	    const existingPhotos = (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
-	      .filter(photo => photo?.id && !pendingHomestayListingPhotoDeleteIds.has(photo.id));
+	    const existingPhotos = (Array.isArray(hostPhotoListingPhotos(info)) ? hostPhotoListingPhotos(info) : [])
+	      .filter(photo => photo?.id && !deleteIds.has(photo.id));
 	    const countEl = document.getElementById(`${prefix}-room-photo-count`);
-	    if (countEl) countEl.textContent = `${existingPhotos.length + pendingHomestayRoomPhotoFiles[key].length} / ${HOMESTAY_ROOM_PHOTO_MAX_COUNT}枚`;
+	    if (countEl) countEl.textContent = info.service === 'homestay'
+	      ? `${existingPhotos.length + roomFiles[key].length} / ${HOMESTAY_ROOM_PHOTO_MAX_COUNT}枚`
+	      : `${existingPhotos.length + roomFiles[key].length}枚`;
 	    const existingHtml = existingPhotos.map(photo => {
 	      const url = homestayListingPhotoPublicUrl(photo.storage_path);
 	      if (!url) return '';
 	      return `
 	        <div style="position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
 	          <img src="${escapeHtml(url)}" alt="Room photo" style="width:100%;height:100%;object-fit:cover;display:block;">
-	          <button type="button" onclick="markHomestayListingPhotoForDelete('${escapeHtml(photo.id)}','${key}')" aria-label="写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	          <button type="button" onclick="markHomestayListingPhotoForDelete('${escapeHtml(photo.id)}','${scope}')" aria-label="写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
 	        </div>
 	      `;
 	    }).join('');
-	    const pendingHtml = pendingHomestayRoomPhotoFiles[key].map((item, index) => `
+	    const pendingHtml = roomFiles[key].map((item, index) => `
 	      <div style="display:flex;flex-direction:column;gap:6px;">
 	        <div style="position:relative;aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--border);">
 	          <img src="${escapeHtml(item.previewUrl)}" alt="New room photo" style="position:absolute;max-width:none;max-height:none;${pendingRoomPhotoImageStyle(item)}">
-	          <button type="button" onclick="removePendingHomestayRoomPhoto('${key}',${index})" aria-label="選択写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
+	          <button type="button" onclick="removePendingHomestayRoomPhoto('${scope}',${index})" aria-label="選択写真を削除" style="position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:none;background:rgba(0,0,0,.55);color:white;font-size:16px;line-height:1;cursor:pointer;">×</button>
 	        </div>
-	        <button type="button" onclick="openHomestayRoomPhotoCropEditor('${key}',${index})" style="width:100%;border:1px solid var(--border);background:white;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
+	        <button type="button" onclick="openHomestayRoomPhotoCropEditor('${scope}',${index})" style="width:100%;border:1px solid var(--border);background:white;border-radius:9px;padding:7px 6px;font-size:11px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
 	      </div>
 	    `).join('');
 	    container.innerHTML = existingHtml + pendingHtml;
@@ -17237,12 +17347,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function openHomestayRoomPhotoCropEditor(scope, index) {
-	    const key = homestayHostPhotoScope(scope);
-	    const item = pendingHomestayRoomPhotoFiles[key][index];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const item = hostPhotoRoomFiles(info)[key][index];
 	    if (!item) return;
 	    homestayRoomPhotoCropEditorState = {
 	      kind: 'room',
+	      service: info.service,
 	      scope: key,
+	      sourceScope: scope,
 	      index,
 	      item,
 	      draft: cloneHomestayRoomPhotoCrop(item.crop),
@@ -17289,18 +17402,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function openHomestayHostAvatarCropEditor(scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const previewUrl = pendingHomestayHostAvatarPreviewUrls[key];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const crops = hostPhotoAvatarCrops(info);
+	    const previewUrl = hostPhotoAvatarPreviewUrls(info)[key];
 	    if (!previewUrl) return;
 	    homestayRoomPhotoCropEditorState = {
 	      kind: 'avatar',
+	      service: info.service,
 	      scope: key,
+	      sourceScope: scope,
 	      index: null,
 	      item: {
 	        previewUrl,
-	        crop: pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()
+	        crop: crops[key] || defaultHomestayRoomPhotoCropState()
 	      },
-	      draft: cloneHomestayRoomPhotoCrop(pendingHomestayHostAvatarCrops[key]),
+	      draft: cloneHomestayRoomPhotoCrop(crops[key]),
 	      pointerId: null,
 	      startX: 0,
 	      startY: 0,
@@ -17316,15 +17433,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (subtitle) subtitle.textContent = '丸いプロフィール画像として見える範囲を調整できます';
 	    if (image) {
 	      image.onload = () => {
-	        pendingHomestayHostAvatarCrops[key] = {
-	          ...(pendingHomestayHostAvatarCrops[key] || defaultHomestayRoomPhotoCropState()),
-	          naturalWidth: image.naturalWidth || pendingHomestayHostAvatarCrops[key]?.naturalWidth || 0,
-	          naturalHeight: image.naturalHeight || pendingHomestayHostAvatarCrops[key]?.naturalHeight || 0
+	        crops[key] = {
+	          ...(crops[key] || defaultHomestayRoomPhotoCropState()),
+	          naturalWidth: image.naturalWidth || crops[key]?.naturalWidth || 0,
+	          naturalHeight: image.naturalHeight || crops[key]?.naturalHeight || 0
 	        };
-	        if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key) {
-	          homestayRoomPhotoCropEditorState.draft.naturalWidth = pendingHomestayHostAvatarCrops[key].naturalWidth;
-	          homestayRoomPhotoCropEditorState.draft.naturalHeight = pendingHomestayHostAvatarCrops[key].naturalHeight;
-	          homestayRoomPhotoCropEditorState.item.crop = pendingHomestayHostAvatarCrops[key];
+	        if (homestayRoomPhotoCropEditorState?.kind === 'avatar' && homestayRoomPhotoCropEditorState.scope === key && homestayRoomPhotoCropEditorState.service === info.service) {
+	          homestayRoomPhotoCropEditorState.draft.naturalWidth = crops[key].naturalWidth;
+	          homestayRoomPhotoCropEditorState.draft.naturalHeight = crops[key].naturalHeight;
+	          homestayRoomPhotoCropEditorState.item.crop = crops[key];
 	          renderHomestayRoomPhotoCropEditorImage();
 	        }
 	      };
@@ -17457,11 +17574,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      adjusted: true
 	    };
 	    if (state.kind === 'avatar') {
-	      pendingHomestayHostAvatarCrops[state.scope] = nextCrop;
+	      const info = { service: state.service || 'homestay', key: state.scope };
+	      hostPhotoAvatarCrops(info)[state.scope] = nextCrop;
 	    } else {
 	      state.item.crop = nextCrop;
 	    }
-	    const scope = state.scope;
+	    const scope = state.sourceScope || state.scope;
 	    closeHomestayRoomPhotoCropModal();
 	    if (state.kind === 'avatar') renderHomestayHostAvatarPreview(scope);
 	    else renderHomestayHostRoomPhotoPreview(scope);
@@ -17570,24 +17688,28 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  async function syncHomestayListingPhotosToSupabase(userId, listingId, scope) {
-	    const key = homestayHostPhotoScope(scope);
-	    const pendingPhotos = pendingHomestayRoomPhotoFiles[key];
+	    const info = hostPhotoScopeInfo(scope);
+	    const key = info.key;
+	    const pendingPhotos = hostPhotoRoomFiles(info)[key];
+	    const deleteIds = hostPhotoDeleteIds(info);
 	    if (!userId || !listingId || !window._supabase?.from || !window._supabase?.storage) {
-	      if (pendingPhotos.length || pendingHomestayListingPhotoDeleteIds.size) {
-	        setHomestayRoomPhotoMessage(key, listingPhotoErrorMessage('user'));
+	      if (pendingPhotos.length || deleteIds.size) {
+	        setHomestayRoomPhotoMessage(scope, listingPhotoErrorMessage('user'));
 	        return false;
 	      }
 	      return true;
 	    }
 
-	    if (currentHomestayListing?.id === listingId && currentHomestayListing?.owner_id && currentHomestayListing.owner_id !== userId) {
+	    const activeListing = info.service === 'sharehouse' ? currentSharehouseListing : currentHomestayListing;
+	    if (activeListing?.id === listingId && activeListing?.owner_id && activeListing.owner_id !== userId) {
 	      console.error('Supabase listing photo sync error:', new Error('Current listing does not belong to the logged-in user'));
 	      return false;
 	    }
 
-	    const photosForListing = (Array.isArray(currentHomestayListingPhotos) ? currentHomestayListingPhotos : [])
+	    const listingPhotos = hostPhotoListingPhotos(info);
+	    const photosForListing = (Array.isArray(listingPhotos) ? listingPhotos : [])
 	      .filter(photo => photo?.listing_id === listingId);
-	    const deletePhotos = photosForListing.filter(photo => pendingHomestayListingPhotoDeleteIds.has(photo.id));
+	    const deletePhotos = photosForListing.filter(photo => deleteIds.has(photo.id));
 
 	    if (!pendingPhotos.length && !deletePhotos.length) return true;
 
@@ -17607,7 +17729,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        }
 	      }
 
-	      const remainingCount = photosForListing.filter(photo => !pendingHomestayListingPhotoDeleteIds.has(photo.id)).length;
+	      const remainingCount = photosForListing.filter(photo => !deleteIds.has(photo.id)).length;
 	      for (const [index, item] of pendingPhotos.entries()) {
 	        const croppedBlob = await croppedHomestayRoomPhotoBlob(item);
 	        const uploadFile = new File([croppedBlob], `room-${Date.now()}-${index}.webp`, { type: 'image/webp' });
@@ -17621,15 +17743,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }
 
 	      await normalizeHomestayListingPhotoOrder(listingId);
-	      pendingHomestayListingPhotoDeleteIds.clear();
-	      clearPendingHomestayRoomPhotos(key);
-	      const input = document.getElementById(`${hostFormPrefix(key)}-room-photo-input`);
+	      deleteIds.clear();
+	      clearPendingHomestayRoomPhotos(scope);
+	      const input = document.getElementById(`${info.prefix}-room-photo-input`);
 	      if (input) input.value = '';
-	      setHomestayRoomPhotoMessage(key, '');
+	      setHomestayRoomPhotoMessage(scope, '');
 	      return true;
 	    } catch (error) {
 	      console.error('Supabase listing photo sync error:', error);
-	      setHomestayRoomPhotoMessage(key, currentLang === 'en' ? 'Could not save room photos. Please try again.' : '部屋写真を保存できませんでした。もう一度お試しください。');
+	      setHomestayRoomPhotoMessage(scope, currentLang === 'en' ? 'Could not save room photos. Please try again.' : '部屋写真を保存できませんでした。もう一度お試しください。');
 	      return false;
 	    }
 	  }
@@ -18480,6 +18602,52 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
 	    if (typeof refreshHostDashboardFavoriteCount === 'function') refreshHostDashboardFavoriteCount();
 	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
+	  }
+
+	  function updateHostDashboardFromCurrentSharehouseData() {
+	    const listing = currentSharehouseListing;
+	    if (!listing?.id) {
+	      if (typeof setHostDashboardListingNeutral === 'function') setHostDashboardListingNeutral();
+	      updateSharehouseManagerProfileCard();
+	      return;
+	    }
+	    const dbStatus = listing.status || '';
+	    const statusLabel = document.getElementById('host-listing-status-label');
+	    const statusNote = document.getElementById('host-listing-status-note');
+	    const statusDot = document.getElementById('host-listing-status-dot');
+	    const pauseBtn = document.getElementById('host-listing-pause-btn');
+	    const pill = document.getElementById('host-listing-pill');
+	    const cityEl = document.getElementById('host-dashboard-city');
+	    const priceEl = document.getElementById('host-dashboard-price');
+	    const availabilityEl = document.getElementById('host-dashboard-availability');
+	    const statusText = dbStatus === 'published' ? '公開中' : dbStatus === 'draft' ? '下書き' : dbStatus === 'paused' ? '一時停止中' : '未設定';
+	    const noteText = dbStatus === 'published'
+	      ? 'ゲストに公開できる掲載として保存されています。'
+	      : dbStatus === 'draft'
+	        ? '掲載は下書きとして保存されています。'
+	        : dbStatus === 'paused'
+	          ? '掲載は一時停止中です。'
+	          : '掲載状況が未設定です。';
+	    if (statusLabel) statusLabel.textContent = localizeText(statusText);
+	    if (statusNote) statusNote.textContent = localizeText(noteText);
+	    if (statusDot) statusDot.style.background = dbStatus === 'published' ? '#00A699' : dbStatus === 'paused' ? '#B26A00' : dbStatus === 'draft' ? '#6B7280' : '#CBD5E1';
+	    if (pill) {
+	      pill.textContent = localizeText(statusText);
+	      pill.style.background = dbStatus === 'published' ? '#F0FFF8' : dbStatus === 'paused' ? '#FFF8E6' : '#F3F4F6';
+	      pill.style.color = dbStatus === 'published' ? '#00875A' : dbStatus === 'paused' ? '#B26A00' : '#4B5563';
+	      pill.style.borderColor = dbStatus === 'published' ? '#B2EFE4' : dbStatus === 'paused' ? '#FFE1A6' : '#E5E7EB';
+	    }
+	    if (pauseBtn) {
+	      pauseBtn.disabled = true;
+	      pauseBtn.style.opacity = '.55';
+	      pauseBtn.textContent = localizeText('掲載を一時停止');
+	    }
+	    if (cityEl) cityEl.textContent = listing.city || '—';
+	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
+	    if (availabilityEl) availabilityEl.textContent = hostDashboardAvailabilityText(listing);
+	    updateSharehouseManagerProfileCard();
+	    if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
+	    if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
 	  }
 
 	  function setSelectValueById(id, value) {
@@ -19557,6 +19725,46 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return `<input class="form-input" id="${id}" type="${type}" value="${escapeHtml(value)}" placeholder="${escapeHtml(localizeText(placeholder))}" />`;
 	  }
 
+	  function shHostBirthDateAgeHtml(prefix, profile = {}) {
+	    const birthDate = profile.basic?.birthDate || '';
+	    const age = birthDate ? calculateAgeFromBirthDate(birthDate) : (profile.basic?.age ?? '');
+	    return `
+	      <div class="form-range-row">
+	        <input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" />
+	        <input class="form-input" id="${prefix}-age" type="number" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('年齢'))}" readonly />
+	      </div>
+	    `;
+	  }
+
+	  function shHostAvatarUploadBoxHtml(prefix) {
+	    const scope = prefix === 'share-profile' ? 'share-profile' : 'res';
+	    return `
+	      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	        <span id="${prefix}-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
+	        <span style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText('顔写真をアップロード')}</span>
+	        <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+	        <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="display:none;" />
+	      </label>
+	      <button id="${prefix}-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('${scope}')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
+	      <div id="${prefix}-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	    `;
+	  }
+
+	  function shHostRoomPhotoUploadBoxHtml(prefix) {
+	    const scope = prefix === 'share-profile' ? 'share-profile' : 'res';
+	    return `
+	      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	        <span style="font-size:28px;">📷</span>
+	        <span style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText('部屋写真をアップロード')}</span>
+	        <span style="font-size:12px;color:var(--light);">${localizeText('部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ')}</span>
+	        <input id="${prefix}-room-photo-input" type="file" accept="image/jpeg,image/png,image/webp" multiple onchange="handleHomestayHostRoomPhotoSelection(event,'${scope}')" style="display:none;" />
+	      </label>
+	      <div id="${prefix}-room-photo-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
+	      <div id="${prefix}-room-photo-count" style="font-size:12px;color:var(--light);font-weight:800;margin-top:6px;">0枚</div>
+	      <div id="${prefix}-room-photo-preview" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:10px;"></div>
+	    `;
+	  }
+
 	  function shHostUpload(label, note, multiple = false) {
 	    return `<label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
 	      <span style="font-size:32px;">${multiple ? '🖼️' : '👤'}</span>
@@ -19577,9 +19785,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function sharehouseHostPageOneHtml(prefix, profile = sharehouseHostDefaults()) {
 	    return [
 	      shHostSection('基本情報', [
-	        shHostField('プロフィール写真', shHostUpload('顔写真をアップロード', '画像保存は行わないデモUIです')),
+	        shHostField('プロフィール写真', shHostAvatarUploadBoxHtml(prefix)),
 	        shHostField('名前', shHostTextInput(`${prefix}-name`, profile.basic.name, '名前')),
-	        shHostField('年齢', shHostTextInput(`${prefix}-age`, profile.basic.age, '年齢', 'number')),
+	        shHostField('生年月日 / 年齢', shHostBirthDateAgeHtml(prefix, profile)),
 	        shHostField('国籍', shHostTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')),
 	        shHostField('性別', shHostChipRow(prefix, 'gender', SH_HOST_GENDER_OPTIONS, profile.basic.gender)),
 	        shHostField('宗教', `${sensitiveInfoNoteHtml()}${shHostChipRow(prefix, 'religion', SH_HOST_RELIGION_OPTIONS, profile.basic.religion)}`),
@@ -19630,7 +19838,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        shHostField('最長滞在期間', `<div style="display:flex;align-items:center;gap:8px;">${shHostTextInput(`${prefix}-max-stay`, profile.stay.maxStay, '12', 'number')}<span style="font-size:13px;font-weight:800;color:var(--light);">${localizeText('ヶ月')}</span></div>`),
 	        shHostField('長期滞在', shHostChipRow(prefix, 'long-stay', ['可能','不可'], profile.stay.longStay)),
 	        shHostField('月額料金 CAD', shHostTextInput(`${prefix}-monthly-rent`, profile.stay.monthlyRent, '1200', 'number')),
-	        shHostField('部屋の写真', shHostUpload('部屋写真をアップロード', '部屋全体・ベッド周り・収納・共有スペース・キッチン・バス/トイレ', true)),
+	        shHostField('部屋の写真', shHostRoomPhotoUploadBoxHtml(prefix)),
 	        shHostField('部屋タイプ', shHostChipRow(prefix, 'room-type', ['個室','相部屋'], profile.stay.roomType)),
 	        shHostField('家具', shHostChipRow(prefix, 'furniture', ['家具付き','家具なし'], profile.stay.furniture)),
 	        shHostField('階', shHostChipRow(prefix, 'floor', ['ベースメント','1階','2階','3階以上'], profile.stay.floor)),
@@ -19719,6 +19927,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ${sharehouseHostPageTwoHtml('share-profile', sharehouseHostDefaults())}
 	    `;
 	    resRenderRoommateList();
+	    renderHomestayHostAvatarPreview('share-profile');
+	    renderHomestayHostRoomPhotoPreview('share-profile');
 	  }
 
 	  function shHostValueMap(value, map, fallback = value) {
@@ -20272,10 +20482,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const position = selectedChipText(prefix + '-position', defaults.basic.position);
 	    const positionOther = formValue(prefix + '-position-other', '');
 	    const membersCount = Math.max(1, resRoommates.length + 1);
+	    const birthDate = formValue(prefix + '-birth-date', '');
+	    const computedAge = birthDate && !isFutureDateInputValue(birthDate)
+	      ? calculateAgeFromBirthDate(birthDate)
+	      : nullableInteger(document.getElementById(prefix + '-age')?.value);
 	    return {
 	      basic: {
 	        name: formValue(prefix + '-name', defaults.basic.name),
-	        age: formValue(prefix + '-age', defaults.basic.age),
+	        birthDate,
+	        age: computedAge === null || computedAge === undefined ? '' : String(computedAge),
 	        nationality: formValue(prefix + '-nationality', defaults.basic.nationality),
 	        gender: selectedChipText(prefix + '-gender', defaults.basic.gender),
 	        religion: selectedChipText(prefix + '-religion', defaults.basic.religion),
@@ -20350,6 +20565,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const currentStatus = toSharehouseHostProfileDbValue('current_status', profile.basic.position);
 	    return omitUndefinedFields({
 	      user_id: userId,
+	      birth_date: nullableText(profile.basic.birthDate),
 	      age: sharehouseHostFormInteger(profile.basic.age),
 	      nationality: nullableText(profile.basic.nationality),
 	      gender: toSharehouseHostProfileDbValue('gender', profile.basic.gender),
@@ -20594,6 +20810,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details.' : '住所情報を保存できませんでした。' };
 	    }
 
+	    const savedAvatar = await saveHomestayHostAvatarToSupabase(scope === 'profile' ? 'share-profile' : 'res');
+	    if (!savedAvatar) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your profile photo.' : 'プロフィール写真を保存できませんでした。' };
+	    }
+
+	    const savedRoomPhotos = await syncHomestayListingPhotosToSupabase(userId, listingId, scope === 'profile' ? 'share-profile' : 'res');
+	    if (!savedRoomPhotos) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save room photos.' : '部屋写真を保存できませんでした。' };
+	    }
+
 	    const savedMode = await saveSharehouseHostUserModeToSupabase();
 	    if (!savedMode) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode.' : 'ホスト登録状態を保存できませんでした。' };
@@ -20713,6 +20939,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return {
 	      basic: {
 	        name: displayName,
+	        birthDate: hostProfile.birth_date || '',
 	        age: hostProfile.age ?? '',
 	        nationality: hostProfile.nationality || '',
 	        gender: fromSharehouseHostProfileDbValue('gender', hostProfile.gender),
@@ -20807,6 +21034,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        : `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分`)
 	      : '';
 	    match.roomType = [profile.stay.roomType, profile.stay.furniture, (profile.stay.amenities || []).slice(0, 3).join('・')].filter(Boolean).join(' · ');
+	    const photoUrls = (Array.isArray(currentSharehouseListingPhotos) ? currentSharehouseListingPhotos : [])
+	      .filter(photo => photo?.storage_path)
+	      .sort((a, b) => {
+	        if (!!a.is_cover !== !!b.is_cover) return a.is_cover ? -1 : 1;
+	        return Number(a.sort_order || 0) - Number(b.sort_order || 0);
+	      })
+	      .map((photo, index) => ({
+	        label: index === 0 ? '部屋全体' : `写真${index + 1}`,
+	        src: homestayListingPhotoPublicUrl(photo.storage_path)
+	      }))
+	      .filter(photo => photo.src);
+	    if (photoUrls.length) match.roomPhotos = photoUrls;
 	    match.lifestyleCards = {
 	      wake: profile.lifestyle.wakeTime || '',
 	      sleep: profile.lifestyle.bedtime || '',
@@ -20827,7 +21066,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (currentScreen !== 'host-profile' || serviceModeForCurrentContext() !== 'sharehouse') return;
 	    const profile = sharehouseCurrentHostUiProfile();
 	    if (!profile) return;
+	    renderHomestayHostAvatarPreview('share-profile');
+	    renderHomestayHostRoomPhotoPreview('share-profile');
 	    setInputValueById('share-profile-name', profile.basic.name);
+	    setInputValueById('share-profile-birth-date', profile.basic.birthDate);
 	    setInputValueById('share-profile-age', profile.basic.age);
 	    setInputValueById('share-profile-nationality', profile.basic.nationality);
 	    setSingleFormChip('share-profile-gender', profile.basic.gender);
@@ -20891,6 +21133,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!userId || !window._supabase?.from || serviceModeForCurrentContext() !== 'sharehouse') return false;
 	    if (!force && currentSharehouseHostDataLoaded) {
 	      syncSharehouseHostDataToDemoObjects();
+	      updateHostDashboardFromCurrentSharehouseData();
 	      applyCurrentSharehouseHostDataToHostProfileScreen();
 	      return true;
 	    }
@@ -20899,6 +21142,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    let listing = null;
 	    let details = null;
 	    let privateDetails = null;
+	    currentSharehouseListingPhotos = [];
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('profiles')
@@ -20913,7 +21157,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('sharehouse_host_profiles')
-	        .select('user_id, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti')
+	        .select('user_id, birth_date, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti')
 	        .eq('user_id', userId)
 	        .maybeSingle();
 	      if (error) throw error;
@@ -20964,6 +21208,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        console.error('Supabase sharehouse private details load error:', error);
 	        privateDetails = null;
 	      }
+	      try {
+	        const { data, error } = await window._supabase
+	          .from('listing_photos')
+	          .select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at')
+	          .eq('listing_id', listing.id)
+	          .order('sort_order', { ascending: true })
+	          .order('created_at', { ascending: true });
+	        if (error) throw error;
+	        currentSharehouseListingPhotos = Array.isArray(data) ? data : [];
+	      } catch (error) {
+	        console.error('Supabase sharehouse listing photos load error:', error);
+	        currentSharehouseListingPhotos = [];
+	      }
 	    }
 	    if (!hostProfile || !listing) {
 	      currentSharehouseHostDataLoaded = false;
@@ -20981,7 +21238,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentSharehouseListing = currentSharehouseListing;
 	    window._currentSharehouseListingDetails = currentSharehouseListingDetails;
 	    window._currentSharehouseListingPrivateDetails = currentSharehouseListingPrivateDetails;
+	    window._currentSharehouseListingPhotos = currentSharehouseListingPhotos;
 	    syncSharehouseHostDataToDemoObjects();
+	    updateHostDashboardFromCurrentSharehouseData();
 	    applyCurrentSharehouseHostDataToHostProfileScreen();
 	    return true;
 	  }
@@ -25018,6 +25277,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentSharehouseListing = null;
     currentSharehouseListingDetails = null;
     currentSharehouseListingPrivateDetails = null;
+    currentSharehouseListingPhotos = [];
     currentSharehouseHostLoadedFullAddress = '';
     currentSharehouseHostDataLoaded = false;
     currentMessageNotificationsEnabled = true;
@@ -25038,6 +25298,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._currentSharehouseListing = null;
     window._currentSharehouseListingDetails = null;
     window._currentSharehouseListingPrivateDetails = null;
+    window._currentSharehouseListingPhotos = [];
     if (typeof resetSupabaseChatState === 'function') resetSupabaseChatState();
     currentSupabaseGuestConversationRows = [];
     currentSupabaseHostConversationRows = [];
@@ -25756,6 +26017,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('res-next-btn').textContent = resStep === resTotal
       ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
       : (currentLang === 'en' ? 'Next →' : '次へ →');
+    if (resStep === 1) renderHomestayHostAvatarPreview('res');
+    if (resStep === 2) renderHomestayHostRoomPhotoPreview('res');
   }
 
   async function resOnboardNext() {
