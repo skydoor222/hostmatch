@@ -7688,6 +7688,7 @@
       updateHostDashboardListing();
     }
     refreshHomestayHostDataForScreen(to);
+    refreshSharehouseHostDataForScreen(to);
     // ホスト用ナビのアクティブ同期
     document.querySelectorAll('#host-bottom-nav .bnav-item').forEach(el => el.classList.remove('active'));
     const hostNavMap = {'host-dashboard':'hbnav-dashboard','host-messages':'hbnav-host-messages','host-profile':'hbnav-host-listing','host-settings':'hbnav-host-settings'};
@@ -13716,6 +13717,291 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  };
 
+	  const SHAREHOUSE_HOST_PROFILE_DB_VALUE_MAPS = {
+	    gender: {
+	      '女性': 'female',
+	      'Female': 'female',
+	      '男性': 'male',
+	      'Male': 'male',
+	      '選択しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
+	    },
+	    religion: {
+	      '仏教': 'buddhist',
+	      'Buddhism': 'buddhist',
+	      'キリスト教': 'christian',
+	      'Christianity': 'christian',
+	      'イスラム教': 'muslim',
+	      'Islam': 'muslim',
+	      'ヒンドゥー教': 'hindu',
+	      'Hinduism': 'hindu',
+	      'ユダヤ教': 'jewish',
+	      'Judaism': 'jewish',
+	      '無宗教': 'none',
+	      'No religion': 'none',
+	      'その他': 'other',
+	      'Other': 'other',
+	      '回答しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
+	    },
+	    english_level: {
+	      '初心者': 'beginner',
+	      'Beginner': 'beginner',
+	      '日常会話': 'daily_conversation',
+	      'Daily conversation': 'daily_conversation',
+	      'ビジネスレベル': 'business',
+	      'Business level': 'business',
+	      'ネイティブレベル': 'native',
+	      'Native level': 'native',
+	      '回答しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
+	    },
+	    current_status: {
+	      '学生': 'student',
+	      'Student': 'student',
+	      'ワーホリ': 'working_holiday',
+	      'Working holiday': 'working_holiday',
+	      '会社員': 'employee',
+	      'Employee': 'employee',
+	      'フリーランス': 'freelance',
+	      'Freelance': 'freelance',
+	      'その他': 'other',
+	      'Other': 'other'
+	    },
+	    smoking_habit: {
+	      '吸わない': 'non_smoker',
+	      'Non-smoker': 'non_smoker',
+	      '屋外で吸う': 'outdoor_smoker',
+	      'Outdoor smoker': 'outdoor_smoker',
+	      '室内でも吸う': 'indoor_smoker',
+	      'Indoor smoker': 'indoor_smoker'
+	    },
+	    drinking_habit: {
+	      'よく飲む': 'often',
+	      'Often': 'often',
+	      'たまに飲む': 'sometimes',
+	      'Sometimes': 'sometimes',
+	      '飲まない': 'none',
+	      'ほとんど飲まない': 'none',
+	      'None': 'none'
+	    },
+	    wake_time: {
+	      '6時以前': 'before_6',
+	      'Before 6 AM': 'before_6',
+	      '6〜7時': '6_to_7',
+	      '6-7 AM': '6_to_7',
+	      '7〜8時': '7_to_8',
+	      '7-8 AM': '7_to_8',
+	      '8〜9時': '8_to_9',
+	      '8-9 AM': '8_to_9',
+	      '9時以降': 'after_9',
+	      'After 9 AM': 'after_9'
+	    },
+	    bedtime: {
+	      '22時以前': 'before_22',
+	      'Before 10 PM': 'before_22',
+	      '22〜23時': '22_to_23',
+	      '10-11 PM': '22_to_23',
+	      '23〜24時': '23_to_24',
+	      '11 PM-midnight': '23_to_24',
+	      '0〜1時': '0_to_1',
+	      'Midnight-1 AM': '0_to_1',
+	      '1時以降': 'after_1',
+	      'After 1 AM': 'after_1'
+	    },
+	    home_presence: {
+	      '日中も家にいることが多い': 'daytime_often_home',
+	      'Often home during the day': 'daytime_often_home',
+	      '学校・仕事で日中はいないことが多い': 'daytime_often_away',
+	      'Usually away during the day': 'daytime_often_away',
+	      '夜を中心に家にいる': 'mostly_evenings',
+	      'Mostly evenings': 'mostly_evenings',
+	      '日によって異なる': 'varies',
+	      'Varies by day': 'varies'
+	    },
+	    cooking_frequency: {
+	      'ほぼ毎日': 'almost_daily',
+	      'Almost daily': 'almost_daily',
+	      '週に数回': 'few_times_week',
+	      'A few times a week': 'few_times_week',
+	      'たまに': 'sometimes',
+	      'Sometimes': 'sometimes',
+	      'ほとんどしない': 'rarely',
+	      'Rarely': 'rarely'
+	    },
+	    mbti: {
+	      'INTJ': 'INTJ',
+	      'INTP': 'INTP',
+	      'ENTJ': 'ENTJ',
+	      'ENTP': 'ENTP',
+	      'INFJ': 'INFJ',
+	      'INFP': 'INFP',
+	      'ENFJ': 'ENFJ',
+	      'ENFP': 'ENFP',
+	      'ISTJ': 'ISTJ',
+	      'ISFJ': 'ISFJ',
+	      'ESTJ': 'ESTJ',
+	      'ESFJ': 'ESFJ',
+	      'ISTP': 'ISTP',
+	      'ISFP': 'ISFP',
+	      'ESTP': 'ESTP',
+	      'ESFP': 'ESFP',
+	      'わからない / 未診断': 'unknown',
+	      'Unknown / not tested': 'unknown',
+	      '回答しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
+	    }
+	  };
+
+	  const SHAREHOUSE_LISTING_DETAIL_DB_VALUE_MAPS = {
+	    room_type: {
+	      '個室': 'private',
+	      'Private room': 'private',
+	      '相部屋': 'shared',
+	      'Shared room': 'shared'
+	    },
+	    floor_type: {
+	      'ベースメント': 'basement',
+	      'Basement': 'basement',
+	      '1階': 'first_floor',
+	      '1st floor': 'first_floor',
+	      '2階': 'second_floor',
+	      '2nd floor': 'second_floor',
+	      '3階以上': 'third_floor_or_above',
+	      '3rd floor or above': 'third_floor_or_above'
+	    },
+	    bathroom_type: {
+	      '専用': 'private',
+	      'Private': 'private',
+	      '他の入居者と共有': 'shared_with_residents',
+	      'Shared with other residents': 'shared_with_residents',
+	      'オーナー / ホストと共有': 'shared_with_owner',
+	      'Shared with owner / host': 'shared_with_owner'
+	    },
+	    resident_count_group: {
+	      '1人': 'one',
+	      '1 resident': 'one',
+	      '2〜3人': 'two_to_three',
+	      '2-3 residents': 'two_to_three',
+	      '4人以上': 'four_plus',
+	      '4+ residents': 'four_plus'
+	    },
+	    kitchen_rule: {
+	      '自由に利用可能': 'free_access',
+	      'Free access': 'free_access',
+	      '共用': 'shared',
+	      'Shared': 'shared',
+	      '利用時間のルールあり': 'hours_rules',
+	      'Hours rules': 'hours_rules',
+	      '利用制限あり': 'restricted',
+	      'Restricted': 'restricted'
+	    },
+	    interaction_level: {
+	      '基本それぞれで過ごす': 'mostly_separate',
+	      'Mostly separate': 'mostly_separate',
+	      '会った時に少し話すくらい': 'small_talk',
+	      'Small talk when we meet': 'small_talk',
+	      '時々一緒に食事や会話をする': 'meals_and_conversation',
+	      'Sometimes meals and conversation': 'meals_and_conversation',
+	      '休日などに一緒に出かけることもある': 'outings_together',
+	      'Sometimes go out together': 'outings_together',
+	      '友達のように交流する': 'friends_like',
+	      'Friends-like': 'friends_like'
+	    },
+	    cleanliness_level: {
+	      'あまり気にしない': 'dont_mind',
+	      "Don't mind much": 'dont_mind',
+	      '最低限綺麗にしている': 'minimum_clean',
+	      'Minimum clean': 'minimum_clean',
+	      'ある程度綺麗にしている': 'fairly_clean',
+	      'Fairly clean': 'fairly_clean',
+	      '常に綺麗に保っている': 'very_clean',
+	      'Very clean': 'very_clean'
+	    },
+	    cleaning_rule: {
+	      '毎日': 'daily',
+	      'Daily': 'daily',
+	      '毎日軽く': 'daily',
+	      '週に数回': 'few_times_week',
+	      'A few times a week': 'few_times_week',
+	      '週1回': 'weekly',
+	      'Weekly': 'weekly',
+	      '汚れたら': 'when_dirty',
+	      'When dirty': 'when_dirty',
+	      '特に決まりなし': 'no_fixed_rule',
+	      'No fixed rule': 'no_fixed_rule'
+	    },
+	    noise_level: {
+	      'かなり静か': 'very_quiet',
+	      'Very quiet': 'very_quiet',
+	      '比較的静か': 'relatively_quiet',
+	      'Relatively quiet': 'relatively_quiet',
+	      '普通': 'normal',
+	      'Normal': 'normal',
+	      'あまり気にしない': 'not_very_quiet',
+	      "Don't mind much": 'not_very_quiet'
+	    },
+	    smoking_environment: {
+	      '室内喫煙OK': 'indoor_smoking_ok',
+	      'Indoor smoking OK': 'indoor_smoking_ok',
+	      '屋外のみ': 'outdoor_only',
+	      'Outdoor only': 'outdoor_only',
+	      '完全禁煙': 'non_smoking',
+	      'Non-smoking': 'non_smoking',
+	      'OK': 'indoor_smoking_ok',
+	      'NG': 'non_smoking'
+	    },
+	    drinking_environment: {
+	      'OK': 'allowed',
+	      'Allowed': 'allowed',
+	      'よく飲む': 'allowed',
+	      '節度を守る': 'moderation_required',
+	      'Moderation required': 'moderation_required',
+	      'たまに飲む': 'moderation_required',
+	      'NG': 'not_allowed',
+	      'Not allowed': 'not_allowed',
+	      'ほとんど飲まない': 'not_allowed'
+	    },
+	    visitor_rule: {
+	      'OK': 'freely_allowed',
+	      '自由にOK': 'freely_allowed',
+	      'Freely allowed': 'freely_allowed',
+	      '事前共有必須': 'advance_notice_required',
+	      '事前に共有すればOK': 'advance_notice_required',
+	      'Advance notice required': 'advance_notice_required',
+	      '頻度制限あり': 'frequency_limited',
+	      '頻繁でなければOK': 'frequency_limited',
+	      'できれば少ない': 'frequency_limited',
+	      'Frequency limited': 'frequency_limited',
+	      'NG': 'not_allowed',
+	      '来客NG': 'not_allowed',
+	      'Not allowed': 'not_allowed'
+	    },
+	    overnight_guest_rule: {
+	      'OK': 'allowed',
+	      '問題ない': 'allowed',
+	      'Allowed': 'allowed',
+	      'たまにならOK': 'sometimes_ok',
+	      'Sometimes OK': 'sometimes_ok',
+	      '事前相談必須': 'prior_consultation_required',
+	      '事前相談があればOK': 'prior_consultation_required',
+	      'Prior consultation required': 'prior_consultation_required',
+	      'NG': 'not_allowed',
+	      'Not allowed': 'not_allowed'
+	    },
+	    quiet_hours_rule: {
+	      '特に制限なし': 'no_restriction',
+	      '特に決まりなし': 'no_restriction',
+	      'No restriction': 'no_restriction',
+	      'ある程度静かにする': 'moderately_quiet',
+	      'ある程度静かにしている': 'moderately_quiet',
+	      'Moderately quiet': 'moderately_quiet',
+	      '厳しく静かにする': 'strictly_quiet',
+	      '厳しく静かにしている': 'strictly_quiet',
+	      'Strictly quiet': 'strictly_quiet'
+	    }
+	  };
+
 	  const HOMESTAY_LISTING_DETAIL_DB_VALUE_MAPS = {
 	    meal_plan: {
 	      '食事提供なし': 'none',
@@ -13832,6 +14118,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function fromHomestayListingDetailDbValue(field, dbValue) {
 	    return mapDbValueToUi(field, dbValue, HOMESTAY_LISTING_DETAIL_DB_VALUE_MAPS);
+	  }
+
+	  function toSharehouseHostProfileDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, SHAREHOUSE_HOST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function fromSharehouseHostProfileDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, SHAREHOUSE_HOST_PROFILE_DB_VALUE_MAPS);
+	  }
+
+	  function toSharehouseListingDetailDbValue(field, uiValue) {
+	    return mapUiValueToDb(field, uiValue, SHAREHOUSE_LISTING_DETAIL_DB_VALUE_MAPS);
+	  }
+
+	  function fromSharehouseListingDetailDbValue(field, dbValue) {
+	    return mapDbValueToUi(field, dbValue, SHAREHOUSE_LISTING_DETAIL_DB_VALUE_MAPS);
 	  }
 
 	  function homestayFilterProfileFromOnboarding() {
@@ -14566,6 +14868,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  let currentHomestayHostStudents = [];
 	  let currentHomestayListingPhotos = [];
 	  let currentHomestayHostDataLoaded = false;
+	  let currentSharehouseHostProfile = null;
+	  let currentSharehouseListing = null;
+	  let currentSharehouseListingDetails = null;
+	  let currentSharehouseListingPrivateDetails = null;
+	  let currentSharehouseHostLoadedFullAddress = '';
+	  let currentSharehouseHostDataLoaded = false;
 	  let currentPublishedHomestayListings = [];
 	  let publishedHomestaySearchHosts = [];
 	  let publishedHomestayHostsLoaded = false;
@@ -19163,6 +19471,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const SH_HOST_MBTI_OPTIONS = ['INTJ','INTP','ENTJ','ENTP','INFJ','INFP','ENFJ','ENFP','ISTJ','ISFJ','ESTJ','ESFJ','ISTP','ISFP','ESTP','ESFP','わからない / 未診断','回答しない'];
 
 	  function sharehouseHostDefaults() {
+	    const currentProfile = sharehouseCurrentHostUiProfile();
+	    if (currentProfile) return currentProfile;
 	    const match = sharehouseMatchProfiles.sh1 || {};
 	    const hp = match.hostProfile || {};
 	    return {
@@ -20032,7 +20342,273 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
-	  function saveSharehouseSettings(scope = 'res') {
+	  function sharehouseHostFormInteger(value) {
+	    return nullableInteger(value);
+	  }
+
+	  function sharehouseHostProfilePayloadFromProfile(profile, userId) {
+	    const currentStatus = toSharehouseHostProfileDbValue('current_status', profile.basic.position);
+	    return omitUndefinedFields({
+	      user_id: userId,
+	      age: sharehouseHostFormInteger(profile.basic.age),
+	      nationality: nullableText(profile.basic.nationality),
+	      gender: toSharehouseHostProfileDbValue('gender', profile.basic.gender),
+	      religion: toSharehouseHostProfileDbValue('religion', profile.basic.religion),
+	      languages: Array.isArray(profile.basic.languages) ? profile.basic.languages.filter(Boolean) : [],
+	      english_level: toSharehouseHostProfileDbValue('english_level', profile.basic.englishLevel),
+	      current_status: ['student', 'working_holiday', 'employee', 'freelance', 'other'].includes(currentStatus) ? currentStatus : 'other',
+	      smoking_habit: toSharehouseHostProfileDbValue('smoking_habit', profile.basic.personalSmoking),
+	      drinking_habit: toSharehouseHostProfileDbValue('drinking_habit', profile.basic.personalAlcohol),
+	      hobbies: Array.isArray(profile.basic.hobbies) ? profile.basic.hobbies.filter(Boolean) : [],
+	      bio: nullableText(profile.basic.intro),
+	      wake_time: toSharehouseHostProfileDbValue('wake_time', profile.lifestyle.wakeTime),
+	      bedtime: toSharehouseHostProfileDbValue('bedtime', profile.lifestyle.bedtime),
+	      home_presence: toSharehouseHostProfileDbValue('home_presence', profile.lifestyle.homeTime),
+	      cooking_frequency: toSharehouseHostProfileDbValue('cooking_frequency', profile.lifestyle.cookingFrequency),
+	      mbti: toSharehouseHostProfileDbValue('mbti', profile.shareStyle.mbti)
+	    });
+	  }
+
+	  function sharehouseListingPayloadFromProfile(profile, userId, options = {}) {
+	    return omitUndefinedFields({
+	      owner_id: userId,
+	      listing_type: 'sharehouse',
+	      title: nullableText(profile.basic.name),
+	      description: nullableText(profile.basic.intro),
+	      country_code: 'CA',
+	      city: nullableText(profile.stay.area),
+	      nearest_station: nullableText(profile.stay.station),
+	      station_walk_minutes: sharehouseHostFormInteger(profile.stay.walkMin),
+	      available_from: nullableText(profile.stay.availableStart),
+	      available_until: nullableText(profile.stay.availableEnd),
+	      minimum_stay_months: sharehouseHostFormInteger(profile.stay.minStay),
+	      maximum_stay_months: sharehouseHostFormInteger(profile.stay.maxStay),
+	      long_stay_allowed: booleanFromSelectedText(profile.stay.longStay, ['可能', 'Available', 'Allowed'], ['不可', 'Not available', 'Not allowed']),
+	      monthly_price: sharehouseHostFormInteger(profile.stay.monthlyRent),
+	      currency: 'CAD',
+	      status: options.status || 'published'
+	    });
+	  }
+
+	  function sharehouseListingDetailsPayloadFromProfile(profile) {
+	    const petsPresent = booleanFromSelectedText(profile.shareStyle.pets, ['ペットあり', 'Pets present'], ['ペットなし', 'No pets']);
+	    const petDetails = petsPresent
+	      ? [profile.shareStyle.petType, profile.shareStyle.petCount ? `${profile.shareStyle.petCount}` : ''].filter(Boolean).join(' / ')
+	      : null;
+	    return omitUndefinedFields({
+	      room_type: toSharehouseListingDetailDbValue('room_type', profile.stay.roomType),
+	      furnished: booleanFromSelectedText(profile.stay.furniture, ['家具付き', 'Furnished'], ['家具なし', 'Unfurnished']),
+	      floor_type: toSharehouseListingDetailDbValue('floor_type', profile.stay.floor),
+	      bathroom_type: toSharehouseListingDetailDbValue('bathroom_type', profile.stay.bathroom),
+	      resident_count_group: toSharehouseListingDetailDbValue('resident_count_group', profile.stay.residentsCount),
+	      amenities: Array.isArray(profile.stay.amenities) ? profile.stay.amenities.filter(Boolean) : [],
+	      kitchen_rule: toSharehouseListingDetailDbValue('kitchen_rule', profile.stay.kitchenRule),
+	      kitchen_rule_details: profile.stay.kitchenRule === '利用時間のルールあり' ? nullableText(profile.stay.kitchenHours) : null,
+	      interaction_level: toSharehouseListingDetailDbValue('interaction_level', profile.shareStyle.roommateInteraction),
+	      cleanliness_level: toSharehouseListingDetailDbValue('cleanliness_level', profile.shareStyle.cleanliness),
+	      cleaning_rule: toSharehouseListingDetailDbValue('cleaning_rule', profile.rules.cleaning || profile.shareStyle.cleaningFrequency),
+	      noise_level: toSharehouseListingDetailDbValue('noise_level', profile.shareStyle.lifeNoise),
+	      smoking_environment: toSharehouseListingDetailDbValue('smoking_environment', profile.shareStyle.smokingEnvironment || profile.rules.smoking),
+	      drinking_environment: toSharehouseListingDetailDbValue('drinking_environment', profile.rules.alcohol || profile.shareStyle.alcoholEnvironment),
+	      pets_present: petsPresent,
+	      pet_details: petDetails,
+	      visitor_rule: toSharehouseListingDetailDbValue('visitor_rule', profile.rules.visitors || profile.shareStyle.visitors),
+	      overnight_guest_rule: toSharehouseListingDetailDbValue('overnight_guest_rule', profile.rules.overnightGuests || profile.shareStyle.overnightGuests),
+	      quiet_hours_rule: toSharehouseListingDetailDbValue('quiet_hours_rule', profile.rules.quietHours || profile.shareStyle.quietHours),
+	      other_house_rules: nullableText(profile.rules.other)
+	    });
+	  }
+
+	  function validateSharehouseListingPayload(payload) {
+	    const errors = [];
+	    if (payload.station_walk_minutes !== null && payload.station_walk_minutes !== undefined && payload.station_walk_minutes < 0) errors.push(currentLang === 'en' ? 'Station walk minutes must be 0 or greater.' : '最寄り駅までの徒歩分数は0以上で入力してください。');
+	    if (payload.minimum_stay_months !== null && payload.minimum_stay_months !== undefined && payload.minimum_stay_months < 1) errors.push(currentLang === 'en' ? 'Minimum stay must be at least 1 month.' : '最短滞在期間は1ヶ月以上で入力してください。');
+	    if (payload.maximum_stay_months !== null && payload.maximum_stay_months !== undefined && payload.maximum_stay_months < 1) errors.push(currentLang === 'en' ? 'Maximum stay must be at least 1 month.' : '最長滞在期間は1ヶ月以上で入力してください。');
+	    if (payload.minimum_stay_months !== null && payload.minimum_stay_months !== undefined && payload.maximum_stay_months !== null && payload.maximum_stay_months !== undefined && payload.minimum_stay_months > payload.maximum_stay_months) errors.push(currentLang === 'en' ? 'Minimum stay must be less than or equal to maximum stay.' : '最短滞在期間は最長滞在期間以下にしてください。');
+	    if (payload.monthly_price !== null && payload.monthly_price !== undefined && payload.monthly_price < 0) errors.push(currentLang === 'en' ? 'Monthly rent must be 0 or greater.' : '月額料金は0以上で入力してください。');
+	    if (payload.available_from && payload.available_until && payload.available_from > payload.available_until) errors.push(currentLang === 'en' ? 'Available start date must be before the end date.' : '入居可能開始日は終了日以前にしてください。');
+	    return errors;
+	  }
+
+	  async function saveSharehouseHostProfileToSupabase(payload) {
+	    const userId = payload?.user_id;
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('sharehouse_host_profiles')
+	        .select('user_id')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      const { user_id, ...updatePayload } = payload;
+	      const query = window._supabase.from('sharehouse_host_profiles');
+	      const { error: saveError } = existing
+	        ? await query.update(omitUndefinedFields(updatePayload)).eq('user_id', userId)
+	        : await query.insert(payload);
+	      if (saveError) throw saveError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase sharehouse_host_profiles save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveSharehouseListingToSupabase(payload) {
+	    const userId = payload?.owner_id;
+	    if (!userId || !window._supabase?.from) return null;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('listings')
+	        .select('id, status, created_at')
+	        .eq('owner_id', userId)
+	        .eq('listing_type', 'sharehouse')
+	        .order('created_at', { ascending: false })
+	        .limit(1)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      if (existing?.id) {
+	        const { error: updateError } = await window._supabase
+	          .from('listings')
+	          .update(omitUndefinedFields(payload))
+	          .eq('id', existing.id)
+	          .eq('owner_id', userId)
+	          .eq('listing_type', 'sharehouse');
+	        if (updateError) throw updateError;
+	        return existing.id;
+	      }
+	      const { data: inserted, error: insertError } = await window._supabase
+	        .from('listings')
+	        .insert(payload)
+	        .select('id')
+	        .single();
+	      if (insertError) throw insertError;
+	      return inserted?.id || null;
+	    } catch (error) {
+	      console.error('Supabase sharehouse listings save error:', error);
+	      return null;
+	    }
+	  }
+
+	  async function saveSharehouseListingDetailsToSupabase(listingId, payload) {
+	    if (!listingId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existing, error: selectError } = await window._supabase
+	        .from('sharehouse_listing_details')
+	        .select('listing_id')
+	        .eq('listing_id', listingId)
+	        .maybeSingle();
+	      if (selectError) throw selectError;
+	      const query = window._supabase.from('sharehouse_listing_details');
+	      const { error: saveError } = existing
+	        ? await query.update(omitUndefinedFields(payload)).eq('listing_id', listingId)
+	        : await query.insert({ listing_id: listingId, ...payload });
+	      if (saveError) throw saveError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase sharehouse_listing_details save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveSharehouseHostUserModeToSupabase() {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) return false;
+	    try {
+	      const { data: existingModes, error: selectError } = await window._supabase
+	        .from('user_modes')
+	        .select('user_id, housing_type, role')
+	        .eq('user_id', userId)
+	        .eq('housing_type', 'sharehouse')
+	        .in('role', ['host', 'resident']);
+	      if (selectError) throw selectError;
+	      const modes = Array.isArray(existingModes) ? existingModes : [];
+	      if (modes.some(mode => mode.role === 'host')) return true;
+	      if (modes.some(mode => mode.role === 'resident')) {
+	        const { error: updateError } = await window._supabase
+	          .from('user_modes')
+	          .update({ role: 'host' })
+	          .eq('user_id', userId)
+	          .eq('housing_type', 'sharehouse')
+	          .eq('role', 'resident');
+	        if (updateError) throw updateError;
+	        return true;
+	      }
+	      const { error: insertError } = await window._supabase
+	        .from('user_modes')
+	        .insert({
+	          user_id: userId,
+	          housing_type: 'sharehouse',
+	          role: 'host'
+	        });
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase sharehouse host user_modes save error:', error);
+	      return false;
+	    }
+	  }
+
+	  async function saveSharehouseHostDataToSupabase(scope = 'res') {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) {
+	      console.error('Supabase sharehouse host save error:', new Error('No logged-in Supabase user'));
+	      return { ok: false, message: currentLang === 'en' ? 'Please log in again before saving.' : '保存するには再度ログインしてください。' };
+	    }
+	    const prefix = scope === 'profile' ? 'share-profile' : 'res';
+	    const profile = collectSharehouseHostProfile(prefix);
+	    const displayName = nullableText(profile.basic.name);
+	    if (!displayName) {
+	      return { ok: false, message: currentLang === 'en' ? 'Please enter a display name.' : '名前を入力してください。' };
+	    }
+	    const listingPayload = sharehouseListingPayloadFromProfile(profile, userId, {
+	      status: currentSharehouseListing?.status || 'published'
+	    });
+	    const validationErrors = validateSharehouseListingPayload(listingPayload);
+	    if (validationErrors.length) return { ok: false, message: validationErrors[0] };
+
+	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
+	    if (!savedDisplayName) {
+	      console.error('Supabase sharehouse profiles display_name save error:', new Error('profiles.display_name update returned false'));
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your name. Please try again.' : '名前を保存できませんでした。もう一度お試しください。' };
+	    }
+
+	    const savedProfile = await saveSharehouseHostProfileToSupabase(sharehouseHostProfilePayloadFromProfile(profile, userId));
+	    if (!savedProfile) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your sharehouse profile.' : 'シェアハウスのプロフィールを保存できませんでした。' };
+	    }
+
+	    const listingId = await saveSharehouseListingToSupabase(listingPayload);
+	    if (!listingId) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save the sharehouse listing.' : 'シェアハウスの掲載情報を保存できませんでした。' };
+	    }
+
+	    const savedDetails = await saveSharehouseListingDetailsToSupabase(listingId, sharehouseListingDetailsPayloadFromProfile(profile));
+	    if (!savedDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save sharehouse listing details.' : 'シェアハウスの掲載詳細を保存できませんでした。' };
+	    }
+
+	    const savedPrivateDetails = await saveListingPrivateDetailsToSupabase(listingId, {
+	      full_address: nullableText(profile.stay.address)
+	    });
+	    if (!savedPrivateDetails) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details.' : '住所情報を保存できませんでした。' };
+	    }
+
+	    const savedMode = await saveSharehouseHostUserModeToSupabase();
+	    if (!savedMode) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host mode.' : 'ホスト登録状態を保存できませんでした。' };
+	    }
+
+	    saveSharehouseSettings(scope, { showSavedToast: false });
+	    const reloaded = await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+	    if (!reloaded) {
+	      return { ok: false, message: currentLang === 'en' ? 'Saved, but could not reload your sharehouse listing.' : '保存しましたが、シェアハウス掲載情報の再読み込みに失敗しました。' };
+	    }
+	    return { ok: true, listingId };
+	  }
+
+	  function saveSharehouseSettings(scope = 'res', options = {}) {
+	    const { showSavedToast = true } = options;
 	    const prefix = scope === 'profile' ? 'share-profile' : 'res';
 	    const listing = SHAREHOUSE_LISTINGS.sh1;
 	    const match = sharehouseMatchProfiles.sh1;
@@ -20090,12 +20666,343 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      { label: '設備', value: (profile.stay.amenities || []).join('、') },
 	      { label: 'キッチン利用', value: profile.stay.kitchenRule }
 	    ];
-	    showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	    if (showSavedToast) showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	  }
+
+	  function sharehouseCurrentHostUiProfile() {
+	    if (!currentSharehouseHostProfile && !currentSharehouseListing && !currentSharehouseListingDetails) return null;
+	    const hostProfile = currentSharehouseHostProfile || {};
+	    const listing = currentSharehouseListing || {};
+	    const details = currentSharehouseListingDetails || {};
+	    const privateDetails = currentSharehouseListingPrivateDetails || {};
+	    const displayName = window._currentProfile?.display_name || listing.title || '';
+	    const petDetails = String(details.pet_details || '');
+	    const [petType, petCount] = petDetails.split('/').map(part => part.trim());
+	    const visitorShareUi = {
+	      freely_allowed: '自由にOK',
+	      advance_notice_required: '事前に共有すればOK',
+	      frequency_limited: '頻繁でなければOK',
+	      not_allowed: '来客NG'
+	    }[details.visitor_rule] || '';
+	    const overnightShareUi = {
+	      allowed: '問題ない',
+	      sometimes_ok: 'たまにならOK',
+	      prior_consultation_required: '事前相談があればOK',
+	      not_allowed: 'NG'
+	    }[details.overnight_guest_rule] || '';
+	    const quietShareUi = {
+	      no_restriction: '特に決まりなし',
+	      moderately_quiet: 'ある程度静かにしている',
+	      strictly_quiet: '厳しく静かにしている'
+	    }[details.quiet_hours_rule] || '';
+	    const alcoholShareUi = {
+	      allowed: 'よく飲む',
+	      moderation_required: 'たまに飲む',
+	      not_allowed: 'ほとんど飲まない'
+	    }[details.drinking_environment] || '';
+	    const smokingRuleUi = {
+	      indoor_smoking_ok: 'OK',
+	      outdoor_only: '屋外のみ',
+	      non_smoking: 'NG'
+	    }[details.smoking_environment] || '';
+	    const alcoholRuleUi = {
+	      allowed: 'OK',
+	      moderation_required: '節度を守る',
+	      not_allowed: 'NG'
+	    }[details.drinking_environment] || '';
+	    return {
+	      basic: {
+	        name: displayName,
+	        age: hostProfile.age ?? '',
+	        nationality: hostProfile.nationality || '',
+	        gender: fromSharehouseHostProfileDbValue('gender', hostProfile.gender),
+	        religion: fromSharehouseHostProfileDbValue('religion', hostProfile.religion),
+	        languages: Array.isArray(hostProfile.languages) ? hostProfile.languages : [],
+	        englishLevel: fromSharehouseHostProfileDbValue('english_level', hostProfile.english_level),
+	        position: fromSharehouseHostProfileDbValue('current_status', hostProfile.current_status),
+	        personalSmoking: fromSharehouseHostProfileDbValue('smoking_habit', hostProfile.smoking_habit),
+	        personalAlcohol: fromSharehouseHostProfileDbValue('drinking_habit', hostProfile.drinking_habit),
+	        hobbies: Array.isArray(hostProfile.hobbies) ? hostProfile.hobbies : [],
+	        intro: hostProfile.bio || listing.description || ''
+	      },
+	      members: resRoommates.slice(),
+	      lifestyle: {
+	        wakeTime: fromSharehouseHostProfileDbValue('wake_time', hostProfile.wake_time),
+	        bedtime: fromSharehouseHostProfileDbValue('bedtime', hostProfile.bedtime),
+	        homeTime: fromSharehouseHostProfileDbValue('home_presence', hostProfile.home_presence),
+	        cookingFrequency: fromSharehouseHostProfileDbValue('cooking_frequency', hostProfile.cooking_frequency)
+	      },
+	      shareStyle: {
+	        roommateInteraction: fromSharehouseListingDetailDbValue('interaction_level', details.interaction_level),
+	        cleanliness: fromSharehouseListingDetailDbValue('cleanliness_level', details.cleanliness_level),
+	        cleaningFrequency: fromSharehouseListingDetailDbValue('cleaning_rule', details.cleaning_rule),
+	        lifeNoise: fromSharehouseListingDetailDbValue('noise_level', details.noise_level),
+	        smokingEnvironment: fromSharehouseListingDetailDbValue('smoking_environment', details.smoking_environment),
+	        alcoholEnvironment: alcoholShareUi,
+	        pets: details.pets_present === true ? 'ペットあり' : details.pets_present === false ? 'ペットなし' : '',
+	        petType: petType || '',
+	        petCount: petCount || '',
+	        visitors: visitorShareUi,
+	        overnightGuests: overnightShareUi,
+	        quietHours: quietShareUi,
+	        mbti: fromSharehouseHostProfileDbValue('mbti', hostProfile.mbti)
+	      },
+	      stay: {
+	        area: listing.city || '',
+	        address: privateDetails.full_address || '',
+	        station: listing.nearest_station || '',
+	        walkMin: listing.station_walk_minutes ?? '',
+	        availableStart: listing.available_from || '',
+	        availableEnd: listing.available_until || '',
+	        minStay: listing.minimum_stay_months ?? '',
+	        maxStay: listing.maximum_stay_months ?? '',
+	        longStay: listing.long_stay_allowed === true ? '可能' : listing.long_stay_allowed === false ? '不可' : '',
+	        monthlyRent: listing.monthly_price ?? '',
+	        roomType: fromSharehouseListingDetailDbValue('room_type', details.room_type),
+	        furniture: details.furnished === true ? '家具付き' : details.furnished === false ? '家具なし' : '',
+	        floor: fromSharehouseListingDetailDbValue('floor_type', details.floor_type),
+	        bathroom: fromSharehouseListingDetailDbValue('bathroom_type', details.bathroom_type),
+	        residentsCount: fromSharehouseListingDetailDbValue('resident_count_group', details.resident_count_group),
+	        amenities: Array.isArray(details.amenities) ? details.amenities : [],
+	        amenityOther: '',
+	        kitchenRule: fromSharehouseListingDetailDbValue('kitchen_rule', details.kitchen_rule),
+	        kitchenHours: details.kitchen_rule_details || ''
+	      },
+	      rules: {
+	        visitors: fromSharehouseListingDetailDbValue('visitor_rule', details.visitor_rule),
+	        overnightGuests: fromSharehouseListingDetailDbValue('overnight_guest_rule', details.overnight_guest_rule),
+	        smoking: smokingRuleUi,
+	        alcohol: alcoholRuleUi,
+	        quietHours: fromSharehouseListingDetailDbValue('quiet_hours_rule', details.quiet_hours_rule),
+	        cleaning: fromSharehouseListingDetailDbValue('cleaning_rule', details.cleaning_rule),
+	        other: details.other_house_rules || ''
+	      }
+	    };
+	  }
+
+	  function syncSharehouseHostDataToDemoObjects() {
+	    const profile = sharehouseCurrentHostUiProfile();
+	    if (!profile || !SHAREHOUSE_LISTINGS.sh1 || !sharehouseMatchProfiles.sh1) return;
+	    const listing = SHAREHOUSE_LISTINGS.sh1;
+	    const match = sharehouseMatchProfiles.sh1;
+	    const rent = Number(profile.stay.monthlyRent) || 0;
+	    listing.name = profile.basic.name || listing.name;
+	    listing.price = rent || listing.price;
+	    listing.pricePrefix = 'C$';
+	    match.name = profile.basic.name || match.name;
+	    match.nationality = profile.basic.nationality || '';
+	    match.gender = profile.basic.gender || '';
+	    match.religion = profile.basic.religion || '';
+	    match.englishLevel = profile.basic.englishLevel || '';
+	    match.hobbies = (profile.basic.hobbies || []).join('、');
+	    match.note = profile.basic.intro || '';
+	    match.hostProfile = profile;
+	    match.available = { start: profile.stay.availableStart, end: profile.stay.availableEnd };
+	    match.rent = rent ? hostMonthlyPriceText({ monthly_price: rent, currency: 'CAD' }) : '';
+	    match.area = [profile.stay.area, profile.stay.station ? `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分` : ''].filter(Boolean).join(' · ');
+	    match.mapPin = profile.stay.area || '';
+	    match.mapNote = profile.stay.station
+	      ? (currentLang === 'en'
+	        ? `${profile.stay.walkMin || '—'} min walk from ${profile.stay.station}`
+	        : `${profile.stay.station} 徒歩${profile.stay.walkMin || '—'}分`)
+	      : '';
+	    match.roomType = [profile.stay.roomType, profile.stay.furniture, (profile.stay.amenities || []).slice(0, 3).join('・')].filter(Boolean).join(' · ');
+	    match.lifestyleCards = {
+	      wake: profile.lifestyle.wakeTime || '',
+	      sleep: profile.lifestyle.bedtime || '',
+	      clean: profile.shareStyle.cleanliness || ''
+	    };
+	    match.shareLifestyle = {
+	      noise: profile.shareStyle.lifeNoise || '',
+	      cooking: profile.lifestyle.cookingFrequency || '',
+	      smoking: profile.shareStyle.smokingEnvironment || '',
+	      alcohol: profile.shareStyle.alcoholEnvironment || '',
+	      mbti: profile.shareStyle.mbti || ''
+	    };
+	    match.roommates = profile.members || [];
+	    match.rules = sharehouseHostRulesForDetail(profile);
+	  }
+
+	  function applyCurrentSharehouseHostDataToHostProfileScreen() {
+	    if (currentScreen !== 'host-profile' || serviceModeForCurrentContext() !== 'sharehouse') return;
+	    const profile = sharehouseCurrentHostUiProfile();
+	    if (!profile) return;
+	    setInputValueById('share-profile-name', profile.basic.name);
+	    setInputValueById('share-profile-age', profile.basic.age);
+	    setInputValueById('share-profile-nationality', profile.basic.nationality);
+	    setSingleFormChip('share-profile-gender', profile.basic.gender);
+	    setSingleFormChip('share-profile-religion', profile.basic.religion);
+	    setMultiFormChips('share-profile-languages', profile.basic.languages);
+	    setSingleFormChip('share-profile-english-level', profile.basic.englishLevel);
+	    setSingleFormChip('share-profile-position', profile.basic.position);
+	    setSingleFormChip('share-profile-personal-smoking', profile.basic.personalSmoking);
+	    setSingleFormChip('share-profile-personal-alcohol', profile.basic.personalAlcohol);
+	    setMultiFormChips('share-profile-hobbies', profile.basic.hobbies);
+	    setInputValueById('share-profile-intro', profile.basic.intro);
+	    setSingleFormChip('share-profile-wake-time', profile.lifestyle.wakeTime);
+	    setSingleFormChip('share-profile-bedtime', profile.lifestyle.bedtime);
+	    setSingleFormChip('share-profile-home-time', profile.lifestyle.homeTime);
+	    setSingleFormChip('share-profile-cooking-frequency', profile.lifestyle.cookingFrequency);
+	    setSingleFormChip('share-profile-roommate-interaction', profile.shareStyle.roommateInteraction);
+	    setSingleFormChip('share-profile-cleanliness', profile.shareStyle.cleanliness);
+	    setSingleFormChip('share-profile-cleaning-frequency', profile.shareStyle.cleaningFrequency);
+	    setSingleFormChip('share-profile-life-noise', profile.shareStyle.lifeNoise);
+	    setSingleFormChip('share-profile-smoking-environment', profile.shareStyle.smokingEnvironment);
+	    setSingleFormChip('share-profile-alcohol-environment', profile.shareStyle.alcoholEnvironment);
+	    setSingleFormChip('share-profile-pets', profile.shareStyle.pets);
+	    setInputValueById('share-profile-pet-type', profile.shareStyle.petType);
+	    setInputValueById('share-profile-pet-count', profile.shareStyle.petCount);
+	    setSingleFormChip('share-profile-visitors', profile.shareStyle.visitors);
+	    setSingleFormChip('share-profile-overnight-guests', profile.shareStyle.overnightGuests);
+	    setSingleFormChip('share-profile-quiet-hours', profile.shareStyle.quietHours);
+	    setSingleFormChip('share-profile-mbti', profile.shareStyle.mbti);
+	    setSingleFormChip('share-profile-area', profile.stay.area);
+	    setInputValueById('share-profile-address', profile.stay.address);
+	    setInputValueById('share-profile-station', profile.stay.station);
+	    setInputValueById('share-profile-walk-min', profile.stay.walkMin);
+	    setInputValueById('share-profile-available-start', profile.stay.availableStart);
+	    setInputValueById('share-profile-available-end', profile.stay.availableEnd);
+	    setInputValueById('share-profile-min-stay', profile.stay.minStay);
+	    setInputValueById('share-profile-max-stay', profile.stay.maxStay);
+	    setSingleFormChip('share-profile-long-stay', profile.stay.longStay);
+	    setInputValueById('share-profile-monthly-rent', profile.stay.monthlyRent);
+	    setSingleFormChip('share-profile-room-type', profile.stay.roomType);
+	    setSingleFormChip('share-profile-furniture', profile.stay.furniture);
+	    setSingleFormChip('share-profile-floor', profile.stay.floor);
+	    setSingleFormChip('share-profile-bathroom', profile.stay.bathroom);
+	    setSingleFormChip('share-profile-residents-count', profile.stay.residentsCount);
+	    setMultiFormChips('share-profile-amenities', profile.stay.amenities);
+	    setSingleFormChip('share-profile-kitchen-rule', profile.stay.kitchenRule);
+	    setInputValueById('share-profile-kitchen-hours', profile.stay.kitchenHours);
+	    setSingleFormChip('share-profile-rule-visitors', profile.rules.visitors);
+	    setSingleFormChip('share-profile-rule-overnight-guests', profile.rules.overnightGuests);
+	    setSingleFormChip('share-profile-rule-smoking', profile.rules.smoking);
+	    setSingleFormChip('share-profile-rule-alcohol', profile.rules.alcohol);
+	    setSingleFormChip('share-profile-rule-quiet-hours', profile.rules.quietHours);
+	    setSingleFormChip('share-profile-rule-cleaning', profile.rules.cleaning);
+	    setInputValueById('share-profile-rule-other', profile.rules.other);
+	    shHostTogglePetFields('share-profile');
+	    shHostToggleKitchenFields('share-profile');
+	  }
+
+	  async function loadCurrentSharehouseHostData(options = {}) {
+	    const { force = false, showErrorToast = false } = options;
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from || serviceModeForCurrentContext() !== 'sharehouse') return false;
+	    if (!force && currentSharehouseHostDataLoaded) {
+	      syncSharehouseHostDataToDemoObjects();
+	      applyCurrentSharehouseHostDataToHostProfileScreen();
+	      return true;
+	    }
+	    let profile = null;
+	    let hostProfile = null;
+	    let listing = null;
+	    let details = null;
+	    let privateDetails = null;
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('profiles')
+	        .select('id, display_name, avatar_url, preferred_language')
+	        .eq('id', userId)
+	        .maybeSingle();
+	      if (error) throw error;
+	      profile = data || null;
+	    } catch (error) {
+	      console.error('Supabase sharehouse optional profiles load error:', error);
+	    }
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('sharehouse_host_profiles')
+	        .select('user_id, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti')
+	        .eq('user_id', userId)
+	        .maybeSingle();
+	      if (error) throw error;
+	      hostProfile = data || null;
+	    } catch (error) {
+	      console.error('Supabase sharehouse_host_profiles load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your sharehouse profile.' : 'シェアハウスのプロフィールを読み込めませんでした。');
+	      return false;
+	    }
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('listings')
+	        .select('id, owner_id, listing_type, title, description, country_code, city, nearest_station, station_walk_minutes, available_from, available_until, minimum_stay_months, maximum_stay_months, long_stay_allowed, monthly_price, currency, status, created_at')
+	        .eq('owner_id', userId)
+	        .eq('listing_type', 'sharehouse')
+	        .order('created_at', { ascending: false })
+	        .limit(1)
+	        .maybeSingle();
+	      if (error) throw error;
+	      listing = data || null;
+	    } catch (error) {
+	      console.error('Supabase sharehouse listings load error:', error);
+	      if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load your sharehouse listing.' : 'シェアハウスの掲載情報を読み込めませんでした。');
+	      return false;
+	    }
+	    if (listing?.id) {
+	      try {
+	        const { data, error } = await window._supabase
+	          .from('sharehouse_listing_details')
+	          .select('listing_id, room_type, furnished, floor_type, bathroom_type, resident_count_group, amenities, kitchen_rule, kitchen_rule_details, interaction_level, cleanliness_level, cleaning_rule, noise_level, smoking_environment, drinking_environment, pets_present, pet_details, visitor_rule, overnight_guest_rule, quiet_hours_rule, other_house_rules')
+	          .eq('listing_id', listing.id)
+	          .maybeSingle();
+	        if (error) throw error;
+	        details = data || null;
+	      } catch (error) {
+	        console.error('Supabase sharehouse_listing_details load error:', error);
+	        details = null;
+	      }
+	      try {
+	        const { data, error } = await window._supabase
+	          .from('listing_private_details')
+	          .select('listing_id, full_address')
+	          .eq('listing_id', listing.id)
+	          .maybeSingle();
+	        if (error) throw error;
+	        privateDetails = data || null;
+	      } catch (error) {
+	        console.error('Supabase sharehouse private details load error:', error);
+	        privateDetails = null;
+	      }
+	    }
+	    if (!hostProfile || !listing) {
+	      currentSharehouseHostDataLoaded = false;
+	      currentSharehouseHostLoadedFullAddress = '';
+	      return false;
+	    }
+	    if (profile) window._currentProfile = { ...(window._currentProfile || {}), ...profile };
+	    currentSharehouseHostProfile = hostProfile;
+	    currentSharehouseListing = listing;
+	    currentSharehouseListingDetails = details || null;
+	    currentSharehouseListingPrivateDetails = privateDetails || null;
+	    currentSharehouseHostLoadedFullAddress = privateDetails?.full_address || '';
+	    currentSharehouseHostDataLoaded = true;
+	    window._currentSharehouseHostProfile = currentSharehouseHostProfile;
+	    window._currentSharehouseListing = currentSharehouseListing;
+	    window._currentSharehouseListingDetails = currentSharehouseListingDetails;
+	    window._currentSharehouseListingPrivateDetails = currentSharehouseListingPrivateDetails;
+	    syncSharehouseHostDataToDemoObjects();
+	    applyCurrentSharehouseHostDataToHostProfileScreen();
+	    return true;
+	  }
+
+	  function refreshSharehouseHostDataForScreen(screenName) {
+	    if (!['host-dashboard', 'host-profile', 'host-settings'].includes(screenName)) return;
+	    if (serviceModeForCurrentContext() !== 'sharehouse') return;
+	    loadCurrentSharehouseHostData({ showErrorToast: true });
 	  }
 
 	  async function saveHostProfileScreen() {
 	    if (isSharehouseHostEditing()) {
-	      saveSharehouseSettings('profile');
+	      const result = await saveSharehouseHostDataToSupabase('profile');
+	      if (!result.ok) {
+	        console.error('Supabase sharehouse host profile edit failed:', result);
+	        showToast(result.message || (currentLang === 'en' ? 'Could not save the sharehouse listing.' : 'シェアハウスの掲載情報を保存できませんでした。'));
+	        return;
+	      }
+	      updateHostDashboardListing();
+	      showToast(currentLang === 'en' ? 'Saved' : '保存しました');
+	      navigate(currentScreen, 'host-dashboard');
 	      return;
 	    }
 	    const result = await saveHomestayHostProfileEditToSupabase();
@@ -23815,6 +24722,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function authenticatedRouteRole() {
     if (currentRole === 'host') return 'host';
+    if (currentRole === 'resident') return 'host';
     if (currentRole === 'guest') return 'guest';
     return 'resident';
   }
@@ -23934,7 +24842,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function authenticatedRouteMatchesMode(route, mode) {
     if (!route || !mode) return false;
     if (route.serviceType && route.serviceType !== mode.housingType) return false;
-    if (route.role === 'host') return mode.role === 'host' && mode.housingType === 'homestay';
+    if (route.role === 'host') {
+      if (mode.role === 'host' && mode.housingType === 'homestay') return true;
+      if (mode.housingType === 'sharehouse' && (mode.role === 'host' || mode.role === 'resident')) return true;
+      return false;
+    }
     if (route.role === 'guest') return mode.role === 'guest' && ['homestay', 'sharehouse'].includes(mode.housingType);
     return false;
   }
@@ -24102,6 +25014,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentHomestayHostStudents = [];
     currentHomestayListingPhotos = [];
     currentHomestayHostDataLoaded = false;
+    currentSharehouseHostProfile = null;
+    currentSharehouseListing = null;
+    currentSharehouseListingDetails = null;
+    currentSharehouseListingPrivateDetails = null;
+    currentSharehouseHostLoadedFullAddress = '';
+    currentSharehouseHostDataLoaded = false;
     currentMessageNotificationsEnabled = true;
     notificationPreferencesLoaded = false;
     notificationPreferencesLoading = false;
@@ -24116,6 +25034,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._currentHomestayHostFamilyMembers = [];
     window._currentHomestayHostStudents = [];
     window._currentHomestayListingPhotos = [];
+    window._currentSharehouseHostProfile = null;
+    window._currentSharehouseListing = null;
+    window._currentSharehouseListingDetails = null;
+    window._currentSharehouseListingPrivateDetails = null;
     if (typeof resetSupabaseChatState === 'function') resetSupabaseChatState();
     currentSupabaseGuestConversationRows = [];
     currentSupabaseHostConversationRows = [];
@@ -24252,6 +25174,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       currentRole = 'resident';
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
+      await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
       window._lastRestoredUserMode = { housingType, role };
       if (typeof window.restoreAuthenticatedRoute === 'function') {
         const restoredRoute = await window.restoreAuthenticatedRoute(window._currentUser, window._lastRestoredUserMode);
@@ -24835,13 +25758,29 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       : (currentLang === 'en' ? 'Next →' : '次へ →');
   }
 
-  function resOnboardNext() {
+  async function resOnboardNext() {
     if (resStep < resTotal) {
       resStep++;
       renderResStep();
     } else {
-      saveSharehouseSettings('res');
+      const btn = document.getElementById('res-next-btn');
+      if (btn?.disabled) return;
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = currentLang === 'en' ? 'Saving...' : '保存中...';
+      }
+      const result = await saveSharehouseHostDataToSupabase('res');
+      if (!result.ok) {
+        showToast(result.message || (currentLang === 'en' ? 'Could not save the sharehouse listing.' : 'シェアハウスの掲載情報を保存できませんでした。'));
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓';
+        }
+        return;
+      }
+      if (btn) btn.disabled = false;
       navigate('resident-onboarding', 'host-dashboard');
+      showToast(currentLang === 'en' ? 'Saved' : '保存しました');
     }
   }
 
