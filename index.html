@@ -7905,12 +7905,23 @@
 
   let originalHostProfileBodyHtml = null;
 
+  function setSharehouseHostProfileLegacyBlocksHidden(hidden) {
+    const section = document.querySelector('#screen-host-profile .sharehouse-profile-section');
+    const card = section?.parentElement;
+    if (!card) return;
+    Array.from(card.children).forEach(child => {
+      const keepForSharehouse = child.classList?.contains('sharehouse-profile-section')
+        || child.matches?.('button[onclick="saveHostProfileScreen()"]');
+      child.style.display = hidden && !keepForSharehouse ? 'none' : '';
+    });
+  }
+
   function updateHostProfileMode() {
     const body = document.querySelector('#screen-host-profile .mypage-sub-body');
     if (body && originalHostProfileBodyHtml === null) originalHostProfileBodyHtml = body.innerHTML;
     const isSharehouse = isSharehouseHostEditing();
     const title = document.querySelector('#screen-host-profile .mypage-sub-title');
-    if (title) title.textContent = isSharehouse ? localizeText('プロフィール編集') : localizeText('掲載情報を編集');
+    if (title) title.textContent = localizeText('掲載情報を編集');
     if (!isSharehouse && body) {
       body.innerHTML = homestayHostProfileEditBodyHtml();
       renderHostFamilyEditors();
@@ -7929,6 +7940,7 @@
       el.style.display = isSharehouse ? 'block' : 'none';
     });
     if (isSharehouse) {
+      setSharehouseHostProfileLegacyBlocksHidden(true);
       const shouldFreshLoad = isSupabaseSharehouseHostContext();
       renderSharehouseHostProfileEdit({ loading: shouldFreshLoad && !currentSharehouseHostDataLoaded });
       if (shouldFreshLoad) {
