@@ -7552,6 +7552,7 @@
   let supabaseHostConversationLoadSeq = 0;
   let hostDashboardConversationCountSeq = 0;
   let hostDashboardFavoriteCountSeq = 0;
+  let isUpdatingHostListingStatus = false;
   let currentHomestayGuestDetailConversationId = '';
   let currentHomestayGuestDetailGuestUserId = '';
   let currentHomestayGuestDetailBackScreen = 'host-messages';
@@ -7729,7 +7730,38 @@
   }
 
   function isHostListingPaused() {
-    return currentHomestayListing?.status === 'paused';
+    return serviceModeForCurrentContext() === 'sharehouse'
+      ? currentSharehouseListing?.status === 'paused'
+      : currentHomestayListing?.status === 'paused';
+  }
+
+  function hostListingStatusToggleTarget() {
+    const userId = window._currentUser?.id || '';
+    const service = serviceModeForCurrentContext();
+    if (service === 'sharehouse') {
+      const status = currentSharehouseListing?.status || '';
+      if (!userId || !currentSharehouseListing?.id || !['published', 'paused'].includes(status)) return null;
+      return {
+        service,
+        listing: currentSharehouseListing,
+        listingType: 'sharehouse',
+        listingId: currentSharehouseListing.id,
+        currentStatus: status,
+        nextStatus: status === 'paused' ? 'published' : 'paused',
+        userId
+      };
+    }
+    const status = currentHomestayListing?.status || '';
+    if (!userId || !currentHomestayListing?.id || !['published', 'paused'].includes(status)) return null;
+    return {
+      service: 'homestay',
+      listing: currentHomestayListing,
+      listingType: 'homestay',
+      listingId: currentHomestayListing.id,
+      currentStatus: status,
+      nextStatus: status === 'paused' ? 'published' : 'paused',
+      userId
+    };
   }
 
   function hostDashboardAvailabilityText(listing = {}) {
@@ -7804,8 +7836,9 @@
     if (statusNote) statusNote.textContent = localizeText(noteText);
     if (statusDot) statusDot.style.background = draft ? '#6B7280' : paused ? '#B26A00' : dbStatus === 'published' ? '#00A699' : '#CBD5E1';
     if (pauseBtn) {
-      pauseBtn.disabled = false;
-      pauseBtn.style.opacity = '1';
+      const canToggle = dbStatus === 'published' || dbStatus === 'paused';
+      pauseBtn.disabled = !canToggle;
+      pauseBtn.style.opacity = canToggle ? '1' : '.55';
       pauseBtn.textContent = localizeText(paused ? '掲載を再開' : '掲載を一時停止');
     }
     if (pill) {
@@ -7820,46 +7853,67 @@
   }
 
   async function toggleHostListingStatus() {
-    const userId = window._currentUser?.id;
-    const listingId = currentHomestayListing?.id;
+    if (isUpdatingHostListingStatus) return;
     const pauseBtn = document.getElementById('host-listing-pause-btn');
-    if (!userId || !listingId || !window._supabase?.from) {
+    const target = hostListingStatusToggleTarget();
+    if (!target || !window._supabase?.from) {
       showToast(currentLang === 'en' ? 'Could not update listing status. Please log in again.' : '掲載状況を更新できませんでした。再度ログインしてください。');
       return;
     }
-    const nextStatus = isHostListingPaused() ? 'published' : 'paused';
-    const previousStatus = currentHomestayListing.status || '';
+    const { service, listing, listingType, listingId, userId, nextStatus, currentStatus: previousStatus } = target;
+    isUpdatingHostListingStatus = true;
     if (pauseBtn) {
       pauseBtn.disabled = true;
       pauseBtn.style.opacity = '.55';
+      pauseBtn.textContent = currentLang === 'en' ? 'Updating...' : '更新中...';
     }
     try {
-      const { error } = await window._supabase
+      const { data, error } = await window._supabase
         .from('listings')
         .update({ status: nextStatus })
         .eq('id', listingId)
         .eq('owner_id', userId)
-        .eq('listing_type', 'homestay');
+        .eq('listing_type', listingType)
+        .select('id, status')
+        .single();
       if (error) throw error;
-      currentHomestayListing.status = nextStatus;
-      window._currentHomestayListing = currentHomestayListing;
+      listing.status = data?.status || nextStatus;
+      if (service === 'sharehouse') {
+        currentSharehouseListing.status = listing.status;
+        window._currentSharehouseListing = currentSharehouseListing;
+      } else {
+        currentHomestayListing.status = listing.status;
+        window._currentHomestayListing = currentHomestayListing;
+      }
       updateHostDashboardListing();
-      if (typeof loadCurrentHomestayHostData === 'function') {
+      if (service === 'sharehouse' && typeof loadCurrentSharehouseHostData === 'function') {
+        await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+      } else if (typeof loadCurrentHomestayHostData === 'function') {
         await loadCurrentHomestayHostData({ force: true, showErrorToast: true });
       }
-      if (typeof invalidatePublishedHomestayGuestCache === 'function') invalidatePublishedHomestayGuestCache();
+      if (service === 'sharehouse') {
+        if (typeof invalidatePublishedSharehouseGuestCache === 'function') invalidatePublishedSharehouseGuestCache();
+      } else if (typeof invalidatePublishedHomestayGuestCache === 'function') {
+        invalidatePublishedHomestayGuestCache();
+      }
       showToast(nextStatus === 'paused'
         ? (currentLang === 'en' ? 'Listing paused.' : '掲載を一時停止しました。')
         : (currentLang === 'en' ? 'Listing published.' : '掲載を公開しました。'));
     } catch (error) {
-      console.error('Supabase homestay listing status update error:', error);
-      if (currentHomestayListing) currentHomestayListing.status = previousStatus;
+      console.error(`Supabase ${listingType} listing status update error:`, error);
+      if (service === 'sharehouse' && currentSharehouseListing) {
+        currentSharehouseListing.status = previousStatus;
+      } else if (currentHomestayListing) {
+        currentHomestayListing.status = previousStatus;
+      }
       updateHostDashboardListing();
-      showToast(currentLang === 'en' ? 'Could not update listing status. Please try again.' : '掲載状況を更新できませんでした。もう一度お試しください。');
+      showToast(currentLang === 'en' ? 'Could not update listing status' : '掲載状態を更新できませんでした');
     } finally {
-      if (pauseBtn && currentHomestayListing?.id) {
+      isUpdatingHostListingStatus = false;
+      if (pauseBtn && hostListingStatusToggleTarget()) {
         pauseBtn.disabled = false;
         pauseBtn.style.opacity = '1';
+        pauseBtn.textContent = localizeText(isHostListingPaused() ? '掲載を再開' : '掲載を一時停止');
       }
     }
   }
@@ -19422,9 +19476,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      pill.style.borderColor = dbStatus === 'published' ? '#B2EFE4' : dbStatus === 'paused' ? '#FFE1A6' : '#E5E7EB';
 	    }
 	    if (pauseBtn) {
-	      pauseBtn.disabled = true;
-	      pauseBtn.style.opacity = '.55';
-	      pauseBtn.textContent = localizeText('掲載を一時停止');
+	      const canToggle = dbStatus === 'published' || dbStatus === 'paused';
+	      pauseBtn.disabled = !canToggle;
+	      pauseBtn.style.opacity = canToggle ? '1' : '.55';
+	      pauseBtn.textContent = localizeText(dbStatus === 'paused' ? '掲載を再開' : '掲載を一時停止');
 	    }
 	    if (cityEl) cityEl.textContent = listing.city || '—';
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
@@ -26359,6 +26414,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     resRoommates = [];
     currentSharehouseHostLoadedFullAddress = '';
     currentSharehouseHostDataLoaded = false;
+    isUpdatingHostListingStatus = false;
     currentMessageNotificationsEnabled = true;
     notificationPreferencesLoaded = false;
     notificationPreferencesLoading = false;
