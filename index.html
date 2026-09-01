@@ -7802,6 +7802,7 @@
     if (cityEl) cityEl.textContent = '—';
     if (priceEl) priceEl.textContent = '—';
     if (availabilityEl) availabilityEl.textContent = '—';
+    hostDashboardFavoriteCountSeq++;
     if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
     if (typeof setHostDashboardConversationCount === 'function') setHostDashboardConversationCount(null);
   }
@@ -11225,17 +11226,37 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return parseSupabaseCountValue(data);
 	  }
 
+	  async function countCurrentSharehouseHostFavorites(listingId = currentSharehouseListing?.id || '') {
+	    const userId = window._currentUser?.id || '';
+	    if (!userId || !listingId || !currentSharehouseListing?.id || String(listingId) !== String(currentSharehouseListing.id) || !window._supabase?.rpc) return null;
+	    const { data, error } = await window._supabase.rpc('get_sharehouse_listing_favorite_count', {
+	      p_listing_id: listingId
+	    });
+	    if (error) throw error;
+	    return parseSupabaseCountValue(data);
+	  }
+
 	  async function refreshHostDashboardFavoriteCount() {
 	    const seq = ++hostDashboardFavoriteCountSeq;
 	    setHostDashboardFavoriteCount(null);
-	    if (currentRole !== 'host' || serviceModeForCurrentContext() !== 'homestay') return null;
+	    const service = serviceModeForCurrentContext();
+	    const listingId = service === 'sharehouse'
+	      ? currentSharehouseListing?.id || ''
+	      : currentHomestayListing?.id || '';
+	    const isHostDashboardRole = currentRole === 'host' || (service === 'sharehouse' && currentRole === 'resident');
+	    if (!listingId || !isHostDashboardRole) return null;
 	    try {
-	      const count = await countCurrentHomestayHostFavorites();
+	      const count = service === 'sharehouse'
+	        ? await countCurrentSharehouseHostFavorites(listingId)
+	        : await countCurrentHomestayHostFavorites();
 	      if (seq !== hostDashboardFavoriteCountSeq) return null;
+	      if (service !== serviceModeForCurrentContext()) return null;
+	      if (service === 'sharehouse' && String(currentSharehouseListing?.id || '') !== String(listingId)) return null;
+	      if (service !== 'sharehouse' && String(currentHomestayListing?.id || '') !== String(listingId)) return null;
 	      setHostDashboardFavoriteCount(count);
 	      return count;
 	    } catch (error) {
-	      console.error('Supabase host dashboard favorite count error:', error);
+	      console.error(`Supabase ${service} host dashboard favorite count error:`, error);
 	      if (seq === hostDashboardFavoriteCountSeq) setHostDashboardFavoriteCount(null);
 	      return null;
 	    }
@@ -19502,7 +19523,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (priceEl) priceEl.textContent = hostMonthlyPriceText(listing);
 	    if (availabilityEl) availabilityEl.textContent = hostDashboardAvailabilityText(listing);
 	    updateSharehouseManagerProfileCard();
-	    if (typeof setHostDashboardFavoriteCount === 'function') setHostDashboardFavoriteCount(null);
+	    if (typeof refreshHostDashboardFavoriteCount === 'function') refreshHostDashboardFavoriteCount();
 	    if (typeof refreshHostDashboardConversationCount === 'function') refreshHostDashboardConversationCount();
 	  }
 
