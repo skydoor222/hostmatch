@@ -15046,6 +15046,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  let currentSharehouseListingDetails = null;
 	  let currentSharehouseListingPrivateDetails = null;
 	  let currentSharehouseListingPhotos = [];
+	  let currentSharehouseHostRoommates = [];
 	  let currentSharehouseHostLoadedFullAddress = '';
 	  let currentSharehouseHostDataLoaded = false;
 	  const currentSharehouseLocationDraft = { res: null, 'share-profile': null };
@@ -21521,6 +21522,101 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    });
 	  }
 
+	  function sharehouseRoommateAgeForDb(value) {
+	    const age = nullableInteger(value);
+	    return age !== null && age >= 0 && age <= 120 ? age : null;
+	  }
+
+	  function sharehouseRoommateLanguagesForDb(languages) {
+	    return Array.isArray(languages) ? languages.map(item => String(item || '').trim()).filter(Boolean) : [];
+	  }
+
+	  function sharehouseHostRoommateDbPayloadFromUi(roommate, index, listingId, hostUserId) {
+	    return omitUndefinedFields({
+	      listing_id: listingId,
+	      host_user_id: hostUserId,
+	      name: nullableText(roommate?.name),
+	      age: sharehouseRoommateAgeForDb(roommate?.age),
+	      gender: toSharehouseHostProfileDbValue('gender', roommate?.gender),
+	      nationality: nullableText(roommate?.nationality),
+	      religion: toSharehouseHostProfileDbValue('religion', roommate?.religion),
+	      languages: sharehouseRoommateLanguagesForDb(roommate?.languages),
+	      english_level: toSharehouseHostProfileDbValue('english_level', roommate?.englishLevel),
+	      smoking_habit: toSharehouseHostProfileDbValue('smoking_habit', roommate?.smoke),
+	      drinking_habit: toSharehouseHostProfileDbValue('drinking_habit', roommate?.alcohol),
+	      hobbies: nullableText(roommate?.hobbies),
+	      note: nullableText(roommate?.note),
+	      wake_time: toSharehouseHostProfileDbValue('wake_time', roommate?.wake),
+	      bedtime: toSharehouseHostProfileDbValue('bedtime', roommate?.sleep),
+	      home_presence: toSharehouseHostProfileDbValue('home_presence', roommate?.home),
+	      cooking_frequency: toSharehouseHostProfileDbValue('cooking_frequency', roommate?.cooking),
+	      sort_order: index
+	    });
+	  }
+
+	  function sharehouseHostRoommateUiFromDbRow(row = {}) {
+	    return {
+	      name: row.name || '',
+	      age: row.age ?? '',
+	      gender: fromSharehouseHostProfileDbValue('gender', row.gender),
+	      nationality: row.nationality || '',
+	      religion: fromSharehouseHostProfileDbValue('religion', row.religion),
+	      languages: Array.isArray(row.languages) ? row.languages.filter(Boolean) : [],
+	      englishLevel: fromSharehouseHostProfileDbValue('english_level', row.english_level),
+	      smoke: fromSharehouseHostProfileDbValue('smoking_habit', row.smoking_habit),
+	      alcohol: fromSharehouseHostProfileDbValue('drinking_habit', row.drinking_habit),
+	      hobbies: row.hobbies || '',
+	      note: row.note || '',
+	      wake: fromSharehouseHostProfileDbValue('wake_time', row.wake_time),
+	      sleep: fromSharehouseHostProfileDbValue('bedtime', row.bedtime),
+	      home: fromSharehouseHostProfileDbValue('home_presence', row.home_presence),
+	      cooking: fromSharehouseHostProfileDbValue('cooking_frequency', row.cooking_frequency)
+	    };
+	  }
+
+	  function setSharehouseHostRoommateUiState(roommates = []) {
+	    currentSharehouseHostRoommates = Array.isArray(roommates) ? roommates.map(roommate => ({ ...roommate })) : [];
+	    resRoommates = currentSharehouseHostRoommates.map(roommate => ({ ...roommate }));
+	    window._currentSharehouseHostRoommates = currentSharehouseHostRoommates;
+	    if (typeof resRenderRoommateList === 'function') resRenderRoommateList();
+	  }
+
+	  async function loadSharehouseHostRoommates(listingId, hostUserId) {
+	    if (!listingId || !hostUserId || !window._supabase?.from) return [];
+	    const { data, error } = await window._supabase
+	      .from('sharehouse_host_roommates')
+	      .select('id, listing_id, host_user_id, name, age, gender, nationality, religion, languages, english_level, smoking_habit, drinking_habit, hobbies, note, wake_time, bedtime, home_presence, cooking_frequency, sort_order, created_at, updated_at')
+	      .eq('listing_id', listingId)
+	      .eq('host_user_id', hostUserId)
+	      .order('sort_order', { ascending: true })
+	      .order('created_at', { ascending: true });
+	    if (error) throw error;
+	    return (Array.isArray(data) ? data : []).map(sharehouseHostRoommateUiFromDbRow);
+	  }
+
+	  async function saveSharehouseHostRoommatesToSupabase({ listingId, hostUserId, roommates = [] } = {}) {
+	    if (!listingId || !hostUserId || !window._supabase?.from) return false;
+	    try {
+	      const { error: deleteError } = await window._supabase
+	        .from('sharehouse_host_roommates')
+	        .delete()
+	        .eq('listing_id', listingId)
+	        .eq('host_user_id', hostUserId);
+	      if (deleteError) throw deleteError;
+	      const rows = (Array.isArray(roommates) ? roommates : [])
+	        .map((roommate, index) => sharehouseHostRoommateDbPayloadFromUi(roommate, index, listingId, hostUserId));
+	      if (!rows.length) return true;
+	      const { error: insertError } = await window._supabase
+	        .from('sharehouse_host_roommates')
+	        .insert(rows);
+	      if (insertError) throw insertError;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase sharehouse_host_roommates save error:', error);
+	      return false;
+	    }
+	  }
+
 	  function validateSharehouseListingPayload(payload) {
 	    const errors = [];
 	    if (payload.station_walk_minutes !== null && payload.station_walk_minutes !== undefined && payload.station_walk_minutes < 0) errors.push(currentLang === 'en' ? 'Station walk minutes must be 0 or greater.' : '最寄り駅までの徒歩分数は0以上で入力してください。');
@@ -21696,6 +21792,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    });
 	    if (!savedPrivateDetails) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save private address details.' : '住所情報を保存できませんでした。' };
+	    }
+
+	    const savedRoommates = await saveSharehouseHostRoommatesToSupabase({
+	      listingId,
+	      hostUserId: userId,
+	      roommates: profile.members
+	    });
+	    if (!savedRoommates) {
+	      return { ok: false, message: currentLang === 'en' ? 'Could not save roommate information.' : '同居メンバー情報を保存できませんでした。' };
 	    }
 
 	    const savedAvatar = await saveHomestayHostAvatarToSupabase(scope === 'profile' ? 'share-profile' : 'res');
@@ -22050,6 +22155,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    shHostTogglePetFields('share-profile');
 	    shHostToggleKitchenFields('share-profile');
 	    initializeSharehouseHostLocationEditor('share-profile', profile);
+	    resRenderRoommateList();
 	  }
 
 	  async function loadCurrentSharehouseHostData(options = {}) {
@@ -22068,6 +22174,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    let details = null;
 	    let privateDetails = null;
 	    currentSharehouseListingPhotos = [];
+	    currentSharehouseHostRoommates = [];
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('profiles')
@@ -22146,10 +22253,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        console.error('Supabase sharehouse listing photos load error:', error);
 	        currentSharehouseListingPhotos = [];
 	      }
+	      try {
+	        currentSharehouseHostRoommates = await loadSharehouseHostRoommates(listing.id, userId);
+	      } catch (error) {
+	        console.error('Supabase sharehouse_host_roommates load error:', error);
+	        if (showErrorToast) showToast(currentLang === 'en' ? 'Could not load roommate information.' : '同居メンバー情報を読み込めませんでした。');
+	        return false;
+	      }
 	    }
 	    if (!hostProfile || !listing) {
 	      currentSharehouseHostDataLoaded = false;
 	      currentSharehouseHostLoadedFullAddress = '';
+	      setSharehouseHostRoommateUiState([]);
 	      return false;
 	    }
 	    if (profile) window._currentProfile = { ...(window._currentProfile || {}), ...profile };
@@ -22158,12 +22273,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    currentSharehouseListingDetails = details || null;
 	    currentSharehouseListingPrivateDetails = privateDetails || null;
 	    currentSharehouseHostLoadedFullAddress = privateDetails?.full_address || '';
+	    setSharehouseHostRoommateUiState(currentSharehouseHostRoommates);
 	    currentSharehouseHostDataLoaded = true;
 	    window._currentSharehouseHostProfile = currentSharehouseHostProfile;
 	    window._currentSharehouseListing = currentSharehouseListing;
 	    window._currentSharehouseListingDetails = currentSharehouseListingDetails;
 	    window._currentSharehouseListingPrivateDetails = currentSharehouseListingPrivateDetails;
 	    window._currentSharehouseListingPhotos = currentSharehouseListingPhotos;
+	    window._currentSharehouseHostRoommates = currentSharehouseHostRoommates;
 	    syncSharehouseHostDataToDemoObjects();
 	    updateHostDashboardFromCurrentSharehouseData();
 	    applyCurrentSharehouseHostDataToHostProfileScreen();
@@ -26238,6 +26355,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentSharehouseListingDetails = null;
     currentSharehouseListingPrivateDetails = null;
     currentSharehouseListingPhotos = [];
+    currentSharehouseHostRoommates = [];
+    resRoommates = [];
     currentSharehouseHostLoadedFullAddress = '';
     currentSharehouseHostDataLoaded = false;
     currentMessageNotificationsEnabled = true;
@@ -26259,6 +26378,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._currentSharehouseListingDetails = null;
     window._currentSharehouseListingPrivateDetails = null;
     window._currentSharehouseListingPhotos = [];
+    window._currentSharehouseHostRoommates = [];
     if (typeof invalidatePublishedSharehouseGuestCache === 'function') invalidatePublishedSharehouseGuestCache();
     if (typeof resetSupabaseChatState === 'function') resetSupabaseChatState();
     currentSupabaseGuestConversationRows = [];
@@ -27027,7 +27147,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   /* ===== ルームメイト追加ロジック ===== */
-  let resRoommates = []; // [{name, age, gender, nationality, languages, wake, sleep, home, cooking, smoke, alcohol}]
+  let resRoommates = []; // [{name, age, gender, nationality, religion, languages, englishLevel, smoke, alcohol, hobbies, note, wake, sleep, home, cooking}]
   let _rmSelections = {}; // 入力中の一時選択
 
   function currentSharehouseHostPrefix() {
@@ -27108,6 +27228,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     'linear-gradient(135deg,#e0c3fc,#8ec5fc)',
   ];
 
+  function sharehouseRoommateMetaText(rm = {}) {
+    return [
+      rm.age ? localizeText(rm.age) : '',
+      rm.gender ? localizeText(rm.gender) : '',
+      rm.nationality || ''
+    ].filter(Boolean).join(' · ');
+  }
+
 	  function resRenderRoommateList() {
     const lists = ['res-roommate-list', 'share-profile-roommate-list']
       .map(id => document.getElementById(id))
@@ -27120,7 +27248,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           <div style="width:48px;height:48px;border-radius:50%;background:${_rmGrads[i % _rmGrads.length]};display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${_rmAvatars[i % _rmAvatars.length]}</div>
           <div style="flex:1;">
             <div style="font-size:15px;font-weight:800;">${escapeHtml(rm.name)}</div>
-            <div style="font-size:12px;color:var(--light);margin-top:2px;">${escapeHtml([rm.age, rm.gender, rm.nationality].filter(Boolean).join(' · '))}</div>
+            <div style="font-size:12px;color:var(--light);margin-top:2px;">${escapeHtml(sharehouseRoommateMetaText(rm))}</div>
           </div>
           <button onclick="resRemoveRoommate(${i})" style="background:none;border:none;color:var(--light);font-size:16px;cursor:pointer;padding:4px;">✕</button>
         </div>
