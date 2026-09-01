@@ -26171,6 +26171,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       'host-messages',
       'chat',
       'homestay-guest-detail',
+      'sharehouse-detail',
       'host-settings',
       'support',
       'privacy-security',
@@ -26203,6 +26204,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       route.conversationId = String(currentHomestayGuestDetailConversationId);
       route.guestUserId = String(currentHomestayGuestDetailGuestUserId);
       route.detailFrom = currentHomestayGuestDetailBackScreen || extra.detailFrom || 'host-messages';
+    }
+    if (routeScreen === 'sharehouse-detail') {
+      if (routeRole !== 'host' || serviceType !== 'sharehouse' || !hostPreviewMode) return null;
+      const listingId = currentSharehouseListing?.id || currentListing?.id || extra.listingId || '';
+      if (!listingId) return null;
+      route.listingId = String(listingId);
+      route.detailFrom = sharehouseDetailBackScreen || extra.detailFrom || 'host-dashboard';
+      route.previewMode = 'sharehouse-host';
     }
     if (extra.listingId) route.listingId = String(extra.listingId);
     if (extra.conversationId) route.conversationId = String(extra.conversationId);
@@ -26383,13 +26392,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         currentRole = 'resident';
         currentSearchCat = 'sharehouse';
         window._serviceType = 'sharehouse';
-        await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+        const sharehouseLoaded = await loadCurrentSharehouseHostData({ force: true, showErrorToast: true });
+        if (!sharehouseLoaded || !currentSharehouseListing?.id) {
+          console.warn('Saved sharehouse host route could not load current listing:', { screen });
+          navigate(currentScreen || 'login', 'host-dashboard');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
         if (['host-dashboard', 'host-profile', 'host-settings'].includes(screen)) {
           navigate(currentScreen || 'login', screen);
           window._authenticatedRouteRestored = true;
           return true;
         }
         if (screen === 'host-messages') {
+          await loadCurrentUserBlocks({ force: true });
+          await loadSupabaseHostConversations({ listingType: 'sharehouse', listingId: currentSharehouseListing.id });
           navigate(currentScreen || 'login', 'host-messages');
           window._authenticatedRouteRestored = true;
           return true;
@@ -26397,11 +26414,35 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (screen === 'chat') {
           const conversationId = String(route.conversationId || '').trim();
           if (!conversationId) throw new Error('Saved sharehouse host chat route is missing conversationId');
+          if (route.chatMode && route.chatMode !== 'sharehouse-host') {
+            console.warn('Saved sharehouse host chat route has a different chat mode:', { chatMode: route.chatMode });
+            navigate(currentScreen || 'login', 'host-messages');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
+          await loadCurrentUserBlocks({ force: true });
+          await loadSupabaseHostConversations({ listingType: 'sharehouse', listingId: currentSharehouseListing.id });
+          if (typeof unsubscribeSupabaseMessageRealtime === 'function') unsubscribeSupabaseMessageRealtime();
           await openSupabaseHostConversation(conversationId);
           window._authenticatedRouteRestored = true;
           return true;
         }
+        if (screen === 'sharehouse-detail' && route.previewMode === 'sharehouse-host') {
+          const routeListingId = String(route.listingId || '').trim();
+          if (routeListingId && routeListingId !== String(currentSharehouseListing.id)) {
+            console.warn('Saved sharehouse preview route listing mismatch:', { routeListingId, currentListingId: currentSharehouseListing.id });
+            navigate(currentScreen || 'login', 'host-dashboard');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
+          hostPreviewMode = true;
+          syncSharehouseHostDataToDemoObjects();
+          openSharehouseDetail(currentSharehouseListing.id, route.detailFrom || 'host-dashboard');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
         if (['support', 'privacy-security', 'blocked-users'].includes(screen)) {
+          if (screen === 'blocked-users') await loadCurrentUserBlocks({ force: true });
           prepareAuthenticatedAuxiliaryBackScreen(screen, mode);
           navigate(currentScreen || 'login', screen);
           window._authenticatedRouteRestored = true;
