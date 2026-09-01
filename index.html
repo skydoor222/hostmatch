@@ -4266,7 +4266,7 @@
 <!-- ==================== サポート画面 ==================== -->
 <div class="screen" id="screen-support">
   <div class="mypage-sub-header">
-    <div class="mypage-sub-back" onclick="navigate(currentScreen,supportBackScreen)">←</div>
+    <div class="mypage-sub-back" onclick="goBackFromSupport()">←</div>
     <div class="mypage-sub-title" data-i18n="support">サポート</div>
   </div>
   <div class="mypage-sub-body" style="padding: 20px 16px 100px;">
@@ -8162,6 +8162,18 @@
       item.style.display = isHostSupport ? 'none' : '';
     });
     document.querySelectorAll('#screen-support .faq-item.open').forEach(item => item.classList.remove('open'));
+  }
+
+  function currentSettingsParentScreen() {
+    const service = serviceModeForCurrentContext?.() || window._serviceType || currentSearchCat || 'homestay';
+    const isHost = currentRole === 'host' || (currentRole === 'resident' && service === 'sharehouse');
+    return isHost ? 'host-settings' : 'mypage';
+  }
+
+  function goBackFromSupport() {
+    const target = currentSettingsParentScreen();
+    supportBackScreen = target;
+    navigate(currentScreen, target);
   }
 
   function notificationPreferenceToggle() {
@@ -26264,12 +26276,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return false;
   }
 
+  function isAuthenticatedRouteHostMode(mode) {
+    if (!mode) return false;
+    if (mode.role === 'host') return true;
+    return mode.housingType === 'sharehouse' && mode.role === 'resident';
+  }
+
   function authenticatedRouteDefaultScreen(mode) {
-    return restoredHomeScreenForMode(mode) || (mode?.role === 'host' ? 'host-dashboard' : 'search');
+    return restoredHomeScreenForMode(mode) || (isAuthenticatedRouteHostMode(mode) ? 'host-dashboard' : 'search');
   }
 
   function prepareAuthenticatedAuxiliaryBackScreen(screen, mode) {
-    const back = mode?.role === 'host' ? 'host-settings' : 'mypage';
+    const back = isAuthenticatedRouteHostMode(mode) ? 'host-settings' : 'mypage';
     if (screen === 'notification-settings') notificationBackScreen = back;
     if (screen === 'support') supportBackScreen = back;
     if (screen === 'privacy-security') privacyBackScreen = back;
