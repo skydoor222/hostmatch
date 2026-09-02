@@ -21133,15 +21133,39 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return null;
 	  }
 
+	  function toSharehouseGuestProfileDbValue(field, uiValue) {
+	    const text = String(uiValue || '').trim();
+	    if (!text) return null;
+	    const map = GUEST_PROFILE_DB_VALUE_MAPS[field] || {};
+	    if (Object.prototype.hasOwnProperty.call(map, text)) return map[text];
+	    if (Object.values(map).includes(text)) return text;
+	    const normalized = normalizeHomestayGuestDetailSystemText(text);
+	    const found = Object.entries(map).find(([label, code]) =>
+	      normalizeHomestayGuestDetailSystemText(label) === normalized ||
+	      normalizeHomestayGuestDetailSystemText(code) === normalized
+	    );
+	    return found ? found[1] : null;
+	  }
+
+	  function logSharehouseGuestSaveFailure(stage, error) {
+	    console.error('[Sharehouse Guest save failed]', {
+	      stage,
+	      code: error?.code || '',
+	      message: error?.message || String(error || ''),
+	      details: error?.details || '',
+	      hint: error?.hint || ''
+	    });
+	  }
+
 	  function sharehouseGuestProfilePayloadFromUi(profile = {}) {
 	    const basic = profile.basic || {};
 	    const lifestyle = profile.lifestyle || {};
 	    return omitUndefinedFields({
 	      age: sharehouseGuestAgeForDb(basic.age),
 	      nationality: nullableText(basic.nationality),
-	      gender: toGuestProfileDbValue('gender', basic.gender),
-	      religion: toGuestProfileDbValue('religion', basic.religion),
-	      english_level: toGuestProfileDbValue('english_level', basic.englishLevel),
+	      gender: toSharehouseGuestProfileDbValue('gender', basic.gender),
+	      religion: toSharehouseGuestProfileDbValue('religion', basic.religion),
+	      english_level: toSharehouseGuestProfileDbValue('english_level', basic.englishLevel),
 	      languages: Array.isArray(basic.languages) ? basic.languages.filter(Boolean) : [],
 	      wake_time: sharehouseGuestProfileWakeForDb(lifestyle.wakeTime),
 	      bedtime: sharehouseGuestProfileBedtimeForDb(lifestyle.bedtime),
@@ -21273,7 +21297,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      applyCurrentUserProfile(window._currentUser, window._currentProfile);
 	      return true;
 	    } catch (error) {
-	      console.error('Supabase sharehouse guest profiles save error:', error);
+	      logSharehouseGuestSaveFailure('profiles', error);
 	      return false;
 	    }
 	  }
@@ -21296,28 +21320,26 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	      const guestProfilePayload = sharehouseGuestProfilePayloadFromUi(profile);
 	      const preferencesPayload = sharehouseGuestPreferencesPayloadFromUi(profile);
-	      console.log('[Sharehouse Guest save payload]', {
-	        source: options.source || avatarScope || 'sharehouse-guest',
-	        profilePayload: {
-	          display_name: nullableText(profile.basic?.name) || '(auth fallback)',
-	          preferred_language: currentLang === 'en' ? 'en' : 'ja'
-	        },
-	        guestProfilePayload,
-	        preferencesPayload
-	      });
 	      const { error: guestProfileError } = await window._supabase
 	        .from('guest_profiles')
 	        .upsert({ user_id: userId, ...guestProfilePayload }, { onConflict: 'user_id' });
-	      if (guestProfileError) throw guestProfileError;
+	      if (guestProfileError) {
+	        logSharehouseGuestSaveFailure('guest_profiles', guestProfileError);
+	        throw guestProfileError;
+	      }
 
 	      const { error: preferencesError } = await window._supabase
 	        .from('sharehouse_guest_preferences')
 	        .upsert({ user_id: userId, ...preferencesPayload }, { onConflict: 'user_id' });
-	      if (preferencesError) throw preferencesError;
+	      if (preferencesError) {
+	        logSharehouseGuestSaveFailure('sharehouse_guest_preferences', preferencesError);
+	        throw preferencesError;
+	      }
 
 	      if (avatarScope) {
 	        const savedAvatar = await saveHomestayHostAvatarToSupabase(avatarScope);
 	        if (!savedAvatar) {
+	          logSharehouseGuestSaveFailure('avatar', new Error('Avatar upload failed'));
 	          showToast(sharehouseGuestSaveErrorMessage());
 	          return false;
 	        }
@@ -21325,6 +21347,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	      const savedMode = await saveGuestUserModeToSupabase('sharehouse');
 	      if (!savedMode) {
+	        logSharehouseGuestSaveFailure('user_modes', new Error('user_modes save returned false'));
 	        showToast(sharehouseGuestSaveErrorMessage());
 	        return false;
 	      }
