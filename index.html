@@ -10186,6 +10186,303 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    `;
 	  }
 
+	  function sharehouseObjectiveComparisonLabel(key) {
+	    const labels = {
+	      guest: { ja: '希望', en: 'Preference' },
+	      host: { ja: '掲載', en: 'Listing' },
+	      matches: { ja: '一致', en: 'Matches' },
+	      within: { ja: '条件内', en: 'Within preference' },
+	      partial: { ja: '一部一致', en: 'Partially matches' },
+	      different: { ja: '希望と異なる', en: 'Different from preference' },
+	      notComparable: { ja: '比較対象外', en: 'Not directly comparable' },
+	      notSet: { ja: '未設定', en: 'Not set' },
+	      hostMissing: { ja: '掲載側未設定', en: 'Not provided by host' }
+	    };
+	    return labels[key]?.[currentLang] || key;
+	  }
+
+	  function sharehouseObjectiveResultTone(status) {
+	    if (status === 'ok') return { bg: '#F0FFF8', border: '#B2EFE4', color: '#167A45', mark: '✓' };
+	    if (status === 'partial') return { bg: '#FFF8E6', border: '#FFE1A6', color: '#9A5B00', mark: '△' };
+	    if (status === 'neutral') return { bg: 'var(--bg)', border: 'var(--border)', color: 'var(--mid)', mark: '•' };
+	    return { bg: '#FFF0F0', border: '#FFD6D6', color: '#B42318', mark: '×' };
+	  }
+
+	  function sharehouseObjectiveValue(text) {
+	    const value = String(text || '').trim();
+	    return value || sharehouseObjectiveComparisonLabel('notSet');
+	  }
+
+	  function sharehouseHostListingDetailCode(field, value) {
+	    const text = String(value || '').trim();
+	    if (!text) return '';
+	    return toSharehouseListingDetailDbValue(field, text) || text;
+	  }
+
+	  function sharehouseGuestPreferenceCode(field, value) {
+	    const text = String(value || '').trim();
+	    if (!text) return '';
+	    return toSharehouseGuestPreferenceDbValue(field, text) || text;
+	  }
+
+	  function sharehouseObjectiveLocalizedGuest(field, value) {
+	    return sharehouseObjectiveValue(localizeSharehouseGuestPreferenceValue(field, value, ''));
+	  }
+
+	  function sharehouseObjectiveLocalizedHost(field, value) {
+	    const uiValue = fromSharehouseListingDetailDbValue(field, value) || value;
+	    return sharehouseObjectiveValue(localizeText(uiValue));
+	  }
+
+	  function sharehouseObjectiveComparableResult(ok, label = 'matches') {
+	    return {
+	      status: ok ? 'ok' : 'out',
+	      label: ok ? sharehouseObjectiveComparisonLabel(label) : sharehouseObjectiveComparisonLabel('different')
+	    };
+	  }
+
+	  function sharehouseCompareRoomPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'either') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'shared_ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    return sharehouseObjectiveComparableResult(hostCode === 'private', 'matches');
+	  }
+
+	  function sharehouseCompareFurnishedPreference(guestCode, hostValue) {
+	    if (!guestCode) return null;
+	    if (hostValue === null || hostValue === undefined || hostValue === '') return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'either' || guestCode === 'unfurnished_ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    return sharehouseObjectiveComparableResult(hostValue === true, 'matches');
+	  }
+
+	  function sharehouseCompareBathroomPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'either' || guestCode === 'shared_ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    return sharehouseObjectiveComparableResult(hostCode === 'private', 'matches');
+	  }
+
+	  function sharehouseCompareHouseholdSizePreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'no_preference' || guestCode === 'four_plus_ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'share_with_one') return sharehouseObjectiveComparableResult(hostCode === 'one', 'matches');
+	    if (guestCode === 'two_to_three') return sharehouseObjectiveComparableResult(hostCode === 'two_to_three', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareKitchenPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'rarely_use') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'frequent_free_access') return sharehouseObjectiveComparableResult(hostCode === 'free_access', 'matches');
+	    if (guestCode === 'shared_ok') return sharehouseObjectiveComparableResult(['free_access', 'shared'].includes(hostCode), 'within');
+	    if (guestCode === 'some_rules_ok') return sharehouseObjectiveComparableResult(['free_access', 'shared', 'hours_rules'].includes(hostCode), 'within');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareSharedScale(guestField, hostField, guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    const hostAsGuestCode = toSharehouseGuestPreferenceDbValue(guestField, fromSharehouseListingDetailDbValue(hostField, hostCode) || hostCode) || hostCode;
+	    return sharehouseObjectiveComparableResult(guestCode === hostAsGuestCode, 'matches');
+	  }
+
+	  function sharehouseCompareSmokingPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    const hostToGuest = { indoor_smoking_ok: 'ok', outdoor_only: 'outdoor_only', non_smoking: 'no' }[hostCode] || hostCode;
+	    if (guestCode === 'ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'outdoor_only') return sharehouseObjectiveComparableResult(['outdoor_only', 'no'].includes(hostToGuest), 'within');
+	    if (guestCode === 'no') return sharehouseObjectiveComparableResult(hostToGuest === 'no', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareDrinkingPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    const hostToGuest = { allowed: 'allowed', moderation_required: 'moderation', not_allowed: 'not_allowed' }[hostCode] || hostCode;
+	    if (guestCode === 'dont_mind') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'depends') return sharehouseObjectiveComparableResult(['moderation', 'not_allowed'].includes(hostToGuest), 'within');
+	    if (guestCode === 'prefer_not') return sharehouseObjectiveComparableResult(hostToGuest === 'not_allowed', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseComparePetPreference(guestCode, hostValue) {
+	    if (!guestCode) return null;
+	    if (hostValue === null || hostValue === undefined || hostValue === '') return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'pets_ok') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'no_pets') return sharehouseObjectiveComparableResult(hostValue === false, 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareVisitorPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    const hostToGuest = {
+	      freely_allowed: 'dont_mind',
+	      advance_notice_required: 'advance_notice_ok',
+	      frequency_limited: 'not_frequent_ok',
+	      not_allowed: 'no_visitors'
+	    }[hostCode] || hostCode;
+	    if (guestCode === 'dont_mind') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'advance_notice_ok') return sharehouseObjectiveComparableResult(['advance_notice_ok', 'not_frequent_ok', 'no_visitors'].includes(hostToGuest), 'within');
+	    if (guestCode === 'not_frequent_ok') return sharehouseObjectiveComparableResult(['not_frequent_ok', 'no_visitors'].includes(hostToGuest), 'within');
+	    if (guestCode === 'prefer_few') return sharehouseObjectiveComparableResult(['not_frequent_ok', 'no_visitors'].includes(hostToGuest), 'within');
+	    if (guestCode === 'no_visitors') return sharehouseObjectiveComparableResult(hostToGuest === 'no_visitors', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareOvernightPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    if (guestCode === 'no_problem') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'sometimes_ok') return sharehouseObjectiveComparableResult(['sometimes_ok', 'prior_consultation_required', 'not_allowed'].includes(hostCode), 'within');
+	    if (guestCode === 'prior_consultation') return sharehouseObjectiveComparableResult(['prior_consultation_required', 'not_allowed'].includes(hostCode), 'within');
+	    if (guestCode === 'not_allowed') return sharehouseObjectiveComparableResult(hostCode === 'not_allowed', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseCompareQuietHoursPreference(guestCode, hostCode) {
+	    if (!guestCode) return null;
+	    if (!hostCode) return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	    const hostToGuest = { no_restriction: 'dont_mind', moderately_quiet: 'moderately_quiet', strictly_quiet: 'strict' }[hostCode] || hostCode;
+	    if (guestCode === 'dont_mind') return { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	    if (guestCode === 'moderately_quiet') return sharehouseObjectiveComparableResult(['moderately_quiet', 'strict'].includes(hostToGuest), 'within');
+	    if (guestCode === 'strict') return sharehouseObjectiveComparableResult(hostToGuest === 'strict', 'matches');
+	    return { status: 'neutral', label: sharehouseObjectiveComparisonLabel('notComparable') };
+	  }
+
+	  function sharehouseObjectiveComparisonRows(listingId) {
+	    const match = sharehouseMatchProfiles[listingId] || {};
+	    const listing = match.listing || {};
+	    const details = match.details || {};
+	    const prefs = currentSharehouseGuestPreferences || window._currentSharehouseGuestPreferences || {};
+	    const rows = [];
+	    const add = (label, guestValue, hostValue, result) => {
+	      const missingGuestLabel = sharehouseObjectiveComparisonLabel('notSet');
+	      if (!result || !String(guestValue || '').trim() || guestValue === missingGuestLabel) return;
+	      rows.push({ label, guestValue, hostValue: sharehouseObjectiveValue(hostValue), status: result.status, result: result.label });
+	    };
+	    const guestAreaCode = sharehouseGuestPreferenceCode('preferred_city', prefs.preferred_city);
+	    const hostAreaCode = sharehouseGuestPreferenceCode('preferred_city', listing.city);
+	    add('希望エリア', sharehouseObjectiveLocalizedGuest('preferred_city', prefs.preferred_city), sharehouseObjectiveValue(localizeText(listing.city || '')), hostAreaCode
+	      ? sharehouseObjectiveComparableResult(guestAreaCode === hostAreaCode, 'matches')
+	      : { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') });
+
+	    if (prefs.move_in_date || prefs.move_out_date) {
+	      const guestRange = { start: prefs.move_in_date || '', end: prefs.move_out_date || '' };
+	      const hostRange = { start: listing.available_from || '', end: listing.available_until || '' };
+	      let result = { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') };
+	      if (hostRange.start || hostRange.end) {
+	        if (!isDateRangeOverlapping(guestRange, hostRange)) result = { status: 'out', label: sharehouseObjectiveComparisonLabel('different') };
+	        else if (isDateRangeCovered(guestRange, hostRange)) result = { status: 'ok', label: sharehouseObjectiveComparisonLabel('within') };
+	        else result = { status: 'partial', label: sharehouseObjectiveComparisonLabel('partial') };
+	      }
+	      add('滞在期間', formatDateRange(guestRange), formatDateRange(hostRange), result);
+	    }
+
+	    const budget = Number(prefs.budget_max);
+	    if (Number.isFinite(budget) && budget > 0) {
+	      const price = Number(listing.monthly_price);
+	      const guestBudget = currentLang === 'ja' ? `C$${budget.toLocaleString()}以下` : `Up to C$${budget.toLocaleString()}`;
+	      add('月額予算', guestBudget, hostMonthlyPriceText(listing), Number.isFinite(price)
+	        ? { status: price <= budget ? 'ok' : 'out', label: price <= budget ? (currentLang === 'en' ? 'Within budget' : '予算内') : (currentLang === 'en' ? 'Over budget' : '予算超過') }
+	        : { status: 'neutral', label: sharehouseObjectiveComparisonLabel('hostMissing') });
+	    }
+
+	    const roomGuest = sharehouseGuestPreferenceCode('room_preference', prefs.room_preference);
+	    const roomHost = sharehouseHostListingDetailCode('room_type', details.room_type);
+	    add('部屋タイプ', sharehouseObjectiveLocalizedGuest('room_preference', prefs.room_preference), sharehouseObjectiveLocalizedHost('room_type', details.room_type), sharehouseCompareRoomPreference(roomGuest, roomHost));
+
+	    const furnishedGuest = sharehouseGuestPreferenceCode('furnished_preference', prefs.furnished_preference);
+	    const hostFurnishedLabel = details.furnished === true ? (currentLang === 'en' ? 'Furnished' : '家具付き') : details.furnished === false ? (currentLang === 'en' ? 'Unfurnished' : '家具なし') : '';
+	    add('家具', sharehouseObjectiveLocalizedGuest('furnished_preference', prefs.furnished_preference), hostFurnishedLabel, sharehouseCompareFurnishedPreference(furnishedGuest, details.furnished));
+
+	    const bathroomGuest = sharehouseGuestPreferenceCode('bathroom_preference', prefs.bathroom_preference);
+	    const bathroomHost = sharehouseHostListingDetailCode('bathroom_type', details.bathroom_type);
+	    add('バスルーム', sharehouseObjectiveLocalizedGuest('bathroom_preference', prefs.bathroom_preference), sharehouseObjectiveLocalizedHost('bathroom_type', details.bathroom_type), sharehouseCompareBathroomPreference(bathroomGuest, bathroomHost));
+
+	    const sizeGuest = sharehouseGuestPreferenceCode('household_size_preference', prefs.household_size_preference);
+	    const sizeHost = sharehouseHostListingDetailCode('resident_count_group', details.resident_count_group);
+	    add('居住人数', sharehouseObjectiveLocalizedGuest('household_size_preference', prefs.household_size_preference), sharehouseObjectiveLocalizedHost('resident_count_group', details.resident_count_group), sharehouseCompareHouseholdSizePreference(sizeGuest, sizeHost));
+
+	    const kitchenGuest = sharehouseGuestPreferenceCode('kitchen_preference', prefs.kitchen_preference);
+	    const kitchenHost = sharehouseHostListingDetailCode('kitchen_rule', details.kitchen_rule);
+	    add('キッチン', sharehouseObjectiveLocalizedGuest('kitchen_preference', prefs.kitchen_preference), sharehouseObjectiveLocalizedHost('kitchen_rule', details.kitchen_rule), sharehouseCompareKitchenPreference(kitchenGuest, kitchenHost));
+
+	    const sharedFields = [
+	      ['交流スタイル', 'interaction_preference', 'interaction_level', prefs.interaction_preference, details.interaction_level],
+	      ['清潔さ', 'cleanliness_preference', 'cleanliness_level', prefs.cleanliness_preference, details.cleanliness_level],
+	      ['掃除', 'cleaning_preference', 'cleaning_rule', prefs.cleaning_preference, details.cleaning_rule],
+	      ['騒音', 'noise_preference', 'noise_level', prefs.noise_preference, details.noise_level]
+	    ];
+	    sharedFields.forEach(([label, guestField, hostField, guestValue, hostValue]) => {
+	      const guestCode = sharehouseGuestPreferenceCode(guestField, guestValue);
+	      const hostCode = sharehouseHostListingDetailCode(hostField, hostValue);
+	      add(label, sharehouseObjectiveLocalizedGuest(guestField, guestValue), sharehouseObjectiveLocalizedHost(hostField, hostValue), sharehouseCompareSharedScale(guestField, hostField, guestCode, hostCode));
+	    });
+
+	    const smokingGuest = sharehouseGuestPreferenceCode('smoker_roommate_preference', prefs.smoker_roommate_preference);
+	    const smokingHost = sharehouseHostListingDetailCode('smoking_environment', details.smoking_environment);
+	    add('喫煙環境', sharehouseObjectiveLocalizedGuest('smoker_roommate_preference', prefs.smoker_roommate_preference), sharehouseObjectiveLocalizedHost('smoking_environment', details.smoking_environment), sharehouseCompareSmokingPreference(smokingGuest, smokingHost));
+
+	    const drinkingGuest = sharehouseGuestPreferenceCode('drinking_roommate_preference', prefs.drinking_roommate_preference);
+	    const drinkingHost = sharehouseHostListingDetailCode('drinking_environment', details.drinking_environment);
+	    add('飲酒環境', sharehouseObjectiveLocalizedGuest('drinking_roommate_preference', prefs.drinking_roommate_preference), sharehouseObjectiveLocalizedHost('drinking_environment', details.drinking_environment), sharehouseCompareDrinkingPreference(drinkingGuest, drinkingHost));
+
+	    const petGuest = sharehouseGuestPreferenceCode('pet_preference', prefs.pet_preference);
+	    const hostPetLabel = details.pets_present === true ? (currentLang === 'en' ? 'Pets present' : 'ペットあり') : details.pets_present === false ? (currentLang === 'en' ? 'No pets' : 'ペットなし') : '';
+	    add('ペット', sharehouseObjectiveLocalizedGuest('pet_preference', prefs.pet_preference), hostPetLabel, sharehouseComparePetPreference(petGuest, details.pets_present));
+
+	    const visitorGuest = sharehouseGuestPreferenceCode('visitor_preference', prefs.visitor_preference);
+	    const visitorHost = sharehouseHostListingDetailCode('visitor_rule', details.visitor_rule);
+	    add('来客', sharehouseObjectiveLocalizedGuest('visitor_preference', prefs.visitor_preference), sharehouseObjectiveLocalizedHost('visitor_rule', details.visitor_rule), sharehouseCompareVisitorPreference(visitorGuest, visitorHost));
+
+	    const overnightGuest = sharehouseGuestPreferenceCode('overnight_guest_preference', prefs.overnight_guest_preference);
+	    const overnightHost = sharehouseHostListingDetailCode('overnight_guest_rule', details.overnight_guest_rule);
+	    add('宿泊ゲスト', sharehouseObjectiveLocalizedGuest('overnight_guest_preference', prefs.overnight_guest_preference), sharehouseObjectiveLocalizedHost('overnight_guest_rule', details.overnight_guest_rule), sharehouseCompareOvernightPreference(overnightGuest, overnightHost));
+
+	    const quietGuest = sharehouseGuestPreferenceCode('quiet_hours_preference', prefs.quiet_hours_preference);
+	    const quietHost = sharehouseHostListingDetailCode('quiet_hours_rule', details.quiet_hours_rule);
+	    add('静かな時間', sharehouseObjectiveLocalizedGuest('quiet_hours_preference', prefs.quiet_hours_preference), sharehouseObjectiveLocalizedHost('quiet_hours_rule', details.quiet_hours_rule), sharehouseCompareQuietHoursPreference(quietGuest, quietHost));
+	    return rows;
+	  }
+
+	  function renderSharehouseObjectivePreferenceComparison(listingId) {
+	    const rows = sharehouseObjectiveComparisonRows(listingId);
+	    if (!rows.length) {
+	      return `
+	        <div style="background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:14px;color:var(--mid);font-size:13px;font-weight:800;">
+	          ${currentLang === 'en' ? 'No registered preferences to compare.' : '比較できる登録条件がありません'}
+	        </div>
+	      `;
+	    }
+	    return `
+	      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;">
+	        <div style="font-size:13px;font-weight:900;color:var(--dark);margin-bottom:10px;">${currentLang === 'en' ? 'Preference Comparison' : '登録条件との比較'}</div>
+	        <div style="display:flex;flex-direction:column;gap:10px;">
+	          ${rows.map(row => {
+	            const tone = sharehouseObjectiveResultTone(row.status);
+	            return `
+	              <div style="border:1px solid ${tone.border};background:${tone.bg};border-radius:12px;padding:12px;">
+	                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+	                  <div style="font-size:13px;font-weight:900;color:var(--dark);">${escapeHtml(localizeText(row.label))}</div>
+	                  <div style="font-size:12px;font-weight:900;color:${tone.color};white-space:nowrap;">${escapeHtml(tone.mark)} ${escapeHtml(row.result)}</div>
+	                </div>
+	                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;line-height:1.45;">
+	                  <div><span style="display:block;color:var(--light);font-weight:800;margin-bottom:2px;">${escapeHtml(sharehouseObjectiveComparisonLabel('guest'))}</span><strong style="color:var(--dark);">${escapeHtml(row.guestValue)}</strong></div>
+	                  <div><span style="display:block;color:var(--light);font-weight:800;margin-bottom:2px;">${escapeHtml(sharehouseObjectiveComparisonLabel('host'))}</span><strong style="color:var(--dark);">${escapeHtml(row.hostValue)}</strong></div>
+	                </div>
+	              </div>
+	            `;
+	          }).join('')}
+	        </div>
+	      </div>
+	    `;
+	  }
+
 	  const sharehouseMatchProfiles = {
 	    sh1: {
 	      name: '田中 あおい',
@@ -10329,13 +10626,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const shBadge = document.getElementById('sharehouse-match-badge');
 	      const conditionSection = document.getElementById('sharehouse-condition-section');
 	      const shAvatar = document.getElementById('sharehouse-match-avatar');
+	      const isPublishedGuestDetail = isPublishedSharehouseDetailListingForGuest(listing.id);
+	      const conditionTitle = conditionSection?.querySelector('.detail-section-title');
 	      if (shName) shName.textContent = profile.name;
 	      if (shAvatar) shAvatar.textContent = profile.basic.gender === '男性' ? '👨' : profile.basic.gender === '女性' ? '👩' : '🧑';
 	      if (conditionSection) conditionSection.style.display = isHostPreview ? 'none' : '';
 	      if (isHostPreview) {
 	        if (shBadge) shBadge.style.display = 'none';
 	        container.innerHTML = '';
+	      } else if (isPublishedGuestDetail) {
+	        if (shBadge) shBadge.style.display = 'none';
+	        if (conditionTitle) conditionTitle.textContent = currentLang === 'en' ? 'Preference Comparison' : '登録条件との比較';
+	        container.innerHTML = renderSharehouseObjectivePreferenceComparison(listing.id);
 	      } else {
+	        if (conditionTitle) conditionTitle.textContent = t('condition_comparison');
 	        if (shBadge) shBadge.style.display = '';
 	        const shCurrentComparison = shEvaluateListing(listing.id, shFilters());
 	        const shInitialComparison = sharehouseInitialComparisonResults().find(result => result.id === listing.id);
@@ -29023,6 +29327,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const saveBtn = document.getElementById('sharehouse-detail-save');
 	    if (saveBtn) saveBtn.style.display = hostPreviewMode ? 'none' : 'block';
 	    renderGuestPreferenceSummary('sharehouse');
+	    if (shouldLoadDetailRoommates && (!currentSharehouseGuestDataLoaded || currentSharehouseGuestDataCacheUserId !== (window._currentUser?.id || ''))) {
+	      loadCurrentSharehouseGuestData({ force: true, showErrorToast: false }).then(() => {
+	        if (currentScreen === 'sharehouse-detail' && currentListing?.id === listingId) renderGuestPreferenceSummary('sharehouse');
+	      }).catch(error => console.error('Supabase sharehouse guest preferences load error:', error));
+	    }
 	    if (shouldLoadDetailRoommates) refreshSharehouseDetailRoommatesForGuest(currentListing.id);
 	    if (isSupabasePublishedSharehouseFavoriteTarget(currentListing.id)
 	      && (!supabaseSharehouseFavoritesLoaded || supabaseSharehouseFavoriteCacheUserId !== (window._currentUser?.id || ''))
