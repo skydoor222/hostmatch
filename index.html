@@ -8608,7 +8608,7 @@
     }
     if (isSupabaseHomestayChatActive() && currentSupabaseChatOtherUserId) {
       const name = document.querySelector('#screen-chat .chat-title')?.textContent || (currentLang === 'en' ? 'User' : 'ユーザー');
-      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: isSupabaseHostChatMode() ? `${serviceModeForCurrentContext()}-guest` : 'homestay-host' };
+      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: isSupabaseHostChatMode() ? `${serviceModeForCurrentContext()}-guest` : `${currentSupabaseChatMode || 'homestay'}-host` };
     }
     if (currentScreen === 'detail' && isPublishedHomestayDetailHost(currentHost)) {
       const selected = publishedHomestaySearchHostByListingId(currentHost);
@@ -8617,6 +8617,13 @@
     }
     if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
       const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
+      const published = isSupabasePublishedSharehouseFavoriteTarget(listing?.id)
+        ? publishedSharehouseSearchListingById(listing.id)
+        : null;
+      const blockedId = currentSupabaseChatOtherUserId || listing?.ownerId || listing?.owner_id || published?.listing?.owner_id || '';
+      if (blockedId) {
+        return { ...targetFromSupabaseUser(blockedId, { display_name: listing?.name || published?.profile?.display_name }), type: 'sharehouse-host', avatar: '🏢' };
+      }
       return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse', avatar: '🏢' };
     }
     if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
@@ -11340,7 +11347,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function isSupabaseGuestChatMode(mode = currentSupabaseChatMode) {
-	    return mode === 'homestay';
+	    return mode === 'homestay' || mode === 'sharehouse';
 	  }
 
 	  async function hasSupabaseConversationUnreadMessages(role, options = {}) {
@@ -11348,7 +11355,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!userId || !window._supabase?.from) return false;
 	    const column = role === 'host' ? 'listing_owner_id' : role === 'guest' ? 'initiator_id' : '';
 	    if (!column) return false;
-	    const listingType = options.listingType || (role === 'host' ? currentHostMessageListingContext().listingType : 'homestay');
+	    const guestListingType = (window._serviceType || currentSearchCat || guestMessageService || 'homestay') === 'sharehouse' ? 'sharehouse' : 'homestay';
+	    const listingType = options.listingType || (role === 'host' ? currentHostMessageListingContext().listingType : guestListingType);
 	    const listingId = options.listingId || (role === 'host' ? currentHostMessageListingContext().listing?.id : '');
 
 	    const { data: conversations, error: conversationsError } = await window._supabase
@@ -11569,10 +11577,69 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
+	  function ensureSharehouseConversationListingObject(conversation, profile = {}, listing = {}) {
+	    const listingId = conversation?.listing_id || listing?.id || '';
+	    if (!listingId || SHAREHOUSE_LISTINGS[listingId]) return;
+	    const name = hostDisplayValue(profile.display_name || listing.title, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト');
+	    SHAREHOUSE_LISTINGS[listingId] = {
+	      id: listingId,
+	      listingId,
+	      ownerId: listing.owner_id || conversation?.listing_owner_id || '',
+	      owner_id: listing.owner_id || conversation?.listing_owner_id || '',
+	      type: 'sharehouse',
+	      name,
+	      title: listing.title || name,
+	      description: '',
+	      price: null,
+	      currency: 'CAD',
+	      pricePrefix: 'C$',
+	      detailScreen: 'sharehouse-detail',
+	      label: currentLang === 'en' ? 'Sharehouse' : 'シェアハウス',
+	      published: listing.status === 'published'
+	    };
+	    sharehouseMatchProfiles[listingId] = {
+	      id: listingId,
+	      listingId,
+	      ownerId: listing.owner_id || conversation?.listing_owner_id || '',
+	      isPublishedSharehouse: listing.status === 'published',
+	      name,
+	      match: null,
+	      area: listing.city || '',
+	      mapPin: listing.city || '',
+	      available: { start: '', end: '' },
+	      rent: '',
+	      roomType: '',
+	      lifestyleCards: {},
+	      shareLifestyle: {},
+	      lifestyle: '',
+	      values: '',
+	      review: '',
+	      hobbies: '',
+	      ng: '',
+	      note: '',
+	      rules: [],
+	      conditions: '',
+	      roommates: [],
+	      roomPhotos: [{ label: '部屋の写真', src: neutralHomestayListingPhotoUrl() }],
+	      hostProfile: {
+	        basic: { name, age: '', nationality: '', gender: '', religion: '', languages: [], englishLevel: '', position: '', hobbies: [], intro: '' },
+	        members: [],
+	        lifestyle: {},
+	        shareStyle: {},
+	        stay: { area: listing.city || '', station: '', walkMin: '', availableStart: '', availableEnd: '', priceText: '', roomType: '', furniture: '', amenities: [] },
+	        rules: {},
+	        roomPhotos: [{ label: '部屋の写真', src: neutralHomestayListingPhotoUrl() }]
+	      },
+	      listing,
+	      profile
+	    };
+	  }
+
 	  async function loadSupabaseGuestConversations() {
 	    const userId = window._currentUser?.id || '';
 	    if (!userId || !window._supabase?.from) return [];
 	    await loadCurrentUserBlocks();
+	    const service = (guestMessageService || window._serviceType || currentSearchCat || 'homestay') === 'sharehouse' ? 'sharehouse' : 'homestay';
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
@@ -11616,13 +11683,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) return null;
 	      const profile = profilesById.get(conversation.listing_owner_id) || {};
 	      const listing = listingsById.get(conversation.listing_id) || {};
-	      if (listing.listing_type && listing.listing_type !== 'homestay') return null;
-	      ensureHomestayConversationHostObject(conversation, profile, listing);
+	      if (!listing?.id || listing.listing_type !== service) return null;
+	      if (service === 'homestay') ensureHomestayConversationHostObject(conversation, profile, listing);
+	      if (service === 'sharehouse') ensureSharehouseConversationListingObject(conversation, profile, listing);
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
-	      return { conversation, profile, listing, latestMessage, read, latestAt, unread };
+	      return { conversation, profile, listing, latestMessage, read, latestAt, unread, listingType: service };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
 	    currentSupabaseGuestConversationRows = enriched;
@@ -11633,7 +11701,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const list = document.getElementById('guest-message-list');
 	    if (!list) return;
 	    if (!rows.length) {
-	      list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'No messages yet.' : 'まだメッセージはありません'}</div>`;
+	      list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'No messages yet' : 'メッセージはまだありません'}</div>`;
 	      return;
 	    }
 	    const userId = window._currentUser?.id || '';
@@ -12817,7 +12885,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  async function renderSupabaseGuestMessages() {
 	    const list = document.getElementById('guest-message-list');
 	    const seq = ++supabaseGuestConversationLoadSeq;
-	    if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Loading messages...' : 'メッセージを読み込み中...'}</div>`;
+	    if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Loading...' : '読み込み中...'}</div>`;
 	    isLoadingSupabaseGuestConversations = true;
 	    try {
 	      const rows = await loadSupabaseGuestConversations();
@@ -12827,7 +12895,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    } catch (error) {
 	      console.error('Supabase guest conversations load error:', error);
 	      if (seq === supabaseGuestConversationLoadSeq && list) {
-	        list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages.' : 'メッセージを読み込めませんでした'}</div>`;
+	        list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Could not load messages' : 'メッセージを読み込めませんでした'}</div>`;
 	      }
 	      setMessageUnreadDotVisible('guest', false);
 	    } finally {
@@ -12854,26 +12922,41 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        navigate(currentScreen, 'messages');
 	        return;
 	      }
-	      ensureHomestayConversationHostObject(conversation, row.profile || {}, row.listing || {});
-	      currentHost = conversation.listing_id;
-	      currentListing = makeHomestayListing(currentHost) || {
-	        type: 'homestay',
-	        id: conversation.listing_id,
-	        name: hostDisplayValue(row.profile?.display_name, currentLang === 'en' ? 'Host' : 'ホスト'),
-	        detailScreen: 'detail',
-	        label: 'ホスト'
-	      };
+	      const listingType = row.listing?.listing_type || row.listingType || 'homestay';
+	      if (listingType === 'sharehouse') {
+	        ensureSharehouseConversationListingObject(conversation, row.profile || {}, row.listing || {});
+	        currentHost = '';
+	        currentListing = SHAREHOUSE_LISTINGS[conversation.listing_id] || {
+	          type: 'sharehouse',
+	          id: conversation.listing_id,
+	          ownerId: conversation.listing_owner_id,
+	          name: hostDisplayValue(row.profile?.display_name, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト'),
+	          detailScreen: 'sharehouse-detail',
+	          label: currentLang === 'en' ? 'Sharehouse' : 'シェアハウス'
+	        };
+	      } else {
+	        ensureHomestayConversationHostObject(conversation, row.profile || {}, row.listing || {});
+	        currentHost = conversation.listing_id;
+	        currentListing = makeHomestayListing(currentHost) || {
+	          type: 'homestay',
+	          id: conversation.listing_id,
+	          name: hostDisplayValue(row.profile?.display_name, currentLang === 'en' ? 'Host' : 'ホスト'),
+	          detailScreen: 'detail',
+	          label: 'ホスト'
+	        };
+	      }
 	      currentApplicationId = null;
 	      currentChatApplicant = null;
 	      chatBackScreen = 'messages';
-	      chatDetailMode = 'host';
+	      chatDetailMode = listingType === 'sharehouse' ? 'sharehouse' : 'host';
 	      currentSupabaseConversation = conversation;
 	      currentSupabaseConversationId = conversation.id;
 	      currentSupabaseChatListingId = conversation.listing_id;
 	      currentSupabaseChatOtherUserId = conversation.listing_owner_id;
-	      currentSupabaseChatMode = 'homestay';
-	      setGuestMessageService('homestay');
-	      applySupabaseHomestayChatHeader(conversation.listing_id);
+	      currentSupabaseChatMode = listingType === 'sharehouse' ? 'sharehouse' : 'homestay';
+	      setGuestMessageService(listingType === 'sharehouse' ? 'sharehouse' : 'homestay');
+	      if (listingType === 'sharehouse') applySupabaseSharehouseChatHeader(row);
+	      else applySupabaseHomestayChatHeader(conversation.listing_id);
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
 	      renderSupabaseHomestayMessages(messages);
 	      await markSupabaseConversationRead(conversation.id);
@@ -12894,6 +12977,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function renderGuestMessages() {
 	    const list = document.getElementById('guest-message-list');
 	    if (!list) return;
+	    if (window._currentUser?.id && window._supabase?.from) {
+	      renderSupabaseGuestMessages();
+	      return;
+	    }
 	    if (guestMessageService === 'sharehouse') {
 	      const rows = Object.values(SHAREHOUSE_LISTINGS);
 	      list.innerHTML = rows.map((listing, index) => {
@@ -12919,11 +13006,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return;
 	    }
 
-	    if (window._currentUser?.id && window._supabase?.from) {
-	      renderSupabaseGuestMessages();
-	      return;
-	    }
-
 	    list.innerHTML = `<div class="hm-empty-result">${currentLang === 'en' ? 'Please log in to view messages.' : 'メッセージを見るにはログインしてください'}</div>`;
 	    return;
 	  }
@@ -12940,9 +13022,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function isSupabaseHomestayChatActive() {
-	    return (currentSupabaseChatMode === 'homestay' || isSupabaseHostChatMode())
+	    return (isSupabaseGuestChatMode() || isSupabaseHostChatMode())
 	      && !!currentSupabaseConversationId
-	      && chatDetailMode === 'host'
+	      && ['host', 'sharehouse'].includes(chatDetailMode)
 	      && !!currentSupabaseChatListingId;
 	  }
 
@@ -13087,6 +13169,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return data || null;
 	  }
 
+	  async function findSupabaseSharehouseConversation(listingId, guestUserId, hostUserId) {
+	    return findSupabaseHomestayConversation(listingId, guestUserId, hostUserId);
+	  }
+
 	  async function ensureSupabaseHomestayConversation(hostId) {
 	    if (!window._supabase?.from) throw new Error('Supabase is not available');
 	    const listingId = String(hostId || currentHost || '').trim();
@@ -13122,6 +13208,42 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    throw error;
 	  }
 
+	  async function ensureSupabaseSharehouseConversation(listingId) {
+	    if (!window._supabase?.from) throw new Error('Supabase is not available');
+	    const id = String(listingId || currentListing?.id || '').trim();
+	    const selected = publishedSharehouseSearchListingById(id);
+	    const listing = selected?.listing || {};
+	    const guestUserId = window._currentUser?.id || '';
+	    const hostUserId = listing.owner_id || selected?.ownerId || SHAREHOUSE_LISTINGS[id]?.ownerId || '';
+	    if (!id || !selected || !listing.id) throw new Error('Published sharehouse listing was not found');
+	    if (listing.listing_type !== 'sharehouse' || listing.status !== 'published') throw new Error('Sharehouse listing is not published');
+	    if (!guestUserId) throw new Error('Current user is missing');
+	    if (!hostUserId) throw new Error('Listing owner is missing');
+	    if (guestUserId === hostUserId) throw new Error('Cannot start a conversation with your own listing');
+	    await loadCurrentUserBlocks();
+	    if (isUserBlockedRelationship(hostUserId)) throw new Error('Conversation is blocked');
+
+	    const existing = await findSupabaseSharehouseConversation(listing.id, guestUserId, hostUserId);
+	    if (existing?.id) return existing;
+
+	    const payload = {
+	      listing_id: listing.id,
+	      initiator_id: guestUserId,
+	      listing_owner_id: hostUserId
+	    };
+	    const { data, error } = await window._supabase
+	      .from('conversations')
+	      .insert(payload)
+	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
+	      .single();
+	    if (!error) return data;
+	    if (error.code === '23505') {
+	      const raced = await findSupabaseSharehouseConversation(listing.id, guestUserId, hostUserId);
+	      if (raced?.id) return raced;
+	    }
+	    throw error;
+	  }
+
 	  function applySupabaseHomestayChatHeader(hostId) {
 	    const h = HOSTS[hostId];
 	    const selected = publishedHomestaySearchHostByListingId(hostId);
@@ -13142,6 +13264,31 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    header.querySelector('.chat-subtitle').textContent = [listing.city || h.city, listing.country_code || h.stateShort].filter(Boolean).join(', ');
 	    document.getElementById('chat-banner-name').textContent = h.name || (currentLang === 'en' ? 'Host' : 'ホスト');
 	    document.querySelector('.chat-banner-sub').textContent = t('chat_detail_apply');
+	  }
+
+	  function applySupabaseSharehouseChatHeader(row = {}) {
+	    const conversation = row.conversation || {};
+	    const profile = row.profile || {};
+	    const listing = row.listing || {};
+	    const listingId = conversation.listing_id || listing.id || '';
+	    const listingObject = SHAREHOUSE_LISTINGS[listingId] || {};
+	    const header = document.querySelector('.chat-header');
+	    if (!header) return;
+	    const avatar = header.querySelector('.chat-avatar');
+	    if (avatar) {
+	      avatar.className = 'chat-avatar';
+	      avatar.style.background = 'var(--bg)';
+	      if (profile.avatar_url) {
+	        avatar.innerHTML = `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`;
+	      } else {
+	        avatar.textContent = '🏢';
+	      }
+	    }
+	    const name = hostDisplayValue(profile.display_name || listingObject.name, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト');
+	    header.querySelector('.chat-title').textContent = name;
+	    header.querySelector('.chat-subtitle').textContent = [listing.title, listing.city].filter(Boolean).join(' · ');
+	    document.getElementById('chat-banner-name').textContent = name;
+	    document.querySelector('.chat-banner-sub').textContent = currentLang === 'en' ? 'Conversation about this sharehouse' : 'このシェアハウスについてのメッセージ';
 	  }
 
 	  async function openSupabaseHomestayChat(hostId) {
@@ -13180,6 +13327,66 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }, 50);
 	    } catch (error) {
 	      console.error('Supabase homestay chat open error:', error);
+	      showToast(currentLang === 'en' ? 'Could not open messages. Please try again.' : 'メッセージを開けませんでした。もう一度お試しください。');
+	    } finally {
+	      isOpeningSupabaseChat = false;
+	      if (detailMessage) detailMessage.disabled = false;
+	    }
+	  }
+
+	  async function openSupabaseSharehouseChat(listingId) {
+	    if (isOpeningSupabaseChat) return;
+	    isOpeningSupabaseChat = true;
+	    const detailMessage = document.getElementById('sharehouse-message-btn');
+	    if (detailMessage) detailMessage.disabled = true;
+	    try {
+	      const id = String(listingId || currentListing?.id || '').trim();
+	      const selected = publishedSharehouseSearchListingById(id);
+	      if (!selected?.listing?.id) throw new Error('Sharehouse listing data was not found');
+	      const conversation = await ensureSupabaseSharehouseConversation(id);
+	      const row = {
+	        conversation,
+	        profile: selected.profile || {},
+	        listing: selected.listing || {},
+	        latestMessage: null,
+	        latestAt: conversation.last_message_at || conversation.created_at,
+	        unread: false,
+	        listingType: 'sharehouse'
+	      };
+	      ensureSharehouseConversationListingObject(conversation, row.profile, row.listing);
+	      currentHost = '';
+	      currentListing = SHAREHOUSE_LISTINGS[id] || {
+	        type: 'sharehouse',
+	        id,
+	        ownerId: conversation.listing_owner_id,
+	        name: hostDisplayValue(row.profile.display_name, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト'),
+	        detailScreen: 'sharehouse-detail',
+	        label: currentLang === 'en' ? 'Sharehouse' : 'シェアハウス'
+	      };
+	      currentApplicationId = null;
+	      currentChatApplicant = null;
+	      chatBackScreen = 'messages';
+	      chatDetailMode = 'sharehouse';
+	      currentSupabaseConversation = conversation;
+	      currentSupabaseConversationId = conversation.id;
+	      currentSupabaseChatListingId = conversation.listing_id;
+	      currentSupabaseChatOtherUserId = conversation.listing_owner_id;
+	      currentSupabaseChatMode = 'sharehouse';
+	      setGuestMessageService('sharehouse');
+	      applySupabaseSharehouseChatHeader(row);
+	      const rows = await loadSupabaseConversationMessages(conversation.id);
+	      renderSupabaseHomestayMessages(rows);
+	      await markSupabaseConversationRead(conversation.id);
+	      await refreshMessageUnreadDot({ role: 'guest' });
+	      navigate(currentScreen, 'chat');
+	      subscribeToCurrentSupabaseConversation();
+	      updateBlockedUi();
+	      const area = document.querySelector('.chat-messages');
+	      setTimeout(() => {
+	        if (area) area.scrollTop = area.scrollHeight;
+	      }, 50);
+	    } catch (error) {
+	      console.error('Supabase sharehouse chat open error:', error);
 	      showToast(currentLang === 'en' ? 'Could not open messages. Please try again.' : 'メッセージを開けませんでした。もう一度お試しください。');
 	    } finally {
 	      isOpeningSupabaseChat = false;
@@ -13255,9 +13462,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function openSharehouseChat(listingId) {
+	    const requestedListingId = String(listingId || currentListing?.id || '').trim();
+	    if (requestedListingId && isPublishedSharehouseSearchListingId(requestedListingId)) {
+	      openSupabaseSharehouseChat(requestedListingId);
+	      return;
+	    }
 	    resetSupabaseChatState();
-	    const listing = listingId && SHAREHOUSE_LISTINGS[listingId]
-	      ? SHAREHOUSE_LISTINGS[listingId]
+	    const listing = requestedListingId && SHAREHOUSE_LISTINGS[requestedListingId]
+	      ? SHAREHOUSE_LISTINGS[requestedListingId]
 	      : currentListing?.type === 'sharehouse'
 	      ? currentListing
 	      : SHAREHOUSE_LISTINGS.sh1;
@@ -27536,7 +27748,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       route.detailFrom = detailBackScreen || extra.detailFrom || 'search';
     }
 	    if (routeScreen === 'chat') {
-	      if (!currentSupabaseConversationId || !['homestay', 'homestay-host', 'sharehouse-host'].includes(currentSupabaseChatMode)) return null;
+	      if (!currentSupabaseConversationId || !['homestay', 'sharehouse', 'homestay-host', 'sharehouse-host'].includes(currentSupabaseChatMode)) return null;
 	      route.conversationId = String(currentSupabaseConversationId);
 	      route.chatMode = currentSupabaseChatMode || (routeRole === 'host' ? 'homestay-host' : 'homestay');
 	    }
@@ -27708,6 +27920,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (screen === 'messages') {
           setGuestMessageService('sharehouse');
           navigate(currentScreen || 'login', 'messages');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
+        if (screen === 'chat') {
+          const conversationId = String(route.conversationId || '').trim();
+          if (!conversationId) throw new Error('Saved sharehouse chat route is missing conversationId');
+          setGuestMessageService('sharehouse');
+          await openSupabaseGuestConversation(conversationId);
           window._authenticatedRouteRestored = true;
           return true;
         }
