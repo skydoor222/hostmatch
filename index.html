@@ -18919,6 +18919,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function sharehouseRoommatePublicUiFromDbRow(row = {}, index = 0) {
 	    const age = Number(row.age);
+	    const rawName = String(row.name || '').trim();
 	    const languages = localizeSharehouseRoommatePublicLanguages(row.languages);
 	    const hobbies = Array.isArray(row.hobbies)
 	      ? row.hobbies.map(item => String(item || '').trim()).filter(Boolean)
@@ -18926,7 +18927,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const genderCode = sharehouseRoommatePublicCode('gender', row.gender);
 	    return {
 	      id: row.id || '',
-	      name: String(row.name || '').trim() || (currentLang === 'en' ? `Resident ${index + 1}` : `同居メンバー ${index + 1}`),
+	      name: rawName || (currentLang === 'en' ? `Roommate ${index + 1}` : `ルームメイト ${index + 1}`),
+	      hasRawName: !!rawName,
 	      age: Number.isFinite(age) ? (currentLang === 'en' ? `${Math.trunc(age)} years old` : `${Math.trunc(age)}歳`) : '',
 	      gender: localizeSharehouseRoommatePublicValue('gender', row.gender),
 	      genderCode,
@@ -18982,7 +18984,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'No resident information has been provided' : '同居メンバー情報は登録されていません'}</div>`;
 	      return;
 	    }
-	    box.innerHTML = roommates.map(member => detailMemberCard(member.name || '同居メンバー', member.genderCode === 'male' ? '👨' : member.genderCode === 'female' ? '👩' : '🧑', [
+	    box.innerHTML = roommates.map(member => detailMemberCard(member.name || (currentLang === 'en' ? 'Roommate' : 'ルームメイト'), member.genderCode === 'male' ? '👨' : member.genderCode === 'female' ? '👩' : '🧑', [
 	      { label: '年齢', value: member.age, raw: true },
 	      { label: '性別', value: member.gender, raw: true },
 	      { label: '国籍', value: member.nationality, raw: true },
@@ -18997,7 +18999,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      { label: '就寝時間', value: member.sleep, raw: true },
 	      { label: '在宅時間', value: member.home, raw: true },
 	      { label: '自炊頻度', value: member.cooking, raw: true }
-	    ], { rawTitle: !!member.name })).join('');
+	    ], { rawTitle: !!member.hasRawName })).join('');
 	  }
 
 	  function startSharehouseDetailRoommatesLoading(listingId) {
@@ -27987,6 +27989,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '他の入居者と共有':'Shared with other residents',
     'オーナー / ホストと共有':'Shared with owner / host',
     '現在一緒に住んでいる人数':'Number of current residents',
+    '居住人数':'Household Size',
+    '交流スタイル':'Social Style',
+    '清潔さ':'Cleanliness',
+    'Cleanさ':'Cleanliness',
+    '掃除':'Cleaning',
+    '騒音':'Noise Level',
+    '静かな時間':'Quiet Hours',
     '1人':'1 person',
     '4人以上':'4 or more people',
     '登録済み同居メンバー数':'Registered household members',
@@ -28051,6 +28060,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '性別':'Gender',
     '宗教':'Religion',
     '英語レベル':'English Level',
+    '在宅時間':'Time at Home',
     'パートナー':'Partner',
     '家族':'Family Member',
     '起床時間':'Wake-up Time',
