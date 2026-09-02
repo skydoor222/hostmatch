@@ -3305,7 +3305,7 @@
       <div class="hm-results-panel" id="sh-results-panel">
         <div class="hm-filter-title">条件に合う掲載</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 12px;flex-wrap:wrap;">
-          <label style="font-size:12px;font-weight:800;color:var(--light);">並び替え</label>
+          <label id="sh-sort-label" style="font-size:12px;font-weight:800;color:var(--light);">並び替え</label>
           <select id="sh-sort" class="hm-filter-input" style="width:auto;min-width:180px;padding:9px 12px;" onchange="rerenderSharehouseFilterResults()">
             <option value="newest">新着順</option>
             <option value="conditions">条件一致が多い順</option>
@@ -19989,9 +19989,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const existingPhotos = (Array.isArray(hostPhotoListingPhotos(info)) ? hostPhotoListingPhotos(info) : [])
 	      .filter(photo => photo?.id && !deleteIds.has(photo.id));
 	    const countEl = document.getElementById(`${prefix}-room-photo-count`);
-	    if (countEl) countEl.textContent = info.service === 'homestay'
-	      ? `${existingPhotos.length + roomFiles[key].length} / ${HOMESTAY_ROOM_PHOTO_MAX_COUNT}枚`
-	      : `${existingPhotos.length + roomFiles[key].length}枚`;
+	    if (countEl) {
+	      const photoCount = existingPhotos.length + roomFiles[key].length;
+	      countEl.textContent = info.service === 'homestay'
+	        ? `${photoCount} / ${HOMESTAY_ROOM_PHOTO_MAX_COUNT}枚`
+	        : currentLang === 'en'
+	          ? `${photoCount} ${photoCount === 1 ? 'photo' : 'photos'}`
+	          : `${photoCount}枚`;
+	    }
 	    const existingHtml = existingPhotos.map(photo => {
 	      const url = homestayListingPhotoPublicUrl(photo.storage_path);
 	      if (!url) return '';
@@ -22690,7 +22695,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          <div class="form-label">${localizeText('プロフィール写真')}</div>
 	          <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:20px 14px;background:var(--bg);cursor:pointer;text-align:center;">
 	            <span class="profile-avatar-preview" id="share-guest-profile-avatar-preview">🧑</span><span style="font-size:14px;font-weight:800;">${localizeText('顔写真をアップロード')}</span>
-	            <span class="profile-avatar-help">JPG / PNG / WebP、5MBまで保存できます</span>
+	            <span class="profile-avatar-help">${currentLang === 'en' ? 'JPG / PNG / WebP, up to 5MB' : 'JPG / PNG / WebP、5MBまで保存できます'}</span>
 	            <input id="share-guest-profile-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'share-guest-profile')" style="display:none;" />
 	          </label>
 	          <button id="share-guest-profile-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('share-guest-profile')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
@@ -22995,7 +23000,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      <div role="button" tabindex="0" onclick="triggerHostAvatarFileInput('${scope}')" onkeydown="handleHostAvatarUploadZoneKeydown(event,'${scope}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
 	        <span id="${prefix}-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
 	        <span style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText('顔写真をアップロード')}</span>
-	        <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
+	        <span style="font-size:12px;color:var(--light);">${currentLang === 'en' ? 'JPG / PNG / WebP, up to 5MB' : 'JPG / PNG / WebP、5MBまで'}</span>
 	      </div>
 	      <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
 	      <button id="${prefix}-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('${scope}')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
@@ -28270,6 +28275,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function localizeHomestayFilterUi() {
     updateHomestaySortLanguage();
+    updateSharehouseSortLanguage();
     document.querySelectorAll('.hm-filter-shell').forEach(root => {
       root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
         if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
@@ -28291,6 +28297,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const label = document.getElementById('hm-sort-label');
     if (label) label.textContent = currentLang === 'ja' ? '並び替え' : 'Sort by';
     const sort = document.getElementById('hm-sort');
+    if (!sort) return;
+    const selectedValue = sort.value;
+    const labels = currentLang === 'ja'
+      ? { newest: '新着順', conditions: '条件一致が多い順', price: '料金が安い順' }
+      : { newest: 'Newest', conditions: 'Most conditions matched', price: 'Lowest price' };
+    Array.from(sort.options).forEach(option => {
+      if (labels[option.value]) option.textContent = labels[option.value];
+    });
+    sort.value = selectedValue;
+  }
+
+  function updateSharehouseSortLanguage() {
+    const label = document.getElementById('sh-sort-label');
+    if (label) label.textContent = currentLang === 'ja' ? '並び替え' : 'Sort by';
+    const sort = document.getElementById('sh-sort');
     if (!sort) return;
     const selectedValue = sort.value;
     const labels = currentLang === 'ja'
