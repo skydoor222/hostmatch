@@ -5107,7 +5107,7 @@
 	      </div>
 	    </div>
 	    <div class="detail-host-row">
-	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">👩</div>
+	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:var(--bg);">👤</div>
 	      <div>
 	        <div class="detail-host-name" id="sharehouse-match-name">田中 あおい</div>
 	        <div class="detail-match-badge" id="sharehouse-match-badge">条件比較</div>
@@ -10643,18 +10643,26 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (counter) counter.textContent = `1 / ${photos.length}`;
 	  }
 
-	  function renderSharehouseDetailHostAvatar(avatarUrl = '') {
+	  function renderSharehouseDetailHostAvatar(options = {}) {
 	    const el = document.getElementById('sharehouse-match-avatar');
 	    if (!el) return;
 	    el.className = 'detail-avatar';
 	    el.style.background = 'var(--bg)';
 	    el.style.overflow = 'hidden';
-	    const url = String(avatarUrl || '').trim();
+	    const url = String(options.avatarUrl || '').trim();
 	    if (url) {
-	      el.innerHTML = `<img src="${escapeHtml(url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`;
+	      const img = document.createElement('img');
+	      img.src = url;
+	      img.alt = options.hostName || '';
+	      img.style.width = '100%';
+	      img.style.height = '100%';
+	      img.style.objectFit = 'cover';
+	      img.style.borderRadius = '50%';
+	      img.style.display = 'block';
+	      el.replaceChildren(img);
 	      return;
 	    }
-	    el.textContent = '👤';
+	    el.replaceChildren(document.createTextNode('👤'));
 	  }
 
 		  function renderGuestPreferenceSummary(type) {
@@ -10682,7 +10690,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const isPublishedGuestDetail = isPublishedSharehouseDetailListingForGuest(listing.id);
 	      const conditionTitle = conditionSection?.querySelector('.detail-section-title');
 	      if (shName) shName.textContent = profile.name;
-	      if (shAvatar) renderSharehouseDetailHostAvatar(profile.avatarUrl || match.avatarUrl || listing.avatarUrl || '');
+	      if (shAvatar) renderSharehouseDetailHostAvatar({
+	        avatarUrl: profile.avatarUrl || match.avatarUrl || listing.avatarUrl || '',
+	        hostName: profile.name || match.name || listing.name || ''
+	      });
 	      if (conditionSection) conditionSection.style.display = isHostPreview ? 'none' : '';
 	      if (isHostPreview) {
 	        if (shBadge) shBadge.style.display = 'none';
@@ -24330,6 +24341,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return {
 	      basic: {
 	        name: displayName,
+	        avatarUrl: window._currentProfile?.avatar_url || '',
 	        birthDate: hostProfile.birth_date || '',
 	        age: hostProfile.age ?? '',
 	        nationality: hostProfile.nationality || '',
@@ -24502,7 +24514,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    updateSharehouseManagerProfileCard();
 	    syncSharehouseHostDataToDemoObjects();
 	    if (currentScreen === 'sharehouse-detail' && currentListing?.type === 'sharehouse') {
-	      renderSharehouseDetailHostAvatar(avatarUrl);
+	      renderSharehouseDetailHostAvatar({
+	        avatarUrl,
+	        hostName: sharehouseMatchProfiles[currentListing.id]?.name || currentListing.name || ''
+	      });
 	    }
 	  }
 
