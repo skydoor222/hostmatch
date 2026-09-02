@@ -7589,11 +7589,17 @@
   let homestayHostListType = 'new';
   let favorites = new Set(['michael', 'thompson']);
   let currentSupabaseFavoriteListingIds = new Set();
+  let currentSupabaseSharehouseFavoriteListingIds = new Set();
   let supabaseFavoriteCacheUserId = '';
   let supabaseFavoritesLoaded = false;
   let supabaseFavoritesLoadFailed = false;
   let supabaseFavoriteLoadingPromise = null;
   const pendingSupabaseFavoriteListingIds = new Set();
+  let supabaseSharehouseFavoriteCacheUserId = '';
+  let supabaseSharehouseFavoritesLoaded = false;
+  let supabaseSharehouseFavoritesLoadFailed = false;
+  let supabaseSharehouseFavoriteLoadingPromise = null;
+  const pendingSupabaseSharehouseFavoriteListingIds = new Set();
   const hostProfileInfo = {
     sarah: { age: '43歳', nationality: 'アメリカ', gender: '女性', religion: '回答しない', englishLevel: 'ネイティブレベル' },
     michael: { age: '45歳・43歳', nationality: 'アメリカ', gender: '男性・女性', religion: 'キリスト教', englishLevel: 'ネイティブレベル' },
@@ -10761,6 +10767,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._currentSupabaseFavoriteListingIds = currentSupabaseFavoriteListingIds;
   }
 
+  function clearSupabaseSharehouseFavoriteCache() {
+    currentSupabaseSharehouseFavoriteListingIds = new Set();
+    supabaseSharehouseFavoriteCacheUserId = '';
+    supabaseSharehouseFavoritesLoaded = false;
+    supabaseSharehouseFavoritesLoadFailed = false;
+    supabaseSharehouseFavoriteLoadingPromise = null;
+    pendingSupabaseSharehouseFavoriteListingIds.clear();
+    window._currentSupabaseSharehouseFavoriteListingIds = currentSupabaseSharehouseFavoriteListingIds;
+  }
+
   async function loadCurrentUserFavorites({ force = false } = {}) {
     const userId = window._currentUser?.id || '';
     if (!userId || !window._supabase?.from) {
@@ -10847,6 +10863,123 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     }
   }
 
+  function isSupabasePublishedSharehouseFavoriteTarget(listingId) {
+    const id = String(listingId || '').trim();
+    const selected = publishedSharehouseSearchListingById(id);
+    return !!(id && selected?.listing?.id === id && selected.listing.status === 'published');
+  }
+
+  function isSupabaseSharehouseListingFavorited(listingId) {
+    return currentSupabaseSharehouseFavoriteListingIds.has(String(listingId || ''));
+  }
+
+  function sharehouseFavoriteHeartForListing(listingId) {
+    if (isSupabasePublishedSharehouseFavoriteTarget(listingId)) {
+      return isSupabaseSharehouseListingFavorited(listingId) ? '❤️' : '🤍';
+    }
+    return favorites.has('sh:' + listingId) ? '❤️' : '🤍';
+  }
+
+  function refreshSharehouseFavoriteViews() {
+    updateFavIcons();
+    const detailSave = document.getElementById('sharehouse-detail-save');
+    if (detailSave && currentListing?.type === 'sharehouse') {
+      detailSave.textContent = sharehouseFavoriteHeartForListing(currentListing.id);
+    }
+    if (currentScreen === 'favorites') renderFavorites();
+    if (currentScreen === 'search' && currentSearchCat === 'sharehouse') rerenderSharehouseFilterResults();
+    if (currentScreen === 'ai-result' && (window._serviceType || currentSearchCat) === 'sharehouse') renderAiResult();
+  }
+
+  async function loadCurrentUserSharehouseFavorites({ force = false } = {}) {
+    const userId = window._currentUser?.id || '';
+    if (!userId || !window._supabase?.from) {
+      clearSupabaseSharehouseFavoriteCache();
+      return currentSupabaseSharehouseFavoriteListingIds;
+    }
+    if (!force && supabaseSharehouseFavoritesLoaded && supabaseSharehouseFavoriteCacheUserId === userId) return currentSupabaseSharehouseFavoriteListingIds;
+    if (supabaseSharehouseFavoriteLoadingPromise && supabaseSharehouseFavoriteCacheUserId === userId) return await supabaseSharehouseFavoriteLoadingPromise;
+
+    supabaseSharehouseFavoriteCacheUserId = userId;
+    supabaseSharehouseFavoriteLoadingPromise = (async () => {
+      try {
+        supabaseSharehouseFavoritesLoadFailed = false;
+        const { data, error } = await window._supabase
+          .from('favorites')
+          .select('listing_id')
+          .eq('user_id', userId);
+        if (error) throw error;
+        const publishedSharehouseIds = new Set((publishedSharehouseSearchListings || [])
+          .map(item => item?.listing?.id || item?.id)
+          .filter(id => isSupabasePublishedSharehouseFavoriteTarget(id)));
+        currentSupabaseSharehouseFavoriteListingIds = new Set((Array.isArray(data) ? data : [])
+          .map(row => String(row?.listing_id || '').trim())
+          .filter(id => id && publishedSharehouseIds.has(id)));
+        supabaseSharehouseFavoritesLoaded = true;
+        supabaseSharehouseFavoritesLoadFailed = false;
+        window._currentSupabaseSharehouseFavoriteListingIds = currentSupabaseSharehouseFavoriteListingIds;
+        refreshSharehouseFavoriteViews();
+        return currentSupabaseSharehouseFavoriteListingIds;
+      } catch (error) {
+        console.error('Supabase sharehouse favorites load error:', error);
+        currentSupabaseSharehouseFavoriteListingIds = new Set();
+        supabaseSharehouseFavoritesLoaded = false;
+        supabaseSharehouseFavoritesLoadFailed = true;
+        window._currentSupabaseSharehouseFavoriteListingIds = currentSupabaseSharehouseFavoriteListingIds;
+        refreshSharehouseFavoriteViews();
+        if (typeof showToast === 'function') showToast(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。');
+        return currentSupabaseSharehouseFavoriteListingIds;
+      } finally {
+        supabaseSharehouseFavoriteLoadingPromise = null;
+      }
+    })();
+    return await supabaseSharehouseFavoriteLoadingPromise;
+  }
+
+  async function saveSupabaseSharehouseFavoriteListing(listingId, shouldFavorite) {
+    const userId = window._currentUser?.id || '';
+    const id = String(listingId || '').trim();
+    if (!userId || !id || !window._supabase?.from || !isSupabasePublishedSharehouseFavoriteTarget(id)) return false;
+    if (pendingSupabaseSharehouseFavoriteListingIds.has(id)) return false;
+    pendingSupabaseSharehouseFavoriteListingIds.add(id);
+
+    const wasFavorite = currentSupabaseSharehouseFavoriteListingIds.has(id);
+    try {
+      if (shouldFavorite) {
+        const { error } = await window._supabase
+          .from('favorites')
+          .insert({ user_id: userId, listing_id: id });
+        if (error && error.code !== '23505') throw error;
+      } else {
+        const { error } = await window._supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('listing_id', id);
+        if (error) throw error;
+      }
+      if (shouldFavorite) currentSupabaseSharehouseFavoriteListingIds.add(id);
+      else currentSupabaseSharehouseFavoriteListingIds.delete(id);
+      supabaseSharehouseFavoritesLoaded = true;
+      supabaseSharehouseFavoriteCacheUserId = userId;
+      supabaseSharehouseFavoritesLoadFailed = false;
+      window._currentSupabaseSharehouseFavoriteListingIds = currentSupabaseSharehouseFavoriteListingIds;
+      refreshSharehouseFavoriteViews();
+      return true;
+    } catch (error) {
+      console.error('Supabase sharehouse favorite update error:', error);
+      if (wasFavorite !== currentSupabaseSharehouseFavoriteListingIds.has(id)) {
+        if (wasFavorite) currentSupabaseSharehouseFavoriteListingIds.add(id);
+        else currentSupabaseSharehouseFavoriteListingIds.delete(id);
+      }
+      refreshSharehouseFavoriteViews();
+      if (typeof showToast === 'function') showToast(currentLang === 'en' ? 'Could not update favorites.' : 'お気に入りを更新できませんでした。');
+      return false;
+    } finally {
+      pendingSupabaseSharehouseFavoriteListingIds.delete(id);
+    }
+  }
+
   async function toggleFavorite(hostId, event) {
     if (event) event.stopPropagation();
     if (isSupabasePublishedFavoriteTarget(hostId)) {
@@ -10873,13 +11006,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (event) event.stopPropagation();
     const listingId = id || currentListing?.id;
     if (!listingId) return;
+    if (isSupabasePublishedSharehouseFavoriteTarget(listingId)) {
+      saveSupabaseSharehouseFavoriteListing(listingId, !isSupabaseSharehouseListingFavorited(listingId));
+      return;
+    }
     const key = 'sh:' + listingId;
     if (favorites.has(key)) favorites.delete(key);
     else favorites.add(key);
     const detailSave = document.getElementById('sharehouse-detail-save');
-    if (detailSave && currentListing?.id === listingId) detailSave.textContent = favorites.has(key) ? '❤️' : '🤍';
+    if (detailSave && currentListing?.id === listingId) detailSave.textContent = sharehouseFavoriteHeartForListing(listingId);
     updateFavIcons();
   }
+  window.loadCurrentUserSharehouseFavorites = loadCurrentUserSharehouseFavorites;
+  window.clearSupabaseSharehouseFavoriteCache = clearSupabaseSharehouseFavoriteCache;
 
   function updateFavIcons() {
     document.querySelectorAll('.match-card-save').forEach(el => {
@@ -10894,15 +11033,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const m = onclick && onclick.match(/openDetail\('([^']+)'\)/);
       if (m) el.textContent = favorites.has(m[1]) ? '❤️' : '🤍';
       const sh = onclick && onclick.match(/openSharehouseDetail\('([^']+)'\)/);
-      if (sh) el.textContent = favorites.has('sh:' + sh[1]) ? '❤️' : '🤍';
+      if (sh) el.textContent = sharehouseFavoriteHeartForListing(sh[1]);
     });
     const detailSave = document.getElementById('detail-save');
     if (detailSave && currentHost) detailSave.textContent = favoriteHeartForHost(currentHost);
+    const sharehouseDetailSave = document.getElementById('sharehouse-detail-save');
+    if (sharehouseDetailSave && currentListing?.type === 'sharehouse') {
+      sharehouseDetailSave.textContent = sharehouseFavoriteHeartForListing(currentListing.id);
+    }
   }
 
   function isHomestayGuestFavoritesContext() {
+    const service = window._serviceType || currentSearchCat || 'homestay';
     return currentRole === 'guest'
-      && (currentSearchCat === 'homestay' || window._serviceType === 'homestay')
+      && service === 'homestay'
       && !!window._currentUser?.id
       && !!window._supabase?.from;
   }
@@ -10955,6 +11099,55 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     });
   }
 
+  function isSharehouseGuestFavoritesContext() {
+    const service = window._serviceType || currentSearchCat || 'homestay';
+    return currentRole === 'guest'
+      && service === 'sharehouse'
+      && !!window._currentUser?.id
+      && !!window._supabase?.from;
+  }
+
+  function renderSupabaseSharehouseFavoriteCard(listingId) {
+    if (!isSupabasePublishedSharehouseFavoriteTarget(listingId)) return '';
+    const profile = sharehouseListingProfile(listingId);
+    if (!profile) return '';
+    const id = escapeHtml(String(listingId || ''));
+    const location = [
+      localizeText(profile.stay.area || ''),
+      localizeText(profile.stay.room || ''),
+      localizeText(profile.stay.furniture || '')
+    ].filter(Boolean).join(' · ');
+    return `
+      <div class="match-card" onclick="openSharehouseDetail('${id}','favorites')">
+        <div class="match-card-img">
+          <img src="${profile.photo}" alt="${localizeText('部屋写真')}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" />
+          <div class="match-badge">${currentLang === 'ja' ? '保存済み' : 'Saved'}</div>
+          <div class="match-card-flag">📍 ${escapeHtml(localizeText(profile.stay.area || ''))}</div>
+          <div class="match-card-save" data-card-action="sharehouse-favorite" onclick="toggleSharehouseFavorite('${id}',event)">❤️</div>
+        </div>
+        <div class="match-card-body">
+          <div class="match-card-row1"><div class="match-card-name">${escapeHtml(localizeText(profile.name || ''))}</div></div>
+          <div class="match-card-location">${escapeHtml(location)}</div>
+          <div class="match-card-footer"><div class="match-card-price">${sharehousePriceCardHtml(profile.stay.budget)}</div><div class="match-card-meals">${escapeHtml(localizeText(profile.ideal.roommateInteraction || ''))}</div></div>
+        </div>
+      </div>`;
+  }
+
+  function loadSharehouseGuestFavoritesForList() {
+    return Promise.resolve().then(async () => {
+      const shouldForceListingLoad = !publishedSharehouseListingsLoaded || !publishedSharehouseListingsCacheMatchesCurrentUser();
+      await ensurePublishedSharehouseListingsForGuest({ force: shouldForceListingLoad });
+      await loadCurrentUserSharehouseFavorites({ force: true });
+      if (currentScreen === 'favorites') renderFavorites();
+    }).catch(error => {
+      console.error('Supabase sharehouse favorite listings render error:', error);
+      const list = document.querySelector('.fav-list');
+      if (currentScreen === 'favorites' && list) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。', '⚠️');
+      }
+    });
+  }
+
   function renderFavorites() {
     const list = document.querySelector('.fav-list');
     if (!list) return;
@@ -10979,6 +11172,29 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
       }
       list.innerHTML = favoriteListingIds.map(id => renderSupabaseHomestayFavoriteCard(id)).join('');
+      return;
+    }
+
+    if (isSharehouseGuestFavoritesContext()) {
+      const hasFavoriteCache = supabaseSharehouseFavoritesLoaded && supabaseSharehouseFavoriteCacheUserId === (window._currentUser?.id || '');
+      const hasPublishedListingCache = publishedSharehouseListingsLoaded && publishedSharehouseListingsCacheMatchesCurrentUser();
+      if (supabaseSharehouseFavoritesLoadFailed || (publishedSharehouseListingsLoadFailed && publishedSharehouseListingsCacheMatchesCurrentUser())) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。', '⚠️');
+        return;
+      }
+      if (!hasFavoriteCache || !hasPublishedListingCache) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Loading saved listings...' : 'お気に入りを読み込み中...', '⌛');
+        if (!supabaseSharehouseFavoriteLoadingPromise && !publishedSharehouseListingsLoading) loadSharehouseGuestFavoritesForList();
+        return;
+      }
+
+      const favoriteListingIds = Array.from(currentSupabaseSharehouseFavoriteListingIds)
+        .filter(id => isSupabasePublishedSharehouseFavoriteTarget(id) && sharehouseListingProfile(id));
+      if (favoriteListingIds.length === 0) {
+        list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'No saved listings yet.' : '保存した掲載はまだありません');
+        return;
+      }
+      list.innerHTML = favoriteListingIds.map(id => renderSupabaseSharehouseFavoriteCard(id)).join('');
       return;
     }
 
@@ -15361,8 +15577,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function sharehouseFavoriteControlHtml(listingId) {
 	    const safeId = escapeHtml(String(listingId || ''));
 	    if (isPublishedSharehouseSearchListingId(listingId)) {
-	      const label = currentLang === 'en' ? 'Sharehouse favorites are coming soon.' : 'シェアハウスのお気に入りは今後対応予定です。';
-	      return `<div class="match-card-save" data-card-action="sharehouse-favorite-disabled" onclick="event.stopPropagation();showToast('${escapeHtml(label)}');">🤍</div>`;
+	      return `<div class="match-card-save" data-card-action="sharehouse-favorite" onclick="toggleSharehouseFavorite('${safeId}',event)">${sharehouseFavoriteHeartForListing(listingId)}</div>`;
 	    }
 	    return `<div class="match-card-save" onclick="toggleSharehouseFavorite('${safeId}',event)">${favorites.has('sh:' + listingId) ? '❤️' : '🤍'}</div>`;
 	  }
@@ -15718,6 +15933,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        ensurePublishedSharehouseListingsForGuest({ force: !publishedSharehouseListingsCacheMatchesCurrentUser() });
 	      }
 	      return;
+	    }
+	    if (isLoggedInSharehouseGuestSearchContext()
+	      && (!supabaseSharehouseFavoritesLoaded || supabaseSharehouseFavoriteCacheUserId !== (window._currentUser?.id || ''))
+	      && !supabaseSharehouseFavoriteLoadingPromise) {
+	      loadCurrentUserSharehouseFavorites();
 	    }
 	    const sortMode = document.getElementById('sh-sort')?.value || 'newest';
 	    const results = sharehouseSearchListingIds()
@@ -27480,6 +27700,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         await loadCurrentSharehouseGuestData({ force: true });
         if (screen === 'favorites') {
           await ensurePublishedSharehouseListingsForGuest({ force: true });
+          await loadCurrentUserSharehouseFavorites({ force: true });
           navigate(currentScreen || 'login', 'favorites');
           window._authenticatedRouteRestored = true;
           return true;
@@ -27713,6 +27934,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._lastRestoredUserMode = null;
     window._registrationStartScreenActive = false;
     if (typeof clearSupabaseFavoriteCache === 'function') clearSupabaseFavoriteCache();
+    if (typeof clearSupabaseSharehouseFavoriteCache === 'function') clearSupabaseSharehouseFavoriteCache();
     if (typeof setMessageUnreadDotVisible === 'function') {
       setMessageUnreadDotVisible('guest', false);
       setMessageUnreadDotVisible('host', false);
@@ -28329,7 +28551,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const saveBtn = document.getElementById('sharehouse-detail-save');
 	    if (saveBtn) saveBtn.style.display = hostPreviewMode ? 'none' : 'block';
 	    renderGuestPreferenceSummary('sharehouse');
-	    if (saveBtn) saveBtn.textContent = favorites.has('sh:' + currentListing.id) ? '❤️' : '🤍';
+	    if (isSupabasePublishedSharehouseFavoriteTarget(currentListing.id)
+	      && (!supabaseSharehouseFavoritesLoaded || supabaseSharehouseFavoriteCacheUserId !== (window._currentUser?.id || ''))
+	      && !supabaseSharehouseFavoriteLoadingPromise) {
+	      loadCurrentUserSharehouseFavorites();
+	    }
+	    if (saveBtn) saveBtn.textContent = sharehouseFavoriteHeartForListing(currentListing.id);
 	    updateListingActionButtons();
     updateBlockedUi();
 	  }
