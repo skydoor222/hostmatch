@@ -18535,6 +18535,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const urls = hostPhotoAvatarPreviewUrls(info);
 	    const file = files[key];
 	    if (!file) return true;
+	    const isSharehouseGuestAvatar = info.service === 'sharehouse-guest';
 
 	    let uploadFile = file;
 	    try {
@@ -18544,16 +18545,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }, HOMESTAY_HOST_AVATAR_ASPECT_RATIO, HOMESTAY_HOST_AVATAR_OUTPUT_SIZE, HOMESTAY_HOST_AVATAR_MIN_ZOOM);
 	      uploadFile = new File([croppedBlob], `avatar-${Date.now()}.webp`, { type: 'image/webp' });
 	    } catch (error) {
-	      console.error('Supabase host profile photo crop error:', error);
-	      setHomestayHostAvatarMessage(scope, currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。');
+	      console.error('Supabase profile photo crop error:', error);
+	      if (isSharehouseGuestAvatar) logSharehouseGuestAvatarUploadFailure('crop', error);
+	      setHomestayHostAvatarMessage(scope, isSharehouseGuestAvatar ? sharehouseGuestAvatarSaveErrorMessage() : (currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。'));
 	      return false;
 	    }
 
 	    const publicUrl = await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(scope, message));
 	    if (!publicUrl) {
-	      console.error('Supabase host profile photo save error:', new Error('Profile photo upload returned no public URL'));
+	      const error = new Error('Profile photo upload returned no public URL');
+	      console.error('Supabase profile photo save error:', error);
+	      if (isSharehouseGuestAvatar) {
+	        logSharehouseGuestAvatarUploadFailure('upload-or-profile-update', error);
+	        setHomestayHostAvatarMessage(scope, sharehouseGuestAvatarSaveErrorMessage());
+	      }
 	      return false;
 	    }
+	    if (isSharehouseGuestAvatar) syncSharehouseGuestAvatarState(publicUrl);
 
 	    clearPendingHomestayHostAvatar(scope);
 	    const input = document.getElementById(`${info.prefix}-avatar-input`);
@@ -22190,6 +22198,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    });
 	  }
 
+	  function logSharehouseGuestAvatarUploadFailure(stage, error) {
+	    console.error('[Sharehouse Guest avatar upload failed]', {
+	      stage,
+	      code: error?.code || '',
+	      message: error?.message || String(error || '')
+	    });
+	  }
+
+	  function sharehouseGuestAvatarSaveErrorMessage() {
+	    return currentLang === 'en' ? 'Could not save profile photo' : 'プロフィール写真を保存できませんでした';
+	  }
+
 	  function sharehouseGuestProfilePayloadFromUi(profile = {}) {
 	    const basic = profile.basic || {};
 	    const lifestyle = profile.lifestyle || {};
@@ -22294,6 +22314,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
+	  function syncSharehouseGuestAvatarState(publicUrl) {
+	    const avatarUrl = String(publicUrl || window._currentProfile?.avatar_url || '').trim();
+	    if (!avatarUrl) return;
+	    window._currentProfile = {
+	      ...(window._currentProfile || {}),
+	      id: window._currentUser?.id || window._currentProfile?.id,
+	      avatar_url: avatarUrl
+	    };
+	    currentSharehouseGuestUiProfile = sharehouseGuestUiProfileFromDbRows(
+	      window._currentProfile || {},
+	      currentSharehouseGuestProfile || {},
+	      currentSharehouseGuestPreferences || {}
+	    );
+	    window._currentSharehouseGuestUiProfile = currentSharehouseGuestUiProfile;
+	    applyCurrentUserAvatarUrl(avatarUrl);
+	  }
+
 	  function sharehouseGuestProfileHasRows(profile, guestProfile, preferences) {
 	    return !!(profile?.id || guestProfile?.user_id || preferences?.user_id);
 	  }
@@ -22373,7 +22410,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        const savedAvatar = await saveHomestayHostAvatarToSupabase(avatarScope);
 	        if (!savedAvatar) {
 	          logSharehouseGuestSaveFailure('avatar', new Error('Avatar upload failed'));
-	          showToast(sharehouseGuestSaveErrorMessage());
+	          logSharehouseGuestAvatarUploadFailure('save', new Error('Avatar upload failed'));
+	          showToast(sharehouseGuestAvatarSaveErrorMessage());
 	          return false;
 	        }
 	      }
@@ -22389,6 +22427,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSharehouseGuestProfile = currentGuestProfileData;
 	      currentSharehouseGuestPreferences = { user_id: userId, ...preferencesPayload };
 	      currentSharehouseGuestUiProfile = sharehouseGuestUiProfileFromDbRows(window._currentProfile || {}, currentSharehouseGuestProfile, currentSharehouseGuestPreferences);
+	      syncSharehouseGuestAvatarState(window._currentProfile?.avatar_url || '');
 	      currentSharehouseGuestDataLoaded = true;
 	      currentSharehouseGuestDataCacheUserId = userId;
 	      window._currentGuestProfileData = currentGuestProfileData;
