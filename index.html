@@ -14323,25 +14323,41 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const GUEST_PROFILE_DB_VALUE_MAPS = {
 	    gender: {
 	      '女性': 'female',
+	      'Female': 'female',
 	      '男性': 'male',
-	      '選択しない': 'prefer_not_to_say'
+	      'Male': 'male',
+	      '選択しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
 	    },
 	    religion: {
 	      '仏教': 'buddhist',
+	      'Buddhism': 'buddhist',
 	      'キリスト教': 'christian',
+	      'Christianity': 'christian',
 	      'イスラム教': 'muslim',
+	      'Islam': 'muslim',
 	      'ヒンドゥー教': 'hindu',
+	      'Hinduism': 'hindu',
 	      'ユダヤ教': 'jewish',
+	      'Judaism': 'jewish',
 	      '無宗教': 'none',
+	      'No religion': 'none',
 	      'その他': 'other',
-	      '回答しない': 'prefer_not_to_say'
+	      'Other': 'other',
+	      '回答しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
 	    },
 	    english_level: {
 	      '初心者': 'beginner',
+	      'Beginner': 'beginner',
 	      '日常会話': 'daily_conversation',
+	      'Daily conversation': 'daily_conversation',
 	      'ビジネスレベル': 'business',
+	      'Business level': 'business',
 	      'ネイティブレベル': 'native',
-	      '回答しない': 'prefer_not_to_say'
+	      'Native level': 'native',
+	      '回答しない': 'prefer_not_to_say',
+	      'Prefer not to say': 'prefer_not_to_say'
 	    },
 	    stay_status: {
 	      '学生': 'student',
@@ -20456,7 +20472,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const sharehouseGuestProfile = collectSharehouseGuestProfileFromEdit();
       shouldApplyRegisteredFilters.sharehouse = true;
       const savedSharehouseGuest = await saveSharehouseGuestDataToSupabase(sharehouseGuestProfile, {
-        avatarScope: name === 'profile' ? 'share-guest-profile' : ''
+        avatarScope: name === 'profile' ? 'share-guest-profile' : '',
+        source: 'edit-' + name
       });
       if (!savedSharehouseGuest) return;
       await loadCurrentSharehouseGuestData({ force: true, applyToUi: false });
@@ -20769,6 +20786,75 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return (textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent).trim();
 	  }
 
+	  function sharehouseGuestCanonicalChipText(chip, fallback = '') {
+	    if (!chip) return fallback;
+	    const original = chip.dataset.hostmatchOriginalText || '';
+	    if (original) return original.trim();
+	    const i18nKey = chip.getAttribute('data-i18n');
+	    if (i18nKey && i18n.ja?.[i18nKey]) return String(i18n.ja[i18nKey]).trim();
+	    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
+	    return (textNode?.__hostmatchOriginalText || chip.textContent || fallback).trim();
+	  }
+
+	  function sharehouseGuestSelectedChipText(rowId, fallback = '') {
+	    const chip = document.querySelector('#' + rowId + ' .form-chip.selected');
+	    return sharehouseGuestCanonicalChipText(chip, fallback);
+	  }
+
+	  function sharehouseGuestSelectedChipTexts(rowId, fallbackValues = []) {
+	    const row = document.getElementById(rowId);
+	    if (!row) return Array.isArray(fallbackValues) ? fallbackValues : [];
+	    const values = Array.from(row.querySelectorAll('.form-chip.selected'))
+	      .map(chip => sharehouseGuestCanonicalChipText(chip, ''))
+	      .filter(Boolean);
+	    return values.length ? values : (Array.isArray(fallbackValues) ? fallbackValues : []);
+	  }
+
+	  function sharehouseGuestCollectorIds(scope = 'onboarding') {
+	    const isProfile = ['profile', 'edit', 'share-guest-profile'].includes(scope);
+	    const prefix = isProfile ? 'shge' : 'shg';
+	    return {
+	      name: isProfile ? 'prof-name' : 'shg-name',
+	      age: prefix + '-age',
+	      nationality: prefix + '-nationality',
+	      gender: prefix + '-gender',
+	      religion: prefix + '-religion',
+	      languages: prefix + '-languages',
+	      englishLevel: prefix + '-english-level',
+	      purpose: prefix + '-purpose',
+	      purposeOther: isProfile ? '' : 'shg-purpose-other',
+	      personalSmoking: prefix + '-personal-smoking',
+	      personalAlcohol: prefix + '-personal-alcohol',
+	      hobbies: prefix + '-hobbies',
+	      hobbyOther: isProfile ? '' : 'shg-hobby-other',
+	      intro: prefix + '-intro',
+	      area: prefix + '-area',
+	      moveIn: isProfile ? prefix + '-move-in' : 'sharehouse-stay-start',
+	      moveOut: isProfile ? prefix + '-move-out' : 'sharehouse-stay-end',
+	      budget: prefix + '-budget',
+	      room: prefix + '-room',
+	      furniture: prefix + '-furniture',
+	      wakeTime: prefix + '-wake-time',
+	      bedtime: prefix + '-bedtime',
+	      homeTime: prefix + '-home-time',
+	      cookingFrequency: prefix + '-cooking-frequency',
+	      roommateInteraction: prefix + '-roommate-interaction',
+	      cleanliness: prefix + '-cleanliness',
+	      cleaningFrequency: prefix + '-cleaning-frequency',
+	      lifeNoise: prefix + '-life-noise',
+	      roommateSmoking: prefix + '-roommate-smoking',
+	      roommateAlcohol: prefix + '-roommate-alcohol',
+	      pets: prefix + '-pets',
+	      visitors: prefix + '-visitors',
+	      overnightGuests: prefix + '-overnight-guests',
+	      bathroom: prefix + '-bathroom',
+	      housemateCount: prefix + '-housemate-count',
+	      kitchen: prefix + '-kitchen',
+	      quietHours: prefix + '-quiet-hours',
+	      mbti: prefix + '-mbti'
+	    };
+	  }
+
   let homestayGuestDemoFilters = null;
   let sharehouseGuestDemoProfile = null;
   const HOMESTAY_GUEST_FILTERS_STORAGE_KEY = 'hostmatch.homestayGuestFilters';
@@ -20830,60 +20916,67 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
-	  function collectSharehouseGuestProfile() {
-	    const purpose = selectedChipText('shg-purpose', '留学');
-	    const purposeOther = formValue('shg-purpose-other', '');
-	    const hobbyOther = formValue('shg-hobby-other', '');
-	    const hobbies = selectedChipTexts('#shg-hobbies').filter(v => !['その他', 'Other'].includes(v));
+	  function collectSharehouseGuestProfile(scope = 'onboarding', fallbackProfile = null) {
+	    const ids = sharehouseGuestCollectorIds(scope);
+	    const useOnboardingDefaults = !['profile', 'edit', 'share-guest-profile'].includes(scope);
+	    const existing = fallbackProfile || (isSharehouseGuestContext() && window._currentUser?.id
+	      ? (currentSharehouseGuestUiProfile || emptySharehouseGuestProfile())
+	      : defaultSharehouseGuestProfile(APPLICANTS?.sakura));
+	    const fieldFallback = (value, onboardingDefault = '') => value || (useOnboardingDefaults ? onboardingDefault : '');
+	    const purpose = sharehouseGuestSelectedChipText(ids.purpose, fieldFallback(existing.basic?.purpose, '留学'));
+	    const purposeOther = ids.purposeOther ? formValue(ids.purposeOther, '') : '';
+	    const hobbyOther = ids.hobbyOther ? formValue(ids.hobbyOther, '') : '';
+	    const hobbies = sharehouseGuestSelectedChipTexts(ids.hobbies, existing.basic?.hobbies || []).filter(v => !['その他', 'Other'].includes(v));
+	    const budgetValue = formValue(ids.budget, String(fieldFallback(existing.stay?.budget, '1200')).replace(/[^0-9]/g, '') || (useOnboardingDefaults ? '1200' : ''));
 	    if (hobbyOther) hobbies.push(hobbyOther);
 	    const nextProfile = {
 	      basic: {
-	        name: formValue('shg-name', '中村 さくら'),
-	        age: formValue('shg-age', '23'),
-	        nationality: formValue('shg-nationality', '日本'),
-	        gender: selectedChipText('shg-gender', '女性'),
-	        religion: selectedChipText('shg-religion', '無宗教'),
-	        languages: selectedChipTexts('#shg-languages'),
-	        englishLevel: selectedChipText('shg-english-level', '日常会話'),
+	        name: formValue(ids.name, fieldFallback(existing.basic?.name, '中村 さくら')),
+	        age: formValue(ids.age, fieldFallback(existing.basic?.age, '23')),
+	        nationality: formValue(ids.nationality, fieldFallback(existing.basic?.nationality, '日本')),
+	        gender: sharehouseGuestSelectedChipText(ids.gender, fieldFallback(existing.basic?.gender, '女性')),
+	        religion: sharehouseGuestSelectedChipText(ids.religion, fieldFallback(existing.basic?.religion, '無宗教')),
+	        languages: sharehouseGuestSelectedChipTexts(ids.languages, existing.basic?.languages || []),
+	        englishLevel: sharehouseGuestSelectedChipText(ids.englishLevel, fieldFallback(existing.basic?.englishLevel, '日常会話')),
 	        purpose: ['その他', 'Other'].includes(purpose) && purposeOther ? purposeOther : purpose,
-	        personalSmoking: selectedChipText('shg-personal-smoking', '吸わない'),
-	        personalAlcohol: selectedChipText('shg-personal-alcohol', 'たまに飲む'),
+	        personalSmoking: sharehouseGuestSelectedChipText(ids.personalSmoking, fieldFallback(existing.basic?.personalSmoking, '吸わない')),
+	        personalAlcohol: sharehouseGuestSelectedChipText(ids.personalAlcohol, fieldFallback(existing.basic?.personalAlcohol, 'たまに飲む')),
 	        hobbies,
-	        intro: formValue('shg-intro', '生活ルールを大切にしながら、程よく交流できるシェア生活をしたいです。')
+	        intro: formValue(ids.intro, fieldFallback(existing.basic?.intro, '生活ルールを大切にしながら、程よく交流できるシェア生活をしたいです。'))
 	      },
 	      stay: {
-	        area: selectedChipText('shg-area', 'Vancouver'),
-	        moveIn: formValue('sharehouse-stay-start', '2026-09-01'),
-	        moveOut: formValue('sharehouse-stay-end', '2027-02-28'),
-	        budget: formValue('shg-budget', '1200') + ' CAD',
-	        room: selectedChipText('shg-room', '個室希望'),
-	        furniture: selectedChipText('shg-furniture', '家具付き希望')
+	        area: sharehouseGuestSelectedChipText(ids.area, fieldFallback(existing.stay?.area, 'Vancouver')),
+	        moveIn: formValue(ids.moveIn, fieldFallback(existing.stay?.moveIn, '2026-09-01')),
+	        moveOut: formValue(ids.moveOut, fieldFallback(existing.stay?.moveOut, '2027-02-28')),
+	        budget: budgetValue ? budgetValue + ' CAD' : '',
+	        room: sharehouseGuestSelectedChipText(ids.room, fieldFallback(existing.stay?.room, '個室希望')),
+	        furniture: sharehouseGuestSelectedChipText(ids.furniture, fieldFallback(existing.stay?.furniture, '家具付き希望'))
 	      },
 	      lifestyle: {
-	        wakeTime: selectedChipText('shg-wake-time', '6〜7時'),
-	        bedtime: selectedChipText('shg-bedtime', '22〜23時'),
-	        homeTime: selectedChipText('shg-home-time', '学校・仕事で日中はいないことが多い'),
-	        cookingFrequency: selectedChipText('shg-cooking-frequency', 'ほぼ毎日')
+	        wakeTime: sharehouseGuestSelectedChipText(ids.wakeTime, fieldFallback(existing.lifestyle?.wakeTime, '6〜7時')),
+	        bedtime: sharehouseGuestSelectedChipText(ids.bedtime, fieldFallback(existing.lifestyle?.bedtime, '22〜23時')),
+	        homeTime: sharehouseGuestSelectedChipText(ids.homeTime, fieldFallback(existing.lifestyle?.homeTime, '学校・仕事で日中はいないことが多い')),
+	        cookingFrequency: sharehouseGuestSelectedChipText(ids.cookingFrequency, fieldFallback(existing.lifestyle?.cookingFrequency, 'ほぼ毎日'))
 	      },
 	      ideal: {
-	        roommateInteraction: selectedChipText('shg-roommate-interaction', '会った時に少し話すくらい'),
-	        cleanliness: selectedChipText('shg-cleanliness', 'ある程度綺麗にしたい'),
-	        cleaningFrequency: selectedChipText('shg-cleaning-frequency', '週1回'),
-	        lifeNoise: selectedChipText('shg-life-noise', '比較的静かな方がいい'),
-	        roommateSmoking: selectedChipText('shg-roommate-smoking', '屋外のみならOK'),
-	        roommateAlcohol: selectedChipText('shg-roommate-alcohol', '気にしない'),
-	        pets: selectedChipText('shg-pets', 'ペットOK'),
-	        visitors: selectedChipText('shg-visitors', '気にしない'),
-	        overnightGuests: selectedChipText('shg-overnight-guests', 'たまにならOK'),
-	        bathroom: selectedChipText('shg-bathroom', '共用でもOK'),
-	        housemateCount: selectedChipText('shg-housemate-count', '2〜3人'),
-	        kitchen: selectedChipText('shg-kitchen', 'キッチンをよく使うので自由に使いたい'),
-	        quietHours: selectedChipText('shg-quiet-hours', 'ある程度静かならOK'),
-	        mbti: selectedChipText('shg-mbti', 'INFP')
+	        roommateInteraction: sharehouseGuestSelectedChipText(ids.roommateInteraction, fieldFallback(existing.ideal?.roommateInteraction, '会った時に少し話すくらい')),
+	        cleanliness: sharehouseGuestSelectedChipText(ids.cleanliness, fieldFallback(existing.ideal?.cleanliness, 'ある程度綺麗にしたい')),
+	        cleaningFrequency: sharehouseGuestSelectedChipText(ids.cleaningFrequency, fieldFallback(existing.ideal?.cleaningFrequency, '週1回')),
+	        lifeNoise: sharehouseGuestSelectedChipText(ids.lifeNoise, fieldFallback(existing.ideal?.lifeNoise, '比較的静かな方がいい')),
+	        roommateSmoking: sharehouseGuestSelectedChipText(ids.roommateSmoking, fieldFallback(existing.ideal?.roommateSmoking, '屋外のみならOK')),
+	        roommateAlcohol: sharehouseGuestSelectedChipText(ids.roommateAlcohol, fieldFallback(existing.ideal?.roommateAlcohol, '気にしない')),
+	        pets: sharehouseGuestSelectedChipText(ids.pets, fieldFallback(existing.ideal?.pets, 'ペットOK')),
+	        visitors: sharehouseGuestSelectedChipText(ids.visitors, fieldFallback(existing.ideal?.visitors, '気にしない')),
+	        overnightGuests: sharehouseGuestSelectedChipText(ids.overnightGuests, fieldFallback(existing.ideal?.overnightGuests, 'たまにならOK')),
+	        bathroom: sharehouseGuestSelectedChipText(ids.bathroom, fieldFallback(existing.ideal?.bathroom, '共用でもOK')),
+	        housemateCount: sharehouseGuestSelectedChipText(ids.housemateCount, fieldFallback(existing.ideal?.housemateCount, '2〜3人')),
+	        kitchen: sharehouseGuestSelectedChipText(ids.kitchen, fieldFallback(existing.ideal?.kitchen, 'キッチンをよく使うので自由に使いたい')),
+	        quietHours: sharehouseGuestSelectedChipText(ids.quietHours, fieldFallback(existing.ideal?.quietHours, 'ある程度静かならOK')),
+	        mbti: sharehouseGuestSelectedChipText(ids.mbti, fieldFallback(existing.ideal?.mbti, 'INFP'))
 	      }
 	    };
 	    saveSharehouseGuestProfile(nextProfile);
-	    if (typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) {
+	    if (!(isSharehouseGuestContext() && window._currentUser?.id) && typeof APPLICANTS !== 'undefined' && APPLICANTS.sakura) {
 	      APPLICANTS.sakura.name = sharehouseGuestDemoProfile.basic.name;
 	      APPLICANTS.sakura.age = sharehouseGuestDemoProfile.basic.age + (String(sharehouseGuestDemoProfile.basic.age).includes('歳') ? '' : '歳');
 	      APPLICANTS.sakura.nationality = sharehouseGuestDemoProfile.basic.nationality;
@@ -20895,7 +20988,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      APPLICANTS.sakura.stay = `${sharehouseGuestDemoProfile.stay.moveIn}〜${sharehouseGuestDemoProfile.stay.moveOut}`;
 	      APPLICANTS.sakura.sharehouseGuestProfile = sharehouseGuestDemoProfile;
 	    }
-	    return sharehouseGuestDemoProfile;
+	    return nextProfile;
 	  }
 
 	  function defaultSharehouseGuestProfile(applicant, useStored = true) {
@@ -21185,7 +21278,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
-	  async function saveSharehouseGuestDataToSupabase(profile = collectSharehouseGuestProfile(), options = {}) {
+	  async function saveSharehouseGuestDataToSupabase(profile = collectSharehouseGuestProfile('onboarding'), options = {}) {
 	    const userId = window._currentUser?.id;
 	    if (!userId || !window._supabase?.from) return false;
 	    if (!sharehouseGuestDatesAreValid(profile)) {
@@ -21196,15 +21289,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const avatarScope = options.avatarScope || '';
 	    try {
 	      const savedProfile = await saveSharehouseGuestProfileRowToSupabase(profile);
-	      if (!savedProfile) return false;
+	      if (!savedProfile) {
+	        showToast(sharehouseGuestSaveErrorMessage());
+	        return false;
+	      }
 
 	      const guestProfilePayload = sharehouseGuestProfilePayloadFromUi(profile);
+	      const preferencesPayload = sharehouseGuestPreferencesPayloadFromUi(profile);
+	      console.log('[Sharehouse Guest save payload]', {
+	        source: options.source || avatarScope || 'sharehouse-guest',
+	        profilePayload: {
+	          display_name: nullableText(profile.basic?.name) || '(auth fallback)',
+	          preferred_language: currentLang === 'en' ? 'en' : 'ja'
+	        },
+	        guestProfilePayload,
+	        preferencesPayload
+	      });
 	      const { error: guestProfileError } = await window._supabase
 	        .from('guest_profiles')
 	        .upsert({ user_id: userId, ...guestProfilePayload }, { onConflict: 'user_id' });
 	      if (guestProfileError) throw guestProfileError;
 
-	      const preferencesPayload = sharehouseGuestPreferencesPayloadFromUi(profile);
 	      const { error: preferencesError } = await window._supabase
 	        .from('sharehouse_guest_preferences')
 	        .upsert({ user_id: userId, ...preferencesPayload }, { onConflict: 'user_id' });
@@ -21212,11 +21317,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	      if (avatarScope) {
 	        const savedAvatar = await saveHomestayHostAvatarToSupabase(avatarScope);
-	        if (!savedAvatar) return false;
+	        if (!savedAvatar) {
+	          showToast(sharehouseGuestSaveErrorMessage());
+	          return false;
+	        }
 	      }
 
 	      const savedMode = await saveGuestUserModeToSupabase('sharehouse');
-	      if (!savedMode) return false;
+	      if (!savedMode) {
+	        showToast(sharehouseGuestSaveErrorMessage());
+	        return false;
+	      }
 
 	      currentGuestProfileData = { ...(currentGuestProfileData || {}), user_id: userId, ...guestProfilePayload };
 	      currentSharehouseGuestProfile = currentGuestProfileData;
@@ -21401,55 +21512,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function collectSharehouseGuestProfileFromEdit() {
 	    const existing = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
-	    const hobbies = shSelectedChipTexts('shge', 'hobbies').filter(v => !['その他', 'Other'].includes(v));
-	    const nextProfile = {
-	      basic: {
-	        name: formValue('prof-name', existing.basic.name),
-	        age: formValue('shge-age', existing.basic.age),
-	        nationality: formValue('shge-nationality', existing.basic.nationality),
-	        gender: shSelectedChipText('shge', 'gender', existing.basic.gender),
-	        religion: shSelectedChipText('shge', 'religion', existing.basic.religion),
-	        languages: shSelectedChipTexts('shge', 'languages'),
-	        englishLevel: shSelectedChipText('shge', 'english-level', existing.basic.englishLevel),
-	        purpose: shSelectedChipText('shge', 'purpose', existing.basic.purpose),
-	        personalSmoking: shSelectedChipText('shge', 'personal-smoking', existing.basic.personalSmoking),
-	        personalAlcohol: shSelectedChipText('shge', 'personal-alcohol', existing.basic.personalAlcohol),
-	        hobbies: hobbies.length ? hobbies : existing.basic.hobbies,
-	        intro: formValue('shge-intro', existing.basic.intro)
-	      },
-	      stay: {
-	        area: shSelectedChipText('shge', 'area', existing.stay.area),
-	        moveIn: formValue('shge-move-in', existing.stay.moveIn),
-	        moveOut: formValue('shge-move-out', existing.stay.moveOut),
-	        budget: formValue('shge-budget', String(existing.stay.budget).replace(/[^0-9]/g, '') || '1200') + ' CAD',
-	        room: shSelectedChipText('shge', 'room', existing.stay.room),
-	        furniture: shSelectedChipText('shge', 'furniture', existing.stay.furniture)
-	      },
-	      lifestyle: {
-	        wakeTime: shSelectedChipText('shge', 'wake-time', existing.lifestyle.wakeTime),
-	        bedtime: shSelectedChipText('shge', 'bedtime', existing.lifestyle.bedtime),
-	        homeTime: shSelectedChipText('shge', 'home-time', existing.lifestyle.homeTime),
-	        cookingFrequency: shSelectedChipText('shge', 'cooking-frequency', existing.lifestyle.cookingFrequency)
-	      },
-	      ideal: {
-	        roommateInteraction: shSelectedChipText('shge', 'roommate-interaction', existing.ideal.roommateInteraction),
-	        cleanliness: shSelectedChipText('shge', 'cleanliness', existing.ideal.cleanliness),
-	        cleaningFrequency: shSelectedChipText('shge', 'cleaning-frequency', existing.ideal.cleaningFrequency),
-	        lifeNoise: shSelectedChipText('shge', 'life-noise', existing.ideal.lifeNoise),
-	        roommateSmoking: shSelectedChipText('shge', 'roommate-smoking', existing.ideal.roommateSmoking),
-	        roommateAlcohol: shSelectedChipText('shge', 'roommate-alcohol', existing.ideal.roommateAlcohol),
-	        pets: shSelectedChipText('shge', 'pets', existing.ideal.pets),
-	        visitors: shSelectedChipText('shge', 'visitors', existing.ideal.visitors),
-	        overnightGuests: shSelectedChipText('shge', 'overnight-guests', existing.ideal.overnightGuests),
-	        bathroom: shSelectedChipText('shge', 'bathroom', existing.ideal.bathroom),
-	        housemateCount: shSelectedChipText('shge', 'housemate-count', existing.ideal.housemateCount),
-	        kitchen: shSelectedChipText('shge', 'kitchen', existing.ideal.kitchen),
-	        quietHours: shSelectedChipText('shge', 'quiet-hours', existing.ideal.quietHours),
-	        mbti: shSelectedChipText('shge', 'mbti', existing.ideal.mbti)
-	      }
-	    };
-	    saveSharehouseGuestProfile(nextProfile);
-	    return sharehouseGuestDemoProfile;
+	    return collectSharehouseGuestProfile('profile', existing);
 	  }
 
 		  function isSharehouseGuestContext() {
@@ -23772,11 +23835,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const type = window._serviceType || 'homestay';
       currentRole = 'guest';
       currentSearchCat = type === 'sharehouse' ? 'sharehouse' : 'homestay';
-	      window._serviceType = currentSearchCat;
+      window._serviceType = currentSearchCat;
 	      if (currentSearchCat === 'sharehouse') {
-	        const sharehouseGuestProfile = collectSharehouseGuestProfile();
+	        const sharehouseGuestProfile = collectSharehouseGuestProfile('onboarding');
 	        shouldApplyRegisteredFilters.sharehouse = true;
-	        const savedSharehouseGuest = await saveSharehouseGuestDataToSupabase(sharehouseGuestProfile, { avatarScope: 'share-guest-ob' });
+	        const savedSharehouseGuest = await saveSharehouseGuestDataToSupabase(sharehouseGuestProfile, { avatarScope: 'share-guest-ob', source: 'onboarding' });
 	        if (!savedSharehouseGuest) {
 	          return;
 	        }
@@ -23837,11 +23900,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       document.getElementById('mstep-4').classList.add('done');
       setTimeout(async () => {
         if (type === 'sharehouse') {
-          const sharehouseGuestProfile = collectSharehouseGuestProfile();
+          const sharehouseGuestProfile = collectSharehouseGuestProfile('onboarding');
           window._serviceType = 'sharehouse';
           currentSearchCat = 'sharehouse';
           shouldApplyRegisteredFilters.sharehouse = true;
-          const savedSharehouseGuest = await saveSharehouseGuestDataToSupabase(sharehouseGuestProfile, { avatarScope: 'share-guest-ob' });
+          const savedSharehouseGuest = await saveSharehouseGuestDataToSupabase(sharehouseGuestProfile, { avatarScope: 'share-guest-ob', source: 'matching-onboarding' });
           if (!savedSharehouseGuest) {
             return;
           }
