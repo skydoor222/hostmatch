@@ -7973,10 +7973,39 @@
 
   let originalHostProfileBodyHtml = null;
 
+  const SHAREHOUSE_HOST_PROFILE_LEGACY_PHOTO_IDS = [
+    'share-profile-avatar-preview',
+    'share-profile-avatar-input',
+    'share-profile-avatar-adjust',
+    'share-profile-avatar-message',
+    'share-profile-room-photo-input',
+    'share-profile-room-photo-message',
+    'share-profile-room-photo-count',
+    'share-profile-room-photo-preview'
+  ];
+
+  function updateSharehouseHostProfileLegacyPhotoIds(hidden) {
+    if (hidden) {
+      SHAREHOUSE_HOST_PROFILE_LEGACY_PHOTO_IDS.forEach(id => {
+        document.querySelectorAll(`#screen-host-profile [id="${id}"]`).forEach(el => {
+          if (el.closest('.sharehouse-profile-section')) return;
+          el.dataset.sharehouseLegacyPhotoId = id;
+          el.removeAttribute('id');
+        });
+      });
+      return;
+    }
+    document.querySelectorAll('#screen-host-profile [data-sharehouse-legacy-photo-id]').forEach(el => {
+      if (!el.id) el.id = el.dataset.sharehouseLegacyPhotoId;
+      delete el.dataset.sharehouseLegacyPhotoId;
+    });
+  }
+
   function setSharehouseHostProfileLegacyBlocksHidden(hidden) {
     const section = document.querySelector('#screen-host-profile .sharehouse-profile-section');
     const card = section?.parentElement;
     if (!card) return;
+    updateSharehouseHostProfileLegacyPhotoIds(hidden);
     Array.from(card.children).forEach(child => {
       const keepForSharehouse = child.classList?.contains('sharehouse-profile-section')
         || child.matches?.('button[onclick="saveHostProfileScreen()"]');
@@ -18411,15 +18440,30 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function setHomestayHostAvatarMessage(scope, message) {
-	    const prefix = hostPhotoScopeInfo(scope).prefix;
-	    const el = document.getElementById(`${prefix}-avatar-message`);
+	    const el = hostPhotoElement(scope, 'avatar-message');
 	    if (el) el.textContent = message || '';
 	  }
 
 	  function setHomestayRoomPhotoMessage(scope, message) {
-	    const prefix = hostPhotoScopeInfo(scope).prefix;
-	    const el = document.getElementById(`${prefix}-room-photo-message`);
+	    const el = hostPhotoElement(scope, 'room-photo-message');
 	    if (el) el.textContent = message || '';
+	  }
+
+	  function hostPhotoDomRoot(scope) {
+	    const info = hostPhotoScopeInfo(scope);
+	    if (info.service === 'sharehouse' && info.prefix === 'share-profile') {
+	      return document.querySelector('#screen-host-profile .sharehouse-profile-section');
+	    }
+	    if (info.service === 'sharehouse' && info.prefix === 'res') {
+	      return document.querySelector('#screen-resident-onboarding');
+	    }
+	    return null;
+	  }
+
+	  function hostPhotoElement(scope, suffix) {
+	    const info = hostPhotoScopeInfo(scope);
+	    const id = `${info.prefix}-${suffix}`;
+	    return hostPhotoDomRoot(scope)?.querySelector(`[id="${id}"]`) || document.getElementById(id);
 	  }
 
 	  function clearPendingHomestayHostAvatar(scope) {
@@ -18438,9 +18482,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function renderHomestayHostAvatarPreview(scope) {
 	    const info = hostPhotoScopeInfo(scope);
 	    const key = info.key;
-	    const prefix = info.prefix;
-	    const preview = document.getElementById(`${prefix}-avatar-preview`);
-	    const adjustBtn = document.getElementById(`${prefix}-avatar-adjust`);
+	    const preview = hostPhotoElement(scope, 'avatar-preview');
+	    const adjustBtn = hostPhotoElement(scope, 'avatar-adjust');
 	    const pendingUrl = hostPhotoAvatarPreviewUrls(info)[key];
 	    if (adjustBtn) adjustBtn.style.display = pendingUrl ? 'block' : 'none';
 	    if (pendingUrl && preview) {
@@ -18457,14 +18500,32 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window.renderAvatarElement(preview, window._currentProfile?.avatar_url || '');
 	  }
 
+	  function triggerHostAvatarFileInput(scope) {
+	    const info = hostPhotoScopeInfo(scope);
+	    const input = hostPhotoElement(scope, 'avatar-input');
+	    if (!input) {
+	      if (info.service === 'sharehouse') {
+	        console.error('[Sharehouse Host avatar selection failed]', { stage: 'input-not-found', scope: info.prefix });
+	      }
+	      return;
+	    }
+	    input.click();
+	  }
+
+	  function handleHostAvatarUploadZoneKeydown(event, scope) {
+	    if (event.key !== 'Enter' && event.key !== ' ') return;
+	    event.preventDefault();
+	    triggerHostAvatarFileInput(scope);
+	  }
+
 	  function bindHostPhotoInputs(scope) {
 	    const info = hostPhotoScopeInfo(scope);
-	    const avatarInput = document.getElementById(`${info.prefix}-avatar-input`);
+	    const avatarInput = hostPhotoElement(scope, 'avatar-input');
 	    if (avatarInput && !avatarInput.hasAttribute('onchange') && avatarInput.dataset.hostPhotoBound !== 'true') {
 	      avatarInput.addEventListener('change', event => handleHomestayHostAvatarSelection(event, scope));
 	      avatarInput.dataset.hostPhotoBound = 'true';
 	    }
-	    const roomInput = document.getElementById(`${info.prefix}-room-photo-input`);
+	    const roomInput = hostPhotoElement(scope, 'room-photo-input');
 	    if (roomInput && !roomInput.hasAttribute('onchange') && roomInput.dataset.hostPhotoBound !== 'true') {
 	      roomInput.addEventListener('change', event => handleHomestayHostRoomPhotoSelection(event, scope));
 	      roomInput.dataset.hostPhotoBound = 'true';
@@ -18527,6 +18588,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    urls[key] = URL.createObjectURL(file);
 	    loadHomestayHostAvatarNaturalSize(scope);
 	    renderHomestayHostAvatarPreview(scope);
+	    if (info.service === 'sharehouse') {
+	      window.setTimeout(() => openHomestayHostAvatarCropEditor(scope, { discardAvatarOnCancel: true }), 0);
+	    }
 	  }
 
 	  async function saveHomestayHostAvatarToSupabase(scope) {
@@ -18577,7 +18641,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (isSharehouseHostAvatar) syncSharehouseHostAvatarState(publicUrl);
 
 	    clearPendingHomestayHostAvatar(scope);
-	    const input = document.getElementById(`${info.prefix}-avatar-input`);
+	    const input = hostPhotoElement(scope, 'avatar-input');
 	    if (input) input.value = '';
 	    renderHomestayHostAvatarPreview(scope);
 	    return true;
@@ -19966,7 +20030,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (modal) modal.style.display = 'flex';
 	  }
 
-	  function openHomestayHostAvatarCropEditor(scope) {
+	  function openHomestayHostAvatarCropEditor(scope, options = {}) {
 	    const info = hostPhotoScopeInfo(scope);
 	    const key = info.key;
 	    const crops = hostPhotoAvatarCrops(info);
@@ -19982,6 +20046,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        previewUrl,
 	        crop: crops[key] || defaultHomestayRoomPhotoCropState()
 	      },
+	      discardAvatarOnCancel: options.discardAvatarOnCancel === true,
 	      draft: cloneHomestayRoomPhotoCrop(crops[key]),
 	      pointerId: null,
 	      startX: 0,
@@ -20128,6 +20193,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function cancelHomestayRoomPhotoCrop() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    if (state?.kind === 'avatar' && state.discardAvatarOnCancel) {
+	      const scope = state.sourceScope || state.scope;
+	      clearPendingHomestayHostAvatar(scope);
+	      closeHomestayRoomPhotoCropModal();
+	      renderHomestayHostAvatarPreview(scope);
+	      return;
+	    }
 	    closeHomestayRoomPhotoCropModal();
 	  }
 
@@ -22873,12 +22946,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function shHostAvatarUploadBoxHtml(prefix) {
 	    const scope = prefix === 'share-profile' ? 'share-profile' : 'res';
 	    return `
-	      <label style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
+	      <div role="button" tabindex="0" onclick="triggerHostAvatarFileInput('${scope}')" onkeydown="handleHostAvatarUploadZoneKeydown(event,'${scope}')" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border:1.5px dashed var(--border);border-radius:14px;padding:22px 16px;background:var(--bg);cursor:pointer;text-align:center;">
 	        <span id="${prefix}-avatar-preview" style="width:74px;height:74px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:34px;overflow:hidden;"></span>
 	        <span style="font-size:14px;font-weight:800;color:var(--dark);">${localizeText('顔写真をアップロード')}</span>
 	        <span style="font-size:12px;color:var(--light);">JPG / PNG / WebP、5MBまで</span>
-	        <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="display:none;" />
-	      </label>
+	      </div>
+	      <input id="${prefix}-avatar-input" type="file" accept="image/jpeg,image/png,image/webp" onchange="handleHomestayHostAvatarSelection(event,'${scope}')" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;" tabindex="-1" aria-hidden="true" />
 	      <button id="${prefix}-avatar-adjust" type="button" onclick="openHomestayHostAvatarCropEditor('${scope}')" style="display:none;width:100%;margin-top:8px;border:1px solid var(--border);background:white;border-radius:10px;padding:9px;font-size:12px;font-weight:900;color:var(--mid);cursor:pointer;">表示を調整</button>
 	      <div id="${prefix}-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	    `;
