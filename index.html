@@ -6860,6 +6860,8 @@
 	    renderAvatarElement(document.getElementById('share-guest-profile-avatar-preview'), avatarUrl);
 	    renderAvatarElement(document.getElementById('host-ob-avatar-preview'), avatarUrl);
 	    renderAvatarElement(document.getElementById('host-profile-avatar-preview'), avatarUrl);
+	    renderAvatarElement(document.getElementById('res-avatar-preview'), avatarUrl);
+	    renderAvatarElement(document.getElementById('share-profile-avatar-preview'), avatarUrl);
 	  }
 
   window.renderAvatarElement = renderAvatarElement;
@@ -18536,6 +18538,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const file = files[key];
 	    if (!file) return true;
 	    const isSharehouseGuestAvatar = info.service === 'sharehouse-guest';
+	    const isSharehouseHostAvatar = info.service === 'sharehouse';
 
 	    let uploadFile = file;
 	    try {
@@ -18547,7 +18550,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    } catch (error) {
 	      console.error('Supabase profile photo crop error:', error);
 	      if (isSharehouseGuestAvatar) logSharehouseGuestAvatarUploadFailure('crop', error);
-	      setHomestayHostAvatarMessage(scope, isSharehouseGuestAvatar ? sharehouseGuestAvatarSaveErrorMessage() : (currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。'));
+	      if (isSharehouseHostAvatar) logSharehouseHostAvatarUploadFailure('crop', error);
+	      setHomestayHostAvatarMessage(scope, isSharehouseGuestAvatar
+	        ? sharehouseGuestAvatarSaveErrorMessage()
+	        : isSharehouseHostAvatar
+	          ? sharehouseHostAvatarSaveErrorMessage()
+	          : (currentLang === 'en' ? 'Could not process the profile photo.' : 'プロフィール写真を加工できませんでした。'));
 	      return false;
 	    }
 
@@ -18559,9 +18567,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        logSharehouseGuestAvatarUploadFailure('upload-or-profile-update', error);
 	        setHomestayHostAvatarMessage(scope, sharehouseGuestAvatarSaveErrorMessage());
 	      }
+	      if (isSharehouseHostAvatar) {
+	        logSharehouseHostAvatarUploadFailure('upload-or-profile-update', error);
+	        setHomestayHostAvatarMessage(scope, sharehouseHostAvatarSaveErrorMessage());
+	      }
 	      return false;
 	    }
 	    if (isSharehouseGuestAvatar) syncSharehouseGuestAvatarState(publicUrl);
+	    if (isSharehouseHostAvatar) syncSharehouseHostAvatarState(publicUrl);
 
 	    clearPendingHomestayHostAvatar(scope);
 	    const input = document.getElementById(`${info.prefix}-avatar-input`);
@@ -22210,6 +22223,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return currentLang === 'en' ? 'Could not save profile photo' : 'プロフィール写真を保存できませんでした';
 	  }
 
+	  function logSharehouseHostAvatarUploadFailure(stage, error) {
+	    console.error('[Sharehouse Host avatar upload failed]', {
+	      stage,
+	      code: error?.code || '',
+	      message: error?.message || String(error || '')
+	    });
+	  }
+
+	  function sharehouseHostAvatarSaveErrorMessage() {
+	    return currentLang === 'en' ? 'Could not save profile photo' : 'プロフィール写真を保存できませんでした';
+	  }
+
 	  function sharehouseGuestProfilePayloadFromUi(profile = {}) {
 	    const basic = profile.basic || {};
 	    const lifestyle = profile.lifestyle || {};
@@ -23994,6 +24019,34 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
+	  async function saveSharehouseHostProfileIdentityToSupabase(displayName) {
+	    const userId = window._currentUser?.id;
+	    const trimmedName = nullableText(displayName) || fallbackAuthDisplayName(window._currentUser);
+	    if (!userId || !window._supabase?.from || !trimmedName) return false;
+	    try {
+	      const { error } = await window._supabase
+	        .from('profiles')
+	        .upsert({
+	          id: userId,
+	          display_name: trimmedName,
+	          preferred_language: currentLang === 'en' ? 'en' : 'ja'
+	        }, { onConflict: 'id' });
+	      if (error) throw error;
+	      window._currentProfile = {
+	        ...(window._currentProfile || {}),
+	        id: userId,
+	        display_name: trimmedName,
+	        preferred_language: currentLang === 'en' ? 'en' : 'ja'
+	      };
+	      const mypageName = document.getElementById('mypage-username') || document.querySelector('.mypage-name');
+	      if (mypageName) mypageName.textContent = trimmedName;
+	      return true;
+	    } catch (error) {
+	      console.error('Supabase sharehouse host profiles identity save error:', error);
+	      return false;
+	    }
+	  }
+
 	  async function saveSharehouseHostDataToSupabase(scope = 'res') {
 	    const userId = window._currentUser?.id;
 	    if (!userId || !window._supabase?.from) {
@@ -24014,7 +24067,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const validationErrors = validateSharehouseListingPayload(listingPayload);
 	    if (validationErrors.length) return { ok: false, message: validationErrors[0] };
 
-	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
+	    const savedDisplayName = await saveSharehouseHostProfileIdentityToSupabase(displayName);
 	    if (!savedDisplayName) {
 	      console.error('Supabase sharehouse profiles display_name save error:', new Error('profiles.display_name update returned false'));
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your name. Please try again.' : '名前を保存できませんでした。もう一度お試しください。' };
@@ -24053,6 +24106,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	    const savedAvatar = await saveHomestayHostAvatarToSupabase(scope === 'profile' ? 'share-profile' : 'res');
 	    if (!savedAvatar) {
+	      logSharehouseHostAvatarUploadFailure('save', new Error('Avatar upload failed'));
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your profile photo.' : 'プロフィール写真を保存できませんでした。' };
 	    }
 
@@ -24337,6 +24391,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	    syncedMatch.roommates = profile.members || [];
 	    syncedMatch.rules = sharehouseHostRulesForDetail(profile);
+	  }
+
+	  function syncSharehouseHostAvatarState(publicUrl) {
+	    const avatarUrl = String(publicUrl || window._currentProfile?.avatar_url || '').trim();
+	    if (!avatarUrl) return;
+	    window._currentProfile = {
+	      ...(window._currentProfile || {}),
+	      id: window._currentUser?.id || window._currentProfile?.id,
+	      avatar_url: avatarUrl
+	    };
+	    renderHomestayHostAvatarPreview('res');
+	    renderHomestayHostAvatarPreview('share-profile');
+	    updateSharehouseManagerProfileCard();
+	    syncSharehouseHostDataToDemoObjects();
 	  }
 
 	  function applyCurrentSharehouseHostDataToHostProfileScreen() {
