@@ -8615,16 +8615,20 @@
       const blockedId = selected?.listing?.owner_id || '';
       return { ...targetFromSupabaseUser(blockedId, { display_name: selected?.name, avatar_url: selected?.avatarUrl }), type: 'homestay-host', avatar: selected?.avatar || '🧑' };
     }
-    if (currentScreen === 'sharehouse-detail' || chatDetailMode === 'sharehouse') {
-      const listing = currentListing?.type === 'sharehouse' ? currentListing : SHAREHOUSE_LISTINGS.sh1;
-      const published = isSupabasePublishedSharehouseFavoriteTarget(listing?.id)
-        ? publishedSharehouseSearchListingById(listing.id)
-        : null;
-      const blockedId = currentSupabaseChatOtherUserId || listing?.ownerId || listing?.owner_id || published?.listing?.owner_id || '';
+    if (currentScreen === 'sharehouse-detail') {
+      const listing = currentListing?.type === 'sharehouse' ? currentListing : null;
+      const listingId = listing?.id || '';
+      const published = listingId ? publishedSharehouseSearchListingById(listingId) : null;
+      const blockedId = published?.listing?.owner_id || listing?.ownerId || listing?.owner_id || '';
       if (blockedId) {
-        return { ...targetFromSupabaseUser(blockedId, { display_name: listing?.name || published?.profile?.display_name }), type: 'sharehouse-host', avatar: '🏢' };
+        return { ...targetFromSupabaseUser(blockedId, { display_name: published?.profile?.display_name || listing?.name }), type: 'sharehouse-host', avatar: '🏢' };
       }
-      return { id: `sharehouse:${listing.id}`, name: listing.name, type: 'sharehouse', avatar: '🏢' };
+      if (listingId && !window._currentUser?.id) return { id: `sharehouse:${listingId}`, name: listing?.name || listingId, type: 'sharehouse', avatar: '🏢' };
+      return { id: '', blockedId: '', name: '', type: 'sharehouse-host', avatar: '🏢' };
+    }
+    if (chatDetailMode === 'sharehouse' && currentSupabaseChatOtherUserId) {
+      const name = document.querySelector('#screen-chat .chat-title')?.textContent || (currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト');
+      return { ...targetFromSupabaseUser(currentSupabaseChatOtherUserId, { display_name: name }), type: 'sharehouse-host', avatar: '🏢' };
     }
     if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant' || currentScreen === 'host-applicant-detail') && currentChatApplicant) {
       const service = chatDetailMode === 'sharehouse-applicant' ? 'sharehouse' : chatDetailMode === 'homestay-applicant' ? 'homestay' : hostApplicantServiceMode;
@@ -8669,6 +8673,10 @@
   function startBlockCurrentUser() {
     document.querySelectorAll('.more-menu').forEach(menu => menu.classList.remove('open'));
     currentBlockTarget = getCurrentUserTarget();
+    if (isSupabaseBlocksContext() && (!currentBlockTarget?.id || !currentBlockTarget?.blockedId)) {
+      showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
+      return;
+    }
     const modal = document.getElementById('block-user-modal');
     if (modal) {
       modal.style.display = 'flex';
@@ -8686,7 +8694,7 @@
     closeBlockModal();
     if (!target?.id) return;
     if (!isSupabaseBlocksContext() || !target.blockedId) {
-      if (isSupabaseBlocksContext() && String(target.type || '').includes('homestay')) {
+      if (isSupabaseBlocksContext() && /(homestay|sharehouse)/.test(String(target.type || ''))) {
         showToast(currentLang === 'en' ? 'Could not update block settings' : 'ブロックを更新できませんでした');
         return;
       }
@@ -11493,18 +11501,24 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (isSharehouseGuestFavoritesContext()) {
       const hasFavoriteCache = supabaseSharehouseFavoritesLoaded && supabaseSharehouseFavoriteCacheUserId === (window._currentUser?.id || '');
       const hasPublishedListingCache = publishedSharehouseListingsLoaded && publishedSharehouseListingsCacheMatchesCurrentUser();
+      const hasBlockCache = supabaseBlocksLoaded && supabaseBlocksCacheUserId === (window._currentUser?.id || '');
       if (supabaseSharehouseFavoritesLoadFailed || (publishedSharehouseListingsLoadFailed && publishedSharehouseListingsCacheMatchesCurrentUser())) {
         list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Could not load saved listings.' : 'お気に入りを読み込めませんでした。', '⚠️');
         return;
       }
-      if (!hasFavoriteCache || !hasPublishedListingCache) {
+      if (!hasFavoriteCache || !hasPublishedListingCache || !hasBlockCache) {
         list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'Loading saved listings...' : 'お気に入りを読み込み中...', '⌛');
         if (!supabaseSharehouseFavoriteLoadingPromise && !publishedSharehouseListingsLoading) loadSharehouseGuestFavoritesForList();
+        if (!supabaseBlocksLoading) {
+          loadCurrentUserBlocks().then(() => {
+            if (currentScreen === 'favorites') renderFavorites();
+          }).catch(error => console.error('Supabase sharehouse favorite blocks refresh error:', error));
+        }
         return;
       }
 
       const favoriteListingIds = Array.from(currentSupabaseSharehouseFavoriteListingIds)
-        .filter(id => isSupabasePublishedSharehouseFavoriteTarget(id) && sharehouseListingProfile(id));
+        .filter(id => isSupabasePublishedSharehouseFavoriteTarget(id) && sharehouseListingProfile(id) && !isPublishedSharehouseListingBlockedForCurrentGuest(id));
       if (favoriteListingIds.length === 0) {
         list.innerHTML = renderFavoritesMessage(currentLang === 'en' ? 'No saved listings yet.' : '保存した掲載はまだありません');
         return;
@@ -16459,10 +16473,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      && !supabaseSharehouseFavoriteLoadingPromise) {
 	      loadCurrentUserSharehouseFavorites();
 	    }
+	    if (isLoggedInSharehouseGuestSearchContext()
+	      && (!supabaseBlocksLoaded || supabaseBlocksCacheUserId !== (window._currentUser?.id || ''))
+	      && !supabaseBlocksLoading) {
+	      loadCurrentUserBlocks().then(() => {
+	        if (currentScreen === 'search' && currentSearchCat === 'sharehouse') rerenderSharehouseFilterResults();
+	      }).catch(error => console.error('Supabase sharehouse search blocks refresh error:', error));
+	    }
 	    const sortMode = document.getElementById('sh-sort')?.value || 'newest';
 	    const results = sharehouseSearchListingIds()
 	      .map(id => shEvaluateListing(id, filters))
-	      .filter(result => result.hardPass);
+	      .filter(result => result.hardPass && !isPublishedSharehouseListingBlockedForCurrentGuest(result.id));
     if (sortMode === 'conditions') {
       results.sort((a, b) => b.matchedTotal - a.matchedTotal || b.activeTotal - a.activeTotal);
 	    } else if (sortMode === 'price') {
@@ -18666,6 +18687,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      && !!listing
 	      && listing.listing_type === 'sharehouse'
 	      && listing.status === 'published';
+	  }
+
+	  function sharehousePublishedListingOwnerUserId(listingId) {
+	    const id = String(listingId || '').trim();
+	    if (!id) return '';
+	    const item = publishedSharehouseSearchListingById(id);
+	    return String(item?.listing?.owner_id || item?.ownerId || '').trim();
+	  }
+
+	  function isPublishedSharehouseListingBlockedForCurrentGuest(listingId) {
+	    if (!isLoggedInSharehouseGuestSearchContext()) return false;
+	    const ownerId = sharehousePublishedListingOwnerUserId(listingId);
+	    return !!ownerId && isUserBlockedRelationship(ownerId);
 	  }
 
 	  const SHAREHOUSE_ROOMMATE_PUBLIC_VALUE_OPTIONS = {
@@ -28479,10 +28513,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           if (!listingId) throw new Error('Saved sharehouse detail route is missing listingId');
           await ensurePublishedSharehouseListingsForGuest({ force: true });
           await loadCurrentUserSharehouseFavorites({ force: true });
+          await loadCurrentUserBlocks({ force: true });
           const selected = publishedSharehouseSearchListingById(listingId);
           const listing = selected?.listing || {};
           if (!selected?.id || listing.listing_type !== 'sharehouse' || listing.status !== 'published') {
             console.warn('Saved sharehouse detail listing is no longer available:', { listingId });
+            navigate(currentScreen || 'login', route.detailFrom === 'favorites' ? 'favorites' : 'search');
+            if (currentScreen === 'search') switchSearchCat('sharehouse');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
+          if (isUserBlockedRelationship(listing.owner_id)) {
+            console.warn('Saved sharehouse detail listing is blocked:', { listingId });
             navigate(currentScreen || 'login', route.detailFrom === 'favorites' ? 'favorites' : 'search');
             if (currentScreen === 'search') switchSearchCat('sharehouse');
             window._authenticatedRouteRestored = true;
@@ -29348,6 +29390,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       console.error('Published sharehouse listing detail data was not found:', { listingId });
       showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
       return;
+    }
+    if (isLoggedInSharehouseGuestSearchContext() && listingId) {
+      if (!supabaseBlocksLoaded || supabaseBlocksCacheUserId !== (window._currentUser?.id || '')) {
+        loadCurrentUserBlocks().then(() => {
+          if (isPublishedSharehouseListingBlockedForCurrentGuest(listingId) && currentScreen === 'sharehouse-detail' && currentListing?.id === listingId) {
+            navigate(currentScreen, backScreen === 'favorites' ? 'favorites' : 'search');
+            if (currentScreen === 'search') switchSearchCat('sharehouse');
+          }
+        }).catch(error => console.error('Supabase sharehouse detail blocks refresh error:', error));
+      } else if (isPublishedSharehouseListingBlockedForCurrentGuest(listingId)) {
+        showToast(currentLang === 'en' ? 'This user is blocked.' : 'このユーザーをブロックしています');
+        navigate(currentScreen || 'search', backScreen === 'favorites' ? 'favorites' : 'search');
+        if (currentScreen === 'search') switchSearchCat('sharehouse');
+        return;
+      }
     }
     currentListing = listing || SHAREHOUSE_LISTINGS.sh1;
     if (!hostPreviewMode) syncGuestServiceContext('sharehouse');
