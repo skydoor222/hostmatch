@@ -6837,7 +6837,7 @@
   function renderAvatarElement(el, avatarUrl) {
     if (!el) return;
     if (avatarUrl) {
-      el.textContent = '';
+      el.replaceChildren();
       const img = document.createElement('img');
       img.src = avatarUrl;
       img.alt = 'Profile photo';
@@ -6845,10 +6845,12 @@
       img.style.height = '100%';
       img.style.objectFit = 'cover';
       img.style.display = 'block';
-      el.appendChild(img);
+      img.onerror = () => {
+        if (img.parentNode === el) el.replaceChildren(document.createTextNode('🧑'));
+      };
+      el.replaceChildren(img);
     } else {
-      el.textContent = '';
-      el.textContent = '🧑';
+      el.replaceChildren(document.createTextNode('🧑'));
     }
   }
 
@@ -7730,7 +7732,7 @@
     const name = document.getElementById('sharehouse-manager-name');
     const meta = document.getElementById('sharehouse-manager-meta');
     const profile = currentSharehouseHostProfile || {};
-    if (avatar && typeof window.renderAvatarElement === 'function') window.renderAvatarElement(avatar, window._currentProfile?.avatar_url || '');
+    if (avatar && typeof window.renderAvatarElement === 'function') window.renderAvatarElement(avatar, currentSharehouseHostAvatarUrl());
     if (name) name.textContent = window._currentProfile?.display_name || '—';
     if (meta) {
       const parts = [
@@ -10659,10 +10661,26 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      img.style.objectFit = 'cover';
 	      img.style.borderRadius = '50%';
 	      img.style.display = 'block';
+	      img.onerror = () => {
+	        if (img.parentNode === el) el.replaceChildren(document.createTextNode('👤'));
+	      };
 	      el.replaceChildren(img);
 	      return;
 	    }
 	    el.replaceChildren(document.createTextNode('👤'));
+	  }
+
+	  function currentSharehouseHostAvatarUrl() {
+	    if (serviceModeForCurrentContext() !== 'sharehouse') return '';
+	    const profileAvatarUrl = String(window._currentProfile?.avatar_url || '').trim();
+	    if (profileAvatarUrl) return profileAvatarUrl;
+	    const listingId = currentSharehouseListing?.id || (currentListing?.type === 'sharehouse' ? currentListing.id : '');
+	    if (!listingId) return '';
+	    const listing = SHAREHOUSE_LISTINGS[listingId] || {};
+	    const match = sharehouseMatchProfiles[listingId] || {};
+	    const isCurrentHostListing = listing.isCurrentSharehouseHost === true || match.isCurrentSharehouseHost === true;
+	    if (!isCurrentHostListing) return '';
+	    return String(match.hostProfile?.basic?.avatarUrl || match.avatarUrl || listing.avatarUrl || '').trim();
 	  }
 
 		  function renderGuestPreferenceSummary(type) {
@@ -10691,7 +10709,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const conditionTitle = conditionSection?.querySelector('.detail-section-title');
 	      if (shName) shName.textContent = profile.name;
 	      if (shAvatar) renderSharehouseDetailHostAvatar({
-	        avatarUrl: profile.avatarUrl || match.avatarUrl || listing.avatarUrl || '',
+	        avatarUrl: isHostPreview ? currentSharehouseHostAvatarUrl() : (profile.avatarUrl || match.avatarUrl || listing.avatarUrl || ''),
 	        hostName: profile.name || match.name || listing.name || ''
 	      });
 	      if (conditionSection) conditionSection.style.display = isHostPreview ? 'none' : '';
@@ -24509,6 +24527,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      id: window._currentUser?.id || window._currentProfile?.id,
 	      avatar_url: avatarUrl
 	    };
+	    if (typeof window.applyCurrentUserAvatarUrl === 'function') window.applyCurrentUserAvatarUrl(avatarUrl);
 	    renderHomestayHostAvatarPreview('res');
 	    renderHomestayHostAvatarPreview('share-profile');
 	    updateSharehouseManagerProfileCard();
@@ -24712,6 +24731,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentSharehouseListingPhotos = currentSharehouseListingPhotos;
 	    window._currentSharehouseHostRoommates = currentSharehouseHostRoommates;
 	    syncSharehouseHostDataToDemoObjects();
+	    syncSharehouseHostAvatarState(window._currentProfile?.avatar_url || '');
 	    updateHostDashboardFromCurrentSharehouseData();
 	    applyCurrentSharehouseHostDataToHostProfileScreen();
 	    return true;
