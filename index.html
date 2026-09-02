@@ -10419,6 +10419,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		        const title = document.getElementById('sharehouse-members-title');
 		        if (title) title.textContent = `👥 ${localizeText('入居者メンバー')}`;
 		        const isRealSharehouseListing = !!match.isPublishedSharehouse || !!match.isCurrentSharehouseHost;
+		        if (isPublishedSharehouseDetailListingForGuest(listing.id)) {
+		          renderSharehouseDetailRoommateBox();
+		        } else {
 		        const storedRoommates = Array.isArray(match.roommates) ? match.roommates : [];
 		        const fallbackMembers = isRealSharehouseListing ? [] : [
 		          {
@@ -10469,6 +10472,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		            { label: '自炊頻度', value: member.cooking },
 		            { label: '趣味', value: member.hobbies || member.social }
 		          ])).join('');
+		        }
 		        }
 		      }
 		      const ruleBox = document.getElementById('sharehouse-rules');
@@ -16240,6 +16244,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  let publishedSharehouseListingsLoading = false;
 	  let publishedSharehouseListingsLoadFailed = false;
 	  let publishedSharehouseListingsCacheUserId = '';
+	  let currentSharehouseDetailRoommateListingId = '';
+	  let currentSharehouseDetailRoommateStatus = 'idle';
+	  let currentSharehouseDetailRoommateRows = [];
 	  const pendingHomestayHostAvatarFiles = { ob: null, profile: null };
 	  const pendingHomestayHostAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingHomestayHostAvatarCrops = { ob: null, profile: null };
@@ -18343,6 +18350,238 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return [];
 	    }
 	    return sharehouseDemoListingIds();
+	  }
+
+	  function isPublishedSharehouseDetailListingForGuest(listingId) {
+	    const item = publishedSharehouseSearchListingById(listingId);
+	    const listing = item?.listing || null;
+	    return currentRole === 'guest'
+	      && !hostPreviewMode
+	      && !!window._currentUser?.id
+	      && !!window._supabase?.from
+	      && !!listing
+	      && listing.listing_type === 'sharehouse'
+	      && listing.status === 'published';
+	  }
+
+	  const SHAREHOUSE_ROOMMATE_PUBLIC_VALUE_OPTIONS = {
+	    gender: [
+	      { code: 'female', ja: '女性', en: 'Female', aliases: ['女性', 'Female'] },
+	      { code: 'male', ja: '男性', en: 'Male', aliases: ['男性', 'Male'] },
+	      { code: 'prefer_not_to_say', ja: '選択しない', en: 'Prefer not to say', aliases: ['選択しない', '回答しない', 'Prefer not to say'] }
+	    ],
+	    religion: [
+	      { code: 'buddhist', ja: '仏教', en: 'Buddhism', aliases: ['仏教', 'Buddhism'] },
+	      { code: 'christian', ja: 'キリスト教', en: 'Christianity', aliases: ['キリスト教', 'Christianity'] },
+	      { code: 'muslim', ja: 'イスラム教', en: 'Islam', aliases: ['イスラム教', 'Islam'] },
+	      { code: 'hindu', ja: 'ヒンドゥー教', en: 'Hinduism', aliases: ['ヒンドゥー教', 'Hinduism'] },
+	      { code: 'jewish', ja: 'ユダヤ教', en: 'Judaism', aliases: ['ユダヤ教', 'Judaism'] },
+	      { code: 'none', ja: '無宗教', en: 'No religion', aliases: ['無宗教', 'No religion'] },
+	      { code: 'other', ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] },
+	      { code: 'prefer_not_to_say', ja: '回答しない', en: 'Prefer not to say', aliases: ['回答しない', '選択しない', 'Prefer not to say'] }
+	    ],
+	    english_level: [
+	      { code: 'beginner', ja: '初心者', en: 'Beginner', aliases: ['初心者', 'Beginner'] },
+	      { code: 'daily_conversation', ja: '日常会話', en: 'Daily conversation', aliases: ['日常会話', 'Daily conversation'] },
+	      { code: 'business', ja: 'ビジネスレベル', en: 'Business level', aliases: ['ビジネスレベル', 'Business level'] },
+	      { code: 'native', ja: 'ネイティブレベル', en: 'Native level', aliases: ['ネイティブレベル', 'Native level'] },
+	      { code: 'prefer_not_to_say', ja: '回答しない', en: 'Prefer not to say', aliases: ['回答しない', 'Prefer not to say'] }
+	    ],
+	    smoking_habit: [
+	      { code: 'non_smoker', ja: '吸わない', en: 'Non-smoker', aliases: ['吸わない', 'Non-smoker'] },
+	      { code: 'outdoor_smoker', ja: '屋外で吸う', en: 'Outdoor smoker', aliases: ['屋外で吸う', 'Outdoor smoker'] },
+	      { code: 'indoor_smoker', ja: '室内でも吸う', en: 'Indoor smoker', aliases: ['室内でも吸う', 'Indoor smoker'] }
+	    ],
+	    drinking_habit: [
+	      { code: 'often', ja: 'よく飲む', en: 'Often', aliases: ['よく飲む', 'Often'] },
+	      { code: 'sometimes', ja: 'たまに飲む', en: 'Sometimes', aliases: ['たまに飲む', 'Sometimes'] },
+	      { code: 'none', ja: '飲まない', en: 'Does not drink', aliases: ['飲まない', 'ほとんど飲まない', 'None', 'Does not drink'] }
+	    ],
+	    wake_time: [
+	      { code: 'before_6', ja: '6時以前', en: 'Before 6 AM', aliases: ['6時以前', 'Before 6 AM'] },
+	      { code: '6_to_7', ja: '6〜7時', en: '6-7 AM', aliases: ['6〜7時', '6-7 AM'] },
+	      { code: '7_to_8', ja: '7〜8時', en: '7-8 AM', aliases: ['7〜8時', '7-8 AM'] },
+	      { code: '8_to_9', ja: '8〜9時', en: '8-9 AM', aliases: ['8〜9時', '8-9 AM'] },
+	      { code: 'after_9', ja: '9時以降', en: 'After 9 AM', aliases: ['9時以降', 'After 9 AM'] }
+	    ],
+	    bedtime: [
+	      { code: 'before_22', ja: '22時以前', en: 'Before 10 PM', aliases: ['22時以前', 'Before 10 PM'] },
+	      { code: '22_to_23', ja: '22〜23時', en: '10-11 PM', aliases: ['22〜23時', '10-11 PM'] },
+	      { code: '23_to_24', ja: '23〜24時', en: '11 PM-midnight', aliases: ['23〜24時', '11 PM-midnight'] },
+	      { code: '0_to_1', ja: '0〜1時', en: 'Midnight-1 AM', aliases: ['0〜1時', 'Midnight-1 AM'] },
+	      { code: 'after_1', ja: '1時以降', en: 'After 1 AM', aliases: ['1時以降', 'After 1 AM'] }
+	    ],
+	    home_presence: [
+	      { code: 'daytime_often_home', ja: '日中も家にいることが多い', en: 'Often home during the day', aliases: ['日中も家にいることが多い', 'Often home during the day'] },
+	      { code: 'daytime_often_away', ja: '学校・仕事で日中はいないことが多い', en: 'Usually away during the day', aliases: ['学校・仕事で日中はいないことが多い', 'Usually away during the day'] },
+	      { code: 'mostly_evenings', ja: '夜を中心に家にいる', en: 'Mostly evenings', aliases: ['夜を中心に家にいる', 'Mostly evenings'] },
+	      { code: 'varies', ja: '日によって異なる', en: 'Varies by day', aliases: ['日によって異なる', 'Varies by day'] }
+	    ],
+	    cooking_frequency: [
+	      { code: 'almost_daily', ja: 'ほぼ毎日', en: 'Almost daily', aliases: ['ほぼ毎日', 'Almost daily'] },
+	      { code: 'few_times_week', ja: '週に数回', en: 'A few times a week', aliases: ['週に数回', 'A few times a week'] },
+	      { code: 'sometimes', ja: 'たまに', en: 'Sometimes', aliases: ['たまに', 'Sometimes'] },
+	      { code: 'rarely', ja: 'ほとんどしない', en: 'Rarely', aliases: ['ほとんどしない', 'Rarely'] }
+	    ]
+	  };
+
+	  function sharehouseRoommatePublicCode(field, value) {
+	    const text = String(value || '').trim();
+	    if (!text) return '';
+	    const normalized = normalizeHomestayGuestDetailSystemText(text);
+	    const option = (SHAREHOUSE_ROOMMATE_PUBLIC_VALUE_OPTIONS[field] || []).find(item =>
+	      item.code === text || item.aliases.some(alias => normalizeHomestayGuestDetailSystemText(alias) === normalized)
+	    );
+	    return option?.code || '';
+	  }
+
+	  function localizeSharehouseRoommatePublicValue(field, value) {
+	    const text = String(value || '').trim();
+	    if (!text) return '';
+	    const code = sharehouseRoommatePublicCode(field, text);
+	    const option = (SHAREHOUSE_ROOMMATE_PUBLIC_VALUE_OPTIONS[field] || []).find(item => item.code === code);
+	    return option ? (currentLang === 'en' ? option.en : option.ja) : text;
+	  }
+
+	  function localizeSharehouseRoommatePublicLanguages(values) {
+	    const items = Array.isArray(values) ? values.map(value => String(value || '').trim()).filter(Boolean) : [];
+	    return items.map(value => {
+	      const localized = localizeGuestProfileValue('languages', value);
+	      return localized === homestayGuestDetailNotProvided() ? value : localized;
+	    });
+	  }
+
+	  function sharehouseRoommatePublicUiFromDbRow(row = {}, index = 0) {
+	    const age = Number(row.age);
+	    const languages = localizeSharehouseRoommatePublicLanguages(row.languages);
+	    const hobbies = Array.isArray(row.hobbies)
+	      ? row.hobbies.map(item => String(item || '').trim()).filter(Boolean)
+	      : String(row.hobbies || '').split(/[、,]/).map(item => item.trim()).filter(Boolean);
+	    const genderCode = sharehouseRoommatePublicCode('gender', row.gender);
+	    return {
+	      id: row.id || '',
+	      name: String(row.name || '').trim() || (currentLang === 'en' ? `Resident ${index + 1}` : `同居メンバー ${index + 1}`),
+	      age: Number.isFinite(age) ? (currentLang === 'en' ? `${Math.trunc(age)} years old` : `${Math.trunc(age)}歳`) : '',
+	      gender: localizeSharehouseRoommatePublicValue('gender', row.gender),
+	      genderCode,
+	      nationality: String(row.nationality || '').trim(),
+	      religion: localizeSharehouseRoommatePublicValue('religion', row.religion),
+	      languages,
+	      languagesText: languages.join(currentLang === 'ja' ? '、' : ', '),
+	      englishLevel: localizeSharehouseRoommatePublicValue('english_level', row.english_level),
+	      smoke: localizeSharehouseRoommatePublicValue('smoking_habit', row.smoking_habit),
+	      alcohol: localizeSharehouseRoommatePublicValue('drinking_habit', row.drinking_habit),
+	      hobbies,
+	      hobbiesText: hobbies.join(currentLang === 'ja' ? '、' : ', '),
+	      note: String(row.note || '').trim(),
+	      wake: localizeSharehouseRoommatePublicValue('wake_time', row.wake_time),
+	      sleep: localizeSharehouseRoommatePublicValue('bedtime', row.bedtime),
+	      home: localizeSharehouseRoommatePublicValue('home_presence', row.home_presence),
+	      cooking: localizeSharehouseRoommatePublicValue('cooking_frequency', row.cooking_frequency),
+	      sortOrder: Number(row.sort_order || 0)
+	    };
+	  }
+
+	  function syncSharehouseDetailRoommatesToAdapter(listingId, rows = []) {
+	    const match = sharehouseMatchProfiles[listingId];
+	    if (!match) return [];
+	    const roommates = (Array.isArray(rows) ? rows : []).map(sharehouseRoommatePublicUiFromDbRow);
+	    match.roommates = roommates;
+	    if (match.hostProfile) match.hostProfile.members = roommates;
+	    return roommates;
+	  }
+
+	  function renderSharehouseDetailRoommateBox() {
+	    const box = document.getElementById('sharehouse-roommates');
+	    const title = document.getElementById('sharehouse-members-title');
+	    if (!box || !currentListing?.id) return;
+	    if (title) title.textContent = `👥 ${currentLang === 'en' ? 'Residents' : '同居メンバー'}`;
+	    const listingId = currentListing.id;
+	    const isPublishedGuestDetail = isPublishedSharehouseDetailListingForGuest(listingId);
+	    if (!isPublishedGuestDetail) return;
+	    if (currentSharehouseDetailRoommateListingId !== listingId) {
+	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'Loading...' : '読み込み中...'}</div>`;
+	      return;
+	    }
+	    if (currentSharehouseDetailRoommateStatus === 'loading') {
+	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'Loading...' : '読み込み中...'}</div>`;
+	      return;
+	    }
+	    if (currentSharehouseDetailRoommateStatus === 'error') {
+	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'Could not load resident information.' : '同居メンバー情報を読み込めませんでした'}</div>`;
+	      return;
+	    }
+	    const roommates = syncSharehouseDetailRoommatesToAdapter(listingId, currentSharehouseDetailRoommateRows);
+	    if (!roommates.length) {
+	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'No resident information has been provided' : '同居メンバー情報は登録されていません'}</div>`;
+	      return;
+	    }
+	    box.innerHTML = roommates.map(member => detailMemberCard(member.name, member.genderCode === 'male' ? '👨' : member.genderCode === 'female' ? '👩' : '🧑', [
+	      { label: '年齢', value: member.age, raw: true },
+	      { label: '性別', value: member.gender, raw: true },
+	      { label: '国籍', value: member.nationality, raw: true },
+	      { label: '宗教', value: member.religion, raw: true },
+	      { label: '使用言語', value: member.languagesText, raw: true },
+	      { label: '英語レベル', value: member.englishLevel, raw: true },
+	      { label: '喫煙', value: member.smoke, raw: true },
+	      { label: '飲酒', value: member.alcohol, raw: true },
+	      { label: '趣味', value: member.hobbiesText, raw: true },
+	      { label: '一言', value: member.note, raw: true },
+	      { label: '起床時間', value: member.wake, raw: true },
+	      { label: '就寝時間', value: member.sleep, raw: true },
+	      { label: '在宅時間', value: member.home, raw: true },
+	      { label: '自炊頻度', value: member.cooking, raw: true }
+	    ])).join('');
+	  }
+
+	  function startSharehouseDetailRoommatesLoading(listingId) {
+	    currentSharehouseDetailRoommateListingId = String(listingId || '');
+	    currentSharehouseDetailRoommateStatus = 'loading';
+	    currentSharehouseDetailRoommateRows = [];
+	    window._currentSharehouseDetailRoommates = currentSharehouseDetailRoommateRows;
+	  }
+
+	  async function loadPublishedSharehouseDetailRoommatesForGuest(listingId) {
+	    const id = String(listingId || '').trim();
+	    if (!isPublishedSharehouseDetailListingForGuest(id)) return [];
+	    const item = publishedSharehouseSearchListingById(id);
+	    const listing = item?.listing || null;
+	    if (!listing || listing.listing_type !== 'sharehouse' || listing.status !== 'published') {
+	      console.error('Published sharehouse roommate load skipped for non-published listing:', { listingId: id });
+	      return [];
+	    }
+	    const { data, error } = await window._supabase
+	      .from('sharehouse_host_roommates')
+	      .select('id, listing_id, name, age, gender, nationality, religion, languages, english_level, smoking_habit, drinking_habit, hobbies, note, wake_time, bedtime, home_presence, cooking_frequency, sort_order, created_at')
+	      .eq('listing_id', id)
+	      .order('sort_order', { ascending: true })
+	      .order('created_at', { ascending: true });
+	    if (error) throw error;
+	    return Array.isArray(data) ? data : [];
+	  }
+
+	  async function refreshSharehouseDetailRoommatesForGuest(listingId) {
+	    const id = String(listingId || '').trim();
+	    if (!isPublishedSharehouseDetailListingForGuest(id)) return;
+	    startSharehouseDetailRoommatesLoading(id);
+	    renderSharehouseDetailRoommateBox();
+	    try {
+	      const rows = await loadPublishedSharehouseDetailRoommatesForGuest(id);
+	      if (currentListing?.id !== id) return;
+	      currentSharehouseDetailRoommateListingId = id;
+	      currentSharehouseDetailRoommateStatus = 'loaded';
+	      currentSharehouseDetailRoommateRows = rows;
+	      window._currentSharehouseDetailRoommates = currentSharehouseDetailRoommateRows;
+	      renderSharehouseDetailRoommateBox();
+	    } catch (error) {
+	      console.error('Supabase sharehouse detail roommates load error:', error);
+	      if (currentListing?.id !== id) return;
+	      currentSharehouseDetailRoommateListingId = id;
+	      currentSharehouseDetailRoommateStatus = 'error';
+	      currentSharehouseDetailRoommateRows = [];
+	      window._currentSharehouseDetailRoommates = currentSharehouseDetailRoommateRows;
+	      renderSharehouseDetailRoommateBox();
+	    }
 	  }
 
   function publishedHomestaySearchHostByListingId(listingId) {
@@ -27523,6 +27762,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     }
     if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
     if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
+	    if (currentScreen === 'sharehouse-detail' && currentListing?.type === 'sharehouse') {
+	      renderGuestPreferenceSummary('sharehouse');
+	      renderSharehouseDetailRoommateBox();
+	    }
 	    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
 	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
 	    if (currentScreen === 'homestay-guest-detail' && currentHomestayGuestDetailData) {
@@ -28766,11 +29009,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentApplicationId = currentListing.type + ':' + currentListing.id;
     interviewBackScreen = currentListing.detailScreen;
     navigate(currentScreen, 'sharehouse-detail');
+	    const shouldLoadDetailRoommates = isPublishedSharehouseDetailListingForGuest(currentListing.id);
+	    if (shouldLoadDetailRoommates) {
+	      startSharehouseDetailRoommatesLoading(currentListing.id);
+	    } else if (!hostPreviewMode) {
+	      currentSharehouseDetailRoommateListingId = '';
+	      currentSharehouseDetailRoommateStatus = 'idle';
+	      currentSharehouseDetailRoommateRows = [];
+	      window._currentSharehouseDetailRoommates = currentSharehouseDetailRoommateRows;
+	    }
 	    const previewBanner = document.getElementById('sharehouse-preview-banner');
 	    if (previewBanner) previewBanner.style.display = hostPreviewMode ? 'block' : 'none';
 	    const saveBtn = document.getElementById('sharehouse-detail-save');
 	    if (saveBtn) saveBtn.style.display = hostPreviewMode ? 'none' : 'block';
 	    renderGuestPreferenceSummary('sharehouse');
+	    if (shouldLoadDetailRoommates) refreshSharehouseDetailRoommatesForGuest(currentListing.id);
 	    if (isSupabasePublishedSharehouseFavoriteTarget(currentListing.id)
 	      && (!supabaseSharehouseFavoritesLoaded || supabaseSharehouseFavoriteCacheUserId !== (window._currentUser?.id || ''))
 	      && !supabaseSharehouseFavoriteLoadingPromise) {
