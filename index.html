@@ -7734,8 +7734,8 @@
     if (name) name.textContent = window._currentProfile?.display_name || '—';
     if (meta) {
       const parts = [
-        profile.age !== null && profile.age !== undefined ? `${profile.age}歳` : '',
-        profile.nationality ? localizeText(profile.nationality) : '',
+        profile.age !== null && profile.age !== undefined ? (currentLang === 'en' ? `${profile.age} years old` : `${profile.age}歳`) : '',
+        profile.nationality ? String(profile.nationality) : '',
         localizeText(fromSharehouseHostProfileDbValue('gender', profile.gender))
       ].filter(Boolean);
       meta.textContent = parts.length ? parts.join(' · ') : '—';
@@ -10729,9 +10729,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }
 	      if (shMeta) shMeta.textContent = `📍 ${localizeText(profile.stay.area)} · ${localizeText('月額料金')} ${localizeText(profile.stay.budget)} · ${localizeText(profile.stay.room)}`;
 		      renderDetailInfoGrid('sharehouse-basic-profile', [
-		        { label: '名前', value: profile.basic.name },
+		        { label: '名前', value: profile.basic.name, raw: true },
 		        { label: '年齢', value: profile.basic.age },
-		        { label: '国籍', value: profile.basic.nationality },
+		        { label: '国籍', value: profile.basic.nationality, raw: true },
 		        { label: '性別', value: profile.basic.gender },
 		        { label: '宗教', value: profile.basic.religion },
 		        { label: '使用言語', value: profile.basic.languages },
@@ -10740,7 +10740,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		        { label: '喫煙', value: profile.basic.personalSmoking },
 		        { label: '飲酒', value: profile.basic.personalAlcohol },
 		        { label: '趣味', value: profile.basic.hobbies },
-		        { label: '一言／自己紹介', value: profile.basic.intro }
+		        { label: '一言／自己紹介', value: profile.basic.intro, raw: true }
 		      ]);
 		      renderDetailInfoGrid('sharehouse-stay-profile', [
 		        { label: 'エリア', value: previewValue(profile.stay.area) },
@@ -10860,7 +10860,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		      const mapPin = document.getElementById('sharehouse-map-pin');
 		      if (mapPin) mapPin.textContent = profile.mapPin || profile.stay.area ? `📍 ${localizeText(profile.mapPin || profile.stay.area)}` : localizeText('位置未設定');
 		      const mapNote = document.getElementById('sharehouse-map-note');
-		      if (mapNote) mapNote.textContent = profile.mapNote ? localizeText(profile.mapNote) : '';
+		      if (mapNote) mapNote.textContent = profile.mapNote ? String(profile.mapNote) : '';
 		      setTimeout(() => renderSharehouseLocationMap(profile), 80);
 	      return;
 	    }
@@ -23307,7 +23307,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        members: profile.members || [],
 	        roomInfo: [
 	          { label: 'エリア', value: profile.stay.area },
-	          { label: '最寄り駅', value: profile.stay.station },
+	          { label: '最寄り駅', value: profile.stay.station, raw: true },
 	          { label: '最寄り駅まで徒歩何分', value: walkText },
 	          { label: '入居可能期間', value: availableText },
 	          { label: '最短滞在期間', value: minStayText },
@@ -24279,7 +24279,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    match.rules = sharehouseHostRulesForDetail(profile);
 	    match.roomInfo = [
 	      { label: 'エリア', value: profile.stay.area },
-	      { label: '最寄り駅', value: profile.stay.station },
+	      { label: '最寄り駅', value: profile.stay.station, raw: true },
 	      { label: '最寄り駅まで徒歩何分', value: `${profile.stay.walkMin}分` },
 	      { label: '入居可能期間', value: `${profile.stay.availableStart}〜${profile.stay.availableEnd}` },
 	      { label: '最短滞在期間', value: `${profile.stay.minStay}ヶ月` },
@@ -26561,6 +26561,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '受け入れ終了日':'Available End Date',
     'カレンダーから選択':'Select from calendar',
     'ハウスルール':'House Rules',
+    '登録済み':'Registered',
     '部屋情報':'Room Information',
     '部屋サイズ':'Room Size',
     'バス/トイレ':'Bath / Toilet',
@@ -26773,6 +26774,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '振込完了':'Paid Out',
     '2024年1月〜現在':'Jan 2024 - Present',
     'まだルームメイトが追加されていません':'No roommates added yet',
+    '登録済み':'Registered',
     '未設定':'Not set',
     '時間未設定':'Time not set',
     '喫煙未設定':'Smoking not set',
@@ -27426,8 +27428,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '理想のシェア生活':'Ideal Shared Living',
     'シェアハウス登録情報':'Share House Registration Information',
     '基本情報':'Basic Information',
+    '生年月日 / 年齢':'Date of Birth / Age',
     '滞在条件':'Stay Conditions',
     '本人の生活スタイル':'Personal Lifestyle',
+    'あなたの生活スタイル':'Your Lifestyle',
     '理想のシェア生活':'Ideal Shared Living',
     'プロフィール写真':'Profile Photo',
     'プロフィール写真をアップロード':'Upload Profile Photo',
@@ -27436,6 +27440,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     'ワーホリ':'Working holiday',
     '就職':'Employment',
     '飲酒':'Alcohol',
+    '飲酒環境':'Alcohol Environment',
     'よく飲む':'Often',
     'たまに飲む':'Occasionally',
     '飲まない':"I don't drink",
@@ -27511,8 +27516,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '専用バスルーム希望':'Private bathroom preferred',
     '共用でもOK':'Shared bathroom is OK',
     '一緒に住む人数':'Number of Housemates',
+    '1人':'1 person',
     '1人とのシェア希望':'Prefer sharing with one person',
     '2〜3人':'2–3 people',
+    '4人以上':'4 or more people',
     '4人以上でもOK':'4 or more is OK',
     'キッチンをよく使うので自由に使いたい':'I cook often and want to use the kitchen freely',
     '共用で問題ない':'Shared use is fine',
@@ -27893,6 +27900,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '家・入居情報':'Home & Move-in Information',
     'シェアハウスゲスト詳細':'Sharehouse Guest Details',
     'シェアハウスゲスト詳細はこちら':'Sharehouse guest details',
+    'あなたの生活スタイル':'Your Lifestyle',
     '現在の立場':'Current Status',
     'その他の立場':'Other status',
     '名前':'Name',
@@ -27922,6 +27930,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '家の中の生活音':'Noise level at home',
     'かなり静か':'Very quiet',
     '比較的静か':'Relatively quiet',
+    '飲酒環境':'Alcohol Environment',
     '喫煙環境':'Smoking Environment',
     '室内喫煙OK':'Indoor smoking OK',
     '屋外のみ':'Outdoor only',
@@ -27951,6 +27960,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '他の入居者と共有':'Shared with other residents',
     'オーナー / ホストと共有':'Shared with owner / host',
     '現在一緒に住んでいる人数':'Number of current residents',
+    '1人':'1 person',
+    '4人以上':'4 or more people',
     '登録済み同居メンバー数':'Registered household members',
     'キッチン利用':'Kitchen Use',
     '自由に利用可能':'Freely available',
@@ -27989,6 +28000,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     'JPG / PNG / WebP、5MBまで保存できます':'JPG / PNG / WebP, up to 5MB',
     '自分の簡単な情報':'Basic Information',
     '生年月日':'Date of Birth',
+    '生年月日 / 年齢':'Date of Birth / Age',
     '希望エリア・期間・予算':'Preferred Area, Period, and Budget',
     '滞在開始日':'Stay Start Date',
     '滞在終了日':'Stay End Date',
@@ -30091,7 +30103,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    if (stationNote) {
 	      stationNote.textContent = profile?.mapNote
-	        ? localizeText(profile.mapNote)
+	        ? String(profile.mapNote)
 	        : (isRealSharehouse ? '' : localizeText('最寄り駅：Central Station 徒歩8分'));
 	    }
 	    if (privacyNote) privacyNote.textContent = loc
