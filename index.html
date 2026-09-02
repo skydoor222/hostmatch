@@ -15573,12 +15573,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function normalizeSharehouseFilterState(filters = {}) {
-    return {
+    const budgetNumber = Number(filters.budget);
+    const next = {
       ...emptySharehouseFilters(),
       ...filters,
-      budget: Number(filters.budget || 2000),
+      budget: Number.isFinite(budgetNumber) && budgetNumber > 0 ? budgetNumber : 2000,
       budgetOnly: !!filters.budgetOnly
     };
+    next.area = canonicalFilterValue('shf-area', next.area);
+    return next;
   }
 
   function renderSharehouseSearchFormFromFilters(filters) {
@@ -15620,20 +15623,58 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return shFilters();
   }
 
-	  function applySharehouseRegisteredFiltersToSearch() {
-	    const filters = sharehouseRegisteredSearchFilters();
+	  function sharehouseInitialCoreSearchFilters() {
+	    const prefs = currentSharehouseGuestPreferences || window._currentSharehouseGuestPreferences || {};
+	    const budgetNumber = Number(prefs?.budget_max);
+	    const hasBudget = Number.isFinite(budgetNumber) && budgetNumber > 0 && budgetNumber < 2000;
+	    return normalizeSharehouseFilterState({
+	      ...emptySharehouseFilters(),
+	      area: fromSharehouseGuestPreferenceDbValue('preferred_city', prefs?.preferred_city) || '',
+	      start: prefs?.move_in_date || '',
+	      end: prefs?.move_out_date || '',
+	      budget: hasBudget ? budgetNumber : 2000,
+	      budgetOnly: hasBudget
+	    });
+	  }
+
+	  function applySharehouseInitialCoreFiltersToSearch() {
+	    const filters = sharehouseInitialCoreSearchFilters();
 	    const sort = document.getElementById('sh-sort');
 	    if (sort) sort.value = 'newest';
 	    committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(filters));
 	    renderSharehouseFilterResults(committedSharehouseFilters);
 	  }
 
+	  function applySharehouseRegisteredFiltersToSearch() {
+	    applySharehouseInitialCoreFiltersToSearch();
+	  }
+
 	  function prepareSharehouseSearchForDisplay() {
 	    const sort = document.getElementById('sh-sort');
 	    if (sort) sort.value = 'newest';
 	    if (isLoggedInSharehouseGuestSearchContext()) {
-	      const filters = committedSharehouseFilters || emptySharehouseFilters();
-	      committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(filters));
+	      const shouldApplyInitial = shouldApplyRegisteredFilters.sharehouse || !committedSharehouseFilters;
+	      shouldApplyRegisteredFilters.sharehouse = false;
+	      if (shouldApplyInitial) {
+	        if (!currentSharehouseGuestDataLoaded || currentSharehouseGuestDataCacheUserId !== (window._currentUser?.id || '')) {
+	          const summary = document.getElementById('sh-filter-summary');
+	          const list = document.getElementById('sh-filter-results');
+	          if (summary) {
+	            summary.style.display = 'block';
+	            summary.textContent = currentLang === 'ja' ? '登録条件を読み込み中...' : 'Loading your search preferences...';
+	          }
+	          if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '登録した検索条件を読み込んでいます。' : 'Loading your registered search preferences.'}</div>`;
+	          loadCurrentSharehouseGuestData({ force: true }).then(() => {
+	            if (currentScreen !== 'search' || currentSearchCat !== 'sharehouse') return;
+	            if (committedSharehouseFilters) return;
+	            applySharehouseInitialCoreFiltersToSearch();
+	          });
+	          return;
+	        }
+	        applySharehouseInitialCoreFiltersToSearch();
+	        return;
+	      }
+	      committedSharehouseFilters = cloneFilterState(renderSharehouseSearchFormFromFilters(committedSharehouseFilters));
 	      renderSharehouseFilterResults(committedSharehouseFilters);
 	      return;
 	    }
@@ -15641,34 +15682,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
   function sharehouseRegisteredSearchFilters() {
+    if (isLoggedInSharehouseGuestSearchContext()) return sharehouseInitialCoreSearchFilters();
     const profile = defaultSharehouseGuestProfile(APPLICANTS?.sakura);
     const budgetNumber = Number(String(profile.stay?.budget || '').replace(/[^0-9]/g, '')) || 1200;
+    const hasBudget = Number.isFinite(budgetNumber) && budgetNumber > 0 && budgetNumber < 2000;
     return normalizeSharehouseFilterState({
+      ...emptySharehouseFilters(),
       area: profile.stay?.area || '',
       start: profile.stay?.moveIn || '',
       end: profile.stay?.moveOut || '',
-      budget: budgetNumber,
-      budgetOnly: !!budgetNumber,
-      room: profile.stay?.room || '',
-      furniture: profile.stay?.furniture || '',
-      bathroom: profile.ideal?.bathroom || '',
-      pets: profile.ideal?.pets || '',
-      smoking: profile.ideal?.roommateSmoking || '',
-      roommateInteraction: profile.ideal?.roommateInteraction || '',
-      alcohol: profile.ideal?.roommateAlcohol || '',
-      visitors: profile.ideal?.visitors || '',
-      overnightGuests: profile.ideal?.overnightGuests || '',
-      housemateCount: profile.ideal?.housemateCount || '',
-      kitchen: profile.ideal?.kitchen || '',
-      mbti: ['回答しない','わからない / 未診断','Prefer not to say'].includes(profile.ideal?.mbti || '') ? '' : (profile.ideal?.mbti || ''),
-      wake: profile.lifestyle?.wakeTime || '',
-      sleep: profile.lifestyle?.bedtime || '',
-      homeTime: profile.lifestyle?.homeTime || '',
-      cooking: profile.lifestyle?.cookingFrequency || '',
-      cleanliness: profile.ideal?.cleanliness || '',
-      cleaningFrequency: profile.ideal?.cleaningFrequency || '',
-      lifeNoise: profile.ideal?.lifeNoise || '',
-      quietHours: profile.ideal?.quietHours || ''
+      budget: hasBudget ? budgetNumber : 2000,
+      budgetOnly: hasBudget
     });
   }
 
