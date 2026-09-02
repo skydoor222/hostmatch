@@ -5109,7 +5109,7 @@
 	    <div class="detail-host-row">
 	      <div class="detail-avatar" id="sharehouse-match-avatar" style="background:var(--bg);">👤</div>
 	      <div>
-	        <div class="detail-host-name" id="sharehouse-match-name">田中 あおい</div>
+	        <div class="detail-host-name" id="sharehouse-match-name" data-raw-text="true">田中 あおい</div>
 	        <div class="detail-match-badge" id="sharehouse-match-badge">条件比較</div>
 	        <div class="detail-host-meta" id="sharehouse-match-meta">📍 新宿区 · 駅徒歩5分</div>
 	      </div>
@@ -6008,7 +6008,7 @@
 	      <div id="sharehouse-manager-avatar" style="width:64px;height:64px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;">👤</div>
 	      <div style="flex:1;min-width:0;">
 	        <div style="font-size:12px;font-weight:800;color:var(--light);margin-bottom:4px;">プロフィール写真</div>
-	        <div id="sharehouse-manager-name" style="font-size:16px;font-weight:900;color:var(--dark);">—</div>
+	        <div id="sharehouse-manager-name" data-raw-text="true" style="font-size:16px;font-weight:900;color:var(--dark);">—</div>
 	        <div id="sharehouse-manager-meta" style="font-size:13px;color:var(--mid);font-weight:700;margin-top:4px;">—</div>
 	      </div>
 	      <button type="button" onclick="navigate(currentScreen,'host-profile')" style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;">編集</button>
@@ -10848,16 +10848,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		        if (!members.length) {
 		          roommateBox.innerHTML = `<div class="empty-list-message">${localizeText('まだ同居メンバーが追加されていません')}</div>`;
 		        } else {
-		          roommateBox.innerHTML = members.map(member => detailMemberCard(member.name || localizeText('同居メンバー'), member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑', [
+		          roommateBox.innerHTML = members.map(member => detailMemberCard(member.name || '同居メンバー', member.gender === '男性' ? '👨' : member.gender === '女性' ? '👩' : '🧑', [
 		            { label: '年齢', value: member.age },
 		            { label: '性別', value: member.gender },
-		            { label: '国籍', value: member.nationality || member.job },
+		            { label: '国籍', value: member.nationality || member.job, raw: !!member.nationality },
 		            { label: '起床時間', value: member.wake },
 		            { label: '就寝時間', value: member.sleep },
 		            { label: '在宅時間', value: member.home },
 		            { label: '自炊頻度', value: member.cooking },
 		            { label: '趣味', value: member.hobbies || member.social }
-		          ])).join('');
+		          ], { rawTitle: !!member.name })).join('');
 		        }
 		        }
 		      }
@@ -11523,7 +11523,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           <div class="match-card-save" data-card-action="sharehouse-favorite" onclick="toggleSharehouseFavorite('${id}',event)">❤️</div>
         </div>
         <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">${escapeHtml(localizeText(profile.name || ''))}</div></div>
+          <div class="match-card-row1"><div class="match-card-name" data-raw-text="true">${escapeHtml(profile.name || '')}</div></div>
           <div class="match-card-location">${escapeHtml(location)}</div>
           <div class="match-card-footer"><div class="match-card-price">${sharehousePriceCardHtml(profile.stay.budget)}</div><div class="match-card-meals">${escapeHtml(localizeText(profile.ideal.roommateInteraction || ''))}</div></div>
         </div>
@@ -11618,7 +11618,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
             <div class="match-card-save" onclick="toggleSharehouseFavorite('${shId}',event)">❤️</div>
           </div>
           <div class="match-card-body">
-            <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div></div>
+            <div class="match-card-row1"><div class="match-card-name" data-raw-text="true">${escapeHtml(profile.name || '')}</div></div>
             <div class="match-card-location">${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)} · ${formatDateRange(profile.available)}</div>
             <div class="match-card-footer"><div class="match-card-price"><strong>${localizeText(profile.stay.budget)}</strong><span> ${currentLang === 'ja' ? '/月' : '/mo'}</span></div><div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div></div>
           </div>
@@ -13390,7 +13390,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	            <div class="msg-avatar" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);">🏢</div>
 	            <div class="msg-content">
 	              <div class="msg-row1">
-	                <div class="msg-name">${localizeText(profile.name || listing.name)}</div>
+	                <div class="msg-name" data-raw-text="true">${escapeHtml(profile.name || listing.name || '')}</div>
 	                <div class="msg-time">${time}</div>
 	              </div>
 	              <div class="msg-preview${index === 0 ? ' unread' : ''}">${preview}</div>
@@ -16208,7 +16208,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           ${sharehouseFavoriteControlHtml(result.id)}
         </div>
         <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div></div>
+          <div class="match-card-row1"><div class="match-card-name" data-raw-text="true">${escapeHtml(profile.name || '')}</div></div>
           <div class="match-card-location">${localizeText(profile.stay.area)} · ${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)}</div>
           <div style="font-size:12px;color:var(--light);font-weight:700;margin-top:6px;">${localizeText('入居可能期間')}: ${availabilityText}</div>
           <div class="hm-match-breakdown">${rows}</div>
@@ -16348,8 +16348,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           ${sharehouseFavoriteControlHtml(result.id)}
         </div>
         <div class="match-card-body">
-          <div class="match-card-row1"><div class="match-card-name">${localizeText(profile.name)}</div></div>
-          <div class="match-card-location">${localizeText(profile.basic.nationality)} · ${localizeText(profile.basic.age)}${currentLang === 'ja' ? '歳' : ''} · ${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)}</div>
+          <div class="match-card-row1"><div class="match-card-name" data-raw-text="true">${escapeHtml(profile.name || '')}</div></div>
+          <div class="match-card-location"><span data-raw-text="true">${escapeHtml(profile.basic.nationality || '')}</span> · ${localizeText(profile.basic.age)}${currentLang === 'ja' ? '歳' : ''} · ${localizeText(profile.stay.room)} · ${localizeText(profile.stay.furniture)}</div>
           <div class="hm-match-breakdown">${rows}</div>
           <div class="match-card-footer"><div class="match-card-price">${sharehousePriceCardHtml(profile.stay.budget)}</div><div class="match-card-meals">${localizeText(profile.ideal.roommateInteraction)}</div></div>
         </div>
@@ -18982,7 +18982,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      box.innerHTML = `<div class="empty-list-message">${currentLang === 'en' ? 'No resident information has been provided' : '同居メンバー情報は登録されていません'}</div>`;
 	      return;
 	    }
-	    box.innerHTML = roommates.map(member => detailMemberCard(member.name, member.genderCode === 'male' ? '👨' : member.genderCode === 'female' ? '👩' : '🧑', [
+	    box.innerHTML = roommates.map(member => detailMemberCard(member.name || '同居メンバー', member.genderCode === 'male' ? '👨' : member.genderCode === 'female' ? '👩' : '🧑', [
 	      { label: '年齢', value: member.age, raw: true },
 	      { label: '性別', value: member.gender, raw: true },
 	      { label: '国籍', value: member.nationality, raw: true },
@@ -18997,7 +18997,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      { label: '就寝時間', value: member.sleep, raw: true },
 	      { label: '在宅時間', value: member.home, raw: true },
 	      { label: '自炊頻度', value: member.cooking, raw: true }
-	    ])).join('');
+	    ], { rawTitle: !!member.name })).join('');
 	  }
 
 	  function startSharehouseDetailRoommatesLoading(listingId) {
@@ -21904,11 +21904,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;">
 	        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:20px;">${m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑'}</div>
 	        <div style="flex:1;font-size:13px;line-height:1.5;">
-	          <strong>${localizeText(m.name || '同居メンバー')}</strong><br>
+	          <strong data-raw-text="true">${escapeHtml(m.name || localizeText('同居メンバー'))}</strong><br>
 	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
-	          ${m.hobbies ? `<div style="color:var(--light);margin-top:4px;">${localizeText('趣味')}：${localizeText(m.hobbies)}</div>` : ''}
+	          ${m.hobbies ? `<div style="color:var(--light);margin-top:4px;">${localizeText('趣味')}：<span data-raw-text="true">${escapeHtml(String(m.hobbies))}</span></div>` : ''}
 	          <div style="color:var(--light);">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')}</div>
-	          ${m.note ? `<div style="color:var(--dark);margin-top:4px;">${localizeText(m.note)}</div>` : ''}
+	          ${m.note ? `<div style="color:var(--dark);margin-top:4px;" data-raw-text="true">${escapeHtml(String(m.note))}</div>` : ''}
 	        </div>
 	        ${removable ? `<button type="button" onclick="removeHostFamilyMember(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
 	      </div>
@@ -23544,12 +23544,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (container) container.innerHTML = detailInfoItems(rows);
 	  }
 
-	  function detailMemberCard(title, icon, rows) {
+	  function detailMemberCard(title, icon, rows, options = {}) {
+	    const titleHtml = options.rawTitle ? escapeHtml(String(title || '')) : localizeText(title);
+	    const rawTitleAttr = options.rawTitle ? ' data-raw-text="true"' : '';
 	    return `
 	      <div class="detail-member-card">
 	        <div class="detail-member-icon">${icon}</div>
 	        <div class="detail-member-main">
-	          <div class="detail-member-name">${localizeText(title)}</div>
+	          <div class="detail-member-name"${rawTitleAttr}>${titleHtml}</div>
 	          <div class="detail-info-grid">${detailInfoItems(rows)}</div>
 	        </div>
 	      </div>
@@ -28187,7 +28189,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function shouldSkipAutoTranslate(node) {
     const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!el) return true;
-    if (el.closest('script,style,svg,.hm-filter-shell,#hm-sort,[data-i18n],[data-i18n-html],[data-lang-option]')) return true;
+    if (el.closest('script,style,svg,.hm-filter-shell,#hm-sort,[data-i18n],[data-i18n-html],[data-lang-option],[data-raw-text]')) return true;
     if (el.closest('.bubble,.msg-name,.msg-preview,.chat-title,.chat-subtitle,.chat-banner-name,.match-card-name,.detail-info-value,#detail-name,#mypage-username,#mypage-useremail')) return true;
     return false;
   }
