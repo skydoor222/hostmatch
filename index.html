@@ -28254,6 +28254,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       'search',
       'favorites',
       'detail',
+      'sharehouse-detail',
       'messages',
       'chat',
       'mypage',
@@ -28289,6 +28290,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       serviceType,
       screen: routeScreen
     };
+    if (routeRole === 'guest'
+      && serviceType === 'sharehouse'
+      && ['search', 'ai-result', 'sharehouse-detail'].includes(routeScreen)
+      && committedSharehouseFilters) {
+      route.sharehouseFilters = cloneFilterState(committedSharehouseFilters);
+    }
     if (routeScreen === 'detail') {
       if (!currentHost || !isPublishedHomestayDetailHost(currentHost)) return null;
       route.listingId = String(currentHost);
@@ -28307,12 +28314,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       route.guestDetailService = currentHomestayGuestDetailService || serviceType || 'homestay';
     }
     if (routeScreen === 'sharehouse-detail') {
-      if (routeRole !== 'host' || serviceType !== 'sharehouse' || !hostPreviewMode) return null;
-      const listingId = currentSharehouseListing?.id || currentListing?.id || extra.listingId || '';
-      if (!listingId) return null;
-      route.listingId = String(listingId);
-      route.detailFrom = sharehouseDetailBackScreen || extra.detailFrom || 'host-dashboard';
-      route.previewMode = 'sharehouse-host';
+      const listingId = currentListing?.id || currentSharehouseListing?.id || extra.listingId || '';
+      if (!listingId || serviceType !== 'sharehouse') return null;
+      if (routeRole === 'guest' && !hostPreviewMode) {
+        if (!isPublishedSharehouseDetailListingForGuest(listingId)) return null;
+        route.listingId = String(listingId);
+        route.detailFrom = sharehouseDetailBackScreen || extra.detailFrom || 'search';
+      } else if (routeRole === 'host' && hostPreviewMode) {
+        route.listingId = String(listingId);
+        route.detailFrom = sharehouseDetailBackScreen || extra.detailFrom || 'host-dashboard';
+        route.previewMode = 'sharehouse-host';
+      } else {
+        return null;
+      }
     }
     if (extra.listingId) route.listingId = String(extra.listingId);
     if (extra.conversationId) route.conversationId = String(extra.conversationId);
@@ -28457,6 +28471,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         currentSearchCat = 'sharehouse';
         window._serviceType = 'sharehouse';
         await loadCurrentSharehouseGuestData({ force: true });
+        if (route.sharehouseFilters && typeof route.sharehouseFilters === 'object') {
+          committedSharehouseFilters = cloneFilterState(normalizeSharehouseFilterState(route.sharehouseFilters));
+        }
+        if (screen === 'sharehouse-detail') {
+          const listingId = String(route.listingId || '').trim();
+          if (!listingId) throw new Error('Saved sharehouse detail route is missing listingId');
+          await ensurePublishedSharehouseListingsForGuest({ force: true });
+          await loadCurrentUserSharehouseFavorites({ force: true });
+          const selected = publishedSharehouseSearchListingById(listingId);
+          const listing = selected?.listing || {};
+          if (!selected?.id || listing.listing_type !== 'sharehouse' || listing.status !== 'published') {
+            console.warn('Saved sharehouse detail listing is no longer available:', { listingId });
+            navigate(currentScreen || 'login', route.detailFrom === 'favorites' ? 'favorites' : 'search');
+            if (currentScreen === 'search') switchSearchCat('sharehouse');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
+          openSharehouseDetail(listingId, route.detailFrom || 'search');
+          window._authenticatedRouteRestored = true;
+          return true;
+        }
         if (screen === 'favorites') {
           await ensurePublishedSharehouseListingsForGuest({ force: true });
           await loadCurrentUserSharehouseFavorites({ force: true });
@@ -28473,6 +28508,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (screen === 'chat') {
           const conversationId = String(route.conversationId || '').trim();
           if (!conversationId) throw new Error('Saved sharehouse chat route is missing conversationId');
+          if (route.chatMode && route.chatMode !== 'sharehouse') {
+            console.warn('Saved sharehouse guest chat route has a different chat mode:', { chatMode: route.chatMode });
+            navigate(currentScreen || 'login', 'messages');
+            window._authenticatedRouteRestored = true;
+            return true;
+          }
           setGuestMessageService('sharehouse');
           await openSupabaseGuestConversation(conversationId);
           window._authenticatedRouteRestored = true;
@@ -28486,6 +28527,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (['search', 'mypage', 'profile', 'lifestyle', 'support', 'privacy-security', 'blocked-users', 'ai-result'].includes(screen)) {
           if (screen === 'search' || screen === 'ai-result') {
             await ensurePublishedSharehouseListingsForGuest({ force: true });
+            await loadCurrentUserSharehouseFavorites({ force: true });
           }
           if (screen === 'profile') updateGuestProfileMode();
           if (screen === 'lifestyle') updateGuestLifestyleMode();
