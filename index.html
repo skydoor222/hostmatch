@@ -7125,6 +7125,9 @@
         || window.currentScreen === 'login'
         || (window.currentScreen === 'role-select' && window._registrationStartScreenActive);
       if (!shouldRestoreMode) {
+        if (currentRole === 'guest') {
+          await refreshCurrentGuestModeProfileIdentityForScreen();
+        }
         const loading = document.getElementById('app-loading');
         if (loading) loading.style.display = 'none';
         return true;
@@ -7724,6 +7727,11 @@
 	    }
     if (to === 'ai-result') renderAiResult();
     if (to === 'messages') renderGuestMessages();
+    if (to === 'mypage' && currentRole === 'guest') {
+      refreshCurrentGuestModeProfileIdentityForScreen().catch(error => {
+        console.warn('Guest mode profile identity refresh failed:', error);
+      });
+    }
     if (to === 'homestay-host-list') renderHomestayHostList();
     if (to === 'notification-settings' && typeof loadCurrentNotificationPreferences === 'function' && !notificationPreferencesLoading) {
       loadCurrentNotificationPreferences({ showError: true });
@@ -16014,7 +16022,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function setCurrentGuestModeProfileCache(housingType, row) {
 	    const type = normalizeGuestModeHousingType(housingType);
-	    const next = row ? { ...row, housing_type: type } : null;
+	    const rowHousingType = String(row?.housing_type || '').trim();
+	    const isModeProfileRow = !!(row?.__isGuestModeProfile || (row?.user_id && rowHousingType && normalizeGuestModeHousingType(rowHousingType) === type));
+	    const next = row ? { ...row, housing_type: type, __isGuestModeProfile: isModeProfileRow } : null;
 	    if (type === 'sharehouse') {
 	      currentSharehouseGuestModeProfile = next;
 	      currentSharehouseGuestProfile = next;
@@ -16029,11 +16039,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return next;
 	  }
 
-	  function guestModeProfilePublicDisplay(housingType, row = currentGuestModeProfileCache(housingType)) {
-	    const modeProfile = row || {};
+	  function guestModeProfileHasRow(housingType, row = currentGuestModeProfileCache(housingType)) {
+	    const type = normalizeGuestModeHousingType(housingType);
+	    const rowHousingType = String(row?.housing_type || '').trim();
+	    return !!(row?.user_id && rowHousingType && normalizeGuestModeHousingType(rowHousingType) === type && row.__isGuestModeProfile);
+	  }
+
+	  function currentGuestIdentityHousingType() {
+	    if (isSharehouseGuestContext()) return 'sharehouse';
+	    if (isHomestayGuestContext()) return 'homestay';
+	    return '';
+	  }
+
+	  function guestModeProfilePublicDisplay(housingType, row = currentGuestModeProfileCache(housingType), options = {}) {
+	    const type = normalizeGuestModeHousingType(housingType);
+	    const hasModeProfile = guestModeProfileHasRow(type, row);
+	    const allowLegacyFallback = !!options.allowLegacyFallback && !hasModeProfile;
+	    const modeProfile = hasModeProfile ? row : {};
 	    return {
-	      displayName: modeProfile.display_name || window._currentProfile?.display_name || fallbackAuthDisplayName(window._currentUser),
-	      avatarUrl: modeProfile.avatar_url || ''
+	      hasModeProfile,
+	      displayName: modeProfile.display_name || (allowLegacyFallback ? (window._currentProfile?.display_name || fallbackAuthDisplayName(window._currentUser)) : ''),
+	      avatarUrl: modeProfile.avatar_url || (allowLegacyFallback ? (window._currentProfile?.avatar_url || '') : '')
 	    };
 	  }
 
@@ -16059,6 +16085,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
+	  async function refreshCurrentGuestModeProfileIdentityForScreen({ force = false } = {}) {
+	    const type = currentGuestIdentityHousingType();
+	    const userId = window._currentUser?.id;
+	    if (!type || !userId) return null;
+	    const cached = currentGuestModeProfileCache(type);
+	    if (!force && guestModeProfileHasRow(type, cached)) {
+	      applyGuestModeProfileIdentityToCurrentUi(type, cached);
+	      return cached;
+	    }
+	    applyGuestModeProfileIdentityToCurrentUi(type, cached);
+	    try {
+	      const loaded = await loadGuestModeProfileForUser(type, userId);
+	      const row = setCurrentGuestModeProfileCache(type, loaded || null);
+	      applyGuestModeProfileIdentityToCurrentUi(type, row);
+	      return row;
+	    } catch (error) {
+	      console.warn('Supabase guest_mode_profiles identity refresh error:', { housingType: type, error });
+	      return cached || null;
+	    }
+	  }
+
 	  async function loadGuestModeProfileForUser(housingType, userId = window._currentUser?.id) {
 	    const type = normalizeGuestModeHousingType(housingType);
 	    if (!userId || !window._supabase?.from) return null;
@@ -16076,14 +16123,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const type = normalizeGuestModeHousingType(housingType);
 	    const userId = window._currentUser?.id;
 	    const current = currentGuestModeProfileCache(type) || {};
-	    const { created_at, updated_at, ...currentEditable } = current;
+	    const hasExistingModeProfile = guestModeProfileHasRow(type, current);
+	    const { created_at, updated_at, __isGuestModeProfile, ...currentEditable } = current;
 	    const next = omitUndefinedFields({
 	      ...currentEditable,
 	      ...payload,
 	      user_id: userId,
 	      housing_type: type
 	    });
-	    if (!next.display_name) next.display_name = window._currentProfile?.display_name || fallbackAuthDisplayName(window._currentUser);
+	    if (!next.display_name && !hasExistingModeProfile) next.display_name = window._currentProfile?.display_name || fallbackAuthDisplayName(window._currentUser);
 	    return next;
 	  }
 
@@ -16188,12 +16236,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (profileResult.error) throw profileResult.error;
 	      if (legacyProfileResult.error) throw legacyProfileResult.error;
 	      if (prefsResult.error) throw prefsResult.error;
-	      currentGuestProfileData = setCurrentGuestModeProfileCache('homestay', {
-	        ...(currentGuestProfileData || {}),
-	        ...(profileResult.data || legacyProfileResult.data || {})
-	      });
+	      const loadedGuestProfile = profileResult.data || legacyProfileResult.data || null;
+	      currentGuestProfileData = setCurrentGuestModeProfileCache('homestay', loadedGuestProfile);
 	      currentHomestayGuestPreferences = { ...(currentHomestayGuestPreferences || {}), ...(prefsResult.data || {}) };
 	      window._currentHomestayGuestPreferences = currentHomestayGuestPreferences;
+	      applyGuestModeProfileIdentityToCurrentUi('homestay', currentGuestProfileData);
 	      return true;
 	    } catch (error) {
 	      console.warn('Supabase homestay guest comparison preferences fetch error:', error);
@@ -18420,8 +18467,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (modeProfileResult.error) throw modeProfileResult.error;
 	      if (legacyProfileResult.error) throw legacyProfileResult.error;
 	      const profileData = modeProfileResult.data || legacyProfileResult.data;
+	      const { __isGuestModeProfile, housing_type, ...previousLegacyCompatibleProfile } = currentGuestProfileData || {};
 	      currentGuestProfileData = {
-	        ...(currentGuestProfileData || {}),
+	        ...(modeProfileResult.data ? {} : previousLegacyCompatibleProfile),
 	        user_id: userId,
 	        ...(profileData || { wake_time: null, bedtime: null, hobbies: [], bio: null })
 	      };
@@ -22675,9 +22723,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function sharehouseGuestUiProfileFromDbRows(profile = {}, guestProfile = {}, preferences = {}) {
 	    const pref = preferences || {};
 	    const gp = guestProfile || {};
+	    const hasModeProfile = guestModeProfileHasRow('sharehouse', gp);
 	    return {
 	      basic: {
-	        name: gp.display_name || profile?.display_name || window._currentProfile?.display_name || '',
+	        name: hasModeProfile ? (gp.display_name || '') : (profile?.display_name || window._currentProfile?.display_name || ''),
 	        age: gp.age ?? '',
 	        nationality: gp.nationality || '',
 	        gender: fromGuestProfileDbValue('gender', gp.gender),
@@ -22757,17 +22806,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  async function saveSharehouseGuestProfileRowToSupabase(profile = {}) {
 	    const userId = window._currentUser?.id;
-	    if (!userId || !window._supabase?.from) return false;
+	    if (!userId || !window._supabase?.from) return null;
 	    const displayName = nullableText(profile.basic?.name) || fallbackAuthDisplayName(window._currentUser);
 	    try {
 	      const modeProfile = await saveGuestModeProfileToSupabase('sharehouse', {
 	        ...sharehouseGuestProfilePayloadFromUi(profile),
 	        display_name: displayName
 	      });
-	      return !!modeProfile;
+	      return modeProfile || null;
 	    } catch (error) {
 	      logSharehouseGuestSaveFailure('guest_mode_profiles', error);
-	      return false;
+	      return null;
 	    }
 	  }
 
@@ -22823,7 +22872,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }
 
 	      currentSharehouseGuestProfile = {
-	        ...(currentSharehouseGuestModeProfile || {}),
+	        ...(currentSharehouseGuestModeProfile || savedProfile || {}),
 	        user_id: userId,
 	        housing_type: 'sharehouse',
 	        ...guestProfilePayload
@@ -22832,6 +22881,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSharehouseGuestPreferences = { user_id: userId, ...preferencesPayload };
 	      currentSharehouseGuestUiProfile = sharehouseGuestUiProfileFromDbRows(currentSharehouseGuestProfile, currentSharehouseGuestProfile, currentSharehouseGuestPreferences);
 	      syncSharehouseGuestAvatarState(currentSharehouseGuestProfile?.avatar_url || '');
+	      applyGuestModeProfileIdentityToCurrentUi('sharehouse', currentSharehouseGuestProfile);
 	      currentSharehouseGuestDataLoaded = true;
 	      currentSharehouseGuestDataCacheUserId = userId;
 	      window._currentSharehouseGuestProfile = currentSharehouseGuestProfile;
@@ -22896,6 +22946,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      window._currentSharehouseGuestProfile = currentSharehouseGuestProfile;
 	      window._currentSharehouseGuestPreferences = currentSharehouseGuestPreferences;
 	      window._currentSharehouseGuestUiProfile = currentSharehouseGuestUiProfile;
+	      applyGuestModeProfileIdentityToCurrentUi('sharehouse', currentSharehouseGuestProfile);
 	      if (applyToUi) applySharehouseGuestUiProfileToOpenScreens();
 	      return true;
 	    } catch (error) {
@@ -22907,8 +22958,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function applySharehouseGuestUiProfileToOpenScreens() {
 	    if (currentScreen === 'profile') updateGuestProfileMode();
 	    if (currentScreen === 'lifestyle') updateGuestLifestyleMode();
-	    const mypageName = document.getElementById('mypage-username');
-	    if (mypageName) mypageName.textContent = currentSharehouseGuestUiProfile?.basic?.name || window._currentProfile?.display_name || '—';
 	    applyGuestModeProfileIdentityToCurrentUi('sharehouse', currentSharehouseGuestProfile);
 	  }
 
