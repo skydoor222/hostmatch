@@ -28513,9 +28513,69 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   /* ===== ロール選択 ===== */
   let currentRole = 'guest'; // 'guest' | 'host' | 'resident'
+  let isRestoringSelectedUserMode = false;
 
-  function chooseRole(role) {
+  function selectedUserModeFromRoleChoice(role) {
+    const housingType = window._serviceType === 'sharehouse' ? 'sharehouse' : 'homestay';
+    return {
+      housingType,
+      role: housingType === 'sharehouse' && role === 'resident' ? 'resident' : role
+    };
+  }
+
+  function userModeRowMatchesSelection(row, selection) {
+    if (!row || !selection) return false;
+    if (row.housing_type !== selection.housingType) return false;
+    if (selection.housingType === 'sharehouse' && selection.role === 'resident') {
+      return row.role === 'resident' || row.role === 'host';
+    }
+    return row.role === selection.role;
+  }
+
+  async function registeredUserModeForSelection(selection) {
+    if (!selection || !window._currentUser?.id) return { status: 'missing', mode: null };
+    const modes = await loadCurrentUserModes(window._currentUser);
+    if (!modes) return { status: 'error', mode: null };
+    const row = modes.find(mode => userModeRowMatchesSelection(mode, selection));
+    if (!row) return { status: 'missing', mode: null };
+    return {
+      status: 'registered',
+      mode: {
+        housingType: row.housing_type,
+        role: row.role
+      }
+    };
+  }
+
+  async function restoreSelectedRegisteredUserMode(mode) {
+    if (!mode) return false;
+    if (typeof clearAuthenticatedRoute === 'function') clearAuthenticatedRoute();
+    window._pendingUserModeRestore = mode;
+    window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housingType : null;
+    return await applyPendingUserModeRestore();
+  }
+
+  async function chooseRole(role) {
+    if (isRestoringSelectedUserMode) return;
     window._registrationStartScreenActive = false;
+    const selectedMode = selectedUserModeFromRoleChoice(role);
+    isRestoringSelectedUserMode = true;
+    try {
+      const registered = await registeredUserModeForSelection(selectedMode);
+      if (registered.status === 'error') {
+        showToast(currentLang === 'en'
+          ? 'Could not check your registered modes. Please try again.'
+          : '登録済みモードを確認できませんでした。もう一度お試しください。');
+        return;
+      }
+      if (registered.status === 'registered') {
+        await restoreSelectedRegisteredUserMode(registered.mode);
+        return;
+      }
+    } finally {
+      isRestoringSelectedUserMode = false;
+    }
+
     currentRole = role;
     if (role === 'guest') {
       navigate('role-select', 'onboarding');
@@ -29305,8 +29365,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     else chooseRole('guest');
   }
   function selectService(type) {
-    if (type === 'host') chooseRole('host');
-    else chooseRole('guest');
+    if (type === 'homestay-guest') {
+      window._serviceType = 'homestay';
+      currentSearchCat = 'homestay';
+      chooseRole('guest');
+    } else if (type === 'sharehouse-guest' || type === 'roommate-guest') {
+      window._serviceType = 'sharehouse';
+      currentSearchCat = 'sharehouse';
+      chooseRole('guest');
+    } else if (type === 'host') {
+      chooseRole('host');
+    } else {
+      chooseRole('guest');
+    }
   }
 
 	  /* ===== ホストカレンダー ===== */
