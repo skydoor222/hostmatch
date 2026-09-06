@@ -16938,6 +16938,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const pendingSharehouseGuestAvatarFiles = { ob: null, profile: null };
 	  const pendingSharehouseGuestAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingSharehouseGuestAvatarCrops = { ob: null, profile: null };
+	  const pendingHomestayGuestAvatarFiles = { profile: null };
+	  const pendingHomestayGuestAvatarPreviewUrls = { profile: '' };
+	  const pendingHomestayGuestAvatarCrops = { profile: null };
 	  const pendingSharehouseRoomPhotoFiles = { res: [], profile: [] };
 	  const pendingSharehouseListingPhotoDeleteIds = new Set();
 	  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -18589,6 +18592,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
 	  function handleProfileAvatarSelection(event) {
+	    if (isHomestayGuestContext()) {
+	      handleHomestayHostAvatarSelection(event, 'homestay-guest-profile');
+	      return;
+	    }
 	    const input = event?.target;
 	    const file = input?.files?.[0] || null;
 	    setProfileAvatarMessage('');
@@ -18741,11 +18748,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  async function saveCurrentUserAvatarToSupabase() {
+	    if (isHomestayGuestContext()) {
+	      return await saveHomestayHostAvatarToSupabase('homestay-guest-profile');
+	    }
 	    if (!pendingProfileAvatarFile) return true;
 
-	    const publicUrl = isHomestayGuestContext()
-	      ? await uploadGuestModeAvatarFileToSupabase(pendingProfileAvatarFile, 'homestay', setProfileAvatarMessage)
-	      : await uploadProfileAvatarFileToSupabase(pendingProfileAvatarFile, setProfileAvatarMessage);
+	    const publicUrl = await uploadProfileAvatarFileToSupabase(pendingProfileAvatarFile, setProfileAvatarMessage);
 	    if (!publicUrl) return false;
 
 	    pendingProfileAvatarFile = null;
@@ -18795,6 +18803,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (raw === 'share-guest-profile') {
 	      return { service: 'sharehouse-guest', key: 'profile', prefix: 'share-guest-profile' };
 	    }
+	    if (raw === 'homestay-guest-profile') {
+	      return { service: 'homestay-guest', key: 'profile', prefix: 'prof' };
+	    }
 	    const key = raw === 'profile' ? 'profile' : 'ob';
 	    return { service: 'homestay', key, prefix: hostFormPrefix(key) };
 	  }
@@ -18802,18 +18813,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function hostPhotoAvatarFiles(info) {
 	    if (info.service === 'sharehouse') return pendingSharehouseHostAvatarFiles;
 	    if (info.service === 'sharehouse-guest') return pendingSharehouseGuestAvatarFiles;
+	    if (info.service === 'homestay-guest') return pendingHomestayGuestAvatarFiles;
 	    return pendingHomestayHostAvatarFiles;
 	  }
 
 	  function hostPhotoAvatarPreviewUrls(info) {
 	    if (info.service === 'sharehouse') return pendingSharehouseHostAvatarPreviewUrls;
 	    if (info.service === 'sharehouse-guest') return pendingSharehouseGuestAvatarPreviewUrls;
+	    if (info.service === 'homestay-guest') return pendingHomestayGuestAvatarPreviewUrls;
 	    return pendingHomestayHostAvatarPreviewUrls;
 	  }
 
 	  function hostPhotoAvatarCrops(info) {
 	    if (info.service === 'sharehouse') return pendingSharehouseHostAvatarCrops;
 	    if (info.service === 'sharehouse-guest') return pendingSharehouseGuestAvatarCrops;
+	    if (info.service === 'homestay-guest') return pendingHomestayGuestAvatarCrops;
 	    return pendingHomestayHostAvatarCrops;
 	  }
 
@@ -18852,6 +18866,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function hostPhotoElement(scope, suffix) {
 	    const info = hostPhotoScopeInfo(scope);
+	    if (info.service === 'homestay-guest' && suffix === 'avatar-message') {
+	      return document.getElementById('profile-avatar-message');
+	    }
 	    const id = `${info.prefix}-${suffix}`;
 	    return hostPhotoDomRoot(scope)?.querySelector(`[id="${id}"]`) || document.getElementById(id);
 	  }
@@ -18887,9 +18904,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      preview.appendChild(img);
 	      return;
 	    }
-	    const fallbackAvatarUrl = info.service === 'sharehouse-guest'
-	      ? currentSharehouseGuestModeProfile?.avatar_url || currentSharehouseGuestProfile?.avatar_url || ''
-	      : window._currentProfile?.avatar_url || '';
+	    const fallbackAvatarUrl = info.service === 'homestay-guest'
+	      ? currentHomestayGuestModeProfile?.avatar_url || currentGuestProfileData?.avatar_url || ''
+	      : info.service === 'sharehouse-guest'
+	        ? currentSharehouseGuestModeProfile?.avatar_url || currentSharehouseGuestProfile?.avatar_url || ''
+	        : window._currentProfile?.avatar_url || '';
 	    window.renderAvatarElement(preview, fallbackAvatarUrl);
 	  }
 
@@ -18981,7 +19000,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    urls[key] = URL.createObjectURL(file);
 	    loadHomestayHostAvatarNaturalSize(scope);
 	    renderHomestayHostAvatarPreview(scope);
-	    if (info.service === 'sharehouse') {
+	    if (info.service === 'sharehouse' || info.service === 'sharehouse-guest' || info.service === 'homestay-guest') {
 	      window.setTimeout(() => openHomestayHostAvatarCropEditor(scope, { discardAvatarOnCancel: true }), 0);
 	    }
 	  }
@@ -18994,6 +19013,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const urls = hostPhotoAvatarPreviewUrls(info);
 	    const file = files[key];
 	    if (!file) return true;
+	    const isHomestayGuestAvatar = info.service === 'homestay-guest';
 	    const isSharehouseGuestAvatar = info.service === 'sharehouse-guest';
 	    const isSharehouseHostAvatar = info.service === 'sharehouse';
 
@@ -19016,13 +19036,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return false;
 	    }
 
-	    const publicUrl = isSharehouseGuestAvatar
-	      ? await uploadGuestModeAvatarFileToSupabase(uploadFile, 'sharehouse', message => setHomestayHostAvatarMessage(scope, message))
+	    const publicUrl = (isHomestayGuestAvatar || isSharehouseGuestAvatar)
+	      ? await uploadGuestModeAvatarFileToSupabase(uploadFile, isHomestayGuestAvatar ? 'homestay' : 'sharehouse', message => setHomestayHostAvatarMessage(scope, message))
 	      : await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(scope, message));
 	    if (!publicUrl) {
 	      const error = new Error('Profile photo upload returned no public URL');
 	      console.error('Supabase profile photo save error:', error);
-	      if (isSharehouseGuestAvatar) {
+	      if (isHomestayGuestAvatar || isSharehouseGuestAvatar) {
 	        logSharehouseGuestAvatarUploadFailure('upload-or-profile-update', error);
 	        setHomestayHostAvatarMessage(scope, sharehouseGuestAvatarSaveErrorMessage());
 	      }
@@ -19031,6 +19051,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        setHomestayHostAvatarMessage(scope, sharehouseHostAvatarSaveErrorMessage());
 	      }
 	      return false;
+	    }
+	    if (isHomestayGuestAvatar) {
+	      const nextModeProfile = setCurrentGuestModeProfileCache('homestay', {
+	        ...(currentHomestayGuestModeProfile || currentGuestProfileData || {}),
+	        user_id: window._currentUser?.id || currentGuestProfileData?.user_id,
+	        housing_type: 'homestay',
+	        avatar_url: publicUrl
+	      });
+	      applyGuestModeProfileIdentityToCurrentUi('homestay', nextModeProfile);
 	    }
 	    if (isSharehouseGuestAvatar) syncSharehouseGuestAvatarState(publicUrl);
 	    if (isSharehouseHostAvatar) syncSharehouseHostAvatarState(publicUrl);
@@ -29474,6 +29503,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._currentSharehouseGuestProfile = null;
     clearPendingHomestayHostAvatar('share-guest-ob');
     clearPendingHomestayHostAvatar('share-guest-profile');
+    clearPendingHomestayHostAvatar('homestay-guest-profile');
     isUpdatingHostListingStatus = false;
     currentMessageNotificationsEnabled = true;
     notificationPreferencesLoaded = false;
