@@ -6959,6 +6959,28 @@
     if (typeof showLoginError === 'function') showLoginError(text);
   }
 
+  function userModeRowToRestoreMode(row) {
+    if (!row?.housing_type || !row?.role) return null;
+    return {
+      housingType: row.housing_type,
+      role: row.role
+    };
+  }
+
+  function isSupportedRestorableUserMode(mode) {
+    if (!mode) return false;
+    if (mode.role === 'guest' && ['homestay', 'sharehouse'].includes(mode.housingType)) return true;
+    if (mode.role === 'host' && mode.housingType === 'homestay') return true;
+    if (mode.housingType === 'sharehouse' && (mode.role === 'host' || mode.role === 'resident')) return true;
+    return false;
+  }
+
+  function registeredModeFromSavedAuthenticatedRoute(user, modes = []) {
+    const route = typeof readAuthenticatedRoute === 'function' ? readAuthenticatedRoute() : null;
+    if (!route || !user?.id || route.userId !== user.id) return null;
+    return modes.find(mode => authenticatedRouteMatchesMode(route, mode)) || null;
+  }
+
   async function restoreUserModeFromUserModes(user) {
     const modes = await loadCurrentUserModes(user);
     if (!modes) {
@@ -6971,21 +6993,38 @@
       showRegistrationStartScreen();
       return false;
     }
-    if (modes.length !== 1) {
-      setUserModeRestoreStatus('multiple', { count: modes.length, modes });
+
+    const restorableModes = modes
+      .map(userModeRowToRestoreMode)
+      .filter(isSupportedRestorableUserMode);
+    if (!restorableModes.length) {
+      setUserModeRestoreStatus('unsupported', { modes });
       showAuthenticatedEntryError(typeof currentLang !== 'undefined' && currentLang === 'en'
-        ? 'Multiple account modes were found. Please choose how to continue.'
-        : '複数の登録モードが見つかりました。続行方法を確認してください。');
+        ? 'This account mode is not supported yet.'
+        : 'この登録モードはまだ対応していません。');
       return false;
     }
 
-    const mode = modes[0];
-    const isGuestMode = mode.role === 'guest' && ['homestay', 'sharehouse'].includes(mode.housing_type);
-    const isHomestayHostMode = mode.role === 'host' && mode.housing_type === 'homestay';
-    const isSharehouseHostMode = mode.housing_type === 'sharehouse' && (mode.role === 'host' || mode.role === 'resident');
-    if (isGuestMode || isHomestayHostMode || isSharehouseHostMode) {
-      window._pendingUserModeRestore = { housingType: mode.housing_type, role: mode.role };
-      window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housing_type : null;
+    if (restorableModes.length !== 1) {
+      const savedRouteMode = registeredModeFromSavedAuthenticatedRoute(user, restorableModes);
+      if (savedRouteMode) {
+        setUserModeRestoreStatus('route-match', { count: restorableModes.length, mode: savedRouteMode });
+        window._pendingUserModeRestore = savedRouteMode;
+        window._pendingGuestModeRestore = savedRouteMode.role === 'guest' ? savedRouteMode.housingType : null;
+        if (typeof window.applyPendingUserModeRestore === 'function') return await window.applyPendingUserModeRestore();
+        setUserModeRestoreStatus('error', { reason: 'restore_handler_unavailable', mode: savedRouteMode });
+        showAuthenticatedEntryError();
+        return false;
+      }
+      setUserModeRestoreStatus('choose_mode', { count: restorableModes.length, modes: restorableModes });
+      showRegistrationStartScreen();
+      return false;
+    }
+
+    const mode = restorableModes[0];
+    if (isSupportedRestorableUserMode(mode)) {
+      window._pendingUserModeRestore = mode;
+      window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housingType : null;
       if (typeof window.applyPendingUserModeRestore === 'function') return await window.applyPendingUserModeRestore();
       if (mode.role === 'guest' && typeof window.applyPendingGuestModeRestore === 'function') return window.applyPendingGuestModeRestore();
       setUserModeRestoreStatus('error', { reason: 'restore_handler_unavailable', mode });
