@@ -16042,7 +16042,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function guestModeProfileHasRow(housingType, row = currentGuestModeProfileCache(housingType)) {
 	    const type = normalizeGuestModeHousingType(housingType);
 	    const rowHousingType = String(row?.housing_type || '').trim();
-	    return !!(row?.user_id && rowHousingType && normalizeGuestModeHousingType(rowHousingType) === type && row.__isGuestModeProfile);
+	    const hasInternalMarker = row && Object.prototype.hasOwnProperty.call(row, '__isGuestModeProfile');
+	    return !!(row?.user_id && rowHousingType && normalizeGuestModeHousingType(rowHousingType) === type && (row.__isGuestModeProfile || !hasInternalMarker));
 	  }
 
 	  function currentGuestIdentityHousingType() {
@@ -16156,12 +16157,61 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	  }
 
-	  async function saveGuestModeProfileIdentityToSupabase(housingType, { displayName, avatarUrl } = {}) {
-	    const payload = omitUndefinedFields({
-	      display_name: nullableText(displayName),
-	      avatar_url: nullableText(avatarUrl)
+	  async function saveGuestModeProfileIdentityToSupabase(housingType, options = {}) {
+	    const userId = window._currentUser?.id;
+	    if (!userId || !window._supabase?.from) return false;
+	    const type = normalizeGuestModeHousingType(housingType);
+	    const hasDisplayNameInput = Object.prototype.hasOwnProperty.call(options, 'displayName');
+	    const hasAvatarInput = Object.prototype.hasOwnProperty.call(options, 'avatarUrl');
+	    const displayName = nullableText(options.displayName);
+	    const avatarUrl = nullableText(options.avatarUrl);
+	    const updatePayload = {};
+	    if (hasDisplayNameInput) {
+	      if (!displayName) return false;
+	      updatePayload.display_name = displayName;
+	    }
+	    if (hasAvatarInput && avatarUrl) {
+	      updatePayload.avatar_url = avatarUrl;
+	    }
+	    if (!Object.keys(updatePayload).length) return true;
+
+	    let existingModeProfile = currentGuestModeProfileCache(type);
+	    if (!guestModeProfileHasRow(type, existingModeProfile)) {
+	      try {
+	        existingModeProfile = await loadGuestModeProfileForUser(type, userId);
+	      } catch (error) {
+	        console.warn('Supabase guest_mode_profiles identity lookup error:', { housingType: type, error });
+	        existingModeProfile = null;
+	      }
+	    }
+
+	    if (guestModeProfileHasRow(type, existingModeProfile)) {
+	      try {
+	        const { data, error } = await window._supabase
+	          .from('guest_mode_profiles')
+	          .update({ ...updatePayload, updated_at: new Date().toISOString() })
+	          .eq('user_id', userId)
+	          .eq('housing_type', type)
+	          .select(GUEST_MODE_PROFILE_SELECT_COLUMNS)
+	          .single();
+	        if (error) throw error;
+	        const cached = setCurrentGuestModeProfileCache(type, data || { ...existingModeProfile, ...updatePayload });
+	        applyGuestModeProfileIdentityToCurrentUi(type, cached);
+	        return true;
+	      } catch (error) {
+	        console.warn('Supabase guest_mode_profiles identity update error:', { housingType: type, error });
+	        return false;
+	      }
+	    }
+
+	    const fallbackDisplayName = displayName
+	      || nullableText(currentGuestModeProfileCache(type)?.display_name)
+	      || nullableText(document.getElementById('prof-name')?.value)
+	      || fallbackAuthDisplayName(window._currentUser);
+	    const saved = await saveGuestModeProfileToSupabase(type, {
+	      ...updatePayload,
+	      display_name: fallbackDisplayName
 	    });
-	    const saved = await saveGuestModeProfileToSupabase(housingType, payload);
 	    return !!saved;
 	  }
 
