@@ -12161,9 +12161,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const guestIds = [...new Set(rows.map(row => row.initiator_id).filter(Boolean))];
 	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
 	    const conversationIds = rows.map(row => row.id).filter(Boolean);
-	    const [profilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
+	    const [profilesResult, guestModeProfilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
 	      guestIds.length
 	        ? window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', guestIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      guestIds.length
+	        ? window._supabase
+	            .from('guest_mode_profiles')
+	            .select(GUEST_MODE_PROFILE_SELECT_COLUMNS)
+	            .eq('housing_type', normalizeGuestModeHousingType(listingType))
+	            .in('user_id', guestIds)
 	        : Promise.resolve({ data: [], error: null }),
 	      listingIds.length
 	        ? window._supabase.from('listings').select('id, owner_id, listing_type, title, city, status').in('id', listingIds)
@@ -12176,11 +12183,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        : Promise.resolve({ data: [], error: null })
 	    ]);
 	    if (profilesResult.error) throw profilesResult.error;
+	    if (guestModeProfilesResult.error) throw guestModeProfilesResult.error;
 	    if (listingsResult.error) throw listingsResult.error;
 	    if (messagesResult.error) throw messagesResult.error;
 	    if (readsResult.error) throw readsResult.error;
 
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
+	    const modeProfilesByUserId = indexRowsBy(guestModeProfilesResult.data, 'user_id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
 	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
@@ -12189,7 +12198,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
 	      const listing = listingsById.get(conversation.listing_id);
 	      if (!listing || listing.owner_id !== userId || listing.listing_type !== listingType || listing.id !== targetListingId) return null;
-	      const profile = profilesById.get(conversation.initiator_id) || {};
+	      const profile = modeProfilesByUserId.get(conversation.initiator_id) || profilesById.get(conversation.initiator_id) || {};
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
