@@ -12245,16 +12245,52 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
 	      const listing = listingsById.get(conversation.listing_id);
 	      if (!listing || listing.owner_id !== userId || listing.listing_type !== listingType || listing.id !== targetListingId) return null;
-	      const profile = modeProfilesByUserId.get(conversation.initiator_id) || profilesById.get(conversation.initiator_id) || {};
+	      const modeProfile = modeProfilesByUserId.get(conversation.initiator_id) || null;
+	      const legacyProfile = profilesById.get(conversation.initiator_id) || null;
+	      const profile = modeProfile || legacyProfile || {};
 	      const latestMessage = latestByConversation.get(conversation.id) || null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
-	      return { conversation, profile, listing, latestMessage, read, latestAt, unread, listingType };
+	      return { conversation, profile, guestModeProfile: modeProfile, legacyProfile, profileSource: modeProfile ? 'guest_mode_profiles' : 'profiles', latestMessage, read, latestAt, unread, listingType };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
 	    currentSupabaseHostConversationRows = enriched;
 	    return enriched;
+	  }
+
+	  function hostConversationListingType(row = {}) {
+	    return normalizeGuestModeHousingType(row.listing?.listing_type || row.listingType || 'homestay');
+	  }
+
+	  async function ensureHostConversationGuestModeIdentity(row) {
+	    const guestUserId = row?.conversation?.initiator_id || '';
+	    const listingType = hostConversationListingType(row);
+	    if (!row || !guestUserId || !window._supabase?.from) return row;
+	    if (row.guestModeProfile?.user_id === guestUserId && normalizeGuestModeHousingType(row.guestModeProfile.housing_type) === listingType) {
+	      row.profile = row.guestModeProfile;
+	      row.profileSource = 'guest_mode_profiles';
+	      return row;
+	    }
+	    try {
+	      const { data, error } = await window._supabase
+	        .from('guest_mode_profiles')
+	        .select(GUEST_MODE_PROFILE_SELECT_COLUMNS)
+	        .eq('user_id', guestUserId)
+	        .eq('housing_type', listingType)
+	        .maybeSingle();
+	      if (error) throw error;
+	      if (data?.user_id) {
+	        row.guestModeProfile = data;
+	        row.profile = data;
+	        row.profileSource = 'guest_mode_profiles';
+	      } else if (!row.profileSource) {
+	        row.profileSource = row.profile?.id ? 'profiles' : '';
+	      }
+	    } catch (error) {
+	      console.warn('Supabase host conversation guest mode identity fetch error:', { listingType, error });
+	    }
+	    return row;
 	  }
 
 	  function renderSupabaseHostConversationRows(rows = []) {
@@ -13299,6 +13335,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        navigate(currentScreen, 'host-messages');
 	        return;
 	      }
+	      row = await ensureHostConversationGuestModeIdentity(row);
 	      const listingType = row.listing?.listing_type || row.listingType || 'homestay';
 	      const expectedContext = await ensureCurrentHostMessageListingLoaded();
 	      if (row.listing?.owner_id !== window._currentUser?.id || row.listing?.id !== expectedContext.listing?.id || row.listing?.listing_type !== expectedContext.listingType) {
