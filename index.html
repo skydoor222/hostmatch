@@ -10497,7 +10497,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    return `
 	      <div style="background:white;border:1.5px solid var(--border);border-radius:14px;padding:14px;">
-	        <div style="font-size:13px;font-weight:900;color:var(--dark);margin-bottom:10px;">${currentLang === 'en' ? 'Preference Comparison' : '登録条件との比較'}</div>
+	        <div style="font-size:13px;font-weight:900;color:var(--dark);margin-bottom:6px;">${currentLang === 'en' ? 'Preference Comparison' : '登録条件との比較'}</div>
+	        <div style="font-size:11px;line-height:1.55;color:var(--mid);font-weight:700;margin-bottom:12px;">
+	          ${currentLang === 'en'
+	            ? 'This is not based on your search filters. Matches and differences are shown based on the information registered in your profile and this listing.'
+	            : 'これは絞り込み条件ではなく、登録された情報をもとに表示した一致・不一致です。'}
+	        </div>
 	        <div style="display:flex;flex-direction:column;gap:10px;">
 	          ${rows.map(row => {
 	            const tone = sharehouseObjectiveResultTone(row.status);
