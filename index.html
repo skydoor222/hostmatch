@@ -5141,11 +5141,6 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">🏠 家・入居情報</div>
-	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-stay-profile"></div></div>
-	    </div>
-
-	    <div class="detail-section" style="padding-top:0;">
 	      <div class="detail-section-title">🧺 設備</div>
 	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-room-info"></div></div>
 	    </div>
@@ -10759,19 +10754,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		        { label: '飲酒', value: profile.basic.personalAlcohol },
 		        { label: '趣味', value: profile.basic.hobbies },
 		        { label: '一言／自己紹介', value: profile.basic.intro, raw: true }
-		      ]);
-		      renderDetailInfoGrid('sharehouse-stay-profile', [
-		        { label: 'エリア', value: previewValue(profile.stay.area) },
-		        { label: '入居可能期間', value: previewValue(formatDateRange({ start: profile.available?.start || profile.stay.moveIn, end: profile.available?.end || profile.stay.moveOut })) },
-		        { label: '最短滞在期間', value: previewValue(profile.stay.minStay) },
-		        { label: '最長滞在期間', value: previewValue(profile.stay.maxStay) },
-		        { label: '長期滞在', value: previewValue(profile.stay.longTerm) },
-		        { label: '月額料金', value: previewValue(profile.stay.budget ? `${localizeText(profile.stay.budget)}${currentLang === 'ja' ? ' / 月' : ' / mo'}` : '') },
-		        { label: '部屋タイプ', value: previewValue(profile.stay.room) },
-		        { label: '家具', value: previewValue(profile.stay.furniture) },
-		        { label: '階', value: previewValue(profile.stay.floor) },
-		        { label: 'バスルーム', value: previewValue(profile.ideal.bathroom) },
-		        { label: 'キッチン利用', value: previewValue(profile.stay.kitchenRule || profile.ideal.kitchen) }
 		      ]);
 		      const lifestyle = profile.lifestyle || {};
 		      const ideal = profile.ideal || {};
