@@ -7775,7 +7775,7 @@
     const meta = document.getElementById('sharehouse-manager-meta');
     const profile = currentSharehouseHostProfile || {};
     if (avatar && typeof window.renderAvatarElement === 'function') window.renderAvatarElement(avatar, currentSharehouseHostAvatarUrl());
-    if (name) name.textContent = window._currentProfile?.display_name || '—';
+    if (name) name.textContent = profile.display_name || window._currentProfile?.display_name || '—';
     if (meta) {
       const parts = [
         profile.age !== null && profile.age !== undefined ? (currentLang === 'en' ? `${profile.age} years old` : `${profile.age}歳`) : '',
@@ -10719,15 +10719,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function currentSharehouseHostAvatarUrl() {
 	    if (serviceModeForCurrentContext() !== 'sharehouse') return '';
-	    const profileAvatarUrl = String(window._currentProfile?.avatar_url || '').trim();
-	    if (profileAvatarUrl) return profileAvatarUrl;
+	    const modeAvatarUrl = String(currentSharehouseHostProfile?.avatar_url || '').trim();
+	    if (modeAvatarUrl) return modeAvatarUrl;
 	    const listingId = currentSharehouseListing?.id || (currentListing?.type === 'sharehouse' ? currentListing.id : '');
-	    if (!listingId) return '';
+	    if (!listingId) return String(window._currentProfile?.avatar_url || '').trim();
 	    const listing = SHAREHOUSE_LISTINGS[listingId] || {};
 	    const match = sharehouseMatchProfiles[listingId] || {};
 	    const isCurrentHostListing = listing.isCurrentSharehouseHost === true || match.isCurrentSharehouseHost === true;
-	    if (!isCurrentHostListing) return '';
-	    return String(match.hostProfile?.basic?.avatarUrl || match.avatarUrl || listing.avatarUrl || '').trim();
+	    if (isCurrentHostListing) {
+	      const syncedAvatarUrl = String(match.hostProfile?.basic?.avatarUrl || match.avatarUrl || listing.avatarUrl || '').trim();
+	      if (syncedAvatarUrl) return syncedAvatarUrl;
+	    }
+	    return String(window._currentProfile?.avatar_url || '').trim();
 	  }
 
 		  function renderGuestPreferenceSummary(type) {
@@ -11987,10 +11990,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function ensureHomestayConversationHostObject(conversation, profile = {}, listing = {}) {
 	    const listingId = conversation?.listing_id;
-	    if (!listingId || HOSTS[listingId]) return;
+	    if (!listingId) return;
+	    const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Host' : 'ホスト');
+	    if (HOSTS[listingId]) {
+	      HOSTS[listingId].name = name;
+	      HOSTS[listingId].avatarUrl = profile.avatar_url || '';
+	      return;
+	    }
 	    HOSTS[listingId] = {
 	      id: listingId,
-	      name: hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Host' : 'ホスト'),
+	      name,
 	      avatar: '🧑',
 	      avatarUrl: profile.avatar_url || '',
 	      avClass: '',
@@ -12009,8 +12018,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function ensureSharehouseConversationListingObject(conversation, profile = {}, listing = {}) {
 	    const listingId = conversation?.listing_id || listing?.id || '';
-	    if (!listingId || SHAREHOUSE_LISTINGS[listingId]) return;
+	    if (!listingId) return;
 	    const name = hostDisplayValue(profile.display_name || listing.title, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト');
+	    if (SHAREHOUSE_LISTINGS[listingId]) {
+	      SHAREHOUSE_LISTINGS[listingId].name = name;
+	      SHAREHOUSE_LISTINGS[listingId].avatarUrl = profile.avatar_url || '';
+	      if (sharehouseMatchProfiles[listingId]) {
+	        sharehouseMatchProfiles[listingId].name = name;
+	        sharehouseMatchProfiles[listingId].avatarUrl = profile.avatar_url || '';
+	      }
+	      return;
+	    }
 	    SHAREHOUSE_LISTINGS[listingId] = {
 	      id: listingId,
 	      listingId,
@@ -12085,9 +12103,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const hostIds = [...new Set(rows.map(row => row.listing_owner_id).filter(Boolean))];
 	    const listingIds = [...new Set(rows.map(row => row.listing_id).filter(Boolean))];
 	    const conversationIds = rows.map(row => row.id).filter(Boolean);
-	    const [profilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
+	    const hostProfileQuery = service === 'sharehouse'
+	      ? window._supabase.from('sharehouse_host_profiles').select('user_id, display_name, avatar_url').in('user_id', hostIds)
+	      : window._supabase.from('homestay_host_profiles').select('user_id, display_name, avatar_url').in('user_id', hostIds);
+	    const [profilesResult, hostProfilesResult, listingsResult, messagesResult, readsResult] = await Promise.all([
 	      hostIds.length
 	        ? window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', hostIds)
+	        : Promise.resolve({ data: [], error: null }),
+	      hostIds.length
+	        ? hostProfileQuery
 	        : Promise.resolve({ data: [], error: null }),
 	      listingIds.length
 	        ? window._supabase.from('listings').select('id, owner_id, listing_type, title, city, status').in('id', listingIds)
@@ -12100,18 +12124,29 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        : Promise.resolve({ data: [], error: null })
 	    ]);
 	    if (profilesResult.error) throw profilesResult.error;
+	    if (hostProfilesResult.error) throw hostProfilesResult.error;
 	    if (listingsResult.error) throw listingsResult.error;
 	    if (messagesResult.error) throw messagesResult.error;
 	    if (readsResult.error) throw readsResult.error;
 
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
+	    const hostProfilesByUserId = indexRowsBy(hostProfilesResult.data, 'user_id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
 	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) return null;
-	      const profile = profilesById.get(conversation.listing_owner_id) || {};
+	      const legacyProfile = profilesById.get(conversation.listing_owner_id) || {};
+	      const hostProfile = hostProfilesByUserId.get(conversation.listing_owner_id) || {};
+	      const identity = hostModeIdentityFromProfiles(hostProfile, legacyProfile);
+	      const profile = {
+	        ...legacyProfile,
+	        ...hostProfile,
+	        id: conversation.listing_owner_id,
+	        display_name: identity.displayName,
+	        avatar_url: identity.avatarUrl
+	      };
 	      const listing = listingsById.get(conversation.listing_id) || {};
 	      if (!listing?.id || listing.listing_type !== service) return null;
 	      if (service === 'homestay') ensureHomestayConversationHostObject(conversation, profile, listing);
@@ -17911,6 +17946,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const hasPartner = hostOnboardingHasPartner(householdTypeUi);
 	    return {
 	      user_id: userId,
+	      display_name: hostFormTextInput(scope, 'name'),
 	      age: hostFormIntegerInput(scope, 'age'),
 	      nationality: hostFormTextInput(scope, 'nationality'),
 	      spoken_languages: hostFormListWithOther(scope, 'spoken-languages', 'spoken-language-other'),
@@ -18784,6 +18820,73 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return publicUrl;
 	  }
 
+	  async function uploadHostModeAvatarFileToSupabase(file, housingType, setMessage = setProfileAvatarMessage) {
+	    const userId = window._currentUser?.id;
+	    const type = normalizeGuestModeHousingType(housingType);
+	    if (!userId || !window._supabase?.storage) {
+	      setMessage(profileAvatarErrorMessage('user'));
+	      return null;
+	    }
+
+	    const path = `${userId}/host/${type}/avatar-${Date.now()}.${profileAvatarExtension(file.type)}`;
+	    try {
+	      const { error: uploadError } = await window._supabase.storage
+	        .from('profile-photos')
+	        .upload(path, file, {
+	          cacheControl: '3600',
+	          contentType: file.type,
+	          upsert: false
+	        });
+	      if (uploadError) throw uploadError;
+	    } catch (error) {
+	      console.warn('Supabase host mode profile photo upload error:', { housingType: type, error });
+	      setMessage(currentLang === 'en' ? 'Could not upload the photo.' : '写真をアップロードできませんでした。');
+	      return null;
+	    }
+
+	    const { data } = window._supabase.storage
+	      .from('profile-photos')
+	      .getPublicUrl(path);
+	    const publicUrl = data?.publicUrl || '';
+	    if (!publicUrl) {
+	      console.warn('Supabase host mode profile photo upload error:', new Error('Public URL was not returned'));
+	      setMessage(currentLang === 'en' ? 'Could not get the photo URL.' : '写真URLを取得できませんでした。');
+	      return null;
+	    }
+	    setMessage('');
+	    return publicUrl;
+	  }
+
+	  async function saveHostModeAvatarUrlToSupabase(housingType, publicUrl, setMessage = setProfileAvatarMessage) {
+	    const userId = window._currentUser?.id;
+	    const type = normalizeGuestModeHousingType(housingType);
+	    const table = type === 'sharehouse' ? 'sharehouse_host_profiles' : 'homestay_host_profiles';
+	    if (!userId || !publicUrl || !window._supabase?.from) return false;
+	    try {
+	      const { data, error } = await window._supabase
+	        .from(table)
+	        .update({ avatar_url: publicUrl })
+	        .eq('user_id', userId)
+	        .select('user_id, display_name, avatar_url')
+	        .maybeSingle();
+	      if (error) throw error;
+	      if (!data?.user_id) throw new Error(`${table} avatar row was not found`);
+	      if (type === 'sharehouse') {
+	        currentSharehouseHostProfile = { ...(currentSharehouseHostProfile || {}), ...data };
+	        window._currentSharehouseHostProfile = currentSharehouseHostProfile;
+	      } else {
+	        currentHomestayHostProfile = { ...(currentHomestayHostProfile || {}), ...data };
+	        window._currentHomestayHostProfile = currentHomestayHostProfile;
+	      }
+	      setMessage('');
+	      return true;
+	    } catch (error) {
+	      console.warn('Supabase host mode avatar_url update error:', { housingType: type, error });
+	      setMessage(currentLang === 'en' ? 'Could not save the photo URL.' : '写真URLをプロフィールへ保存できませんでした。');
+	      return false;
+	    }
+	  }
+
 	  async function saveCurrentUserAvatarToSupabase() {
 	    if (isHomestayGuestContext()) {
 	      return await saveHomestayHostAvatarToSupabase('homestay-guest-profile');
@@ -18945,7 +19048,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ? currentHomestayGuestModeProfile?.avatar_url || currentGuestProfileData?.avatar_url || ''
 	      : info.service === 'sharehouse-guest'
 	        ? currentSharehouseGuestModeProfile?.avatar_url || currentSharehouseGuestProfile?.avatar_url || ''
-	        : window._currentProfile?.avatar_url || '';
+	        : info.service === 'sharehouse'
+	          ? currentSharehouseHostProfile?.avatar_url || window._currentProfile?.avatar_url || ''
+	          : currentHomestayHostProfile?.avatar_url || window._currentProfile?.avatar_url || '';
 	    window.renderAvatarElement(preview, fallbackAvatarUrl);
 	  }
 
@@ -19053,6 +19158,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const isHomestayGuestAvatar = info.service === 'homestay-guest';
 	    const isSharehouseGuestAvatar = info.service === 'sharehouse-guest';
 	    const isSharehouseHostAvatar = info.service === 'sharehouse';
+	    const isHomestayHostAvatar = info.service === 'homestay';
 
 	    let uploadFile = file;
 	    try {
@@ -19073,9 +19179,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return false;
 	    }
 
-	    const publicUrl = (isHomestayGuestAvatar || isSharehouseGuestAvatar)
-	      ? await uploadGuestModeAvatarFileToSupabase(uploadFile, isHomestayGuestAvatar ? 'homestay' : 'sharehouse', message => setHomestayHostAvatarMessage(scope, message))
-	      : await uploadProfileAvatarFileToSupabase(uploadFile, message => setHomestayHostAvatarMessage(scope, message));
+	    let publicUrl = '';
+	    if (isHomestayGuestAvatar || isSharehouseGuestAvatar) {
+	      publicUrl = await uploadGuestModeAvatarFileToSupabase(uploadFile, isHomestayGuestAvatar ? 'homestay' : 'sharehouse', message => setHomestayHostAvatarMessage(scope, message));
+	    } else {
+	      const hostMode = isSharehouseHostAvatar ? 'sharehouse' : 'homestay';
+	      publicUrl = await uploadHostModeAvatarFileToSupabase(uploadFile, hostMode, message => setHomestayHostAvatarMessage(scope, message));
+	      if (publicUrl) {
+	        const savedHostAvatar = await saveHostModeAvatarUrlToSupabase(hostMode, publicUrl, message => setHomestayHostAvatarMessage(scope, message));
+	        if (!savedHostAvatar) publicUrl = '';
+	      }
+	    }
 	    if (!publicUrl) {
 	      const error = new Error('Profile photo upload returned no public URL');
 	      console.error('Supabase profile photo save error:', error);
@@ -19099,6 +19213,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      applyGuestModeProfileIdentityToCurrentUi('homestay', nextModeProfile);
 	    }
 	    if (isSharehouseGuestAvatar) syncSharehouseGuestAvatarState(publicUrl);
+	    if (isHomestayHostAvatar) syncHomestayHostAvatarState(publicUrl);
 	    if (isSharehouseHostAvatar) syncSharehouseHostAvatarState(publicUrl);
 
 	    clearPendingHomestayHostAvatar(scope);
@@ -19598,7 +19713,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function syncPublishedHomestayListingToSearchObjects({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [], students = [], familyMembers = [] }) {
 	    if (!listing.id) return null;
 	    const hostId = listing.id;
-	    const name = hostDisplayValue(profile.display_name);
+	    const identity = hostModeIdentityFromProfiles(hostProfile, profile);
+	    const name = hostDisplayValue(identity.displayName);
 	    const city = normalizeHomestayArea(listing.city) || hostDisplayValue(listing.city);
 	    const roomType = hostDisplayValue(fromHomestayListingDetailDbValue('room_type', details.room_type));
 	    const mealPlan = fromHomestayListingDetailDbValue('meal_plan', details.meal_plan);
@@ -19639,7 +19755,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      id: hostId,
 	      name,
 	      avatar: '🧑',
-	      avatarUrl: profile.avatar_url || '',
+	      avatarUrl: identity.avatarUrl || '',
 	      avClass: '',
 	      roomBg: '',
 	      roomEmoji: '',
@@ -19752,7 +19868,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      cleaning: homestayDetailFilterCode('cleaning_rule', details.cleaning_rule),
 	      overnight: homestayDetailFilterCode('overnight_guest_rule', details.overnight_guest_rule)
 	    };
-	    return { id: hostId, listing, profile, hostProfile, details, photos, students: studentRows, familyMembers: familyMemberRows };
+	    return {
+	      id: hostId,
+	      listing,
+	      profile: { ...profile, ...hostProfile, id: listing.owner_id || profile.id, display_name: identity.displayName, avatar_url: identity.avatarUrl },
+	      hostProfile,
+	      details,
+	      photos,
+	      students: studentRows,
+	      familyMembers: familyMemberRows
+	    };
 	  }
 
 	  function indexRowsBy(rows = [], key) {
@@ -19812,7 +19937,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listingIds = listings.map(listing => listing.id).filter(Boolean);
 	    const [profilesResult, hostProfilesResult, detailsResult, photosResult, studentsResult, familyMembersResult] = await Promise.all([
 	      window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', ownerIds),
-	      window._supabase.from('homestay_host_profiles').select('user_id, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
+	      window._supabase.from('homestay_host_profiles').select('user_id, display_name, avatar_url, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
 	      window._supabase.from('homestay_listing_details').select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules').in('listing_id', listingIds),
 	      window._supabase.from('listing_photos').select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at').in('listing_id', listingIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
 	      window._supabase.from('homestay_host_students').select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at').in('host_user_id', ownerIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
@@ -19872,6 +19997,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function sharehousePublishedHostUiProfileFromRows({ listing = {}, profile = {}, hostProfile = {}, details = {}, photos = [] }) {
+	    const identity = hostModeIdentityFromProfiles(hostProfile, profile);
 	    const petDetails = String(details.pet_details || '');
 	    const [petType, petCount] = petDetails.split('/').map(part => part.trim());
 	    const visitorShareUi = {
@@ -19909,8 +20035,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const photoItems = sharehousePublishedListingPhotosFromRows(photos);
 	    return {
 	      basic: {
-	        name: hostDisplayValue(profile.display_name || listing.title, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト'),
-	        avatarUrl: profile.avatar_url || '',
+	        name: hostDisplayValue(identity.displayName || listing.title, currentLang === 'en' ? 'Sharehouse host' : 'シェアハウスホスト'),
+	        avatarUrl: identity.avatarUrl || '',
 	        birthDate: hostProfile.birth_date || '',
 	        age: hostProfile.age ?? '',
 	        nationality: hostProfile.nationality || '',
@@ -20063,9 +20189,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      hostProfile: uiProfile,
 	      listing,
 	      details,
-	      profile
+	      profile: { ...profile, ...hostProfile, id: listing.owner_id || profile.id, display_name: uiProfile.basic.name, avatar_url: uiProfile.basic.avatarUrl || '' }
 	    };
-	    return { id: listingId, listing, profile, hostProfile, details, photos, uiProfile };
+	    return {
+	      id: listingId,
+	      listing,
+	      profile: { ...profile, ...hostProfile, id: listing.owner_id || profile.id, display_name: uiProfile.basic.name, avatar_url: uiProfile.basic.avatarUrl || '' },
+	      hostProfile,
+	      details,
+	      photos,
+	      uiProfile
+	    };
 	  }
 
 	  async function loadPublishedSharehouseListingsForGuest({ force = false } = {}) {
@@ -20098,7 +20232,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listingIds = listings.map(listing => listing.id).filter(Boolean);
 	    const [profilesResult, hostProfilesResult, detailsResult, photosResult] = await Promise.all([
 	      window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', ownerIds),
-	      window._supabase.from('sharehouse_host_profiles').select('user_id, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti').in('user_id', ownerIds),
+	      window._supabase.from('sharehouse_host_profiles').select('user_id, display_name, avatar_url, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti').in('user_id', ownerIds),
 	      window._supabase.from('sharehouse_listing_details').select('listing_id, room_type, furnished, floor_type, bathroom_type, resident_count_group, amenities, kitchen_rule, kitchen_rule_details, interaction_level, cleanliness_level, cleaning_rule, noise_level, smoking_environment, drinking_environment, pets_present, pet_details, visitor_rule, overnight_guest_rule, quiet_hours_rule, other_house_rules').in('listing_id', listingIds),
 	      window._supabase.from('listing_photos').select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at').in('listing_id', listingIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true })
 	    ]);
@@ -21353,12 +21487,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ...approximateLocation.payload
 	    };
 
-	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
-	    if (!savedDisplayName) {
-	      console.error('Supabase profiles display_name save error:', new Error('profiles.display_name update returned false'));
-	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host name. Please try again.' : 'ホスト名を保存できませんでした。もう一度お試しください。' };
-	    }
-
 	    const hostProfilePayload = homestayHostProfilePayloadFromOnboarding(userId);
 	    const savedHostProfile = await saveHomestayHostProfileToSupabase(hostProfilePayload);
 	    if (!savedHostProfile) {
@@ -21449,12 +21577,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ...approximateLocation.payload
 	    };
 
-	    const savedDisplayName = await saveCurrentUserDisplayNameToSupabase(displayName);
-	    if (!savedDisplayName) {
-	      console.error('Supabase profiles display_name edit save error:', new Error('profiles.display_name update returned false'));
-	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host name. Please try again.' : 'ホスト名を保存できませんでした。もう一度お試しください。' };
-	    }
-
 	    const hostProfilePayload = homestayHostProfilePayloadFromForm('profile', userId);
 	    const savedHostProfile = await updateExistingHomestayHostProfileToSupabase(userId, hostProfilePayload);
 	    if (!savedHostProfile) {
@@ -21511,6 +21633,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (Array.isArray(value)) return value.length ? value.join('、') : fallback;
 	    const text = String(value).trim();
 	    return text || fallback;
+	  }
+
+	  function hostModeIdentityFromProfiles(hostProfile = {}, legacyProfile = {}) {
+	    const modeDisplayName = nullableText(hostProfile?.display_name);
+	    const legacyDisplayName = nullableText(legacyProfile?.display_name);
+	    const modeAvatarUrl = nullableText(hostProfile?.avatar_url);
+	    const legacyAvatarUrl = nullableText(legacyProfile?.avatar_url);
+	    return {
+	      displayName: modeDisplayName || legacyDisplayName || '',
+	      avatarUrl: modeAvatarUrl || legacyAvatarUrl || ''
+	    };
 	  }
 
 	  function hostAgeDisplay(age) {
@@ -21587,7 +21720,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!hostProfile.user_id && !listing.id) return;
 
 	    const host = HOSTS.sarah;
-	    const name = hostDisplayValue(profile.display_name);
+	    const identity = hostModeIdentityFromProfiles(hostProfile, profile);
+	    const name = hostDisplayValue(identity.displayName);
 	    const city = normalizeHomestayArea(listing.city) || hostDisplayValue(listing.city);
 	    const roomType = hostDisplayValue(fromHomestayListingDetailDbValue('room_type', details.room_type));
 	    const mealPlan = fromHomestayListingDetailDbValue('meal_plan', details.meal_plan);
@@ -21604,8 +21738,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const price = Number(listing.monthly_price);
 
 	    host.name = name;
-	    host.avatar = profile.avatar_url ? '🧑' : '🧑';
-	    host.avatarUrl = profile.avatar_url || '';
+	    host.avatar = identity.avatarUrl ? '🧑' : '🧑';
+	    host.avatarUrl = identity.avatarUrl || '';
 	    const photoUrls = photos.map(photo => homestayListingPhotoPublicUrl(photo.storage_path)).filter(Boolean);
 	    if (photoUrls.length) host.photos = photoUrls;
 	    host.city = city;
@@ -21705,6 +21839,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
+	  function syncHomestayHostAvatarState(publicUrl) {
+	    const avatarUrl = String(publicUrl || currentHomestayHostProfile?.avatar_url || '').trim();
+	    if (!avatarUrl) return;
+	    currentHomestayHostProfile = {
+	      ...(currentHomestayHostProfile || {}),
+	      user_id: window._currentUser?.id || currentHomestayHostProfile?.user_id,
+	      avatar_url: avatarUrl
+	    };
+	    window._currentHomestayHostProfile = currentHomestayHostProfile;
+	    renderHomestayHostAvatarPreview('ob');
+	    renderHomestayHostAvatarPreview('profile');
+	    syncHomestayHostDataToDemoObjects({
+	      profile: window._currentProfile || {},
+	      hostProfile: currentHomestayHostProfile,
+	      listing: currentHomestayListing,
+	      details: currentHomestayListingDetails,
+	      photos: currentHomestayListingPhotos,
+	      students: currentHomestayHostStudents
+	    });
+	  }
+
 	  function updateHostDashboardFromCurrentHomestayData() {
 	    const listing = currentHomestayListing;
 	    if (!listing) {
@@ -21789,6 +21944,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (currentScreen !== 'host-profile' || serviceModeForCurrentContext() !== 'homestay') return;
 	    const profile = window._currentProfile || {};
 	    const hostProfile = currentHomestayHostProfile || {};
+	    const identity = hostModeIdentityFromProfiles(hostProfile, profile);
 	    const listing = currentHomestayListing || {};
 	    const details = currentHomestayListingDetails || {};
 	    const privateDetails = currentHomestayListingPrivateDetails || {};
@@ -21796,7 +21952,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	    renderHomestayHostAvatarPreview('profile');
 	    renderHomestayHostRoomPhotoPreview('profile');
-	    setInputValueById('host-profile-name', profile.display_name || '');
+	    setInputValueById('host-profile-name', identity.displayName || '');
 	    setInputValueById('host-profile-age', hostProfile.age ?? '');
 	    setInputValueById('host-profile-nationality', hostProfile.nationality || '');
 	    setMultiFormChipsWithOther('host-profile-spoken-languages', hostProfile.spoken_languages || [], 'host-profile-spoken-language-other', 'host-profile-spoken-language-other-wrap');
@@ -21909,7 +22065,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('homestay_host_profiles')
-	        .select('user_id, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio')
+	        .select('user_id, display_name, avatar_url, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio')
 	        .eq('user_id', userId)
 	        .maybeSingle();
 	      if (error) throw error;
@@ -24281,6 +24437,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const currentStatus = toSharehouseHostProfileDbValue('current_status', profile.basic.position);
 	    return omitUndefinedFields({
 	      user_id: userId,
+	      display_name: nullableText(profile.basic.name),
 	      birth_date: nullableText(profile.basic.birthDate),
 	      age: sharehouseHostFormInteger(profile.basic.age),
 	      nationality: nullableText(profile.basic.nationality),
@@ -24583,25 +24740,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const trimmedName = nullableText(displayName) || fallbackAuthDisplayName(window._currentUser);
 	    if (!userId || !window._supabase?.from || !trimmedName) return false;
 	    try {
-	      const { error } = await window._supabase
-	        .from('profiles')
-	        .upsert({
-	          id: userId,
-	          display_name: trimmedName,
-	          preferred_language: currentLang === 'en' ? 'en' : 'ja'
-	        }, { onConflict: 'id' });
+	      const { data, error } = await window._supabase
+	        .from('sharehouse_host_profiles')
+	        .update({ display_name: trimmedName })
+	        .eq('user_id', userId)
+	        .select('user_id, display_name, avatar_url')
+	        .maybeSingle();
 	      if (error) throw error;
-	      window._currentProfile = {
-	        ...(window._currentProfile || {}),
-	        id: userId,
-	        display_name: trimmedName,
-	        preferred_language: currentLang === 'en' ? 'en' : 'ja'
-	      };
+	      if (!data?.user_id) return false;
+	      currentSharehouseHostProfile = { ...(currentSharehouseHostProfile || {}), ...data };
+	      window._currentSharehouseHostProfile = currentSharehouseHostProfile;
 	      const mypageName = document.getElementById('mypage-username') || document.querySelector('.mypage-name');
 	      if (mypageName) mypageName.textContent = trimmedName;
 	      return true;
 	    } catch (error) {
-	      console.error('Supabase sharehouse host profiles identity save error:', error);
+	      console.error('Supabase sharehouse_host_profiles identity save error:', error);
 	      return false;
 	    }
 	  }
@@ -24625,12 +24778,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    });
 	    const validationErrors = validateSharehouseListingPayload(listingPayload);
 	    if (validationErrors.length) return { ok: false, message: validationErrors[0] };
-
-	    const savedDisplayName = await saveSharehouseHostProfileIdentityToSupabase(displayName);
-	    if (!savedDisplayName) {
-	      console.error('Supabase sharehouse profiles display_name save error:', new Error('profiles.display_name update returned false'));
-	      return { ok: false, message: currentLang === 'en' ? 'Could not save your name. Please try again.' : '名前を保存できませんでした。もう一度お試しください。' };
-	    }
 
 	    const savedProfile = await saveSharehouseHostProfileToSupabase(sharehouseHostProfilePayloadFromProfile(profile, userId));
 	    if (!savedProfile) {
@@ -24760,7 +24907,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listing = currentSharehouseListing || {};
 	    const details = currentSharehouseListingDetails || {};
 	    const privateDetails = currentSharehouseListingPrivateDetails || {};
-	    const displayName = window._currentProfile?.display_name || '';
+	    const identity = hostModeIdentityFromProfiles(hostProfile, window._currentProfile || {});
+	    const displayName = identity.displayName || '';
 	    const petDetails = String(details.pet_details || '');
 	    const [petType, petCount] = petDetails.split('/').map(part => part.trim());
 	    const visitorShareUi = {
@@ -24798,7 +24946,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return {
 	      basic: {
 	        name: displayName,
-	        avatarUrl: window._currentProfile?.avatar_url || '',
+	        avatarUrl: identity.avatarUrl || '',
 	        birthDate: hostProfile.birth_date || '',
 	        age: hostProfile.age ?? '',
 	        nationality: hostProfile.nationality || '',
@@ -24877,7 +25025,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listing = SHAREHOUSE_LISTINGS[listingId] || {};
 	    const match = sharehouseMatchProfiles[listingId] || {};
 	    const rent = Number(profile.stay.monthlyRent) || 0;
-	    const avatarUrl = String(window._currentProfile?.avatar_url || '').trim();
+	    const avatarUrl = String(profile.basic.avatarUrl || '').trim();
 	    SHAREHOUSE_LISTINGS[listingId] = {
 	      ...listing,
 	      id: listingId,
@@ -24959,14 +25107,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function syncSharehouseHostAvatarState(publicUrl) {
-	    const avatarUrl = String(publicUrl || window._currentProfile?.avatar_url || '').trim();
+	    const avatarUrl = String(publicUrl || currentSharehouseHostProfile?.avatar_url || '').trim();
 	    if (!avatarUrl) return;
-	    window._currentProfile = {
-	      ...(window._currentProfile || {}),
-	      id: window._currentUser?.id || window._currentProfile?.id,
+	    currentSharehouseHostProfile = {
+	      ...(currentSharehouseHostProfile || {}),
+	      user_id: window._currentUser?.id || currentSharehouseHostProfile?.user_id,
 	      avatar_url: avatarUrl
 	    };
-	    if (typeof window.applyCurrentUserAvatarUrl === 'function') window.applyCurrentUserAvatarUrl(avatarUrl);
+	    window._currentSharehouseHostProfile = currentSharehouseHostProfile;
 	    renderHomestayHostAvatarPreview('res');
 	    renderHomestayHostAvatarPreview('share-profile');
 	    updateSharehouseManagerProfileCard();
@@ -25077,7 +25225,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('sharehouse_host_profiles')
-	        .select('user_id, birth_date, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti')
+	        .select('user_id, display_name, avatar_url, birth_date, age, nationality, gender, religion, languages, english_level, current_status, smoking_habit, drinking_habit, hobbies, bio, wake_time, bedtime, home_presence, cooking_frequency, mbti')
 	        .eq('user_id', userId)
 	        .maybeSingle();
 	      if (error) throw error;
@@ -25170,7 +25318,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentSharehouseListingPhotos = currentSharehouseListingPhotos;
 	    window._currentSharehouseHostRoommates = currentSharehouseHostRoommates;
 	    syncSharehouseHostDataToDemoObjects();
-	    syncSharehouseHostAvatarState(window._currentProfile?.avatar_url || '');
+	    syncSharehouseHostAvatarState(currentSharehouseHostProfile?.avatar_url || '');
 	    updateHostDashboardFromCurrentSharehouseData();
 	    applyCurrentSharehouseHostDataToHostProfileScreen();
 	    return true;
