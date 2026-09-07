@@ -6648,6 +6648,7 @@
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
       <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
+      <div class="mypage-item" onclick="showRegistrationStartScreen()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openDeleteAccountModal()"><span class="mypage-item-icon">🗑</span><span class="mypage-item-label" data-i18n="delete_account">アカウント削除</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="doLogout()" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
     </div>
@@ -6922,6 +6923,7 @@
 
   function showRegistrationStartScreen() {
     clearRestoredModeLock();
+    if (typeof clearAuthenticatedRoute === 'function') clearAuthenticatedRoute();
     window._lastRestoredUserMode = null;
     window._lastUserModeRestoreStatus = { status: 'empty' };
     window._registrationStartScreenActive = true;
@@ -29086,10 +29088,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           </div>
           <div class="role-card-arrow">›</div>
         </div>
-        <div class="role-card host" onclick="chooseRole('resident')">
+        <div class="role-card host" onclick="chooseRole('host')">
           <div class="role-card-icon">🤝</div>
           <div class="role-card-text">
-            <div class="role-card-title">${t('resident_recruiting')}</div>
+            <div class="role-card-title">${t('register_as_host')}</div>
             <div class="role-card-desc">${t('resident_recruiting_desc')}</div>
           </div>
           <div class="role-card-arrow">›</div>
@@ -29117,7 +29119,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function userModeRowMatchesSelection(row, selection) {
     if (!row || !selection) return false;
     if (row.housing_type !== selection.housingType) return false;
-    if (selection.housingType === 'sharehouse' && selection.role === 'resident') {
+    if (selection.housingType === 'sharehouse' && (selection.role === 'host' || selection.role === 'resident')) {
       return row.role === 'resident' || row.role === 'host';
     }
     return row.role === selection.role;
@@ -29167,12 +29169,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       isRestoringSelectedUserMode = false;
     }
 
-    currentRole = role;
-    if (role === 'guest') {
+    if (selectedMode.housingType === 'sharehouse' && selectedMode.role === 'host') {
+      currentRole = 'resident';
+      currentSearchCat = 'sharehouse';
+      window._serviceType = 'sharehouse';
+      resStep = 1;
+      navigate('role-select', 'resident-onboarding');
+      renderResStep();
+    } else if (role === 'guest') {
+      currentRole = 'guest';
       navigate('role-select', 'onboarding');
       onboardStep = 1;
       renderOnboardStep();
     } else if (role === 'host') {
+      currentRole = 'host';
       hostObStep = 1;
       navigate('role-select', 'host-onboarding');
       renderHostObStep();
