@@ -19421,14 +19421,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const table = type === 'sharehouse' ? 'sharehouse_host_profiles' : 'homestay_host_profiles';
 	    if (!userId || !publicUrl || !window._supabase?.from) return false;
 	    try {
+	      const updatePayload = {
+	        avatar_url: publicUrl,
+	        updated_at: new Date().toISOString()
+	      };
 	      const { data, error } = await window._supabase
 	        .from(table)
-	        .update({ avatar_url: publicUrl })
+	        .update(updatePayload)
 	        .eq('user_id', userId)
 	        .select('user_id, display_name, avatar_url')
 	        .maybeSingle();
 	      if (error) throw error;
 	      if (!data?.user_id) throw new Error(`${table} avatar row was not found`);
+	      if (data.avatar_url !== publicUrl) throw new Error(`${table} avatar_url was not updated`);
 	      if (type === 'sharehouse') {
 	        currentSharehouseHostProfile = { ...(currentSharehouseHostProfile || {}), ...data };
 	        window._currentSharehouseHostProfile = currentSharehouseHostProfile;
