@@ -6784,6 +6784,7 @@
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
   const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let freshOnboardingModeSelection = null;
   let freshOnboardingSelection = null;
 
   const firebaseConfig = {
@@ -22586,18 +22587,25 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          role: normalizeFreshOnboardingRole(selection.role)
 	        }
 	      : null;
+	    freshOnboardingModeSelection = freshOnboardingSelection;
 	    window._freshOnboardingSelection = freshOnboardingSelection;
+	    window._freshOnboardingModeSelection = freshOnboardingModeSelection;
+	  }
+
+	  function currentFreshOnboardingSelection() {
+	    return freshOnboardingModeSelection || freshOnboardingSelection || window._freshOnboardingModeSelection || window._freshOnboardingSelection || null;
 	  }
 
 	  function isFreshOnboardingSelection(housingType, role) {
-	    if (!freshOnboardingSelection) return false;
-	    return freshOnboardingSelection.housingType === (housingType === 'sharehouse' ? 'sharehouse' : 'homestay')
-	      && freshOnboardingSelection.role === normalizeFreshOnboardingRole(role);
+	    const selection = currentFreshOnboardingSelection();
+	    if (!selection) return false;
+	    return selection.housingType === (housingType === 'sharehouse' ? 'sharehouse' : 'homestay')
+	      && selection.role === normalizeFreshOnboardingRole(role);
 	  }
 
 	  function shouldSuppressFreshOnboardingFallbackForId(id) {
 	    const normalizedId = String(id || '').replace(/^#/, '');
-	    if (!normalizedId || !freshOnboardingSelection) return false;
+	    if (!normalizedId || !currentFreshOnboardingSelection()) return false;
 	    if (isFreshOnboardingSelection('homestay', 'guest')) {
 	      return normalizedId.startsWith('onboard-') || normalizedId.startsWith('hs-onboard-') || normalizedId.startsWith('homestay-stay-');
 	    }
