@@ -7173,6 +7173,7 @@
   window.beginModeChangeFromSettings = beginModeChangeFromSettings;
   window.cancelModeChangeAndReturn = cancelModeChangeAndReturn;
   window.clearModeChangeOrigin = clearModeChangeOrigin;
+  window.renderModeChangeReturnControls = renderModeChangeReturnControls;
   window.setRestoredModeLock = setRestoredModeLock;
   window.clearRestoredModeLock = clearRestoredModeLock;
   window.restoreUserModeFromUserModes = restoreUserModeFromUserModes;
@@ -26213,7 +26214,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	    document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
 	    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
-	    renderModeChangeReturnControls();
+	    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
 	    if (type === 'homestay' && onboardStep === 1 && typeof window.renderAvatarElement === 'function') {
 	      window.renderAvatarElement(
 	        document.getElementById('hs-onboard-avatar-preview'),
@@ -26277,7 +26278,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          return;
 	        }
 	        await loadCurrentSharehouseGuestData({ force: true });
-	        clearModeChangeOrigin();
+	        if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	        navigate('onboarding', 'search');
 	        return;
 	      } else {
@@ -26301,7 +26302,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        showToast(currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
 	        return;
 	      }
-	      clearModeChangeOrigin();
+	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('onboarding', 'search');
 	    }
 	  }
@@ -29595,7 +29596,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         <div class="role-card-arrow">›</div>
       </div>
     `;
-    renderModeChangeReturnControls();
+    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
   }
 
   /* ===== サービス種別選択 ===== */
@@ -29653,7 +29654,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const typeLabel = document.getElementById('mypage-current-type');
     if (typeLabel) typeLabel.textContent = type === 'homestay' ? t('homestay') : t('sharehouse');
     navigate(currentScreen || 'login', 'role-select');
-    renderModeChangeReturnControls();
+    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
   }
 
   /* ===== ロール選択 ===== */
@@ -29699,7 +29700,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._pendingUserModeRestore = mode;
     window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housingType : null;
     const restored = await applyPendingUserModeRestore();
-    if (restored) clearModeChangeOrigin();
+    if (restored && typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
     return restored;
   }
 
@@ -31004,7 +31005,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('host-ob-back-btn').style.display = hostObStep > 1 ? 'block' : 'none';
     document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
-    renderModeChangeReturnControls();
+    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
     if (hostObStep === 1) renderHomestayHostAvatarPreview('ob');
     if (hostObStep === 2) {
       renderHomestayHostRoomPhotoPreview('ob');
@@ -31041,7 +31042,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
 	      }
 	      if (btn) btn.disabled = false;
-	      clearModeChangeOrigin();
+	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('host-onboarding', 'host-dashboard');
 	      showToast(savedToSupabase.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
 	    }
@@ -31073,7 +31074,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('res-next-btn').textContent = resStep === resTotal
       ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
       : (currentLang === 'en' ? 'Next →' : '次へ →');
-	    renderModeChangeReturnControls();
+	    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
 	    if (resStep === 1) {
 	      renderHomestayHostAvatarPreview('res');
 	      clearSharehouseHostLocationEditorMap('res');
@@ -31105,7 +31106,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
 	      }
 	      if (btn) btn.disabled = false;
-	      clearModeChangeOrigin();
+	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('resident-onboarding', 'host-dashboard');
 	      showToast(result.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
 	    }
