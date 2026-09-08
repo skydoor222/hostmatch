@@ -6791,6 +6791,7 @@
   const SUPABASE_URL = 'https://rceszxyfcvzuveqtjgfm.supabase.co';
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
   const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
+  const MODE_CHANGE_ORIGIN_STORAGE_KEY = 'hostmatch_mode_change_origin';
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   window._freshOnboardingSelection = null;
   window._modeChangeOrigin = null;
@@ -6951,20 +6952,88 @@
       : (window._serviceType === 'sharehouse' || currentSearchCat === 'sharehouse' ? 'sharehouse' : 'homestay');
     const screen = window.currentScreen || currentScreen || restoredHomeScreenForMode?.({ housingType, role }) || '';
     return {
+      userId: window._currentUser?.id || '',
       housingType,
       role,
       screen
     };
   }
 
+  function normalizeModeChangeOrigin(origin, userId = window._currentUser?.id || '') {
+    if (!origin || typeof origin !== 'object') return null;
+    if (!origin.userId || (userId && origin.userId !== userId)) return null;
+    const housingType = origin.housingType === 'sharehouse' ? 'sharehouse' : origin.housingType === 'homestay' ? 'homestay' : '';
+    const role = normalizedModeChangeRole(origin.role);
+    if (!housingType || !['guest', 'host'].includes(role)) return null;
+    return {
+      userId: origin.userId,
+      housingType,
+      role,
+      screen: String(origin.screen || '')
+    };
+  }
+
+  function removeModeChangeOriginFromSession() {
+    try {
+      sessionStorage.removeItem(MODE_CHANGE_ORIGIN_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Mode change origin clear failed:', error);
+    }
+  }
+
+  function saveModeChangeOriginToSession(origin) {
+    const normalized = normalizeModeChangeOrigin(origin);
+    if (!normalized) {
+      removeModeChangeOriginFromSession();
+      return null;
+    }
+    try {
+      sessionStorage.setItem(MODE_CHANGE_ORIGIN_STORAGE_KEY, JSON.stringify(normalized));
+    } catch (error) {
+      console.warn('Mode change origin save failed:', error);
+    }
+    return normalized;
+  }
+
+  function restoreModeChangeOriginFromSession(user) {
+    const userId = user?.id || window._currentUser?.id || '';
+    if (!userId) return null;
+    try {
+      const raw = sessionStorage.getItem(MODE_CHANGE_ORIGIN_STORAGE_KEY);
+      if (!raw) return null;
+      const restored = normalizeModeChangeOrigin(JSON.parse(raw), userId);
+      if (!restored) {
+        removeModeChangeOriginFromSession();
+        window._modeChangeOrigin = null;
+        return null;
+      }
+      window._modeChangeOrigin = restored;
+      return restored;
+    } catch (error) {
+      console.warn('Mode change origin restore failed:', error);
+      removeModeChangeOriginFromSession();
+      window._modeChangeOrigin = null;
+      return null;
+    }
+  }
+
   function currentModeChangeOrigin() {
-    const origin = window._modeChangeOrigin || null;
-    if (!origin || !['homestay', 'sharehouse'].includes(origin.housingType) || !['guest', 'host'].includes(origin.role)) return null;
+    const origin = normalizeModeChangeOrigin(window._modeChangeOrigin || null);
+    if (!origin) return null;
+    window._modeChangeOrigin = origin;
     return origin;
+  }
+
+  function modeChangeOriginMatchesUserModeRow(row, origin) {
+    if (!row || !origin) return false;
+    if (row.housing_type !== origin.housingType) return false;
+    if (origin.housingType === 'sharehouse' && origin.role === 'host') return row.role === 'host' || row.role === 'resident';
+    return row.role === origin.role;
   }
 
   function clearModeChangeOrigin() {
     window._modeChangeOrigin = null;
+    removeModeChangeOriginFromSession();
     if (typeof renderModeChangeReturnControls === 'function') renderModeChangeReturnControls();
   }
 
@@ -6996,7 +7065,8 @@
 
   function beginModeChangeFromSettings() {
     const origin = modeChangeOriginFromCurrentContext();
-    if (origin) window._modeChangeOrigin = origin;
+    const normalized = saveModeChangeOriginToSession(origin);
+    window._modeChangeOrigin = normalized;
     showRegistrationStartScreen({ preserveModeChangeOrigin: true });
   }
 
@@ -7117,6 +7187,17 @@
       return false;
     }
 
+    const modeChangeOrigin = currentModeChangeOrigin();
+    if (modeChangeOrigin) {
+      if (!modes.some(row => modeChangeOriginMatchesUserModeRow(row, modeChangeOrigin))) {
+        clearModeChangeOrigin();
+      } else {
+        setUserModeRestoreStatus('mode_change', { modes, origin: modeChangeOrigin });
+        showRegistrationStartScreen({ preserveModeChangeOrigin: true });
+        return false;
+      }
+    }
+
     const restorableModes = modes
       .map(userModeRowToRestoreMode)
       .filter(isSupportedRestorableUserMode);
@@ -7140,7 +7221,7 @@
         return false;
       }
       setUserModeRestoreStatus('choose_mode', { count: restorableModes.length, modes: restorableModes });
-      showRegistrationStartScreen();
+      showRegistrationStartScreen({ preserveModeChangeOrigin: !!currentModeChangeOrigin() });
       return false;
     }
 
@@ -7245,6 +7326,7 @@
       window._currentUser = user;
       applyCurrentUserProfile(user, window._currentProfile);
       await loadCurrentUserProfile(user);
+      restoreModeChangeOriginFromSession(user);
       if (entryVersion !== authenticatedEntryVersion) return false;
 
       const shouldRestoreMode = options.forceRestoreMode
@@ -7272,7 +7354,7 @@
         window.ensureRestoredUserHomeScreen(window._lastRestoredUserMode);
         return true;
       }
-      if (window._lastUserModeRestoreStatus?.status !== 'empty' && !window._lastUserModeRestoreStatus?.notified) {
+      if (!['empty', 'mode_change'].includes(window._lastUserModeRestoreStatus?.status) && !window._lastUserModeRestoreStatus?.notified) {
         showAuthenticatedEntryError();
       }
       return false;
