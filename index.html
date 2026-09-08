@@ -6784,6 +6784,7 @@
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
   const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  let freshOnboardingSelection = null;
 
   const firebaseConfig = {
     apiKey: "AIzaSyAstdZhTnegb8zkxfPmTv_zMP9Hj2wJ5Zg",
@@ -6853,12 +6854,20 @@
 	  function applyCurrentUserAvatarUrl(avatarUrl) {
 	    renderAvatarElement(document.querySelector('.mypage-avatar'), avatarUrl);
 	    renderAvatarElement(document.getElementById('prof-avatar-preview'), avatarUrl);
-	    renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), avatarUrl);
-	    renderAvatarElement(document.getElementById('share-guest-ob-avatar-preview'), avatarUrl);
+	    if (!isFreshOnboardingSelection('homestay', 'guest')) {
+	      renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), avatarUrl);
+	    }
+	    if (!isFreshOnboardingSelection('sharehouse', 'guest')) {
+	      renderAvatarElement(document.getElementById('share-guest-ob-avatar-preview'), avatarUrl);
+	    }
 	    renderAvatarElement(document.getElementById('share-guest-profile-avatar-preview'), avatarUrl);
-	    renderAvatarElement(document.getElementById('host-ob-avatar-preview'), avatarUrl);
+	    if (!isFreshOnboardingSelection('homestay', 'host')) {
+	      renderAvatarElement(document.getElementById('host-ob-avatar-preview'), avatarUrl);
+	    }
 	    renderAvatarElement(document.getElementById('host-profile-avatar-preview'), avatarUrl);
-	    renderAvatarElement(document.getElementById('res-avatar-preview'), avatarUrl);
+	    if (!isFreshOnboardingSelection('sharehouse', 'host')) {
+	      renderAvatarElement(document.getElementById('res-avatar-preview'), avatarUrl);
+	    }
 	    renderAvatarElement(document.getElementById('share-profile-avatar-preview'), avatarUrl);
 	  }
 
@@ -6923,6 +6932,7 @@
 
   function showRegistrationStartScreen() {
     clearRestoredModeLock();
+    if (typeof setFreshOnboardingSelection === 'function') setFreshOnboardingSelection(null);
     if (typeof clearAuthenticatedRoute === 'function') clearAuthenticatedRoute();
     window._lastRestoredUserMode = null;
     window._lastUserModeRestoreStatus = { status: 'empty' };
@@ -14462,7 +14472,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function selectedChipTextFromRow(rowId, fallback = '') {
     const row = document.getElementById(rowId);
     const selected = row?.querySelector('.form-chip.selected');
-    if (!selected) return fallback;
+    if (!selected) return shouldSuppressFreshOnboardingFallbackForId(rowId) ? '' : fallback;
     const textNode = Array.from(selected.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
     return (textNode?.__hostmatchOriginalText || selected.dataset.hostmatchOriginalText || selected.textContent).trim();
   }
@@ -15937,17 +15947,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function homestayFilterProfileFromOnboarding() {
+	    const isFreshHomestayGuestOnboarding = isFreshOnboardingSelection('homestay', 'guest');
 	    const meal = selectedChipTextFromRow('hs-onboard-meal', '朝食のみ');
 	    const mealMap = { '不要': '食事なし', '朝食のみ': '朝食あり', '朝夕食': '朝・夕食あり', '3食': '3食あり' };
     const pet = selectedChipTextFromRow('hs-onboard-pets', 'ペットOK');
     const smoking = selectedChipTextFromRow('hs-onboard-smoking', '喫煙NG');
     const students = selectedChipTextFromRow('hs-onboard-students', 'いてもOK');
     const talk = selectedChipTextFromRow('hs-onboard-talk', '適度に話したい');
+    const budgetValue = document.getElementById('hs-onboard-budget-max')?.value || '';
     return {
-      area: selectedChipTextsFromRow('hs-onboard-area')[0] || 'バンクーバー',
+      area: selectedChipTextsFromRow('hs-onboard-area')[0] || (isFreshHomestayGuestOnboarding ? '' : 'バンクーバー'),
       start: document.getElementById('guest-stay-start')?.value || document.getElementById('profile-stay-start')?.value || '',
       end: document.getElementById('guest-stay-end')?.value || document.getElementById('profile-stay-end')?.value || '',
-      budget: Number(document.getElementById('hs-onboard-budget-max')?.value || 1300),
+      budget: budgetValue ? Number(budgetValue) : (isFreshHomestayGuestOnboarding ? null : 1300),
       meal: mealMap[meal] || '',
       dining: selectedChipTextFromRow('hs-onboard-dining', ''),
       diet: selectedChipTextFromRow('hs-onboard-diet', '') && selectedChipTextFromRow('hs-onboard-diet', '') !== 'なし'
@@ -19056,13 +19068,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      preview.appendChild(img);
 	      return;
 	    }
-	    const fallbackAvatarUrl = info.service === 'homestay-guest'
-	      ? currentHomestayGuestModeProfile?.avatar_url || currentGuestProfileData?.avatar_url || ''
-	      : info.service === 'sharehouse-guest'
-	        ? currentSharehouseGuestModeProfile?.avatar_url || currentSharehouseGuestProfile?.avatar_url || ''
-	        : info.service === 'sharehouse'
-	          ? currentSharehouseHostProfile?.avatar_url || window._currentProfile?.avatar_url || ''
-	          : currentHomestayHostProfile?.avatar_url || window._currentProfile?.avatar_url || '';
+	    const suppressFallback = (info.service === 'sharehouse-guest' && key === 'ob' && isFreshOnboardingSelection('sharehouse', 'guest'))
+	      || (info.service === 'sharehouse' && key === 'res' && isFreshOnboardingSelection('sharehouse', 'host'))
+	      || (info.service === 'homestay' && key === 'ob' && isFreshOnboardingSelection('homestay', 'host'));
+	    const fallbackAvatarUrl = suppressFallback
+	      ? ''
+	      : info.service === 'homestay-guest'
+	        ? currentHomestayGuestModeProfile?.avatar_url || currentGuestProfileData?.avatar_url || ''
+	        : info.service === 'sharehouse-guest'
+	          ? currentSharehouseGuestModeProfile?.avatar_url || currentSharehouseGuestProfile?.avatar_url || ''
+	          : info.service === 'sharehouse'
+	            ? currentSharehouseHostProfile?.avatar_url || window._currentProfile?.avatar_url || ''
+	            : currentHomestayHostProfile?.avatar_url || window._currentProfile?.avatar_url || '';
 	    window.renderAvatarElement(preview, fallbackAvatarUrl);
 	  }
 
@@ -22546,14 +22563,213 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function formValue(id, fallback = '') {
 	    const el = document.getElementById(id);
-	    return el?.value?.trim() || fallback;
+	    const value = el?.value?.trim() || '';
+	    if (value) return value;
+	    return shouldSuppressFreshOnboardingFallbackForId(id) ? '' : fallback;
 	  }
 
 	  function selectedChipText(id, fallback = '') {
 	    const chip = document.querySelector('#' + id + ' .form-chip.selected');
-	    if (!chip) return fallback;
+	    if (!chip) return shouldSuppressFreshOnboardingFallbackForId(id) ? '' : fallback;
 	    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
 	    return (textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent).trim();
+	  }
+
+	  function normalizeFreshOnboardingRole(role) {
+	    return role === 'resident' ? 'host' : role;
+	  }
+
+	  function setFreshOnboardingSelection(selection) {
+	    freshOnboardingSelection = selection
+	      ? {
+	          housingType: selection.housingType === 'sharehouse' ? 'sharehouse' : 'homestay',
+	          role: normalizeFreshOnboardingRole(selection.role)
+	        }
+	      : null;
+	    window._freshOnboardingSelection = freshOnboardingSelection;
+	  }
+
+	  function isFreshOnboardingSelection(housingType, role) {
+	    if (!freshOnboardingSelection) return false;
+	    return freshOnboardingSelection.housingType === (housingType === 'sharehouse' ? 'sharehouse' : 'homestay')
+	      && freshOnboardingSelection.role === normalizeFreshOnboardingRole(role);
+	  }
+
+	  function shouldSuppressFreshOnboardingFallbackForId(id) {
+	    const normalizedId = String(id || '').replace(/^#/, '');
+	    if (!normalizedId || !freshOnboardingSelection) return false;
+	    if (isFreshOnboardingSelection('homestay', 'guest')) {
+	      return normalizedId.startsWith('onboard-') || normalizedId.startsWith('hs-onboard-') || normalizedId.startsWith('homestay-stay-');
+	    }
+	    if (isFreshOnboardingSelection('sharehouse', 'guest')) {
+	      return normalizedId.startsWith('shg-') || normalizedId.startsWith('share-guest-ob-') || normalizedId.startsWith('sharehouse-stay-');
+	    }
+	    if (isFreshOnboardingSelection('homestay', 'host')) {
+	      return normalizedId.startsWith('host-ob-');
+	    }
+	    if (isFreshOnboardingSelection('sharehouse', 'host')) {
+	      return normalizedId.startsWith('res-') || normalizedId.startsWith('rm-');
+	    }
+	    return false;
+	  }
+
+	  function resetOnboardingDom(rootSelector) {
+	    const root = document.querySelector(rootSelector);
+	    if (!root) return;
+	    root.querySelectorAll('input, textarea').forEach(el => {
+	      if (el.type === 'checkbox' || el.type === 'radio') {
+	        el.checked = false;
+	      } else {
+	        el.value = '';
+	      }
+	    });
+	    root.querySelectorAll('select').forEach(el => {
+	      el.value = '';
+	      if (el.value !== '') el.selectedIndex = -1;
+	    });
+	    root.querySelectorAll('.form-chip.selected').forEach(chip => chip.classList.remove('selected'));
+	    root.querySelectorAll('[contenteditable="true"]').forEach(el => { el.textContent = ''; });
+	  }
+
+	  function hideElementsByIds(ids) {
+	    ids.forEach(id => {
+	      const el = document.getElementById(id);
+	      if (el) el.style.display = 'none';
+	    });
+	  }
+
+	  function resetHomestayOnboardingAvatarState() {
+	    pendingHomestayOnboardingAvatarFile = null;
+	    if (pendingHomestayOnboardingAvatarPreviewUrl) {
+	      URL.revokeObjectURL(pendingHomestayOnboardingAvatarPreviewUrl);
+	      pendingHomestayOnboardingAvatarPreviewUrl = '';
+	    }
+	    const input = document.getElementById('hs-onboard-avatar-input');
+	    if (input) input.value = '';
+	    if (typeof window.renderAvatarElement === 'function') {
+	      window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), '');
+	    }
+	    if (typeof setHomestayOnboardingAvatarMessage === 'function') setHomestayOnboardingAvatarMessage('');
+	  }
+
+	  function resetHomestayGuestOnboardingForFreshStart() {
+	    setFreshOnboardingSelection({ housingType: 'homestay', role: 'guest' });
+	    onboardStep = 1;
+	    currentGuestProfileData = null;
+	    currentHomestayGuestModeProfile = null;
+	    currentHomestayGuestPreferences = null;
+	    window._currentGuestProfileData = null;
+	    window._currentHomestayGuestModeProfile = null;
+	    window._currentHomestayGuestPreferences = null;
+	    resetOnboardingDom('#screen-onboarding');
+	    resetHomestayOnboardingAvatarState();
+	    hideElementsByIds([
+	      'onboard-other-hobby-field',
+	      'onboard-meal-followups',
+	      'onboard-allergy-field'
+	    ]);
+	  }
+
+	  function resetSharehouseGuestOnboardingForFreshStart() {
+	    setFreshOnboardingSelection({ housingType: 'sharehouse', role: 'guest' });
+	    onboardStep = 1;
+	    currentSharehouseGuestProfile = null;
+	    currentSharehouseGuestModeProfile = null;
+	    currentSharehouseGuestPreferences = null;
+	    currentSharehouseGuestUiProfile = null;
+	    currentSharehouseGuestDataLoaded = false;
+	    currentSharehouseGuestDataCacheUserId = '';
+	    window._currentSharehouseGuestProfile = null;
+	    window._currentSharehouseGuestModeProfile = null;
+	    resetOnboardingDom('#screen-onboarding');
+	    clearPendingHomestayHostAvatar('share-guest-ob');
+	    if (typeof window.renderAvatarElement === 'function') {
+	      window.renderAvatarElement(document.getElementById('share-guest-ob-avatar-preview'), '');
+	    }
+	    setHomestayHostAvatarMessage('share-guest-ob', '');
+	    hideElementsByIds([
+	      'shg-purpose-other',
+	      'shg-hobby-other'
+	    ]);
+	  }
+
+	  function resetHomestayHostOnboardingForFreshStart() {
+	    setFreshOnboardingSelection({ housingType: 'homestay', role: 'host' });
+	    hostObStep = 1;
+	    currentHomestayHostProfile = null;
+	    currentHomestayListing = null;
+	    currentHomestayListingDetails = null;
+	    currentHomestayListingPrivateDetails = null;
+	    currentHomestayHostLoadedFullAddress = '';
+	    currentHomestayHostFamilyMembers = [];
+	    currentHomestayHostStudents = [];
+	    currentHomestayListingPhotos = [];
+	    currentHomestayHostDataLoaded = false;
+	    window._currentHomestayHostProfile = null;
+	    hostFamilyMembers.splice(0, hostFamilyMembers.length);
+	    hostInternationalStudents.splice(0, hostInternationalStudents.length);
+	    pendingHomestayListingPhotoDeleteIds.clear();
+	    resetOnboardingDom('#screen-host-onboarding');
+	    clearPendingHomestayHostAvatar('ob');
+	    clearPendingHomestayRoomPhotos('ob');
+	    clearHomestayHostApproxLocationDraft('ob');
+	    if (typeof window.renderAvatarElement === 'function') {
+	      window.renderAvatarElement(document.getElementById('host-ob-avatar-preview'), '');
+	    }
+	    renderHomestayHostRoomPhotoPreview('ob');
+	    renderHostFamilyEditors();
+	    renderHostStudentEditors();
+	    hideElementsByIds([
+	      'host-ob-spoken-language-other-wrap',
+	      'host-ob-home-language-other-wrap',
+	      'host-ob-other-household-wrap',
+	      'host-ob-partner-fields',
+	      'host-ob-member-form',
+	      'host-ob-student-fields',
+	      'host-ob-student-form',
+	      'host-ob-hobby-other-wrap',
+	      'host-ob-lunch-wrap',
+	      'host-ob-dinner-wrap',
+	      'host-ob-diet-other-wrap',
+	      'host-ob-pet-type-wrap',
+	      'host-ob-kitchen-restriction-wrap'
+	    ]);
+	  }
+
+	  function resetSharehouseHostOnboardingForFreshStart() {
+	    setFreshOnboardingSelection({ housingType: 'sharehouse', role: 'host' });
+	    resStep = 1;
+	    currentSharehouseHostProfile = null;
+	    currentSharehouseListing = null;
+	    currentSharehouseListingDetails = null;
+	    currentSharehouseListingPrivateDetails = null;
+	    currentSharehouseListingPhotos = [];
+	    currentSharehouseHostRoommates = [];
+	    currentSharehouseHostLoadedFullAddress = '';
+	    currentSharehouseHostDataLoaded = false;
+	    window._currentSharehouseHostProfile = null;
+	    window._currentSharehouseHostRoommates = [];
+	    resRoommates = [];
+	    resetOnboardingDom('#screen-resident-onboarding');
+	    clearPendingHomestayHostAvatar('res');
+	    clearPendingHomestayRoomPhotos('res');
+	    pendingSharehouseListingPhotoDeleteIds.clear();
+	    clearSharehouseHostLocationDraft('res');
+	    if (typeof window.renderAvatarElement === 'function') {
+	      window.renderAvatarElement(document.getElementById('res-avatar-preview'), '');
+	    }
+	    renderHomestayHostRoomPhotoPreview('res');
+	    resRenderRoommateList();
+	    hideElementsByIds([
+	      'res-roommate-form',
+	      'res-spoken-language-other-wrap',
+	      'res-home-language-other-wrap',
+	      'res-hobby-other-wrap',
+	      'res-pet-details',
+	      'res-kitchen-hours-wrap'
+	    ]);
+	    const addRoommateBtn = document.getElementById('res-add-roommate-btn');
+	    if (addRoommateBtn) addRoommateBtn.style.display = 'block';
 	  }
 
 	  function sharehouseGuestCanonicalChipText(chip, fallback = '') {
@@ -22568,16 +22784,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function sharehouseGuestSelectedChipText(rowId, fallback = '') {
 	    const chip = document.querySelector('#' + rowId + ' .form-chip.selected');
-	    return sharehouseGuestCanonicalChipText(chip, fallback);
+	    return sharehouseGuestCanonicalChipText(chip, shouldSuppressFreshOnboardingFallbackForId(rowId) ? '' : fallback);
 	  }
 
 	  function sharehouseGuestSelectedChipTexts(rowId, fallbackValues = []) {
 	    const row = document.getElementById(rowId);
-	    if (!row) return Array.isArray(fallbackValues) ? fallbackValues : [];
+	    if (!row) return shouldSuppressFreshOnboardingFallbackForId(rowId) ? [] : (Array.isArray(fallbackValues) ? fallbackValues : []);
 	    const values = Array.from(row.querySelectorAll('.form-chip.selected'))
 	      .map(chip => sharehouseGuestCanonicalChipText(chip, ''))
 	      .filter(Boolean);
-	    return values.length ? values : (Array.isArray(fallbackValues) ? fallbackValues : []);
+	    if (values.length) return values;
+	    return shouldSuppressFreshOnboardingFallbackForId(rowId) ? [] : (Array.isArray(fallbackValues) ? fallbackValues : []);
 	  }
 
 	  function sharehouseGuestCollectorIds(scope = 'onboarding') {
@@ -25680,7 +25897,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (type === 'homestay' && onboardStep === 1 && typeof window.renderAvatarElement === 'function') {
 	      window.renderAvatarElement(
 	        document.getElementById('hs-onboard-avatar-preview'),
-	        pendingHomestayOnboardingAvatarPreviewUrl || window._currentProfile?.avatar_url || ''
+	        pendingHomestayOnboardingAvatarPreviewUrl || (isFreshOnboardingSelection('homestay', 'guest') ? '' : window._currentProfile?.avatar_url || '')
 	      );
 	      updateHomestayOnboardingAgeFromBirthDate();
 	    }
@@ -29152,6 +29369,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   async function restoreSelectedRegisteredUserMode(mode) {
     if (!mode) return false;
+    setFreshOnboardingSelection(null);
     if (typeof clearAuthenticatedRoute === 'function') clearAuthenticatedRoute();
     window._pendingUserModeRestore = mode;
     window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housingType : null;
@@ -29180,6 +29398,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     }
 
     if (selectedMode.housingType === 'sharehouse' && selectedMode.role === 'host') {
+      resetSharehouseHostOnboardingForFreshStart();
       currentRole = 'resident';
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
@@ -29187,16 +29406,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       navigate('role-select', 'resident-onboarding');
       renderResStep();
     } else if (role === 'guest') {
+      if (selectedMode.housingType === 'sharehouse') {
+        resetSharehouseGuestOnboardingForFreshStart();
+      } else {
+        resetHomestayGuestOnboardingForFreshStart();
+      }
       currentRole = 'guest';
       navigate('role-select', 'onboarding');
       onboardStep = 1;
       renderOnboardStep();
     } else if (role === 'host') {
+      resetHomestayHostOnboardingForFreshStart();
       currentRole = 'host';
       hostObStep = 1;
       navigate('role-select', 'host-onboarding');
       renderHostObStep();
     } else if (role === 'resident') {
+      resetSharehouseHostOnboardingForFreshStart();
       resStep = 1;
       navigate('role-select', 'resident-onboarding');
       renderResStep();
