@@ -18028,7 +18028,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      available_until: nullableText(document.getElementById(hostFormAvailableEndId(scope))?.value),
 	      minimum_stay_months: hostFormIntegerInput(scope, 'min-stay'),
 	      maximum_stay_months: hostFormIntegerInput(scope, 'max-stay'),
-	      long_stay_allowed: booleanFromSelectedText(selectedHostFormChipText(scope, 'long-stay', ''), ['長期滞在可能'], ['長期滞在不可']),
+	      long_stay_allowed: booleanFromSelectedText(selectedHostFormChipText(scope, 'long-stay', ''), ['長期滞在可能'], ['長期滞在不可']) === true,
 	      monthly_price: hostFormIntegerInput(scope, 'monthly-rent'),
 	      status: options.status || (scope === 'ob' ? 'published' : currentHomestayListing?.status || undefined)
 	    };
@@ -24865,7 +24865,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      available_until: nullableText(profile.stay.availableEnd),
 	      minimum_stay_months: sharehouseHostFormInteger(profile.stay.minStay),
 	      maximum_stay_months: sharehouseHostFormInteger(profile.stay.maxStay),
-	      long_stay_allowed: booleanFromSelectedText(profile.stay.longStay, ['可能', 'Available', 'Allowed'], ['不可', 'Not available', 'Not allowed']),
+	      long_stay_allowed: booleanFromSelectedText(profile.stay.longStay, ['可能', 'Available', 'Allowed'], ['不可', 'Not available', 'Not allowed']) === true,
 	      monthly_price: sharehouseHostFormInteger(profile.stay.monthlyRent),
 	      currency: 'CAD',
 	      status: options.status || 'published',
