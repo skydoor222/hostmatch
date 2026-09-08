@@ -5390,7 +5390,7 @@
     <!-- STEP2 -->
     <div class="onboard-step-panel" id="host-ob-panel-2">
       <div class="form-section-title">🏠 家・滞在情報</div>
-      <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+      <div class="form-group"><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-ob-area"><div class="form-chip selected" onclick="toggleChip(this);renderHomestayHostApproxLocationMap('ob')">バンクーバー</div><div class="form-chip" onclick="toggleChip(this);renderHomestayHostApproxLocationMap('ob')">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
       <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="host-ob-station" type="text" value="Central Station" placeholder="最寄り駅" /></div>
       <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-ob-walk-min" type="number" min="0" inputmode="numeric" value="8" placeholder="5" /></div>
       <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="host-ob-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('ob')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -6457,7 +6457,7 @@
 	      <div class="homestay-profile-only" style="border-top:1px solid var(--border);padding-top:16px;">
 	        <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:12px;">家・滞在情報</div>
 	        <div style="display:flex;flex-direction:column;gap:14px;">
-	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div><div class="form-chip" onclick="toggleChip(this)">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+	          <div><div class="form-label">公開エリア</div><div class="form-chip-row" id="host-profile-area"><div class="form-chip selected" onclick="toggleChip(this);renderHomestayHostApproxLocationMap('profile')">バンクーバー</div><div class="form-chip" onclick="toggleChip(this);renderHomestayHostApproxLocationMap('profile')">トロント</div></div><div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	          <div><div class="form-label">最寄り駅</div><input class="form-input" id="host-profile-station" type="text" value="Waterfront Station" placeholder="最寄り駅" /></div>
 	          <div><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="host-profile-walk-min" type="number" min="0" inputmode="numeric" value="5" placeholder="5" /></div>
 	          <div><div class="form-label">非公開住所 <span style="font-size:11px;color:var(--light);font-weight:600;">一般公開しません</span></div><input class="form-input" id="host-profile-address" type="text" value="Vancouver, BC" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('profile')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -17842,7 +17842,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function homestayHostPrivateMapStartLocation(scope) {
 	    const area = hostPublicAreaDbValue(selectedHostFormChipText(scope, 'area', ''));
-	    return homestayApproxLocationFromPublicArea(area)?.center || [49.2827, -123.1207];
+	    const address = hostApproxLocationAddressValue(scope);
+	    return homestayApproxLocationFromPublicArea(area)?.center
+	      || homestayApproxLocationFromPublicArea(address)?.center
+	      || [49.2827, -123.1207];
 	  }
 
 	  function renderHomestayHostApproxLocationMap(scope) {
@@ -17854,20 +17857,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    clearHomestayHostApproxLocationMap(key);
 	    const hasPublicCenter = draft && validHomestayCoordinate(draft.publicLatitude, draft.publicLongitude);
 	    const hasAnchor = draft && validHomestayCoordinate(draft.anchorLatitude, draft.anchorLongitude);
-	    if (!hasPublicCenter && !hasAnchor) {
-	      mapEl.innerHTML = `<div class="host-private-map-empty">${localizeText('位置を取得できませんでした')}</div>`;
-	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
-	        ? 'Enter an address and get the location, or click the actual home location on the map.'
-	        : '住所を入力して位置を取得するか、地図上で実際の住居位置をクリックしてください。');
-	      return;
-	    }
-	    setHomestayHostApproxLocationMessage(key, draft.confirmed
-	      ? (currentLang === 'en'
+	    const hasSetLocation = (hasPublicCenter || hasAnchor) && draft?.confirmed === true;
+	    const startCenter = hasPublicCenter || hasAnchor
+	      ? (hasPublicCenter
+	        ? [Number(draft.publicLatitude), Number(draft.publicLongitude)]
+	        : [Number(draft.anchorLatitude), Number(draft.anchorLongitude)])
+	      : homestayHostPrivateMapStartLocation(key);
+	    if (hasSetLocation) setHomestayHostApproxLocationMessage(key, currentLang === 'en'
 	        ? 'Home location confirmed. Guests see only the 500m circle, with no pin.'
-	        : '住居位置を確認しました。ゲストには500mの円だけが表示され、ピンは表示されません。')
-	      : (currentLang === 'en'
-	        ? 'Please click the actual home location. Guests see only the 500m circle, with no pin or address.'
-	        : '実際の住居位置をクリックしてください。ゲストには500mの円だけが表示され、ピンや住所は表示されません。'));
+	        : '住居位置を確認しました。ゲストには500mの円だけが表示され、ピンは表示されません。');
+	    else setHomestayHostApproxLocationMessage(key, currentLang === 'en'
+	      ? 'Click the actual home location on the map, or get the location from the address.'
+	      : '地図上で実際の住居位置をクリックするか、住所から位置を取得してください。');
 
 	    if (!window.L) {
 	      mapEl.innerHTML = `<div class="host-private-map-empty">${localizeText('おおよその位置')}</div>`;
@@ -17875,9 +17876,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 
 	    mapEl.innerHTML = '';
-	    const circleCenter = hasPublicCenter
-	      ? [Number(draft.publicLatitude), Number(draft.publicLongitude)]
-	      : [Number(draft.anchorLatitude), Number(draft.anchorLongitude)];
+	    const circleCenter = startCenter;
 	    const markerCenter = hasAnchor
 	      ? [Number(draft.anchorLatitude), Number(draft.anchorLongitude)]
 	      : circleCenter;
@@ -17887,7 +17886,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      dragging: true,
 	      touchZoom: true,
 	      tap: true
-	    }).setView(circleCenter, 14);
+	    }).setView(startCenter, hasSetLocation ? 14 : 12);
 	    homestayHostApproxLocationMaps[key] = map;
 
 	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -17895,15 +17894,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      attribution: '&copy; OpenStreetMap contributors'
 	    }).addTo(map);
 
-	    const circle = L.circle(circleCenter, {
-	      radius: homestayApproximateLocationRadiusM(),
-	      color: '#FF5A5F',
-	      weight: 2,
-	      fillColor: '#FF5A5F',
-	      fillOpacity: 0.14
-	    }).addTo(map);
-
-	    const marker = L.marker(markerCenter, { draggable: true }).addTo(map);
+	    let circle = null;
+	    let marker = null;
 	    const updateDraftCenter = latlng => {
 	      if (!validHomestayCoordinate(latlng?.lat, latlng?.lng)) return;
 	      const nextDraft = setHomestayHostApproxLocationDraftFromAnchor(key, latlng.lat, latlng.lng, {
@@ -17911,15 +17903,43 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        manual: true
 	      });
 	      if (!nextDraft) return;
-	      circle.setLatLng([Number(nextDraft.publicLatitude), Number(nextDraft.publicLongitude)]);
-	      marker.setLatLng([Number(nextDraft.anchorLatitude), Number(nextDraft.anchorLongitude)]);
+	      const nextCircleCenter = [Number(nextDraft.publicLatitude), Number(nextDraft.publicLongitude)];
+	      const nextMarkerCenter = [Number(nextDraft.anchorLatitude), Number(nextDraft.anchorLongitude)];
+	      if (!circle) {
+	        circle = L.circle(nextCircleCenter, {
+	          radius: homestayApproximateLocationRadiusM(),
+	          color: '#FF5A5F',
+	          weight: 2,
+	          fillColor: '#FF5A5F',
+	          fillOpacity: 0.14
+	        }).addTo(map);
+	      } else {
+	        circle.setLatLng(nextCircleCenter);
+	      }
+	      if (!marker) {
+	        marker = L.marker(nextMarkerCenter, { draggable: true }).addTo(map);
+	        marker.on('dragend', event => updateDraftCenter(event.target.getLatLng()));
+	      } else {
+	        marker.setLatLng(nextMarkerCenter);
+	      }
 	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
 	        ? 'Home location confirmed. Guests see only the 500m circle, with no pin.'
 	        : '住居位置を確認しました。ゲストには500mの円だけが表示され、ピンは表示されません。');
 	    };
+	    if (hasSetLocation) {
+	      circle = L.circle(circleCenter, {
+	        radius: homestayApproximateLocationRadiusM(),
+	        color: '#FF5A5F',
+	        weight: 2,
+	        fillColor: '#FF5A5F',
+	        fillOpacity: 0.14
+	      }).addTo(map);
+
+	      marker = L.marker(markerCenter, { draggable: true }).addTo(map);
+	      marker.on('dragend', event => updateDraftCenter(event.target.getLatLng()));
+	      map.fitBounds(circle.getBounds(), { padding: [18, 18], maxZoom: 15 });
+	    }
 	    map.on('click', event => updateDraftCenter(event.latlng));
-	    marker.on('dragend', event => updateDraftCenter(event.target.getLatLng()));
-	    map.fitBounds(circle.getBounds(), { padding: [18, 18], maxZoom: 15 });
 	    setTimeout(() => map.invalidateSize(), 120);
 	  }
 
@@ -17965,6 +17985,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      setHomestayHostApproxLocationMessage(key, currentLang === 'en'
 	        ? 'Address changed. Get the approximate location again, then click the actual home location.'
 	        : '住所が変更されました。位置を再取得してから、実際の住居位置をクリックしてください。');
+	    } else if (!draft) {
+	      renderHomestayHostApproxLocationMap(key);
 	    }
 	  }
 
@@ -18312,7 +18334,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const otherClick = suffix => `toggleHostOtherField(this,'${prefix}-${suffix}-wrap')`;
 	    return `
 	      <div class="form-section-title">🏠 家・滞在情報</div>
-	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['バンクーバー','トロント'])}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
+	      <div class="form-group"><div class="form-label">公開エリア</div>${hostChipRowHtml(`${prefix}-area`, ['バンクーバー','トロント'], `toggleChip(this);renderHomestayHostApproxLocationMap('${scope}')`)}<div style="font-size:12px;color:var(--light);margin-top:6px;">正確な住所は公開されません</div></div>
 	      <div class="form-group"><div class="form-label">最寄り駅</div><input class="form-input" id="${prefix}-station" type="text" placeholder="最寄り駅" /></div>
 	      <div class="form-group"><div class="form-label">最寄り駅まで徒歩何分</div><input class="form-input" id="${prefix}-walk-min" type="number" min="0" inputmode="numeric" placeholder="5" /></div>
 	      <div class="form-group"><div class="form-label">非公開住所</div><input class="form-input" id="${prefix}-address" type="text" placeholder="住所を入力してください" oninput="handleHomestayHostApproxAddressInput('${scope}')" /><div style="font-size:12px;color:var(--light);margin-top:6px;">住所から概略エリアを作成するため、保存時に住所情報の一部を地図サービスへ送信します。ゲストには正確な住所は表示されません。</div></div>
@@ -18504,7 +18526,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const prefix = isSharehouse ? (scope === 'profile' ? 'share-profile' : 'res') : hostFormPrefix(scope);
 	    const startId = isSharehouse ? `${prefix}-available-start` : hostFormAvailableStartId(scope);
 	    const endId = isSharehouse ? `${prefix}-available-end` : hostFormAvailableEndId(scope);
-	    const birthDate = isSharehouse ? formValue(`${prefix}-birth-date`, '') : formValue(`${prefix}-birth-date`, '');
+	    const birthDate = formValue(`${prefix}-birth-date`, '');
+	    const calculatedAge = birthDate && !isFutureDateInputValue(birthDate) ? calculateAgeFromBirthDate(birthDate) : null;
 	    const nameFieldId = `${prefix}-name`;
 	    const addressFieldId = `${prefix}-address`;
 	    if (!nullableText(profilePayload?.display_name)) errors.push(validationError(nameFieldId, '名前を入力してください。', 'Please enter a name.'));
@@ -18512,6 +18535,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を入力してください。', 'Please enter your date of birth.'));
 	    } else if (!validCalculatedBirthDateAge(birthDate)) {
 	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を確認してください。', 'Please check your date of birth.'));
+	    } else if (calculatedAge < 18) {
+	      errors.push(validationError(`${prefix}-birth-date`, 'ホストは18歳以上の方のみ登録できます。', 'You must be at least 18 years old to register as a host.'));
 	    }
 	    if (!nullableText(listingPayload?.city)) errors.push(validationError(`${prefix}-area`, 'エリアを選択してください。', 'Please select an area.'));
 	    if (!nullableText(listingPayload?.nearest_station)) errors.push(validationError(`${prefix}-station`, '最寄駅を入力してください。', 'Please enter the nearest station.'));
@@ -22616,6 +22641,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    renderHostFamilyEditors();
 	  }
 
+	  function visibleHomestayFamilyMemberName(member = {}) {
+	    const name = String(member.name || '').trim();
+	    return name && !['未入力', '子供'].includes(name) ? name : '';
+	  }
+
+	  function visibleHomestayFamilyMemberNote(member = {}) {
+	    const note = String(member.note || '').trim();
+	    return note && note !== '未入力' ? note : '';
+	  }
+
 	  function addHostStudent(scope) {
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
 	    const genderEl = document.querySelector('#' + prefix + '-student-gender .form-chip.selected');
@@ -22655,11 +22690,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;">
 	        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:20px;">${m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑'}</div>
 	        <div style="flex:1;font-size:13px;line-height:1.5;">
-	          <strong data-raw-text="true">${escapeHtml(m.name || localizeText('同居メンバー'))}</strong><br>
+	          ${visibleHomestayFamilyMemberName(m) ? `<strong data-raw-text="true">${escapeHtml(visibleHomestayFamilyMemberName(m))}</strong><br>` : ''}
 	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
 	          ${m.hobbies ? `<div style="color:var(--light);margin-top:4px;">${localizeText('趣味')}：<span data-raw-text="true">${escapeHtml(String(m.hobbies))}</span></div>` : ''}
 	          <div style="color:var(--light);">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')}</div>
-	          ${m.note ? `<div style="color:var(--dark);margin-top:4px;" data-raw-text="true">${escapeHtml(String(m.note))}</div>` : ''}
+	          ${visibleHomestayFamilyMemberNote(m) ? `<div style="color:var(--dark);margin-top:4px;" data-raw-text="true">${escapeHtml(visibleHomestayFamilyMemberNote(m))}</div>` : ''}
 	        </div>
 	        ${removable ? `<button type="button" onclick="removeHostFamilyMember(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
 	      </div>
