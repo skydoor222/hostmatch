@@ -4408,7 +4408,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">名前</div>
-          <input class="form-input" type="text" placeholder="山田 由紀" value="Yuki Tanaka" />
+          <input class="form-input" id="hs-onboard-name" type="text" placeholder="山田 由紀" />
         </div>
 	        <div class="form-group">
 	          <div class="form-label">生年月日</div>
@@ -4716,7 +4716,10 @@
         </div>
         <div class="form-group">
           <div class="form-label" data-i18n="age">年齢</div>
-          <input class="form-input" id="shg-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="23" />
+          <div class="form-range-row">
+            <input class="form-input" id="shg-birth-date" type="date" onchange="updateSharehouseGuestOnboardingAgeFromBirthDate()" />
+            <input class="form-input" id="shg-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
+          </div>
         </div>
         <div class="form-group">
           <div class="form-label" data-i18n="nationality">国籍</div>
@@ -5238,7 +5241,10 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">年齢</div>
-	        <input class="form-input" id="host-ob-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" value="43" />
+	        <div class="form-range-row">
+	          <input class="form-input" id="host-ob-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('ob')" />
+	          <input class="form-input" id="host-ob-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
+	        </div>
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">国籍</div>
@@ -6281,7 +6287,10 @@
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">年齢</div>
-	        <input id="host-profile-age" type="number" min="0" inputmode="numeric" value="43" placeholder="年齢を入力してください" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
+	        <div class="form-range-row">
+	          <input id="host-profile-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('profile')" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
+	          <input id="host-profile-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
+	        </div>
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">国籍</div>
@@ -6621,11 +6630,6 @@
     </div>
     <!-- アカウント操作 -->
     <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-      <div onclick="chooseRole('guest')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border);">
-        <span style="font-size:20px;width:28px;text-align:center;">🔄</span>
-        <span style="font-size:15px;font-weight:600;flex:1;">ゲストモードに切り替える</span>
-        <span style="color:var(--light);">›</span>
-      </div>
       <div onclick="doLogout()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;color:var(--primary);">
         <span style="font-size:20px;width:28px;text-align:center;">🚪</span>
         <span style="font-size:15px;font-weight:600;flex:1;">ログアウト</span>
@@ -16033,6 +16037,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    lastHomestayOnboardingSaveError = '';
 	    setHomestayOnboardingBirthDateMax();
 	    const birthDate = document.getElementById('hs-onboard-birth-date')?.value || '';
+	    const requiredErrors = validateGuestOnboardingRequiredFields({
+	      nameId: 'hs-onboard-name',
+	      birthDateId: 'hs-onboard-birth-date'
+	    });
+	    if (requiredErrors.length) {
+	      lastHomestayOnboardingSaveError = 'required';
+	      updateHomestayOnboardingAgeFromBirthDate();
+	      console.warn('Supabase homestay onboarding required validation error:', requiredErrors[0]?.message || '');
+	      showToast(applyFirstValidationError(requiredErrors));
+	      return false;
+	    }
 	    if (isFutureDateInputValue(birthDate)) {
 	      lastHomestayOnboardingSaveError = 'birth_date';
 	      updateHomestayOnboardingAgeFromBirthDate();
@@ -16041,7 +16056,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    updateHomestayOnboardingAgeFromBirthDate();
 	    const guestProfilePayload = guestProfilePayloadFromHomestayOnboarding();
-	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload);
+	    const savedGuestProfile = await saveGuestProfileDataToSupabase(guestProfilePayload, {
+	      displayName: formValue('hs-onboard-name', '')
+	    });
 	    if (!savedGuestProfile) {
 	      lastHomestayOnboardingSaveError = 'profile';
 	      console.warn('Supabase homestay onboarding guest profile save error:', guestProfilePayload);
@@ -17968,10 +17985,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const householdTypeUi = selectedHostFormChipText(scope, 'household-type', '');
 	    const householdType = toHostProfileDbValue('household_type', householdTypeUi);
 	    const hasPartner = hostOnboardingHasPartner(householdTypeUi);
+	    const birthDate = nullableText(document.getElementById(`${hostFormPrefix(scope)}-birth-date`)?.value);
+	    const computedAge = birthDate && !isFutureDateInputValue(birthDate) ? calculateAgeFromBirthDate(birthDate) : null;
 	    return {
 	      user_id: userId,
 	      display_name: hostFormTextInput(scope, 'name'),
-	      age: hostFormIntegerInput(scope, 'age'),
+	      birth_date: birthDate,
+	      age: computedAge,
 	      nationality: hostFormTextInput(scope, 'nationality'),
 	      spoken_languages: hostFormListWithOther(scope, 'spoken-languages', 'spoken-language-other'),
 	      home_languages: hostFormListWithOther(scope, 'home-languages', 'home-language-other'),
@@ -18200,7 +18220,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      <div class="form-section-title">👥 ホスト・家族について</div>
 	      ${hostAvatarUploadBoxHtml(scope)}
 	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" placeholder="山田ファミリー" /></div>
-	      <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="年齢を入力してください" /></div>
+	      <div class="form-group"><div class="form-label">生年月日 / 年齢</div><div class="form-range-row"><input class="form-input" id="${prefix}-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('${scope}')" /><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly /></div></div>
 	      <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-nationality" type="text" placeholder="国籍を入力してください" /></div>
 	      <div class="form-group">
 	        <div class="form-label">話せる言語</div>
@@ -18337,11 +18357,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        <button onclick="saveHostProfileScreen()" style="background:var(--primary);color:white;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;" data-i18n="save">保存する</button>
 	      </div>
 	      <div style="background:white;border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-	        <div onclick="chooseRole('guest')" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;border-bottom:1px solid var(--border);">
-	          <span style="font-size:20px;width:28px;text-align:center;">🔄</span>
-	          <span style="font-size:15px;font-weight:600;flex:1;">ゲストモードに切り替える</span>
-	          <span style="color:var(--light);">›</span>
-	        </div>
 	        <div onclick="doLogout()" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;color:var(--primary);">
 	          <span style="font-size:20px;width:28px;text-align:center;">🚪</span>
 	          <span style="font-size:15px;font-weight:600;flex:1;">ログアウト</span>
@@ -18412,6 +18427,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function updateSharehouseHostAgeFromBirthDate(prefix) {
 	    const birthDateInput = document.getElementById(`${prefix}-birth-date`);
 	    const ageInput = document.getElementById(`${prefix}-age`);
+	    if (birthDateInput) birthDateInput.max = todayDateInputValue();
 	    if (!ageInput) return null;
 	    const value = birthDateInput?.value || '';
 	    if (!value || isFutureDateInputValue(value)) {
@@ -18424,6 +18440,100 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  window.updateSharehouseHostAgeFromBirthDate = updateSharehouseHostAgeFromBirthDate;
+
+	  function updateSharehouseGuestOnboardingAgeFromBirthDate() {
+	    return updateSharehouseHostAgeFromBirthDate('shg');
+	  }
+
+	  window.updateSharehouseGuestOnboardingAgeFromBirthDate = updateSharehouseGuestOnboardingAgeFromBirthDate;
+
+	  function updateHomestayHostAgeFromBirthDate(scope) {
+	    return updateSharehouseHostAgeFromBirthDate(hostFormPrefix(scope));
+	  }
+
+	  window.updateHomestayHostAgeFromBirthDate = updateHomestayHostAgeFromBirthDate;
+
+	  function localizedValidationMessage(ja, en) {
+	    return currentLang === 'en' ? en : ja;
+	  }
+
+	  function focusValidationField(fieldId) {
+	    const el = fieldId ? document.getElementById(fieldId) : null;
+	    if (!el) return;
+	    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	    if (typeof el.focus === 'function') {
+	      setTimeout(() => el.focus({ preventScroll: true }), 180);
+	    }
+	  }
+
+	  function validationError(fieldId, ja, en) {
+	    return { fieldId, message: localizedValidationMessage(ja, en) };
+	  }
+
+	  function applyFirstValidationError(errors = []) {
+	    const error = errors.find(Boolean);
+	    if (!error) return '';
+	    focusValidationField(error.fieldId);
+	    return error.message || '';
+	  }
+
+	  function validCalculatedBirthDateAge(birthDateValue) {
+	    return !!birthDateValue && !isFutureDateInputValue(birthDateValue) && calculateAgeFromBirthDate(birthDateValue) !== null;
+	  }
+
+	  function validateGuestOnboardingRequiredFields({ nameId, birthDateId } = {}) {
+	    const errors = [];
+	    const name = formValue(nameId, '');
+	    const birthDate = formValue(birthDateId, '');
+	    if (!name) errors.push(validationError(nameId, '名前を入力してください。', 'Please enter your name.'));
+	    if (!birthDate) {
+	      errors.push(validationError(birthDateId, '生年月日を入力してください。', 'Please enter your date of birth.'));
+	    } else if (!validCalculatedBirthDateAge(birthDate)) {
+	      errors.push(validationError(birthDateId, '生年月日を確認してください。', 'Please check your date of birth.'));
+	    }
+	    return errors;
+	  }
+
+	  function mapLocationValidationError(fieldId) {
+	    return validationError(fieldId, 'マップ上の位置を設定してください。', 'Please set the location on the map.');
+	  }
+
+	  function validateHostRegistrationRequiredFields({ scope, profilePayload, listingPayload, privateAddress, approximateLocationPayload, serviceType } = {}) {
+	    const errors = [];
+	    const isSharehouse = serviceType === 'sharehouse';
+	    const prefix = isSharehouse ? (scope === 'profile' ? 'share-profile' : 'res') : hostFormPrefix(scope);
+	    const startId = isSharehouse ? `${prefix}-available-start` : hostFormAvailableStartId(scope);
+	    const endId = isSharehouse ? `${prefix}-available-end` : hostFormAvailableEndId(scope);
+	    const birthDate = isSharehouse ? formValue(`${prefix}-birth-date`, '') : formValue(`${prefix}-birth-date`, '');
+	    const nameFieldId = `${prefix}-name`;
+	    const addressFieldId = `${prefix}-address`;
+	    if (!nullableText(profilePayload?.display_name)) errors.push(validationError(nameFieldId, '名前を入力してください。', 'Please enter a name.'));
+	    if (!birthDate) {
+	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を入力してください。', 'Please enter your date of birth.'));
+	    } else if (!validCalculatedBirthDateAge(birthDate)) {
+	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を確認してください。', 'Please check your date of birth.'));
+	    }
+	    if (!nullableText(listingPayload?.city)) errors.push(validationError(`${prefix}-area`, 'エリアを選択してください。', 'Please select an area.'));
+	    if (!nullableText(listingPayload?.nearest_station)) errors.push(validationError(`${prefix}-station`, '最寄駅を入力してください。', 'Please enter the nearest station.'));
+	    if (listingPayload?.station_walk_minutes === null || listingPayload?.station_walk_minutes === undefined) {
+	      errors.push(validationError(`${prefix}-walk-min`, '最寄駅まで徒歩何分か入力してください。', 'Please enter the walking time to the nearest station.'));
+	    } else if (listingPayload.station_walk_minutes < 0) {
+	      errors.push(validationError(`${prefix}-walk-min`, '最寄り駅までの徒歩分数は0以上で入力してください。', 'Station walk minutes must be 0 or greater.'));
+	    }
+	    if (!nullableText(privateAddress)) errors.push(validationError(addressFieldId, '住所を入力してください。', 'Please enter the address.'));
+	    if (!validHomestayCoordinate(approximateLocationPayload?.approximate_latitude, approximateLocationPayload?.approximate_longitude)) errors.push(mapLocationValidationError(addressFieldId));
+	    if (!listingPayload?.available_from) errors.push(validationError(startId, '受け入れ可能日を入力してください。', 'Please enter the available start date.'));
+	    if (!listingPayload?.available_until) errors.push(validationError(endId, '受け入れ終了日を入力してください。', 'Please enter the available end date.'));
+	    if (listingPayload?.available_from && listingPayload?.available_until && listingPayload.available_from > listingPayload.available_until) {
+	      errors.push(validationError(endId, '受け入れ終了日は開始日以降にしてください。', 'Available end date must be on or after the start date.'));
+	    }
+	    if (listingPayload?.monthly_price === null || listingPayload?.monthly_price === undefined) {
+	      errors.push(validationError(`${prefix}-monthly-rent`, '月額料金を入力してください。', 'Please enter the monthly rent.'));
+	    } else if (listingPayload.monthly_price <= 0) {
+	      errors.push(validationError(`${prefix}-monthly-rent`, '月額料金は1以上で入力してください。', 'Monthly rent must be greater than 0.'));
+	    }
+	    return errors;
+	  }
 
   function setInputValueById(id, value) {
     const el = document.getElementById(id);
@@ -19966,7 +20076,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const listingIds = listings.map(listing => listing.id).filter(Boolean);
 	    const [profilesResult, hostProfilesResult, detailsResult, photosResult, studentsResult, familyMembersResult] = await Promise.all([
 	      window._supabase.from('profiles').select('id, display_name, avatar_url').in('id', ownerIds),
-	      window._supabase.from('homestay_host_profiles').select('user_id, display_name, avatar_url, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
+	      window._supabase.from('homestay_host_profiles').select('user_id, display_name, avatar_url, birth_date, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio').in('user_id', ownerIds),
 	      window._supabase.from('homestay_listing_details').select('listing_id, meal_plan, meal_style, room_type, furnished, floor_type, bathroom_type, amenities, pets_present, pet_details, curfew_type, curfew_time, kitchen_rule, kitchen_restriction_details, shower_limit, cleaning_rule, visitor_rule, overnight_guest_rule, drinking_rule, instrument_rule, other_house_rules').in('listing_id', listingIds),
 	      window._supabase.from('listing_photos').select('id, listing_id, storage_path, photo_type, sort_order, is_cover, created_at').in('listing_id', listingIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
 	      window._supabase.from('homestay_host_students').select('id, host_user_id, age, gender, nationality, wake_time, bedtime, hobbies, stay_period, sort_order, created_at').in('host_user_id', ownerIds).order('sort_order', { ascending: true }).order('created_at', { ascending: true }),
@@ -21113,7 +21223,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 	  }
 
-  async function saveGuestProfileDataToSupabase(payload) {
+  async function saveGuestProfileDataToSupabase(payload, options = {}) {
     const userId = window._currentUser?.id;
     if (!userId || !window._supabase?.from) return false;
 
@@ -21131,7 +21241,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         : await query.insert({ user_id: userId, ...payload });
       if (saveError) throw saveError;
 
-      const modeProfile = await saveGuestModeProfileToSupabase('homestay', payload);
+      const modeProfile = await saveGuestModeProfileToSupabase('homestay', {
+        ...payload,
+        ...(nullableText(options.displayName) ? { display_name: nullableText(options.displayName) } : {})
+      });
       if (!modeProfile) throw new Error('guest_mode_profiles homestay save returned no row');
       currentGuestProfileData = modeProfile;
       window._currentGuestProfileData = currentGuestProfileData;
@@ -21517,6 +21630,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 
 	    const hostProfilePayload = homestayHostProfilePayloadFromOnboarding(userId);
+	    const requiredErrors = validateHostRegistrationRequiredFields({
+	      scope: 'ob',
+	      profilePayload: hostProfilePayload,
+	      listingPayload,
+	      privateAddress,
+	      approximateLocationPayload: approximateLocation.payload,
+	      serviceType: 'homestay'
+	    });
+	    if (requiredErrors.length) {
+	      return { ok: false, message: applyFirstValidationError(requiredErrors) };
+	    }
 	    const savedHostProfile = await saveHomestayHostProfileToSupabase(hostProfilePayload);
 	    if (!savedHostProfile) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host profile. Please try again.' : 'ホスト情報を保存できませんでした。もう一度お試しください。' };
@@ -21607,6 +21731,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    };
 
 	    const hostProfilePayload = homestayHostProfilePayloadFromForm('profile', userId);
+	    const requiredErrors = validateHostRegistrationRequiredFields({
+	      scope: 'profile',
+	      profilePayload: hostProfilePayload,
+	      listingPayload,
+	      privateAddress,
+	      approximateLocationPayload: approximateLocation.payload,
+	      serviceType: 'homestay'
+	    });
+	    if (requiredErrors.length) {
+	      return { ok: false, message: applyFirstValidationError(requiredErrors) };
+	    }
 	    const savedHostProfile = await updateExistingHomestayHostProfileToSupabase(userId, hostProfilePayload);
 	    if (!savedHostProfile) {
 	      return { ok: false, message: currentLang === 'en' ? 'Could not save your host profile. Please try again.' : 'ホスト情報を保存できませんでした。もう一度お試しください。' };
@@ -21982,7 +22117,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    renderHomestayHostAvatarPreview('profile');
 	    renderHomestayHostRoomPhotoPreview('profile');
 	    setInputValueById('host-profile-name', identity.displayName || '');
-	    setInputValueById('host-profile-age', hostProfile.age ?? '');
+	    setInputValueById('host-profile-birth-date', hostProfile.birth_date || '');
+	    const computedHostAge = updateHomestayHostAgeFromBirthDate('profile');
+	    if (computedHostAge === null) setInputValueById('host-profile-age', hostProfile.age ?? '');
 	    setInputValueById('host-profile-nationality', hostProfile.nationality || '');
 	    setMultiFormChipsWithOther('host-profile-spoken-languages', hostProfile.spoken_languages || [], 'host-profile-spoken-language-other', 'host-profile-spoken-language-other-wrap');
 	    setMultiFormChipsWithOther('host-profile-home-languages', hostProfile.home_languages || [], 'host-profile-home-language-other', 'host-profile-home-language-other-wrap');
@@ -22094,7 +22231,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    try {
 	      const { data, error } = await window._supabase
 	        .from('homestay_host_profiles')
-	        .select('user_id, display_name, avatar_url, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio')
+	        .select('user_id, display_name, avatar_url, birth_date, age, nationality, spoken_languages, home_languages, gender, religion, english_level, household_type, partner_age, partner_gender, partner_nationality, partner_wake_time, partner_bedtime, partner_hobbies, other_students_present, smoking_environment, wake_time, bedtime, conversation_level, interaction_level, hobbies, bio')
 	        .eq('user_id', userId)
 	        .maybeSingle();
 	      if (error) throw error;
@@ -22807,6 +22944,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const prefix = isProfile ? 'shge' : 'shg';
 	    return {
 	      name: isProfile ? 'prof-name' : 'shg-name',
+	      birthDate: isProfile ? prefix + '-birth-date' : 'shg-birth-date',
 	      age: prefix + '-age',
 	      nationality: prefix + '-nationality',
 	      gender: prefix + '-gender',
@@ -22920,11 +23058,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const hobbyOther = ids.hobbyOther ? formValue(ids.hobbyOther, '') : '';
 	    const hobbies = sharehouseGuestSelectedChipTexts(ids.hobbies, existing.basic?.hobbies || []).filter(v => !['その他', 'Other'].includes(v));
 	    const budgetValue = formValue(ids.budget, String(fieldFallback(existing.stay?.budget, '1200')).replace(/[^0-9]/g, '') || (useOnboardingDefaults ? '1200' : ''));
+	    const birthDate = formValue(ids.birthDate, fieldFallback(existing.basic?.birthDate, ''));
+	    const computedAge = birthDate && !isFutureDateInputValue(birthDate)
+	      ? calculateAgeFromBirthDate(birthDate)
+	      : null;
 	    if (hobbyOther) hobbies.push(hobbyOther);
 	    const nextProfile = {
 	      basic: {
 	        name: formValue(ids.name, fieldFallback(existing.basic?.name, '中村 さくら')),
-	        age: formValue(ids.age, fieldFallback(existing.basic?.age, '23')),
+	        birthDate,
+	        age: computedAge === null || computedAge === undefined ? '' : String(computedAge),
 	        nationality: formValue(ids.nationality, fieldFallback(existing.basic?.nationality, '日本')),
 	        gender: sharehouseGuestSelectedChipText(ids.gender, fieldFallback(existing.basic?.gender, '女性')),
 	        religion: sharehouseGuestSelectedChipText(ids.religion, fieldFallback(existing.basic?.religion, '無宗教')),
@@ -22994,6 +23137,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return (useStored ? sharehouseGuestDemoProfile : null) || applicant?.sharehouseGuestProfile || {
 	      basic: {
 	        name: applicant?.name || '中村 さくら',
+	        birthDate: '',
 	        age: String(applicant?.age || '23歳').replace('歳', ''),
 	        nationality: applicant?.nationality || '日本',
 	        gender: applicant?.gender || '女性',
@@ -23043,6 +23187,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return {
 	      basic: {
 	        name: window._currentProfile?.display_name || '',
+	        birthDate: '',
 	        age: '',
 	        nationality: '',
 	        gender: '',
@@ -23177,6 +23322,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const basic = profile.basic || {};
 	    const lifestyle = profile.lifestyle || {};
 	    return omitUndefinedFields({
+	      birth_date: nullableText(basic.birthDate),
 	      age: sharehouseGuestAgeForDb(basic.age),
 	      nationality: nullableText(basic.nationality),
 	      gender: toSharehouseGuestProfileDbValue('gender', basic.gender),
@@ -23233,6 +23379,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return {
 	      basic: {
 	        name: hasModeProfile ? (gp.display_name || '') : (profile?.display_name || window._currentProfile?.display_name || ''),
+	        birthDate: gp.birth_date || '',
 	        age: gp.age ?? '',
 	        nationality: gp.nationality || '',
 	        gender: fromGuestProfileDbValue('gender', gp.gender),
@@ -23329,6 +23476,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  async function saveSharehouseGuestDataToSupabase(profile = collectSharehouseGuestProfile('onboarding'), options = {}) {
 	    const userId = window._currentUser?.id;
 	    if (!userId || !window._supabase?.from) return false;
+	    if (options.source === 'onboarding' || options.source === 'matching-onboarding') {
+	      const requiredErrors = validateGuestOnboardingRequiredFields({
+	        nameId: 'shg-name',
+	        birthDateId: 'shg-birth-date'
+	      });
+	      if (requiredErrors.length) {
+	        showToast(applyFirstValidationError(requiredErrors));
+	        return false;
+	      }
+	    }
 	    if (!sharehouseGuestDatesAreValid(profile)) {
 	      console.error('Supabase sharehouse_guest_preferences date validation error');
 	      showToast(currentLang === 'en' ? 'Please check your move-in and move-out dates.' : '入居日と退去日を確認してください。');
@@ -23501,6 +23658,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function sharehouseGuestEditProfileHtml(profile, prefix = 'shge') {
+	    const birthDate = profile.basic?.birthDate || '';
+	    const age = birthDate ? calculateAgeFromBirthDate(birthDate) : (profile.basic?.age ?? '');
 	    return `
 	      <div class="form-section">
 	        <div class="form-section-title">👤 ${localizeText('自分の情報')}</div>
@@ -23515,7 +23674,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          <div class="profile-avatar-message" id="share-guest-profile-avatar-message"></div>
 	        </div>
 	        <div class="form-group"><div class="form-label">${localizeText('名前')}</div><input class="form-input" id="prof-name" type="text" value="${escapeHtml(profile.basic.name)}" placeholder="${localizeText('名前')}" /></div>
-	        <div class="form-group"><div class="form-label">${localizeText('年齢')}</div><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(profile.basic.age)}" /></div>
+	        <div class="form-group"><div class="form-label">${localizeText('生年月日 / 年齢')}</div><div class="form-range-row"><input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" /><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly /></div></div>
 	        <div class="form-group"><div class="form-label">${localizeText('国籍')}</div>${shTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')}</div>
 	        <div class="form-group"><div class="form-label">${localizeText('性別')}</div>${shChipRow(prefix, 'gender', ['女性','男性','選択しない'], profile.basic.gender)}</div>
 	        <div class="form-group"><div class="form-label">${localizeText('宗教')}</div>${sensitiveInfoNoteHtml()}${shChipRow(prefix, 'religion', ['仏教','キリスト教','イスラム教','ヒンドゥー教','ユダヤ教','無宗教','その他','回答しない'], profile.basic.religion)}</div>
@@ -25010,6 +25169,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      status: currentSharehouseListing?.status || 'published',
 	      ...approximateLocation.payload
 	    });
+	    const requiredErrors = validateHostRegistrationRequiredFields({
+	      scope,
+	      profilePayload: sharehouseHostProfilePayloadFromProfile(profile, userId),
+	      listingPayload,
+	      privateAddress: profile.stay.address,
+	      approximateLocationPayload: approximateLocation.payload,
+	      serviceType: 'sharehouse'
+	    });
+	    if (requiredErrors.length) return { ok: false, message: applyFirstValidationError(requiredErrors) };
 	    const validationErrors = validateSharehouseListingPayload(listingPayload);
 	    if (validationErrors.length) return { ok: false, message: validationErrors[0] };
 
@@ -25966,10 +26134,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        return;
 	      } else {
 	        const homestayFilterProfile = homestayFilterProfileFromOnboarding();
-	        saveHomestayGuestFilterProfile(homestayFilterProfile);
-	        shouldApplyRegisteredFilters.homestay = true;
 	        const savedHomestayOnboarding = await saveHomestayGuestOnboardingToSupabase();
 	        if (!savedHomestayOnboarding) {
+	          if (lastHomestayOnboardingSaveError === 'required') return;
 	          const message = lastHomestayOnboardingSaveError === 'avatar'
 	            ? (currentLang === 'ja' ? 'プロフィール写真を保存できませんでした。もう一度お試しください。' : 'Could not save your profile photo. Please try again.')
 	            : lastHomestayOnboardingSaveError === 'birth_date'
@@ -25978,6 +26145,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          showToast(message);
 	          return;
 	        }
+	        saveHomestayGuestFilterProfile(homestayFilterProfile);
+	        shouldApplyRegisteredFilters.homestay = true;
 	      }
 	      const savedUserMode = await saveGuestUserModeToSupabase('homestay');
 	      if (!savedUserMode) {
