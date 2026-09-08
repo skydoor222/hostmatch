@@ -8499,8 +8499,17 @@
     if (!entry || !entry.name) return false;
     if (entry.id) return true;
     const metadata = entry.metadata || {};
-    return Object.prototype.hasOwnProperty.call(metadata, 'size')
-      || Object.prototype.hasOwnProperty.call(metadata, 'mimetype');
+    const hasMetadataKey = key => Object.prototype.hasOwnProperty.call(metadata, key);
+    const hasFileMetadata = hasMetadataKey('size')
+      || hasMetadataKey('mimetype')
+      || hasMetadataKey('mimeType')
+      || hasMetadataKey('contentType')
+      || hasMetadataKey('cacheControl')
+      || hasMetadataKey('eTag')
+      || hasMetadataKey('lastModified');
+    if (hasFileMetadata) return true;
+    if (entry.created_at || entry.updated_at || entry.last_accessed_at) return true;
+    return /\.[A-Za-z0-9]{1,12}$/.test(String(entry.name || '').trim());
   }
 
   async function listStorageFilesRecursively(bucketName, prefix) {
@@ -8510,7 +8519,6 @@
     const pageSize = 100;
 
     async function walk(path) {
-      const startCount = files.length;
       let offset = 0;
       while (true) {
         const { data, error } = await bucket.list(path, {
@@ -8529,15 +8537,12 @@
           if (isSupabaseStorageFileEntry(entry)) {
             files.push(childPath);
           } else {
-            const beforeChildCount = files.length;
             await walk(childPath);
-            if (files.length === beforeChildCount) files.push(childPath);
           }
         }
         if (entries.length < pageSize) break;
         offset += pageSize;
       }
-      return files.length - startCount;
     }
 
     await walk(String(prefix || '').replace(/^\/+|\/+$/g, ''));
@@ -8565,6 +8570,7 @@
     const buckets = ['profile-photos', 'listing-photos'];
     for (const bucketName of buckets) {
       const paths = await listStorageFilesRecursively(bucketName, userId);
+      console.log('Account deletion storage files:', { bucketName, paths });
       await removeStorageFilesInBatches(bucketName, paths);
     }
     return true;
