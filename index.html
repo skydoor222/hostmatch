@@ -6784,8 +6784,7 @@
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
   const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-  let freshOnboardingModeSelection = null;
-  let freshOnboardingSelection = null;
+  window._freshOnboardingSelection = null;
 
   const firebaseConfig = {
     apiKey: "AIzaSyAstdZhTnegb8zkxfPmTv_zMP9Hj2wJ5Zg",
@@ -22581,19 +22580,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function setFreshOnboardingSelection(selection) {
-	    freshOnboardingSelection = selection
+	    const normalizedSelection = selection
 	      ? {
 	          housingType: selection.housingType === 'sharehouse' ? 'sharehouse' : 'homestay',
 	          role: normalizeFreshOnboardingRole(selection.role)
 	        }
 	      : null;
-	    freshOnboardingModeSelection = freshOnboardingSelection;
-	    window._freshOnboardingSelection = freshOnboardingSelection;
-	    window._freshOnboardingModeSelection = freshOnboardingModeSelection;
+	    window._freshOnboardingSelection = normalizedSelection;
 	  }
 
 	  function currentFreshOnboardingSelection() {
-	    return freshOnboardingModeSelection || freshOnboardingSelection || window._freshOnboardingModeSelection || window._freshOnboardingSelection || null;
+	    return window._freshOnboardingSelection || null;
 	  }
 
 	  function isFreshOnboardingSelection(housingType, role) {
