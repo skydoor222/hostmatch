@@ -12778,7 +12778,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
-	      return { conversation, profile, guestModeProfile: modeProfile, legacyProfile, profileSource: modeProfile ? 'guest_mode_profiles' : 'profiles', latestMessage, read, latestAt, unread, listingType };
+	      return { conversation, listing, profile, guestModeProfile: modeProfile, legacyProfile, profileSource: modeProfile ? 'guest_mode_profiles' : 'profiles', latestMessage, read, latestAt, unread, listingType };
 	    }).filter(Boolean);
 	    enriched.sort((a, b) => new Date(b.latestAt || 0) - new Date(a.latestAt || 0));
 	    if (!contextStillCurrent()) return [];
