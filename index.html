@@ -1568,8 +1568,15 @@
   .role-card:active { transform:scale(.98); }
   .role-card-icon { font-size:36px; flex-shrink:0; }
   .role-card-text { flex:1; }
+  .role-card.no-desc .role-card-text {
+    min-height: 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .role-card-title { font-size:17px; font-weight:800; color:var(--dark); }
   .role-card-desc { font-size:13px; color:var(--light); margin-top:4px; line-height:1.5; }
+  .role-card.no-desc .role-card-desc { display:none; }
   .role-card-arrow { font-size:20px; color:var(--border); }
   .role-card.guest:hover, .role-card.guest:active { border-color:var(--primary); background:#FFF5F5; }
   .role-card.host:hover, .role-card.host:active { border-color:#635BFF; background:#F5F4FF; }
@@ -6870,9 +6877,11 @@
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_1IkzHObGzH7lLAQRX7t8ag_ykj-XSVj';
   const SUPABASE_AUTH_REDIRECT_TO = 'https://skydoor222.github.io/hostmatch/';
   const MODE_CHANGE_ORIGIN_STORAGE_KEY = 'hostmatch_mode_change_origin';
+  const REGISTRATION_FLOW_STORAGE_KEY = 'hostmatch_registration_flow';
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   window._freshOnboardingSelection = null;
   window._modeChangeOrigin = null;
+  window._registrationFlowState = null;
 
   const firebaseConfig = {
     apiKey: "AIzaSyAstdZhTnegb8zkxfPmTv_zMP9Hj2wJ5Zg",
@@ -7163,6 +7172,132 @@
     });
   }
 
+  function normalizeRegistrationFlowState(state, userId = window._currentUser?.id || '') {
+    if (!state || typeof state !== 'object') return null;
+    if (!state.userId || (userId && state.userId !== userId)) return null;
+    const screen = ['role-select', 'onboarding', 'host-onboarding', 'resident-onboarding'].includes(state.screen)
+      ? state.screen
+      : '';
+    if (!screen) return null;
+    const serviceType = state.serviceType === 'sharehouse' ? 'sharehouse' : state.serviceType === 'homestay' ? 'homestay' : '';
+    const role = normalizedModeChangeRole(state.role);
+    const onboardingStep = Math.max(1, Number.parseInt(state.onboardingStep || 1, 10) || 1);
+    if (screen === 'role-select') {
+      const stage = state.stage === 'role-select' && serviceType ? 'role-select' : 'service-select';
+      return {
+        userId: state.userId,
+        screen,
+        stage,
+        serviceType: stage === 'role-select' ? serviceType : '',
+        role: '',
+        onboardingStep: 1
+      };
+    }
+    if (screen === 'onboarding' && serviceType && role === 'guest') {
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+    }
+    if (screen === 'host-onboarding' && serviceType === 'homestay' && role === 'host') {
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+    }
+    if (screen === 'resident-onboarding' && serviceType === 'sharehouse' && role === 'host') {
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+    }
+    return null;
+  }
+
+  function removeRegistrationFlowStateFromSession() {
+    try {
+      sessionStorage.removeItem(REGISTRATION_FLOW_STORAGE_KEY);
+    } catch (error) {
+      console.warn('Registration flow state clear failed:', error);
+    }
+  }
+
+  function saveRegistrationFlowState(state) {
+    const userId = window._currentUser?.id || '';
+    if (!userId) return null;
+    const normalized = normalizeRegistrationFlowState({ ...state, userId }, userId);
+    if (!normalized) return null;
+    window._registrationFlowState = normalized;
+    try {
+      sessionStorage.setItem(REGISTRATION_FLOW_STORAGE_KEY, JSON.stringify(normalized));
+    } catch (error) {
+      console.warn('Registration flow state save failed:', error);
+    }
+    return normalized;
+  }
+
+  function clearRegistrationFlowState() {
+    window._registrationFlowState = null;
+    removeRegistrationFlowStateFromSession();
+  }
+
+  function readRegistrationFlowStateFromSession(user) {
+    const userId = user?.id || window._currentUser?.id || '';
+    if (!userId) return null;
+    try {
+      const raw = sessionStorage.getItem(REGISTRATION_FLOW_STORAGE_KEY);
+      if (!raw) return null;
+      const restored = normalizeRegistrationFlowState(JSON.parse(raw), userId);
+      if (!restored) {
+        clearRegistrationFlowState();
+        return null;
+      }
+      window._registrationFlowState = restored;
+      return restored;
+    } catch (error) {
+      console.warn('Registration flow state restore failed:', error);
+      clearRegistrationFlowState();
+      return null;
+    }
+  }
+
+  async function restoreRegistrationFlowStateForUser(user) {
+    const restored = readRegistrationFlowStateFromSession(user);
+    if (!restored) return false;
+    if (typeof clearAuthenticatedRoute === 'function') clearAuthenticatedRoute();
+    if (restored.screen === 'role-select') {
+      if (restored.stage === 'role-select' && restored.serviceType) {
+        chooseType(restored.serviceType);
+      } else {
+        showRegistrationStartScreen({ preserveModeChangeOrigin: true });
+      }
+      return true;
+    }
+    if (restored.screen === 'onboarding') {
+      if (restored.serviceType === 'sharehouse') resetSharehouseGuestOnboardingForFreshStart();
+      else resetHomestayGuestOnboardingForFreshStart();
+      currentRole = 'guest';
+      currentSearchCat = restored.serviceType;
+      window._serviceType = restored.serviceType;
+      onboardStep = Math.min(restored.onboardingStep, restored.serviceType === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal);
+      navigate(currentScreen || 'role-select', 'onboarding');
+      renderOnboardStep();
+      return true;
+    }
+    if (restored.screen === 'host-onboarding') {
+      resetHomestayHostOnboardingForFreshStart();
+      currentRole = 'host';
+      currentSearchCat = 'homestay';
+      window._serviceType = 'homestay';
+      hostObStep = Math.min(restored.onboardingStep, hostObTotal);
+      navigate(currentScreen || 'role-select', 'host-onboarding');
+      renderHostObStep();
+      return true;
+    }
+    if (restored.screen === 'resident-onboarding') {
+      resetSharehouseHostOnboardingForFreshStart();
+      currentRole = 'resident';
+      currentSearchCat = 'sharehouse';
+      window._serviceType = 'sharehouse';
+      resStep = Math.min(restored.onboardingStep, resTotal);
+      navigate(currentScreen || 'role-select', 'resident-onboarding');
+      renderResStep();
+      return true;
+    }
+    return false;
+  }
+
   function beginModeChangeFromSettings() {
     const origin = modeChangeOriginFromCurrentContext();
     const normalized = saveModeChangeOriginToSession(origin);
@@ -7217,6 +7352,7 @@
     window._lastRestoredUserMode = null;
     window._lastUserModeRestoreStatus = { status: 'empty' };
     window._registrationStartScreenActive = true;
+    saveRegistrationFlowState({ screen: 'role-select', stage: 'service-select' });
     if (typeof renderRegistrationStartOptions === 'function') renderRegistrationStartOptions();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     document.getElementById('screen-role-select').classList.add('active');
@@ -7354,6 +7490,9 @@
   window.beginModeChangeFromSettings = beginModeChangeFromSettings;
   window.cancelModeChangeAndReturn = cancelModeChangeAndReturn;
   window.clearModeChangeOrigin = clearModeChangeOrigin;
+  window.clearRegistrationFlowState = clearRegistrationFlowState;
+  window.saveRegistrationFlowState = saveRegistrationFlowState;
+  window.restoreRegistrationFlowStateForUser = restoreRegistrationFlowStateForUser;
   window.renderModeChangeReturnControls = renderModeChangeReturnControls;
   window.setRestoredModeLock = setRestoredModeLock;
   window.clearRestoredModeLock = clearRestoredModeLock;
@@ -7432,6 +7571,7 @@
       clearCurrentPersonalIdentityUi(user);
       await loadCurrentUserProfile(user, { applyToUi: false });
       restoreModeChangeOriginFromSession(user);
+      readRegistrationFlowStateFromSession(user);
       if (entryVersion !== authenticatedEntryVersion) return false;
 
       const shouldRestoreMode = options.forceRestoreMode
@@ -7448,6 +7588,13 @@
       }
 
       window._authenticatedRouteRestored = false;
+      const restoredRegistrationFlow = await restoreRegistrationFlowStateForUser(user);
+      if (entryVersion !== authenticatedEntryVersion) return false;
+      if (restoredRegistrationFlow) {
+        const loading = document.getElementById('app-loading');
+        if (loading) loading.style.display = 'none';
+        return true;
+      }
       const restoredMode = await restoreUserModeOnce(user);
       if (entryVersion !== authenticatedEntryVersion) return false;
 
@@ -27061,6 +27208,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (typeof window.resetAuthenticatedEntryState === 'function') window.resetAuthenticatedEntryState();
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
+    if (typeof window.clearRegistrationFlowState === 'function') window.clearRegistrationFlowState();
     try {
       if (window._supabase?.auth) await window._supabase.auth.signOut();
     } catch(e) {}
@@ -27085,6 +27233,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function renderOnboardStep() {
 	    const type = window._serviceType || 'homestay';
 	    const onboardTotal = type === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal;
+	    saveRegistrationFlowState({ screen: 'onboarding', serviceType: type, role: 'guest', onboardingStep: onboardStep });
 	    const profileTitle = type === 'sharehouse' ? t('shg_onboard_title_self') : t('hs_onboard_title_about_you');
 	    const profileSub = type === 'sharehouse' ? '' : (currentLang === 'ja' ? 'ホストに見える基本プロフィールを入力してください' : 'Enter the basic profile hosts will see');
 	    const titles = type === 'sharehouse'
@@ -27114,7 +27263,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       }
     });
 
-	    document.getElementById('onboard-back-btn').style.display = onboardStep > 1 ? 'block' : 'none';
+	    const onboardBackBtn = document.getElementById('onboard-back-btn');
+	    onboardBackBtn.style.display = 'block';
+	    onboardBackBtn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
 	    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
 	    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
 	    if (type === 'homestay' && onboardStep === 1 && typeof window.renderAvatarElement === 'function') {
@@ -27180,6 +27331,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          return;
 	        }
 	        await loadCurrentSharehouseGuestData({ force: true });
+	        clearRegistrationFlowState();
 	        if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	        navigate('onboarding', 'search');
 	        return;
@@ -27204,6 +27356,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        showToast(currentLang === 'ja' ? '登録情報を保存できませんでした。もう一度お試しください。' : 'Could not save your registration information. Please try again.');
 	        return;
 	      }
+	      clearRegistrationFlowState();
 	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('onboarding', 'search');
 	    }
@@ -27213,6 +27366,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (onboardStep > 1) {
       onboardStep--;
       renderOnboardStep();
+    } else {
+      chooseType(window._serviceType === 'sharehouse' ? 'sharehouse' : 'homestay');
     }
   }
 
@@ -27248,6 +27403,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
             return;
           }
           await loadCurrentSharehouseGuestData({ force: true });
+          clearRegistrationFlowState();
+          if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
           navigate('matching', 'search');
           return;
         }
@@ -27255,6 +27412,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         currentSearchCat = 'homestay';
         saveHomestayGuestFilterProfile(homestayFilterProfileFromOnboarding());
         shouldApplyRegisteredFilters.homestay = true;
+        clearRegistrationFlowState();
+        if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
         navigate('matching', 'search');
       }, 600);
     }, 3400);
@@ -30485,19 +30644,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (sub) sub.innerHTML = '&nbsp;';
     if (backControl) backControl.style.display = 'none';
     if (container) container.innerHTML = `
-      <div class="role-card guest" onclick="chooseType('homestay')">
+      <div class="role-card guest no-desc" onclick="chooseType('homestay')">
         <div class="role-card-icon">🏡</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('homestay')}</div>
-          <div class="role-card-desc">&nbsp;</div>
+          <div class="role-card-desc"></div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
-      <div class="role-card host" onclick="chooseType('sharehouse')">
+      <div class="role-card host no-desc" onclick="chooseType('sharehouse')">
         <div class="role-card-icon">🏢</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('sharehouse')}</div>
-          <div class="role-card-desc">&nbsp;</div>
+          <div class="role-card-desc"></div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
@@ -30513,6 +30672,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function chooseType(type) {
     window._registrationStartScreenActive = false;
     window._serviceType = type;
+    saveRegistrationFlowState({ screen: 'role-select', stage: 'role-select', serviceType: type });
     const emoji = document.getElementById('role-select-emoji');
     const brand = document.getElementById('role-select-brand');
     const container = document.getElementById('role-cards-container');
@@ -30527,19 +30687,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
       }
       if (container) container.innerHTML = `
-        <div class="role-card guest" onclick="chooseRole('guest')">
+        <div class="role-card guest no-desc" onclick="chooseRole('guest')">
           <div class="role-card-icon">🧳</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('svc_homestay_guest')}</div>
-            <div class="role-card-desc">&nbsp;</div>
+            <div class="role-card-desc"></div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
-        <div class="role-card host" onclick="chooseRole('host')">
+        <div class="role-card host no-desc" onclick="chooseRole('host')">
           <div class="role-card-icon">🏠</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('register_as_host')}</div>
-            <div class="role-card-desc">&nbsp;</div>
+            <div class="role-card-desc"></div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
@@ -30547,7 +30707,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     } else {
       if (emoji) emoji.textContent = '🏢';
       if (brand) brand.textContent = t('sharehouse');
-      if (backControl) backControl.style.display = 'none';
+      if (backControl) {
+        backControl.style.display = '';
+        const btn = backControl.querySelector('button');
+        if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
+      }
       if (container) container.innerHTML = `
         <div class="role-card guest" onclick="chooseRole('guest')">
           <div class="role-card-icon">🔍</div>
@@ -30619,7 +30783,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     window._pendingUserModeRestore = mode;
     window._pendingGuestModeRestore = mode.role === 'guest' ? mode.housingType : null;
     const restored = await applyPendingUserModeRestore();
-    if (restored && typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
+    if (restored) {
+      clearRegistrationFlowState();
+      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
+    }
     return restored;
   }
 
@@ -31146,6 +31313,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function clearRuntimeSessionState() {
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
+    if (typeof window.clearRegistrationFlowState === 'function') window.clearRegistrationFlowState();
     if (typeof window.clearChatDetailReturnInfo === 'function') window.clearChatDetailReturnInfo();
     supabaseGuestConversationLoadSeq += 1;
     supabaseHostConversationLoadSeq += 1;
@@ -31925,6 +32093,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function renderHostObStep() {
     const titles = [localizeText('ホスト・家族について'), localizeText('家・滞在情報')];
     const subs = ['', ''];
+    saveRegistrationFlowState({ screen: 'host-onboarding', serviceType: 'homestay', role: 'host', onboardingStep: hostObStep });
     document.getElementById('host-ob-step-label').textContent = `STEP ${hostObStep} / ${hostObTotal}`;
     document.getElementById('host-ob-progress').style.width = (hostObStep / hostObTotal * 100) + '%';
     document.getElementById('host-ob-title').textContent = titles[hostObStep - 1];
@@ -31934,7 +32103,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.querySelectorAll('[id^="host-ob-panel-"]').forEach((p, i) => {
       p.classList.toggle('active', i + 1 === hostObStep);
     });
-    document.getElementById('host-ob-back-btn').style.display = hostObStep > 1 ? 'block' : 'none';
+    document.getElementById('host-ob-back-btn').style.display = 'block';
     document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
     if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
@@ -31974,6 +32143,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
 	      }
 	      if (btn) btn.disabled = false;
+	      clearRegistrationFlowState();
 	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('host-onboarding', 'host-dashboard');
 	      showToast(savedToSupabase.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
@@ -31982,6 +32152,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function hostObBack() {
     if (hostObStep > 1) { hostObStep--; renderHostObStep(); }
+    else chooseType('homestay');
   }
 
   /* ===== 入居者オンボーディング ===== */
@@ -31993,6 +32164,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function renderResStep() {
     ensureSharehouseHostRegistrationUi();
     bindHostPhotoInputs('res');
+    saveRegistrationFlowState({ screen: 'resident-onboarding', serviceType: 'sharehouse', role: 'host', onboardingStep: resStep });
     document.getElementById('res-step-label').textContent = `STEP ${resStep} / ${resTotal}`;
     document.getElementById('res-progress').style.width = (resStep / resTotal * 100) + '%';
     document.getElementById('res-title').textContent = localizeText(resTitles[resStep - 1]);
@@ -32002,7 +32174,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.querySelectorAll('.onboard-step-panel[id^="res-panel"]').forEach((p, i) => {
       p.classList.toggle('active', i + 1 === resStep);
     });
-    document.getElementById('res-back-btn').style.display = resStep > 1 ? 'block' : 'none';
+    document.getElementById('res-back-btn').style.display = 'block';
+    document.getElementById('res-back-btn').textContent = currentLang === 'en' ? '← Back' : '← 戻る';
     document.getElementById('res-next-btn').textContent = resStep === resTotal
       ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
       : (currentLang === 'en' ? 'Next →' : '次へ →');
@@ -32038,6 +32211,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
 	      }
 	      if (btn) btn.disabled = false;
+	      clearRegistrationFlowState();
 	      if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
 	      navigate('resident-onboarding', 'host-dashboard');
 	      showToast(result.warning || (currentLang === 'en' ? 'Saved' : '保存しました'));
@@ -32046,6 +32220,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function resOnboardBack() {
     if (resStep > 1) { resStep--; renderResStep(); }
+    else chooseType('sharehouse');
   }
 
   /* ===== ルームメイト追加ロジック ===== */
