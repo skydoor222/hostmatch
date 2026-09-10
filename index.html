@@ -3644,7 +3644,7 @@
       <div class="photo-dot"></div>
     </div>
     <div class="photo-counter" id="photo-counter">1 / 6</div>
-    <div class="detail-back" onclick="navigate(currentScreen, detailBackScreen)">←</div>
+    <div class="detail-back" onclick="goBackFromDetail()">←</div>
     <div class="detail-save" id="detail-save">❤️</div>
     <div class="more-menu-wrap" style="position:absolute;top:16px;right:58px;z-index:12;">
       <button class="more-menu-btn" type="button" onclick="toggleUserActionMenu('detail-user-menu')">…</button>
@@ -11298,6 +11298,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		  }
 
 	  /* ===== DETAIL SCREEN ===== */
+	  function restoreSupabaseGuestChatFromDetail() {
+	    if (currentRole !== 'guest' || !isSupabaseGuestChatMode() || !currentSupabaseConversationId) return false;
+	    setGuestMessageService(currentSupabaseChatMode === 'sharehouse' ? 'sharehouse' : 'homestay');
+	    openSupabaseGuestConversation(currentSupabaseConversationId);
+	    return true;
+	  }
+
+	  function goBackFromDetail() {
+	    if ((detailBackScreen || 'search') === 'chat' && restoreSupabaseGuestChatFromDetail()) return;
+	    navigate(currentScreen, detailBackScreen);
+	  }
+
 	  function openDetail(hostId, backScreen = 'search') {
 	    // mapから来た場合、screen-mapを非アクティブにする（navigate内で処理）
 	    const h = HOSTS[hostId];
@@ -31725,6 +31737,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
   function goBackFromSharehouseDetail() {
+    if ((sharehouseDetailBackScreen || 'search') === 'chat' && restoreSupabaseGuestChatFromDetail()) return;
     navigate(currentScreen, sharehouseDetailBackScreen || 'search');
     if ((sharehouseDetailBackScreen || 'search') === 'search') switchSearchCat('sharehouse');
   }
