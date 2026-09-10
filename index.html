@@ -13836,6 +13836,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSupabaseChatOtherUserId = conversation.initiator_id;
 	      currentSupabaseChatMode = supabaseHostChatModeForListingType(listingType);
 	      openContext.conversationId = conversation.id;
+	      navigate(currentScreen, 'chat');
 	      applySupabaseHostChatHeader(row);
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
@@ -13843,7 +13844,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      await markSupabaseConversationRead(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      await refreshMessageUnreadDot({ role: 'host' });
-	      navigate(currentScreen, 'chat');
 	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -13941,6 +13941,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      setGuestMessageService(listingType === 'sharehouse' ? 'sharehouse' : 'homestay');
 	      openContext.conversationId = conversation.id;
 	      openContext.service = listingType === 'sharehouse' ? 'sharehouse' : 'homestay';
+	      navigate(currentScreen, 'chat');
 	      if (listingType === 'sharehouse') applySupabaseSharehouseChatHeader(row);
 	      else applySupabaseHomestayChatHeader(conversation.listing_id);
 	      const messages = await loadSupabaseConversationMessages(conversation.id);
@@ -13949,7 +13950,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      await markSupabaseConversationRead(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      await refreshMessageUnreadDot({ role: 'guest' });
-	      navigate(currentScreen, 'chat');
 	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -14627,6 +14627,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSupabaseChatMode = 'homestay';
 	      setGuestMessageService('homestay');
 	      openContext.conversationId = conversation.id;
+	      navigate(currentScreen, 'chat');
 	      applySupabaseHomestayChatHeader(listingId);
 	      const rows = await loadSupabaseConversationMessages(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
@@ -14634,7 +14635,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      await markSupabaseConversationRead(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      await refreshMessageUnreadDot({ role: 'guest' });
-	      navigate(currentScreen, 'chat');
 	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
@@ -14699,6 +14699,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      currentSupabaseChatMode = 'sharehouse';
 	      setGuestMessageService('sharehouse');
 	      openContext.conversationId = conversation.id;
+	      navigate(currentScreen, 'chat');
 	      applySupabaseSharehouseChatHeader(row);
 	      const rows = await loadSupabaseConversationMessages(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
@@ -14706,7 +14707,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      await markSupabaseConversationRead(conversation.id);
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      await refreshMessageUnreadDot({ role: 'guest' });
-	      navigate(currentScreen, 'chat');
 	      subscribeToCurrentSupabaseConversation();
 	      updateBlockedUi();
 	      const area = document.querySelector('.chat-messages');
