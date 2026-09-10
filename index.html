@@ -14881,13 +14881,27 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     setTimeout(() => area.scrollTop = area.scrollHeight, 50);
   }
 
-	  function openChatDetail() {
+	  async function openChatDetail() {
 	    if (currentSupabaseChatMode === 'homestay-host' && currentSupabaseConversationId) {
 	      openHomestayGuestDetailFromConversation(currentSupabaseConversationId, 'chat');
 	      return;
 	    }
 	    if (currentSupabaseChatMode === 'sharehouse-host' && currentSupabaseConversationId) {
 	      openSharehouseGuestDetailFromConversation(currentSupabaseConversationId, 'chat');
+	      return;
+	    }
+	    if (isSupabaseGuestChatMode() && currentSupabaseConversationId) {
+	      const listingId = String(currentSupabaseChatListingId || currentSupabaseConversation?.listing_id || currentListing?.id || currentHost || '').trim();
+	      if (!listingId) {
+	        console.error('Supabase chat detail listing id is missing:', { conversationId: currentSupabaseConversationId, mode: currentSupabaseChatMode });
+	        showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
+	        return;
+	      }
+	      if (currentSupabaseChatMode === 'sharehouse' || currentListing?.type === 'sharehouse') {
+	        openSharehouseDetail(listingId, 'chat');
+	        return;
+	      }
+	      await openPublishedHomestayListingDetail(listingId, 'chat');
 	      return;
 	    }
 	    if ((chatDetailMode === 'applicant' || chatDetailMode === 'homestay-applicant' || chatDetailMode === 'sharehouse-applicant') && currentChatApplicant) {
