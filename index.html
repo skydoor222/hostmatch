@@ -1021,6 +1021,61 @@
     .bubble.me { background: var(--primary); color: white; border-bottom-right-radius: 4px; }
     .bubble.them { background: white; color: var(--dark); border-bottom-left-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
     .bubble-time { font-size: 10px; color: var(--light); padding: 0 4px; }
+    .message-attachments {
+      display: grid; gap: 6px; margin-top: 6px;
+      grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+      max-width: min(72%, 320px);
+    }
+    .bubble-wrap.me .message-attachments { justify-items: end; }
+    .message-attachment {
+      width: 100%; max-width: 220px; border-radius: 14px; overflow: hidden;
+      background: white; border: 1px solid var(--border);
+    }
+    .message-attachment img,
+    .message-attachment video {
+      width: 100%; max-height: 260px; object-fit: cover; display: block;
+    }
+    .message-attachment img { cursor: zoom-in; }
+    .message-attachment-unavailable {
+      padding: 14px; color: var(--light); font-size: 12px; font-weight: 800;
+    }
+    .chat-attachment-preview {
+      display: none; position: fixed; left: 50%; bottom: 62px; transform: translateX(-50%);
+      width: 100%; max-width: 430px; padding: 8px 16px; box-sizing: border-box;
+      background: rgba(255,255,255,.96); border-top: 1px solid var(--border); z-index: 151;
+      gap: 8px; overflow-x: auto;
+    }
+    .chat-attachment-preview.has-items { display: flex; }
+    .chat-attachment-chip {
+      position: relative; width: 74px; height: 74px; border-radius: 12px; overflow: hidden;
+      background: var(--bg); border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .chat-attachment-chip img,
+    .chat-attachment-chip video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .chat-attachment-remove {
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%;
+      border: none; background: rgba(0,0,0,.58); color: white; font-size: 14px; line-height: 1;
+      cursor: pointer;
+    }
+    .chat-attach {
+      width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+      background: white; color: var(--dark); cursor: pointer; font-size: 20px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .chat-attach:disabled { opacity: .45; cursor: not-allowed; }
+    .media-viewer {
+      display: none; position: fixed; inset: 0; z-index: 3200;
+      background: rgba(0,0,0,.82); align-items: center; justify-content: center; padding: 20px;
+    }
+    .media-viewer.open { display: flex; }
+    .media-viewer img {
+      max-width: 100%; max-height: 86vh; object-fit: contain; border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    }
+    .media-viewer-close {
+      position: absolute; top: 18px; right: 18px; width: 38px; height: 38px; border-radius: 50%;
+      border: none; background: rgba(255,255,255,.92); color: var(--dark); font-size: 24px; cursor: pointer;
+    }
 
     .chat-input-bar {
       position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
@@ -3830,12 +3885,20 @@
     </div>
   </div>
 
+  <div class="chat-attachment-preview" id="chat-attachment-preview"></div>
   <div class="chat-input-bar">
+    <button class="chat-attach" type="button" onclick="triggerChatAttachmentPicker()" aria-label="メディアを添付">＋</button>
+    <input id="chat-attachment-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" multiple onchange="handleChatAttachmentSelection(event)" style="display:none;" />
     <input class="chat-input" type="text" placeholder="メッセージを入力..." data-i18n-placeholder="message_placeholder" />
     <button class="chat-send">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
     </button>
   </div>
+</div>
+
+<div class="media-viewer" id="message-media-viewer" onclick="closeMessageMediaViewer()">
+  <button class="media-viewer-close" type="button" onclick="event.stopPropagation();closeMessageMediaViewer()">×</button>
+  <img id="message-media-viewer-img" alt="" onclick="event.stopPropagation()" />
 </div>
 
 <!-- ==================== ④ お気に入り ==================== -->
@@ -9261,6 +9324,7 @@
     if (notice) notice.style.display = blockedByMe && currentScreen === 'chat' ? 'block' : 'none';
     const input = document.querySelector('#screen-chat .chat-input');
     const send = document.querySelector('#screen-chat .chat-send');
+    const attach = document.querySelector('#screen-chat .chat-attach');
     if (input) {
       input.disabled = blocked;
       input.placeholder = blocked ? t('message_unavailable') : t('message_placeholder');
@@ -9269,6 +9333,11 @@
       send.disabled = blocked;
       send.style.opacity = blocked ? '.45' : '';
       send.style.cursor = blocked ? 'not-allowed' : 'pointer';
+    }
+    if (attach) {
+      attach.disabled = blocked;
+      attach.style.opacity = blocked ? '.45' : '';
+      attach.style.cursor = blocked ? 'not-allowed' : 'pointer';
     }
     const detailMessage = document.getElementById('detail-message-btn');
     if (detailMessage) {
@@ -12415,8 +12484,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
 	    const hostProfilesByUserId = indexRowsBy(hostProfilesResult.data, 'user_id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
+	    const attachmentsByMessage = await loadMessageAttachmentsForMessages((messagesResult.data || []).map(message => message.id));
+	    const messagesWithAttachments = (messagesResult.data || []).map(message => ({
+	      ...message,
+	      attachments: attachmentsByMessage.get(message.id) || []
+	    }));
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
-	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
+	    const messagesByConversation = groupMessagesByConversation(messagesWithAttachments);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) return null;
@@ -12434,7 +12508,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      if (!listing?.id || listing.listing_type !== service) return null;
 	      if (service === 'homestay') ensureHomestayConversationHostObject(conversation, profile, listing);
 	      if (service === 'sharehouse') ensureSharehouseConversationListingObject(conversation, profile, listing);
-	      const latestMessage = latestByConversation.get(conversation.id) || null;
+	      const latestRaw = latestByConversation.get(conversation.id) || null;
+	      const latestMessage = latestRaw ? { ...latestRaw, attachments: attachmentsByMessage.get(latestRaw.id) || [] } : null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
@@ -12460,10 +12535,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const listing = row.listing || {};
 	      const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Host' : 'ホスト');
 	      const latest = row.latestMessage;
-	      const previewPrefix = latest?.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
-	      const preview = latest?.body
-	        ? `${previewPrefix}${latest.body}`
-	        : (currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません');
+	      const preview = conversationPreviewText(latest, userId);
 	      const time = formatConversationListTime(row.latestAt);
 	      const avatarHtml = profile.avatar_url
 	        ? `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`
@@ -12565,8 +12637,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const profilesById = indexRowsBy(profilesResult.data, 'id');
 	    const modeProfilesByUserId = indexRowsBy(guestModeProfilesResult.data, 'user_id');
 	    const listingsById = indexRowsBy(listingsResult.data, 'id');
+	    const attachmentsByMessage = await loadMessageAttachmentsForMessages((messagesResult.data || []).map(message => message.id));
+	    const messagesWithAttachments = (messagesResult.data || []).map(message => ({
+	      ...message,
+	      attachments: attachmentsByMessage.get(message.id) || []
+	    }));
 	    const latestByConversation = latestMessagesByConversation(messagesResult.data);
-	    const messagesByConversation = groupMessagesByConversation(messagesResult.data);
+	    const messagesByConversation = groupMessagesByConversation(messagesWithAttachments);
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
@@ -12575,7 +12652,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const modeProfile = modeProfilesByUserId.get(conversation.initiator_id) || null;
 	      const legacyProfile = profilesById.get(conversation.initiator_id) || null;
 	      const profile = modeProfile || legacyProfile || {};
-	      const latestMessage = latestByConversation.get(conversation.id) || null;
+	      const latestRaw = latestByConversation.get(conversation.id) || null;
+	      const latestMessage = latestRaw ? { ...latestRaw, attachments: attachmentsByMessage.get(latestRaw.id) || [] } : null;
 	      const read = readsByConversation.get(conversation.id) || null;
 	      const latestAt = latestMessage?.created_at || conversation.last_message_at || conversation.created_at;
 	      const unread = conversationHasUnreadForUser(conversation.id, messagesByConversation.get(conversation.id) || [], readsByConversation, userId);
@@ -12636,10 +12714,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const listingType = listing.listing_type || row.listingType || 'homestay';
 	      const name = hostDisplayValue(profile.display_name, currentLang === 'en' ? 'Guest' : 'ゲスト');
 	      const latest = row.latestMessage;
-	      const previewPrefix = latest?.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
-	      const preview = latest?.body
-	        ? `${previewPrefix}${latest.body}`
-	        : (currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません');
+	      const preview = conversationPreviewText(latest, userId);
 	      const time = formatConversationListTime(row.latestAt);
 	      const avatarHtml = profile.avatar_url
 	        ? `<img src="${escapeHtml(profile.avatar_url)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" />`
@@ -13713,6 +13788,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      role: currentRole,
 	      service: serviceModeForCurrentContext()
 	    };
+	    clearPendingMessageAttachments();
 	    renderSupabaseChatLoadingState();
 	    try {
 	      let row = currentSupabaseHostConversationRows.find(item => item.conversation?.id === id);
@@ -13810,6 +13886,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      role: currentRole,
 	      service: (guestMessageService || window._serviceType || currentSearchCat || 'homestay') === 'sharehouse' ? 'sharehouse' : 'homestay'
 	    };
+	    clearPendingMessageAttachments();
 	    renderSupabaseChatLoadingState();
 	    try {
 	      let row = currentSupabaseGuestConversationRows.find(item => item.conversation?.id === id);
@@ -13947,6 +14024,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    currentSupabaseChatListingId = '';
 	    currentSupabaseChatOtherUserId = '';
 	    currentSupabaseChatMode = '';
+	    clearPendingMessageAttachments();
 	    renderSupabaseChatLoadingState();
 	  }
 
@@ -14024,6 +14102,311 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 	  }
 
+	  function messageAttachmentLimitMessage() {
+	    return currentLang === 'en'
+	      ? 'You can send up to 10 images or videos at a time.'
+	      : '一度に送信できる画像・動画は10件までです。';
+	  }
+
+	  function messageAttachmentSizeMessage() {
+	    return currentLang === 'en'
+	      ? 'Please select images or videos up to 100 MB per file.'
+	      : '1ファイルあたり100MB以下の画像・動画を選択してください。';
+	  }
+
+	  function messageMediaSendErrorMessage() {
+	    return currentLang === 'en'
+	      ? 'Could not send the media. Please try again.'
+	      : '画像・動画を送信できませんでした。もう一度お試しください。';
+	  }
+
+	  function messageAttachmentType(file = {}) {
+	    const type = String(file.type || '').toLowerCase();
+	    if (type.startsWith('image/')) return 'image';
+	    if (type.startsWith('video/')) return 'video';
+	    return '';
+	  }
+
+	  function safeMessageAttachmentFileName(file = {}, index = 0) {
+	    const original = String(file.name || `media-${index}`).trim();
+	    const extension = (original.match(/\.([a-z0-9]+)$/i)?.[1] || (messageAttachmentType(file) === 'video' ? 'mp4' : 'webp')).toLowerCase();
+	    const base = original
+	      .replace(/\.[^.]+$/, '')
+	      .normalize('NFKD')
+	      .replace(/[^\w.-]+/g, '-')
+	      .replace(/-+/g, '-')
+	      .replace(/^-|-$/g, '')
+	      .slice(0, 48) || 'media';
+	    const uuid = window.crypto?.randomUUID ? window.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	    return `${base}-${uuid}.${extension}`;
+	  }
+
+	  function messageAttachmentDimensions(file) {
+	    return new Promise(resolve => {
+	      const type = messageAttachmentType(file);
+	      const url = URL.createObjectURL(file);
+	      const done = data => {
+	        URL.revokeObjectURL(url);
+	        resolve(data);
+	      };
+	      if (type === 'image') {
+	        const img = new Image();
+	        img.onload = () => done({ width: img.naturalWidth || null, height: img.naturalHeight || null, duration_seconds: null });
+	        img.onerror = () => done({ width: null, height: null, duration_seconds: null });
+	        img.src = url;
+	        return;
+	      }
+	      if (type === 'video') {
+	        const video = document.createElement('video');
+	        video.preload = 'metadata';
+	        video.onloadedmetadata = () => done({
+	          width: video.videoWidth || null,
+	          height: video.videoHeight || null,
+	          duration_seconds: Number.isFinite(video.duration) ? video.duration : null
+	        });
+	        video.onerror = () => done({ width: null, height: null, duration_seconds: null });
+	        video.src = url;
+	        return;
+	      }
+	      done({ width: null, height: null, duration_seconds: null });
+	    });
+	  }
+
+	  function clearPendingMessageAttachments() {
+	    pendingMessageAttachments.forEach(item => {
+	      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+	    });
+	    pendingMessageAttachments = [];
+	    const input = document.getElementById('chat-attachment-input');
+	    if (input) input.value = '';
+	    renderPendingMessageAttachments();
+	  }
+
+	  function renderPendingMessageAttachments() {
+	    const container = document.getElementById('chat-attachment-preview');
+	    if (!container) return;
+	    container.classList.toggle('has-items', pendingMessageAttachments.length > 0);
+	    container.innerHTML = pendingMessageAttachments.map((item, index) => {
+	      const media = item.type === 'video'
+	        ? `<video src="${escapeHtml(item.previewUrl)}" muted playsinline></video>`
+	        : `<img src="${escapeHtml(item.previewUrl)}" alt="" />`;
+	      return `
+	        <div class="chat-attachment-chip" title="${escapeHtml(item.file?.name || '')}">
+	          ${media}
+	          <button class="chat-attachment-remove" type="button" onclick="removePendingMessageAttachment(${index})" aria-label="${currentLang === 'en' ? 'Remove attachment' : '添付を削除'}">×</button>
+	        </div>
+	      `;
+	    }).join('');
+	  }
+
+	  function removePendingMessageAttachment(index) {
+	    const item = pendingMessageAttachments[index];
+	    if (!item) return;
+	    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+	    pendingMessageAttachments.splice(index, 1);
+	    renderPendingMessageAttachments();
+	  }
+
+	  function triggerChatAttachmentPicker() {
+	    if (!isSupabaseHomestayChatActive() || isCurrentTargetBlocked()) return;
+	    document.getElementById('chat-attachment-input')?.click();
+	  }
+
+	  function handleChatAttachmentSelection(event) {
+	    const input = event?.target;
+	    const files = Array.from(input?.files || []);
+	    if (input) input.value = '';
+	    if (!files.length) return;
+	    if (pendingMessageAttachments.length + files.length > MESSAGE_ATTACHMENT_MAX_FILES) {
+	      showToast(messageAttachmentLimitMessage());
+	      return;
+	    }
+	    const invalid = files.find(file => !MESSAGE_ATTACHMENT_ALLOWED_TYPES.has(file.type) || !messageAttachmentType(file));
+	    if (invalid) {
+	      showToast(currentLang === 'en' ? 'Please select supported image or video files.' : '対応している画像・動画ファイルを選択してください。');
+	      return;
+	    }
+	    const tooLarge = files.find(file => file.size > MESSAGE_ATTACHMENT_MAX_SIZE);
+	    if (tooLarge) {
+	      showToast(messageAttachmentSizeMessage());
+	      return;
+	    }
+	    files.forEach(file => {
+	      pendingMessageAttachments.push({
+	        file,
+	        type: messageAttachmentType(file),
+	        previewUrl: URL.createObjectURL(file)
+	      });
+	    });
+	    renderPendingMessageAttachments();
+	  }
+
+	  function messageAttachmentPreviewText(attachments = []) {
+	    const list = Array.isArray(attachments) ? attachments : [];
+	    const hasImage = list.some(item => item?.attachment_type === 'image');
+	    const hasVideo = list.some(item => item?.attachment_type === 'video');
+	    if (hasImage && hasVideo) return currentLang === 'en' ? 'Photo & video' : '画像・動画';
+	    if (hasImage) return currentLang === 'en' ? 'Photo' : '画像';
+	    if (hasVideo) return currentLang === 'en' ? 'Video' : '動画';
+	    return '';
+	  }
+
+	  function conversationPreviewText(message, userId) {
+	    if (!message) return currentLang === 'en' ? 'No messages yet' : 'まだメッセージはありません';
+	    const prefix = message.sender_id === userId ? (currentLang === 'en' ? 'You: ' : 'あなた: ') : '';
+	    const body = String(message.body || '').trim();
+	    return body ? `${prefix}${body}` : `${prefix}${messageAttachmentPreviewText(message.attachments) || (currentLang === 'en' ? 'Message' : 'メッセージ')}`;
+	  }
+
+	  function groupAttachmentsByMessage(attachments = []) {
+	    const map = new Map();
+	    (Array.isArray(attachments) ? attachments : []).forEach(attachment => {
+	      if (!attachment?.message_id) return;
+	      if (!map.has(attachment.message_id)) map.set(attachment.message_id, []);
+	      map.get(attachment.message_id).push(attachment);
+	    });
+	    map.forEach(list => list.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+	    return map;
+	  }
+
+	  async function signedMessageAttachments(attachments = []) {
+	    const rows = Array.isArray(attachments) ? attachments : [];
+	    const paths = rows.map(row => row.storage_path).filter(Boolean);
+	    if (!paths.length || !window._supabase?.storage) return rows;
+	    try {
+	      const { data, error } = await window._supabase.storage
+	        .from('message-media')
+	        .createSignedUrls(paths, 60 * 30);
+	      if (error) throw error;
+	      const signedByPath = new Map((Array.isArray(data) ? data : []).map(item => [item.path, item.signedUrl]));
+	      return rows.map(row => ({ ...row, signedUrl: signedByPath.get(row.storage_path) || '' }));
+	    } catch (error) {
+	      console.error('Supabase message media signed URL error:', error);
+	      return rows.map(row => ({ ...row, signedUrl: '' }));
+	    }
+	  }
+
+	  async function loadMessageAttachmentsForMessages(messageIds = []) {
+	    const ids = [...new Set((Array.isArray(messageIds) ? messageIds : []).filter(Boolean))];
+	    if (!ids.length || !window._supabase?.from) return new Map();
+	    const { data, error } = await window._supabase
+	      .from('message_attachments')
+	      .select('id, message_id, uploader_id, storage_path, attachment_type, mime_type, file_name, file_size_bytes, width, height, duration_seconds, sort_order, created_at')
+	      .in('message_id', ids)
+	      .order('sort_order', { ascending: true });
+	    if (error) throw error;
+	    const signed = await signedMessageAttachments(data || []);
+	    return groupAttachmentsByMessage(signed);
+	  }
+
+	  function renderMessageAttachmentHtml(attachments = []) {
+	    const list = Array.isArray(attachments) ? attachments : [];
+	    if (!list.length) return '';
+	    return `<div class="message-attachments">${list.map(attachment => {
+	      const url = attachment.signedUrl || '';
+	      if (!url) {
+	        return `<div class="message-attachment message-attachment-unavailable">${currentLang === 'en' ? 'Media unavailable' : 'メディアを表示できません'}</div>`;
+	      }
+	      if (attachment.attachment_type === 'video') {
+	        return `<div class="message-attachment"><video src="${escapeHtml(url)}" controls playsinline preload="metadata"></video></div>`;
+	      }
+	      return `<div class="message-attachment"><img src="${escapeHtml(url)}" data-url="${escapeHtml(url)}" alt="${escapeHtml(attachment.file_name || '')}" loading="lazy" onclick="openMessageMediaViewer(this.dataset.url)" /></div>`;
+	    }).join('')}</div>`;
+	  }
+
+	  function openMessageMediaViewer(url) {
+	    const viewer = document.getElementById('message-media-viewer');
+	    const image = document.getElementById('message-media-viewer-img');
+	    if (!viewer || !image || !url) return;
+	    image.src = url;
+	    viewer.classList.add('open');
+	  }
+
+	  function closeMessageMediaViewer() {
+	    const viewer = document.getElementById('message-media-viewer');
+	    const image = document.getElementById('message-media-viewer-img');
+	    if (viewer) viewer.classList.remove('open');
+	    if (image) image.src = '';
+	  }
+
+	  async function removeUploadedMessageMedia(paths = []) {
+	    const safePaths = (Array.isArray(paths) ? paths : []).filter(Boolean);
+	    if (!safePaths.length || !window._supabase?.storage) return;
+	    const { error } = await window._supabase.storage.from('message-media').remove(safePaths);
+	    if (error) throw error;
+	  }
+
+	  async function uploadPendingMessageAttachments({ userId, conversationId, messageId }) {
+	    const uploadedPaths = [];
+	    const metadata = [];
+	    try {
+	      for (const [index, item] of pendingMessageAttachments.entries()) {
+	        const file = item.file;
+	        const type = messageAttachmentType(file);
+	        if (!file || !type) throw new Error('Invalid message attachment');
+	        const fileName = safeMessageAttachmentFileName(file, index);
+	        const storagePath = `${userId}/${conversationId}/${messageId}/${fileName}`;
+	        const { error } = await window._supabase.storage
+	          .from('message-media')
+	          .upload(storagePath, file, {
+	            cacheControl: '3600',
+	            contentType: file.type,
+	            upsert: false
+	          });
+	        if (error) throw error;
+	        uploadedPaths.push(storagePath);
+	        const dimensions = await messageAttachmentDimensions(file);
+	        metadata.push({
+	          storage_path: storagePath,
+	          attachment_type: type,
+	          mime_type: file.type || '',
+	          file_name: file.name || fileName,
+	          file_size_bytes: file.size || 0,
+	          width: dimensions.width,
+	          height: dimensions.height,
+	          duration_seconds: dimensions.duration_seconds,
+	          sort_order: index
+	        });
+	      }
+	    } catch (error) {
+	      if (uploadedPaths.length) await removeUploadedMessageMedia(uploadedPaths);
+	      throw error;
+	    }
+	    return { uploadedPaths, metadata };
+	  }
+
+	  async function sendSupabaseMessageWithAttachments(conversationId, body) {
+	    const userId = window._currentUser?.id || '';
+	    const messageId = window.crypto?.randomUUID
+	      ? window.crypto.randomUUID()
+	      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+	    if (!userId || !conversationId || !window._supabase?.storage || !window._supabase?.rpc) {
+	      throw new Error('Supabase message sender is not available');
+	    }
+	    let uploadedPaths = [];
+	    try {
+	      const uploaded = await uploadPendingMessageAttachments({ userId, conversationId, messageId });
+	      uploadedPaths = uploaded.uploadedPaths;
+	      const { data, error } = await window._supabase.rpc('send_message_with_attachments', {
+	        p_message_id: messageId,
+	        p_conversation_id: conversationId,
+	        p_body: body,
+	        p_attachments: uploaded.metadata
+	      });
+	      if (error) throw error;
+	      return data || { id: messageId, conversation_id: conversationId, sender_id: userId, body, attachments: uploaded.metadata };
+	    } catch (error) {
+	      if (uploadedPaths.length) {
+	        try {
+	          await removeUploadedMessageMedia(uploadedPaths);
+	        } catch (cleanupError) {
+	          console.error('Supabase message media cleanup error:', cleanupError);
+	        }
+	      }
+	      throw error;
+	    }
+	  }
+
 	  function renderSupabaseHomestayMessages(rows = []) {
 	    const area = document.querySelector('.chat-messages');
 	    if (!area) return;
@@ -14032,9 +14415,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      ? messages.map(message => {
 	        const mine = message.sender_id === window._currentUser?.id;
 	        const side = mine ? 'me' : 'them';
+	        const body = String(message.body || '').trim();
+	        const bubbleHtml = body ? `<div class="bubble ${side}">${escapeHtml(body)}</div>` : '';
 	        return `
 	          <div class="bubble-wrap ${side}">
-	            <div class="bubble ${side}">${escapeHtml(message.body)}</div>
+	            ${bubbleHtml}
+	            ${renderMessageAttachmentHtml(message.attachments)}
 	            <div class="bubble-time">${escapeHtml(formatChatMessageTime(message.created_at))}</div>
 	          </div>
 	        `;
@@ -14050,7 +14436,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      .eq('conversation_id', conversationId)
 	      .order('created_at', { ascending: true });
 	    if (error) throw error;
-	    return Array.isArray(data) ? data : [];
+	    const rows = Array.isArray(data) ? data : [];
+	    const attachmentsByMessage = await loadMessageAttachmentsForMessages(rows.map(message => message.id));
+	    return rows.map(message => ({
+	      ...message,
+	      attachments: attachmentsByMessage.get(message.id) || []
+	    }));
 	  }
 
 	  async function markSupabaseConversationRead(conversationId) {
@@ -14213,6 +14604,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      role: currentRole,
 	      service: 'homestay'
 	    };
+	    clearPendingMessageAttachments();
 	    renderSupabaseChatLoadingState();
 	    const detailMessage = document.getElementById('detail-message-btn');
 	    if (detailMessage) detailMessage.disabled = true;
@@ -14267,6 +14659,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      role: currentRole,
 	      service: 'sharehouse'
 	    };
+	    clearPendingMessageAttachments();
 	    renderSupabaseChatLoadingState();
 	    const detailMessage = document.getElementById('sharehouse-message-btn');
 	    if (detailMessage) detailMessage.disabled = true;
@@ -14511,14 +14904,24 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   async function sendMessage() {
     const input = document.querySelector('.chat-input');
     const text = input.value.trim();
-    if (!text) return;
+    const hasAttachments = pendingMessageAttachments.length > 0;
+    if (!text && !hasAttachments) return;
 
     if (isSupabaseHomestayChatActive()) {
       if (isSendingSupabaseMessage) return;
       const sendingConversationId = String(currentSupabaseConversationId || '');
       const sendingUserId = window._currentUser?.id || '';
+      const sendingSeq = supabaseChatOpenSeq;
       if (text.length > 5000) {
         showToast(currentLang === 'en' ? 'Messages must be 5000 characters or fewer.' : 'メッセージは5000文字以内で入力してください。');
+        return;
+      }
+      if (pendingMessageAttachments.length > MESSAGE_ATTACHMENT_MAX_FILES) {
+        showToast(messageAttachmentLimitMessage());
+        return;
+      }
+      if (pendingMessageAttachments.some(item => item.file?.size > MESSAGE_ATTACHMENT_MAX_SIZE)) {
+        showToast(messageAttachmentSizeMessage());
         return;
       }
       await loadCurrentUserBlocks();
@@ -14527,41 +14930,45 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         return;
       }
       const send = document.querySelector('.chat-send');
+      const attach = document.querySelector('.chat-attach');
       isSendingSupabaseMessage = true;
       if (send) {
         send.disabled = true;
         send.style.opacity = '.45';
         send.style.cursor = 'not-allowed';
       }
+      if (attach) {
+        attach.disabled = true;
+        attach.style.opacity = '.45';
+        attach.style.cursor = 'not-allowed';
+      }
       try {
-        const { data, error } = await window._supabase
-          .from('messages')
-          .insert({
-            conversation_id: currentSupabaseConversationId,
-            sender_id: window._currentUser.id,
-            body: text
-          })
-          .select('id, conversation_id, sender_id, body, created_at')
-          .single();
-        if (error) throw error;
+        const data = await sendSupabaseMessageWithAttachments(sendingConversationId, text);
+        if (window._currentUser?.id !== sendingUserId || currentSupabaseConversationId !== sendingConversationId || supabaseChatOpenSeq !== sendingSeq) return;
         input.value = '';
+        clearPendingMessageAttachments();
         const rows = await loadSupabaseConversationMessages(sendingConversationId);
-        if (window._currentUser?.id !== sendingUserId || currentSupabaseConversationId !== sendingConversationId) return;
+        if (window._currentUser?.id !== sendingUserId || currentSupabaseConversationId !== sendingConversationId || supabaseChatOpenSeq !== sendingSeq) return;
         renderSupabaseHomestayMessages(rows.length ? rows : (data ? [data] : []));
         await markSupabaseConversationRead(sendingConversationId);
-        if (window._currentUser?.id !== sendingUserId || currentSupabaseConversationId !== sendingConversationId) return;
+        if (window._currentUser?.id !== sendingUserId || currentSupabaseConversationId !== sendingConversationId || supabaseChatOpenSeq !== sendingSeq) return;
         await refreshMessageUnreadDot({ role: isSupabaseHostChatMode() ? 'host' : 'guest' });
         const area = document.querySelector('.chat-messages');
         if (area) area.scrollTop = area.scrollHeight;
       } catch (error) {
-        console.error('Supabase message insert error:', error);
-        showToast(currentLang === 'en' ? 'Could not send your message. Please try again.' : 'メッセージを送信できませんでした。もう一度お試しください。');
+        console.error('Supabase message send error:', error);
+        showToast(hasAttachments ? messageMediaSendErrorMessage() : (currentLang === 'en' ? 'Could not send your message. Please try again.' : 'メッセージを送信できませんでした。もう一度お試しください。'));
       } finally {
         isSendingSupabaseMessage = false;
         if (send) {
           send.disabled = false;
           send.style.opacity = '';
           send.style.cursor = 'pointer';
+        }
+        if (attach) {
+          attach.disabled = false;
+          attach.style.opacity = '';
+          attach.style.cursor = 'pointer';
         }
         updateBlockedUi();
       }
@@ -17453,6 +17860,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const HOMESTAY_HOST_AVATAR_ASPECT_RATIO = 1;
 	  const HOMESTAY_HOST_AVATAR_OUTPUT_SIZE = 800;
 	  const HOMESTAY_HOST_AVATAR_MIN_ZOOM = 0.5;
+	  const MESSAGE_ATTACHMENT_MAX_FILES = 10;
+	  const MESSAGE_ATTACHMENT_MAX_SIZE = 100 * 1024 * 1024;
+	  const MESSAGE_ATTACHMENT_ALLOWED_TYPES = new Set([
+	    'image/jpeg',
+	    'image/png',
+	    'image/webp',
+	    'image/gif',
+	    'video/mp4',
+	    'video/webm',
+	    'video/quicktime'
+	  ]);
+	  let pendingMessageAttachments = [];
 	  let homestayRoomPhotoCropEditorState = null;
 
   function nullableText(value) {
