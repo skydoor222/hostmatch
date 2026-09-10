@@ -12217,7 +12217,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function messageUnreadRoleForCurrentContext() {
 	    const service = serviceModeForCurrentContext();
 	    if ((currentRole === 'host' || currentRole === 'resident') && ['homestay', 'sharehouse'].includes(service)) return 'host';
-	    if (currentRole === 'guest' && (window._serviceType || currentSearchCat || 'homestay') === 'homestay') return 'guest';
+	    if (currentRole === 'guest' && ['homestay', 'sharehouse'].includes(window._serviceType || currentSearchCat || 'homestay')) return 'guest';
 	    return '';
 	  }
 
@@ -12253,7 +12253,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id')
-	      .eq(column, userId);
+	      .eq(column, userId)
+	      .neq(role === 'host' ? 'initiator_id' : 'listing_owner_id', userId);
 	    if (conversationsError) throw conversationsError;
 
 	    const rows = Array.isArray(conversations) ? conversations : [];
@@ -12270,7 +12271,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const listing = listingsById.get(row.listing_id);
 	      if (!listing || listing.listing_type !== listingType) return false;
 	      if (listingId && listing.id !== listingId) return false;
-	      return role === 'host' ? listing.owner_id === userId : true;
+	      if (role === 'host') {
+	        return row.listing_owner_id === userId && row.initiator_id !== userId && listing.owner_id === userId;
+	      }
+	      return row.initiator_id === userId && row.listing_owner_id !== userId && listing.owner_id === row.listing_owner_id;
 	    });
 	    await loadCurrentUserBlocks();
 	    const unblockedRows = visibleRows.filter(row => !shouldHideSupabaseConversationForBlocks(row, role));
@@ -12553,7 +12557,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const { data: conversations, error: conversationsError } = await window._supabase
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
-	      .eq('initiator_id', userId);
+	      .eq('initiator_id', userId)
+	      .neq('listing_owner_id', userId);
 	    if (conversationsError) throw conversationsError;
 	    if (!contextStillCurrent()) return [];
 
@@ -12606,6 +12611,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) return null;
+	      if (conversation.initiator_id !== userId || conversation.listing_owner_id === userId) return null;
 	      const legacyProfile = profilesById.get(conversation.listing_owner_id) || {};
 	      const hostProfile = hostProfilesByUserId.get(conversation.listing_owner_id) || {};
 	      const identity = hostModeIdentityFromProfiles(hostProfile, legacyProfile);
@@ -12617,6 +12623,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        avatar_url: identity.avatarUrl
 	      };
 	      const listing = listingsById.get(conversation.listing_id) || {};
+	      if (listing.owner_id !== conversation.listing_owner_id) return null;
 	      if (!listing?.id || listing.listing_type !== service) return null;
 	      if (service === 'homestay') ensureHomestayConversationHostObject(conversation, profile, listing);
 	      if (service === 'sharehouse') ensureSharehouseConversationListingObject(conversation, profile, listing);
@@ -12705,7 +12712,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      .from('conversations')
 	      .select('id, listing_id, initiator_id, listing_owner_id, created_at, updated_at, last_message_at')
 	      .eq('listing_owner_id', userId)
-	      .eq('listing_id', targetListingId);
+	      .eq('listing_id', targetListingId)
+	      .neq('initiator_id', userId);
 	    if (conversationsError) throw conversationsError;
 	    if (!contextStillCurrent()) return [];
 
@@ -12759,6 +12767,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const readsByConversation = indexConversationReadsByConversation(readsResult.data);
 	    const enriched = rows.map(conversation => {
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) return null;
+	      if (conversation.listing_owner_id !== userId || conversation.initiator_id === userId) return null;
 	      const listing = listingsById.get(conversation.listing_id);
 	      if (!listing || listing.owner_id !== userId || listing.listing_type !== listingType || listing.id !== targetListingId) return null;
 	      const modeProfile = modeProfilesByUserId.get(conversation.initiator_id) || null;
@@ -13914,6 +13923,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        return;
 	      }
 	      const conversation = row.conversation;
+	      if (conversation.listing_owner_id !== window._currentUser?.id || conversation.initiator_id === window._currentUser?.id) {
+	        console.error('Supabase host conversation role mismatch:', { conversationId: id });
+	        navigate(currentScreen, 'host-messages');
+	        return;
+	      }
 	      await loadCurrentUserBlocks();
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'host')) {
@@ -14012,6 +14026,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        return;
 	      }
 	      const conversation = row.conversation;
+	      if (conversation.initiator_id !== window._currentUser?.id || conversation.listing_owner_id === window._currentUser?.id) {
+	        console.error('Supabase guest conversation role mismatch:', { conversationId: id });
+	        navigate(currentScreen, 'messages');
+	        return;
+	      }
 	      await loadCurrentUserBlocks();
 	      if (!supabaseChatOpenContextMatches(openContext)) return;
 	      if (shouldHideSupabaseConversationForBlocks(conversation, 'guest')) {
