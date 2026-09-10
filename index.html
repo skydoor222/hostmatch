@@ -5927,7 +5927,7 @@
   <div class="role-screen">
     <div style="font-size:32px;margin-bottom:8px;" id="role-select-emoji"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="role-brand" id="role-select-brand">ホームステイ</div>
-    <div class="role-sub">あなたの立場を教えてください</div>
+    <div class="role-sub">&nbsp;</div>
     <div class="role-cards" id="role-cards-container">
       <!-- JSで動的に生成 -->
     </div>
@@ -30475,14 +30475,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const emoji = document.getElementById('role-select-emoji');
     const brand = document.getElementById('role-select-brand');
     const container = document.getElementById('role-cards-container');
+    const sub = document.querySelector('#screen-role-select .role-sub');
     if (emoji) emoji.innerHTML = '<img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" />';
     if (brand) brand.textContent = currentLang === 'ja' ? '登録をはじめる' : 'Start registration';
+    if (sub) sub.innerHTML = '&nbsp;';
     if (container) container.innerHTML = `
       <div class="role-card guest" onclick="chooseType('homestay')">
         <div class="role-card-icon">🏡</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('homestay')}</div>
-          <div class="role-card-desc">${t('svc_homestay_guest')}</div>
+          <div class="role-card-desc">&nbsp;</div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
@@ -30490,7 +30492,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         <div class="role-card-icon">🏢</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('sharehouse')}</div>
-          <div class="role-card-desc">${t('choose_by_roommate_profile')}</div>
+          <div class="role-card-desc">&nbsp;</div>
         </div>
         <div class="role-card-arrow">›</div>
       </div>
