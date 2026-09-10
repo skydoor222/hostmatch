@@ -1188,6 +1188,23 @@
       min-height: 100vh; padding: 40px 28px; background: white; text-align: center; position: relative;
     }
     .login-logo { font-size: 52px; margin-bottom: 12px; }
+    .hostmatch-brand-logo {
+      display: block;
+      width: min(180px, 58vw);
+      max-height: 92px;
+      object-fit: contain;
+      margin: 0 auto;
+    }
+    .login-logo .hostmatch-brand-logo,
+    .role-logo .hostmatch-brand-logo,
+    #role-select-emoji .hostmatch-brand-logo {
+      width: min(170px, 54vw);
+      max-height: 86px;
+    }
+    #app-loading .hostmatch-brand-logo {
+      width: min(160px, 52vw);
+      max-height: 82px;
+    }
     .login-brand { font-size: 28px; font-weight: 900; color: var(--dark); margin-bottom: 6px; }
     .login-tagline { font-size: 14px; color: var(--light); margin-bottom: 40px; line-height: 1.6; }
     .login-form { width: 100%; display: flex; flex-direction: column; gap: 14px; }
@@ -2914,8 +2931,8 @@
 <body>
 
 <div id="app-loading">
-  <div class="loading-logo">🏠</div>
-  <div class="loading-text">HostMatch</div>
+  <div class="loading-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
+  <div class="loading-text">読み込み中...</div>
 </div>
 
 <!-- ==================== ① 検索画面 ==================== -->
@@ -4360,8 +4377,7 @@
         <button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button>
       </div>
     </div>
-    <div class="login-logo">🏠</div>
-    <div class="login-brand">HostMatch</div>
+    <div class="login-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="login-tagline" data-i18n-html="login_tagline">条件に合う人と<br>住まいを探せます</div>
 
     <div class="login-form">
@@ -4406,7 +4422,7 @@
 <!-- ==================== パスワード再設定メール送信画面 ==================== -->
 <div class="screen" id="screen-password-reset-request">
   <div class="login-screen" style="position:relative;">
-    <div class="login-logo">🏠</div>
+    <div class="login-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="login-brand" data-i18n="password_reset_title">パスワード再設定</div>
     <div class="login-tagline" data-i18n="password_reset_sub">登録済みのメールアドレスを入力してください</div>
 
@@ -4425,7 +4441,7 @@
 <!-- ==================== 新しいパスワード設定画面 ==================== -->
 <div class="screen" id="screen-password-update">
   <div class="login-screen" style="position:relative;">
-    <div class="login-logo">🏠</div>
+    <div class="login-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="login-brand" data-i18n="new_password_title">新しいパスワード</div>
     <div class="login-tagline" data-i18n="new_password_sub">新しいパスワードを入力してください</div>
 
@@ -5909,24 +5925,20 @@
 <!-- ==================== ロール選択画面 ==================== -->
 <div class="screen" id="screen-role-select">
   <div class="role-screen">
-    <div style="font-size:32px;margin-bottom:8px;" id="role-select-emoji">🏡</div>
+    <div style="font-size:32px;margin-bottom:8px;" id="role-select-emoji"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="role-brand" id="role-select-brand">ホームステイ</div>
     <div class="role-sub">あなたの立場を教えてください</div>
     <div class="role-cards" id="role-cards-container">
       <!-- JSで動的に生成 -->
     </div>
     <div id="mode-change-return-role-select" style="display:none;margin-top:18px;"></div>
-    <div style="margin-top:20px;">
-      <button onclick="showRegistrationStartScreen()" style="background:none;border:none;color:var(--light);font-size:14px;cursor:pointer;">← 登録方法を選ぶ</button>
-    </div>
   </div>
 </div>
 
 <!-- ==================== サービス選択画面（廃止済み・後方互換） ==================== -->
 <div class="screen" id="screen-service-select">
   <div style="min-height:100vh;background:linear-gradient(160deg,#FF5A5F 0%,#FF8C00 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;">
-    <div style="font-size:48px;margin-bottom:8px;">🏠</div>
-    <div style="font-size:26px;font-weight:900;color:white;margin-bottom:6px;" data-i18n="brand">HostMatch</div>
+    <div style="margin-bottom:10px;"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div style="font-size:14px;color:rgba(255,255,255,.85);margin-bottom:36px;text-align:center;" data-i18n="service_select_sub">あなたの目的を教えてください</div>
 
     <div style="width:100%;display:flex;flex-direction:column;gap:14px;">
@@ -30463,7 +30475,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const emoji = document.getElementById('role-select-emoji');
     const brand = document.getElementById('role-select-brand');
     const container = document.getElementById('role-cards-container');
-    if (emoji) emoji.textContent = '🏠';
+    if (emoji) emoji.innerHTML = '<img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" />';
     if (brand) brand.textContent = currentLang === 'ja' ? '登録をはじめる' : 'Start registration';
     if (container) container.innerHTML = `
       <div class="role-card guest" onclick="chooseType('homestay')">
