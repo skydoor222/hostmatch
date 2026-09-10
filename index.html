@@ -30705,7 +30705,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         </div>
       `;
     } else {
-      if (emoji) emoji.textContent = '🏢';
+      if (emoji) emoji.innerHTML = '<img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" />';
       if (brand) brand.textContent = t('sharehouse');
       if (backControl) {
         backControl.style.display = '';
@@ -30713,19 +30713,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
       }
       if (container) container.innerHTML = `
-        <div class="role-card guest" onclick="chooseRole('guest')">
+        <div class="role-card guest no-desc" onclick="chooseRole('guest')">
           <div class="role-card-icon">🔍</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('looking_for_room')}</div>
-            <div class="role-card-desc">${t('choose_by_roommate_profile')}</div>
+            <div class="role-card-desc"></div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
-        <div class="role-card host" onclick="chooseRole('host')">
+        <div class="role-card host no-desc" onclick="chooseRole('host')">
           <div class="role-card-icon">🤝</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('register_as_host')}</div>
-            <div class="role-card-desc">${t('resident_recruiting_desc')}</div>
+            <div class="role-card-desc"></div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
