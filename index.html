@@ -5931,6 +5931,9 @@
     <div class="role-cards" id="role-cards-container">
       <!-- JSで動的に生成 -->
     </div>
+    <div id="role-type-back-control" style="display:none;margin-top:18px;width:100%;">
+      <button type="button" onclick="backToRegistrationStartOptions()" style="background:white;border:1.5px solid var(--border);border-radius:12px;color:var(--dark);font-size:14px;font-weight:800;padding:11px 14px;cursor:pointer;width:100%;">← 戻る</button>
+    </div>
     <div id="mode-change-return-role-select" style="display:none;margin-top:18px;"></div>
   </div>
 </div>
@@ -30476,9 +30479,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const brand = document.getElementById('role-select-brand');
     const container = document.getElementById('role-cards-container');
     const sub = document.querySelector('#screen-role-select .role-sub');
+    const backControl = document.getElementById('role-type-back-control');
     if (emoji) emoji.innerHTML = '<img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" />';
     if (brand) brand.textContent = currentLang === 'ja' ? '登録をはじめる' : 'Start registration';
     if (sub) sub.innerHTML = '&nbsp;';
+    if (backControl) backControl.style.display = 'none';
     if (container) container.innerHTML = `
       <div class="role-card guest" onclick="chooseType('homestay')">
         <div class="role-card-icon">🏡</div>
@@ -30500,6 +30505,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
   }
 
+  function backToRegistrationStartOptions() {
+    showRegistrationStartScreen({ preserveModeChangeOrigin: true });
+  }
+
   /* ===== サービス種別選択 ===== */
   function chooseType(type) {
     window._registrationStartScreenActive = false;
@@ -30507,16 +30516,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const emoji = document.getElementById('role-select-emoji');
     const brand = document.getElementById('role-select-brand');
     const container = document.getElementById('role-cards-container');
+    const backControl = document.getElementById('role-type-back-control');
 
     if (type === 'homestay') {
-      if (emoji) emoji.textContent = '🏡';
+      if (emoji) emoji.innerHTML = '<img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" />';
       if (brand) brand.textContent = t('homestay');
+      if (backControl) {
+        backControl.style.display = '';
+        const btn = backControl.querySelector('button');
+        if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
+      }
       if (container) container.innerHTML = `
         <div class="role-card guest" onclick="chooseRole('guest')">
           <div class="role-card-icon">🧳</div>
           <div class="role-card-text">
-            <div class="role-card-title">${t('looking_for_place')}</div>
-            <div class="role-card-desc">${t('svc_homestay_guest')}</div>
+            <div class="role-card-title">${t('svc_homestay_guest')}</div>
+            <div class="role-card-desc">&nbsp;</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
@@ -30524,7 +30539,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           <div class="role-card-icon">🏠</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('register_as_host')}</div>
-            <div class="role-card-desc">${t('host_income_desc')}</div>
+            <div class="role-card-desc">&nbsp;</div>
           </div>
           <div class="role-card-arrow">›</div>
         </div>
@@ -30532,6 +30547,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     } else {
       if (emoji) emoji.textContent = '🏢';
       if (brand) brand.textContent = t('sharehouse');
+      if (backControl) backControl.style.display = 'none';
       if (container) container.innerHTML = `
         <div class="role-card guest" onclick="chooseRole('guest')">
           <div class="role-card-icon">🔍</div>
