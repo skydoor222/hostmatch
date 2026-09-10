@@ -7471,6 +7471,7 @@
     window._suppressLegacyIdentityRender = false;
     clearCurrentPersonalIdentityUi(null);
     if (typeof window.clearAuthenticatedRoute === 'function') window.clearAuthenticatedRoute();
+    if (typeof window.clearChatDetailReturnInfo === 'function') window.clearChatDetailReturnInfo();
     resetAuthenticatedEntryState();
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
@@ -7885,6 +7886,7 @@
   let currentSupabaseChatListingId = '';
   let currentSupabaseChatOtherUserId = '';
   let currentSupabaseChatMode = '';
+  const CHAT_DETAIL_RETURN_STORAGE_KEY = 'hostmatch_chat_detail_return';
   let isOpeningSupabaseChat = false;
   let isSendingSupabaseMessage = false;
   let supabaseChatOpenSeq = 0;
@@ -8906,6 +8908,7 @@
 
   async function cleanupAfterAccountDeletion() {
     if (typeof window.clearAuthenticatedRoute === 'function') window.clearAuthenticatedRoute();
+    if (typeof window.clearChatDetailReturnInfo === 'function') window.clearChatDetailReturnInfo();
     if (typeof window.resetAuthenticatedEntryState === 'function') window.resetAuthenticatedEntryState();
     if (typeof window.clearRuntimeSessionState === 'function') window.clearRuntimeSessionState();
     window._currentUser = null;
@@ -11297,16 +11300,112 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 		    ].join('');
 		  }
 
+	  function normalizeChatDetailReturn(info, expectedUserId = window._currentUser?.id || '') {
+	    if (!info || typeof info !== 'object') return null;
+	    const userId = String(info.userId || '').trim();
+	    if (!userId || (expectedUserId && userId !== expectedUserId)) return null;
+	    const conversationId = String(info.conversationId || '').trim();
+	    const listingId = String(info.listingId || '').trim();
+	    const listingType = info.listingType === 'sharehouse' ? 'sharehouse' : info.listingType === 'homestay' ? 'homestay' : '';
+	    if (!conversationId || !listingId || !listingType || info.origin !== 'chat') return null;
+	    return { userId, conversationId, listingId, listingType, origin: 'chat' };
+	  }
+
+	  function clearChatDetailReturnInfo() {
+	    try {
+	      sessionStorage.removeItem(CHAT_DETAIL_RETURN_STORAGE_KEY);
+	    } catch (error) {
+	      console.warn('Chat detail return clear failed:', error);
+	    }
+	  }
+
+	  function saveChatDetailReturnInfo(info) {
+	    const normalized = normalizeChatDetailReturn(info);
+	    if (!normalized) {
+	      clearChatDetailReturnInfo();
+	      return null;
+	    }
+	    try {
+	      sessionStorage.setItem(CHAT_DETAIL_RETURN_STORAGE_KEY, JSON.stringify(normalized));
+	    } catch (error) {
+	      console.warn('Chat detail return save failed:', error);
+	    }
+	    return normalized;
+	  }
+
+	  function readChatDetailReturnInfo() {
+	    const userId = window._currentUser?.id || '';
+	    if (!userId) return null;
+	    try {
+	      const raw = sessionStorage.getItem(CHAT_DETAIL_RETURN_STORAGE_KEY);
+	      if (!raw) return null;
+	      const normalized = normalizeChatDetailReturn(JSON.parse(raw), userId);
+	      if (!normalized) {
+	        clearChatDetailReturnInfo();
+	        return null;
+	      }
+	      return normalized;
+	    } catch (error) {
+	      console.warn('Chat detail return read failed:', error);
+	      clearChatDetailReturnInfo();
+	      return null;
+	    }
+	  }
+
+	  function fallbackFromChatDetailToMessages() {
+	    const saved = readChatDetailReturnInfo();
+	    const service = saved?.listingType || (currentSupabaseChatMode === 'sharehouse' ? 'sharehouse' : 'homestay');
+	    clearChatDetailReturnInfo();
+	    setGuestMessageService(service === 'sharehouse' ? 'sharehouse' : 'homestay');
+	    navigate(currentScreen || 'detail', 'messages');
+	  }
+	  window.clearChatDetailReturnInfo = clearChatDetailReturnInfo;
+
 	  /* ===== DETAIL SCREEN ===== */
 	  function restoreSupabaseGuestChatFromDetail() {
-	    if (currentRole !== 'guest' || !isSupabaseGuestChatMode() || !currentSupabaseConversationId) return false;
-	    setGuestMessageService(currentSupabaseChatMode === 'sharehouse' ? 'sharehouse' : 'homestay');
-	    openSupabaseGuestConversation(currentSupabaseConversationId);
+	    if (currentRole !== 'guest') return false;
+	    const saved = readChatDetailReturnInfo();
+	    const runtimeInfo = (isSupabaseGuestChatMode() && currentSupabaseConversationId)
+	      ? normalizeChatDetailReturn({
+	          userId: window._currentUser?.id || '',
+	          conversationId: currentSupabaseConversationId,
+	          listingId: currentSupabaseChatListingId || currentSupabaseConversation?.listing_id || currentListing?.id || currentHost || saved?.listingId || '',
+	          listingType: currentSupabaseChatMode,
+	          origin: 'chat'
+	        })
+	      : null;
+	    const info = runtimeInfo || saved;
+	    if (!info) return false;
+	    currentSupabaseConversationId = info.conversationId;
+	    currentSupabaseChatListingId = info.listingId;
+	    currentSupabaseChatMode = info.listingType;
+	    setGuestMessageService(info.listingType);
+	    openSupabaseGuestConversation(info.conversationId)
+	      .then(() => {
+	        const restored = currentScreen === 'chat'
+	          && currentSupabaseConversationId === info.conversationId
+	          && currentSupabaseChatMode === info.listingType;
+	        clearChatDetailReturnInfo();
+	        if (!restored) {
+	          setGuestMessageService(info.listingType);
+	          navigate(currentScreen || 'detail', 'messages');
+	        }
+	      })
+	      .catch(error => {
+	        console.error('Supabase chat return restore failed:', error);
+	        clearChatDetailReturnInfo();
+	        navigate(currentScreen || 'detail', 'messages');
+	      });
 	    return true;
 	  }
 
 	  function goBackFromDetail() {
 	    if ((detailBackScreen || 'search') === 'chat' && restoreSupabaseGuestChatFromDetail()) return;
+	    if ((detailBackScreen || 'search') === 'chat') {
+	      fallbackFromChatDetailToMessages();
+	      return;
+	    }
+	    clearChatDetailReturnInfo();
 	    navigate(currentScreen, detailBackScreen);
 	  }
 
@@ -11331,6 +11430,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     };
     syncGuestServiceContext('homestay');
     detailBackScreen = backScreen;
+    if ((detailBackScreen || 'search') !== 'chat') clearChatDetailReturnInfo();
     const previewBanner = document.getElementById('host-preview-banner');
     if (previewBanner) previewBanner.style.display = hostPreviewMode ? 'block' : 'none';
     const saveBtn = document.getElementById('detail-save');
@@ -14909,7 +15009,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        showToast(currentLang === 'en' ? 'Could not load this listing.' : '掲載情報を読み込めませんでした。');
 	        return;
 	      }
-	      if (currentSupabaseChatMode === 'sharehouse' || currentListing?.type === 'sharehouse') {
+	      const listingType = currentSupabaseChatMode === 'sharehouse' || currentListing?.type === 'sharehouse' ? 'sharehouse' : 'homestay';
+	      saveChatDetailReturnInfo({
+	        userId: window._currentUser?.id || '',
+	        conversationId: currentSupabaseConversationId,
+	        listingId,
+	        listingType,
+	        origin: 'chat'
+	      });
+	      if (listingType === 'sharehouse') {
 	        openSharehouseDetail(listingId, 'chat');
 	        return;
 	      }
@@ -30989,6 +31097,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function clearRuntimeSessionState() {
     if (typeof window.clearRestoredModeLock === 'function') window.clearRestoredModeLock();
     if (typeof window.clearModeChangeOrigin === 'function') window.clearModeChangeOrigin();
+    if (typeof window.clearChatDetailReturnInfo === 'function') window.clearChatDetailReturnInfo();
     supabaseGuestConversationLoadSeq += 1;
     supabaseHostConversationLoadSeq += 1;
     supabaseChatOpenSeq += 1;
@@ -31703,6 +31812,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     currentListing = listing || SHAREHOUSE_LISTINGS.sh1;
     if (!hostPreviewMode) syncGuestServiceContext('sharehouse');
     sharehouseDetailBackScreen = backScreen || 'search';
+    if ((sharehouseDetailBackScreen || 'search') !== 'chat') clearChatDetailReturnInfo();
     currentApplicationId = currentListing.type + ':' + currentListing.id;
     interviewBackScreen = currentListing.detailScreen;
     navigate(currentScreen, 'sharehouse-detail');
@@ -31738,6 +31848,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function goBackFromSharehouseDetail() {
     if ((sharehouseDetailBackScreen || 'search') === 'chat' && restoreSupabaseGuestChatFromDetail()) return;
+    if ((sharehouseDetailBackScreen || 'search') === 'chat') {
+      fallbackFromChatDetailToMessages();
+      return;
+    }
+    clearChatDetailReturnInfo();
     navigate(currentScreen, sharehouseDetailBackScreen || 'search');
     if ((sharehouseDetailBackScreen || 'search') === 'search') switchSearchCat('sharehouse');
   }
