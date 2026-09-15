@@ -10853,7 +10853,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return Array.from(scope.querySelectorAll('.form-chip.selected'))
 	      .map(el => {
 	        const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-	        return (textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent).trim();
+	        return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
 	      })
 	      .filter(Boolean);
 	  }
@@ -15721,13 +15721,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const selected = row?.querySelector('.form-chip.selected');
     if (!selected) return shouldSuppressFreshOnboardingFallbackForId(rowId) ? '' : fallback;
     const textNode = Array.from(selected.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-    return (textNode?.__hostmatchOriginalText || selected.dataset.hostmatchOriginalText || selected.textContent).trim();
+    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || selected.dataset.hostmatchOriginalText || selected.textContent);
   }
 
   function selectedChipTextsFromRow(rowId) {
     return Array.from(document.querySelectorAll('#' + rowId + ' .form-chip.selected')).map(el => {
       const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-      return (textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent).trim();
+      return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
     });
   }
 
@@ -17134,7 +17134,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function mapUiValueToDb(field, uiValue, maps) {
 	    const text = String(uiValue || '').trim();
 	    if (!text) return null;
-	    return maps[field]?.[text] || text;
+	    const canonical = canonicalizeSystemOption(text);
+	    return maps[field]?.[text] || maps[field]?.[canonical] || text;
 	  }
 
 	  function mapDbValueToUi(field, dbValue, maps) {
@@ -17142,7 +17143,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!text) return '';
 	    const map = maps[field] || {};
 	    const found = Object.entries(map).find(([, value]) => value === text);
-	    return found ? found[0] : text;
+	    if (found) return found[0];
+	    const canonical = canonicalizeSystemOption(text);
+	    return map[canonical] ? canonical : text;
 	  }
 
 	  function toGuestProfileDbValue(field, uiValue) {
@@ -19456,7 +19459,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function formChipHtml(text, onclick = 'toggleChip(this)') {
-	    return `<div class="form-chip" onclick="${onclick}">${text}</div>`;
+	    const prefix = systemOptionLeadingDecoration(text);
+	    return `<div class="form-chip" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(text))}" data-hostmatch-option-prefix="${escapeHtml(prefix)}" onclick="${onclick}">${localizedSystemOption(text)}</div>`;
 	  }
 
 	  function hostChipRowHtml(id, values, onclick = 'toggleChip(this)') {
@@ -20081,23 +20085,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function chipStoredText(chip) {
     const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-    return (textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent || '').trim();
+    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent || '');
   }
 
   function setSingleFormChip(rowId, value) {
     const row = document.getElementById(rowId);
     if (!row) return;
     row.querySelectorAll('.form-chip').forEach(chip => {
-      chip.classList.toggle('selected', !!value && chipStoredText(chip) === value);
+      chip.classList.toggle('selected', !!value && systemOptionsEqual(chipStoredText(chip), value));
     });
   }
 
   function setMultiFormChips(rowId, values = []) {
-    const selectedValues = new Set(Array.isArray(values) ? values.filter(Boolean) : []);
+    const selectedValues = (Array.isArray(values) ? values : []).filter(Boolean).map(canonicalizeSystemOption);
     const row = document.getElementById(rowId);
     if (!row) return;
     row.querySelectorAll('.form-chip').forEach(chip => {
-      chip.classList.toggle('selected', selectedValues.has(chipStoredText(chip)));
+      chip.classList.toggle('selected', selectedValues.some(value => systemOptionsEqual(chipStoredText(chip), value)));
     });
   }
 
@@ -20105,10 +20109,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const row = document.getElementById(rowId);
 	    if (!row) return;
 	    const valueList = Array.isArray(values) ? values.filter(Boolean) : [];
-	    const known = new Set(Array.from(row.querySelectorAll('.form-chip')).map(chipStoredText));
-	    const customValues = valueList.filter(value => !known.has(value));
+	    const known = Array.from(row.querySelectorAll('.form-chip')).map(chipStoredText);
+	    const customValues = valueList.filter(value => !known.some(knownValue => systemOptionsEqual(knownValue, value)));
 	    setMultiFormChips(rowId, valueList);
-	    const otherChip = Array.from(row.querySelectorAll('.form-chip')).find(chip => chipStoredText(chip) === 'その他');
+	    const otherChip = Array.from(row.querySelectorAll('.form-chip')).find(chip => systemOptionsEqual(chipStoredText(chip), 'その他'));
 	    if (otherChip) otherChip.classList.toggle('selected', customValues.length > 0 || otherChip.classList.contains('selected'));
 	    const otherInput = document.getElementById(otherInputId);
 	    if (otherInput) otherInput.value = customValues.join('、');
@@ -23651,10 +23655,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const partner = document.getElementById(prefix + '-partner-fields');
 	    const children = document.getElementById(prefix + '-children-fields');
 	    const other = document.getElementById(prefix + '-household-other-wrap');
-	    const text = String(selected || '');
-	    const hasPartner = text.includes('カップル') || text.includes('Couple');
-	    const hasChildren = text.includes('子ども') || text.includes('子供') || text.includes('Children');
-	    const isOther = text.includes('その他') || text.includes('Other');
+	    const text = canonicalizeSystemOption(selected);
+	    const hasPartner = systemOptionsEqual(text, 'カップル');
+	    const hasChildren = text.includes('子ども') || text.includes('子供');
+	    const isOther = systemOptionsEqual(text, 'その他');
 	    if (partner) partner.style.display = hasPartner ? 'block' : 'none';
 	    if (children) children.style.display = (hasChildren || isOther) ? 'block' : 'none';
 	    if (other) other.style.display = isOther ? 'block' : 'none';
@@ -24026,20 +24030,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function updateMealDetailFields(scope) {
     const selected = selectedChipText(scope + '-meal-plan', '');
     const followups = document.getElementById(scope + '-meal-followups');
-    const hasMeals = !['なし', '不要'].includes(selected);
+    const hasMeals = !['なし', '不要'].some(value => systemOptionsEqual(selected, value));
     if (followups) followups.style.display = hasMeals ? 'flex' : 'none';
-    const breakfast = document.getElementById(scope + '-breakfast-field');
-    const lunch = document.getElementById(scope + '-lunch-field');
-    const dinner = document.getElementById(scope + '-dinner-field');
-    if (breakfast) breakfast.style.display = hasMeals ? 'block' : 'none';
-    if (lunch) lunch.style.display = selected === '3食' ? 'block' : 'none';
-    if (dinner) dinner.style.display = ['朝夕食', '3食'].includes(selected) ? 'block' : 'none';
-  }
+	    const breakfast = document.getElementById(scope + '-breakfast-field');
+	    const lunch = document.getElementById(scope + '-lunch-field');
+	    const dinner = document.getElementById(scope + '-dinner-field');
+	    if (breakfast) breakfast.style.display = hasMeals ? 'block' : 'none';
+	    if (lunch) lunch.style.display = systemOptionsEqual(selected, '3食') ? 'block' : 'none';
+	    if (dinner) dinner.style.display = ['朝夕食', '3食'].some(value => systemOptionsEqual(selected, value)) ? 'block' : 'none';
+	  }
 
   function toggleDietChip(el, scope) {
     toggleChip(el);
     const allergyField = document.getElementById(scope + '-allergy-field');
-    if (allergyField) allergyField.style.display = el.textContent.trim() === 'アレルギー' ? 'block' : 'none';
+    if (allergyField) allergyField.style.display = systemOptionsEqual(chipStoredText(el), 'アレルギー') ? 'block' : 'none';
   }
 
   function toggleHostAllergySupport(el, scope) {
@@ -24059,8 +24063,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!field) return;
 	    const row = el.closest('.form-chip-row');
 	    const otherChip = row ? Array.from(row.querySelectorAll('.form-chip')).find(chip => {
-	      const text = chip.textContent.trim();
-	      return text.includes('その他') || text.includes('Other');
+	      return systemOptionsEqual(chipStoredText(chip), 'その他');
 	    }) : null;
 	    field.style.display = otherChip && otherChip.classList.contains('selected') ? 'block' : 'none';
 	  }
@@ -24071,8 +24074,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!wrap) return;
 	    const row = el.closest('.form-chip-row');
 	    const otherChip = row ? Array.from(row.querySelectorAll('.form-chip')).find(chip => {
-	      const text = chip.textContent.trim();
-	      return text.includes('その他') || text.includes('Other');
+	      return systemOptionsEqual(chipStoredText(chip), 'その他');
 	    }) : null;
 	    wrap.style.display = otherChip && otherChip.classList.contains('selected') ? 'block' : 'none';
 	  }
@@ -24081,12 +24083,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    toggleChip(el);
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
 	    const selected = el.textContent.trim();
+	    const selectedCanonical = chipStoredText(el);
 	    const partner = document.getElementById(prefix + '-partner-fields');
 	    const children = document.getElementById(prefix + '-children-fields');
 	    const other = document.getElementById(prefix + '-household-other-wrap');
-	    const hasPartner = selected.includes('カップル') || selected.includes('Couple');
-	    const hasChildren = selected.includes('子ども') || selected.includes('子供') || selected.includes('Children');
-	    const isOther = selected.includes('その他') || selected.includes('Other');
+	    const hasPartner = systemOptionsEqual(selectedCanonical, 'カップル');
+	    const hasChildren = selectedCanonical.includes('子ども') || selectedCanonical.includes('子供');
+	    const isOther = systemOptionsEqual(selectedCanonical, 'その他');
 	    if (partner) partner.style.display = hasPartner ? 'block' : 'none';
 	    if (children) children.style.display = (hasChildren || isOther) ? 'block' : 'none';
 	    if (other) other.style.display = isOther ? 'block' : 'none';
@@ -24102,7 +24105,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function toggleHostStudentFields(el, scope) {
 	    toggleChip(el);
 	    const prefix = scope === 'profile' ? 'host-profile' : 'host-ob';
-	    const hasStudents = el.textContent.trim().includes('いる') || el.textContent.trim().includes('Yes');
+	    const selectedCanonical = chipStoredText(el);
+	    const hasStudents = selectedCanonical.includes('いる') || selectedCanonical.includes('Yes');
 	    setHostStudentFieldsVisibility(prefix, hasStudents);
 	    renderHostStudentEditors();
 	  }
@@ -24150,7 +24154,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const nameEl = document.getElementById(prefix + '-member-name');
 	    const ageEl = document.getElementById(prefix + '-member-age');
 	    const nationalityEl = document.getElementById(prefix + '-member-nationality');
-	    const genderEl = document.querySelector('#' + prefix + '-member-gender .form-chip.selected');
+	      const genderEl = document.querySelector('#' + prefix + '-member-gender .form-chip.selected');
 	    const hobbiesEl = document.getElementById(prefix + '-member-hobbies');
 	    const noteEl = document.getElementById(prefix + '-member-note');
 	    const wake = selectedChipText(prefix + '-member-wake', '6〜8時');
@@ -24158,7 +24162,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    hostFamilyMembers.push({
 	      name: nameEl?.value || '未入力',
 	      age: ageEl?.value || '未入力',
-	      gender: genderEl?.textContent.trim() || '選択しない',
+	      gender: genderEl ? chipStoredText(genderEl) : '選択しない',
 	      nationality: nationalityEl?.value || '未入力',
 	      hobbies: hobbiesEl?.value || '未入力',
 	      wake,
@@ -24197,7 +24201,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const sleep = selectedChipText(prefix + '-student-sleep', '22〜23時');
 	    hostInternationalStudents.push({
 	      age: formValue(prefix + '-student-age', ''),
-	      gender: genderEl?.textContent.trim() || '選択しない',
+	      gender: genderEl ? chipStoredText(genderEl) : '選択しない',
 	      nationality: formValue(prefix + '-student-nationality', ''),
 	      wake,
 	      sleep,
@@ -24227,12 +24231,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    container.innerHTML = hostFamilyMembers.map((m, i) => `
 	      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;">
-	        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:20px;">${m.gender === '男性' ? '👨' : m.gender === '女性' ? '👩' : '🧑'}</div>
+	        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a8edea,#fed6e3);display:flex;align-items:center;justify-content:center;font-size:20px;">${systemOptionsEqual(m.gender, '男性') ? '👨' : systemOptionsEqual(m.gender, '女性') ? '👩' : '🧑'}</div>
 	        <div style="flex:1;font-size:13px;line-height:1.5;">
 	          ${visibleHomestayFamilyMemberName(m) ? `<strong data-raw-text="true">${escapeHtml(visibleHomestayFamilyMemberName(m))}</strong><br>` : ''}
-	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
+	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizedSystemOption(m.gender)} · ${localizeText('国籍')} ${localizedSystemOption(m.nationality)}</span>
 	          ${m.hobbies ? `<div style="color:var(--light);margin-top:4px;">${localizeText('趣味')}：<span data-raw-text="true">${escapeHtml(String(m.hobbies))}</span></div>` : ''}
-	          <div style="color:var(--light);">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')}</div>
+	          <div style="color:var(--light);">${localizeText('起床時間')}：${localizedSystemOption(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizedSystemOption(m.sleep || '22〜23時')}</div>
 	          ${visibleHomestayFamilyMemberNote(m) ? `<div style="color:var(--dark);margin-top:4px;" data-raw-text="true">${escapeHtml(visibleHomestayFamilyMemberNote(m))}</div>` : ''}
 	        </div>
 	        ${removable ? `<button type="button" onclick="removeHostFamilyMember(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
@@ -24258,8 +24262,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        <div style="width:38px;height:38px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:20px;">🎓</div>
 	        <div style="flex:1;font-size:13px;line-height:1.5;">
 	          <strong>${localizeText('留学生')}</strong><br>
-	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizeText(m.gender)} · ${localizeText('国籍')} ${localizeText(m.nationality)}</span>
-	          <div style="color:var(--light);margin-top:4px;">${localizeText('起床時間')}：${localizeText(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizeText(m.sleep || '22〜23時')} / ${localizeText('趣味')}：${localizeText(m.hobbies)} / ${localizeText('滞在期間')}：${localizeText(m.stay)}</div>
+	          <span style="color:var(--light);">${localizeText('年齢')} ${localizeText(m.age)} · ${localizeText('性別')} ${localizedSystemOption(m.gender)} · ${localizeText('国籍')} ${localizedSystemOption(m.nationality)}</span>
+	          <div style="color:var(--light);margin-top:4px;">${localizeText('起床時間')}：${localizedSystemOption(m.wake || '6〜8時')} / ${localizeText('就寝時間')}：${localizedSystemOption(m.sleep || '22〜23時')} / ${localizeText('趣味')}：<span data-raw-text="true">${escapeHtml(String(m.hobbies || ''))}</span> / ${localizeText('滞在期間')}：<span data-raw-text="true">${escapeHtml(String(m.stay || ''))}</span></div>
 	        </div>
 	        ${removable ? `<button type="button" onclick="removeHostStudent(${i})" style="background:white;border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--light);cursor:pointer;">${localizeText('削除')}</button>` : ''}
 	      </div>
@@ -24283,7 +24287,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const chip = document.querySelector('#' + id + ' .form-chip.selected');
 	    if (!chip) return shouldSuppressFreshOnboardingFallbackForId(id) ? '' : fallback;
 	    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-	    return (textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent).trim();
+	    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent);
 	  }
 
 	  function normalizeFreshOnboardingRole(role) {
@@ -24498,11 +24502,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function sharehouseGuestCanonicalChipText(chip, fallback = '') {
 	    if (!chip) return fallback;
 	    const original = chip.dataset.hostmatchOriginalText || '';
-	    if (original) return original.trim();
+	    if (original) return canonicalizeSystemOption(original);
 	    const i18nKey = chip.getAttribute('data-i18n');
-	    if (i18nKey && i18n.ja?.[i18nKey]) return String(i18n.ja[i18nKey]).trim();
+	    if (i18nKey && i18n.ja?.[i18nKey]) return canonicalizeSystemOption(i18n.ja[i18nKey]);
 	    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-	    return (textNode?.__hostmatchOriginalText || chip.textContent || fallback).trim();
+	    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || chip.textContent || fallback);
 	  }
 
 	  function sharehouseGuestSelectedChipText(rowId, fallback = '') {
@@ -24616,7 +24620,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (kind === 'purpose') {
 	      toggleChip(el);
 	      const field = document.getElementById('shg-purpose-other');
-	      if (field) field.style.display = el.textContent.trim() === 'その他' || el.textContent.trim() === 'Other' ? 'block' : 'none';
+	      if (field) field.style.display = systemOptionsEqual(chipStoredText(el), 'その他') ? 'block' : 'none';
 	      return;
 	    }
 	    if (kind === 'hobby') {
@@ -25234,7 +25238,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const handler = onClick || (multi ? 'toggleMultiChip(this)' : 'toggleChip(this)');
 	    return `
 	      <div class="form-chip-row" id="${prefix}-${key}">
-	        ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(option)}" onclick="${handler}">${localizeText(option)}</div>`).join('')}
+	        ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(option))}" data-hostmatch-option-prefix="${escapeHtml(systemOptionLeadingDecoration(option))}" onclick="${handler}">${localizedSystemOption(option)}</div>`).join('')}
 	      </div>
 	    `;
 	  }
@@ -25548,7 +25552,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const selectedValues = Array.isArray(selected) ? selected : [selected];
 	    const handler = multi ? 'toggleMultiChip(this)' : 'toggleChip(this)';
 	    return `<div class="form-chip-row" id="${prefix}-${key}">
-	      ${options.map(option => `<div class="form-chip ${selectedValues.includes(option) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(option)}" onclick="${handler};${extra}">${localizeText(option)}</div>`).join('')}
+	      ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(option))}" data-hostmatch-option-prefix="${escapeHtml(systemOptionLeadingDecoration(option))}" onclick="${handler};${extra}">${localizedSystemOption(option)}</div>`).join('')}
 	    </div>`;
 	  }
 
@@ -25648,7 +25652,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        shHostField('家の中の生活音', shHostChipRow(prefix, 'life-noise', ['かなり静か','比較的静か','普通','あまり気にしない'], profile.shareStyle.lifeNoise)),
 	        shHostField('喫煙環境', shHostChipRow(prefix, 'smoking-environment', ['室内喫煙OK','屋外のみ','完全禁煙'], profile.shareStyle.smokingEnvironment)),
 	        shHostField('家での飲酒について', shHostChipRow(prefix, 'alcohol-environment', ['よく飲む','たまに飲む','ほとんど飲まない'], profile.shareStyle.alcoholEnvironment)),
-	        shHostField('ペット', `${shHostChipRow(prefix, 'pets', ['ペットなし','ペットあり'], profile.shareStyle.pets, false, `shHostTogglePetFields('${prefix}')`)}<div id="${prefix}-pet-detail-wrap" style="display:${profile.shareStyle.pets === 'ペットあり' ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">${shHostTextInput(`${prefix}-pet-type`, profile.shareStyle.petType, '動物の種類')}${shHostTextInput(`${prefix}-pet-count`, profile.shareStyle.petCount, '頭数', 'number')}</div>`),
+	        shHostField('ペット', `${shHostChipRow(prefix, 'pets', ['ペットなし','ペットあり'], profile.shareStyle.pets, false, `shHostTogglePetFields('${prefix}')`)}<div id="${prefix}-pet-detail-wrap" style="display:${systemOptionsEqual(profile.shareStyle.pets, 'ペットあり') ? 'grid' : 'none'};grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">${shHostTextInput(`${prefix}-pet-type`, profile.shareStyle.petType, '動物の種類')}${shHostTextInput(`${prefix}-pet-count`, profile.shareStyle.petCount, '頭数', 'number')}</div>`),
 	        shHostField('友人などの来客について', shHostChipRow(prefix, 'visitors', ['自由にOK','事前に共有すればOK','頻繁でなければOK','できれば少ない','来客NG'], profile.shareStyle.visitors)),
 	        shHostField('パートナーなどの宿泊について', shHostChipRow(prefix, 'overnight-guests', ['問題ない','たまにならOK','事前相談があればOK','NG'], profile.shareStyle.overnightGuests)),
 	        shHostField('夜の静かな時間について', shHostChipRow(prefix, 'quiet-hours', ['厳しく静かにしている','ある程度静かにしている','特に決まりなし'], profile.shareStyle.quietHours)),
@@ -25676,10 +25680,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        shHostField('階', shHostChipRow(prefix, 'floor', ['ベースメント','1階','2階','3階以上'], profile.stay.floor)),
 	        shHostField('バスルーム', shHostChipRow(prefix, 'bathroom', ['専用','他の入居者と共有','オーナー / ホストと共有'], profile.stay.bathroom)),
 	        shHostField('現在一緒に住んでいる人数', `<div class="detail-info-item" style="background:var(--bg);">${localizeText('登録済み同居メンバー数')}: <strong id="${prefix}-resident-count">${(resRoommates.length || profile.members?.length || 0) + 1}</strong></div>${shHostChipRow(prefix, 'residents-count', ['1人','2〜3人','4人以上'], profile.stay.residentsCount)}`),
-	        shHostField('設備', `${shHostChipRow(prefix, 'amenities', ['Wi-Fi','洗濯機','乾燥機','キッチン','冷蔵庫','エアコン','その他'], profile.stay.amenities, true, `shHostToggleSelectedField('${prefix}-amenities','${prefix}-amenity-other-wrap','その他')`)}<div id="${prefix}-amenity-other-wrap" style="display:${profile.stay.amenities?.includes('その他') ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-amenity-other`, profile.stay.amenityOther, 'その他の設備')}</div>`)
+	        shHostField('設備', `${shHostChipRow(prefix, 'amenities', ['Wi-Fi','洗濯機','乾燥機','キッチン','冷蔵庫','エアコン','その他'], profile.stay.amenities, true, `shHostToggleSelectedField('${prefix}-amenities','${prefix}-amenity-other-wrap','その他')`)}<div id="${prefix}-amenity-other-wrap" style="display:${profile.stay.amenities?.some(value => systemOptionsEqual(value, 'その他')) ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-amenity-other`, profile.stay.amenityOther, 'その他の設備')}</div>`)
 	      ].join('')),
 	      shHostSection('キッチン利用', [
-	        shHostField('キッチン利用', `${shHostChipRow(prefix, 'kitchen-rule', ['自由に利用可能','共用','利用時間のルールあり','利用制限あり'], profile.stay.kitchenRule, false, `shHostToggleKitchenFields('${prefix}')`)}<div id="${prefix}-kitchen-hours-wrap" style="display:${profile.stay.kitchenRule === '利用時間のルールあり' ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-kitchen-hours`, profile.stay.kitchenHours, '例：7:00〜22:00')}</div>`)
+	        shHostField('キッチン利用', `${shHostChipRow(prefix, 'kitchen-rule', ['自由に利用可能','共用','利用時間のルールあり','利用制限あり'], profile.stay.kitchenRule, false, `shHostToggleKitchenFields('${prefix}')`)}<div id="${prefix}-kitchen-hours-wrap" style="display:${systemOptionsEqual(profile.stay.kitchenRule, '利用時間のルールあり') ? 'block' : 'none'};margin-top:10px;">${shHostTextInput(`${prefix}-kitchen-hours`, profile.stay.kitchenHours, '例：7:00〜22:00')}</div>`)
 	      ].join('')),
 	      shHostSection('ハウスルール', [
 	        shHostField('来客', shHostChipRow(prefix, 'rule-visitors', ['OK','事前共有必須','頻度制限あり','NG'], profile.rules.visitors)),
@@ -25723,19 +25727,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function shHostToggleSelectedField(rowId, wrapId, triggerText) {
 	    const values = selectedChipTexts('#' + rowId);
 	    const wrap = document.getElementById(wrapId);
-	    if (wrap) wrap.style.display = values.includes(triggerText) ? 'block' : 'none';
+	    if (wrap) wrap.style.display = values.some(value => systemOptionsEqual(value, triggerText)) ? 'block' : 'none';
 	  }
 
 	  function shHostTogglePetFields(prefix) {
 	    const selected = selectedChipText(prefix + '-pets', 'ペットなし');
 	    const wrap = document.getElementById(prefix + '-pet-detail-wrap');
-	    if (wrap) wrap.style.display = selected === 'ペットあり' ? 'grid' : 'none';
+	    if (wrap) wrap.style.display = systemOptionsEqual(selected, 'ペットあり') ? 'grid' : 'none';
 	  }
 
 	  function shHostToggleKitchenFields(prefix) {
 	    const selected = selectedChipText(prefix + '-kitchen-rule', '共用');
 	    const wrap = document.getElementById(prefix + '-kitchen-hours-wrap');
-	    if (wrap) wrap.style.display = selected === '利用時間のルールあり' ? 'block' : 'none';
+	    if (wrap) wrap.style.display = systemOptionsEqual(selected, '利用時間のルールあり') ? 'block' : 'none';
 	  }
 
 	  function ensureSharehouseHostRegistrationUi() {
@@ -25829,7 +25833,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          'たまに飲む': '程度による',
 	          'ほとんど飲まない': 'あまり好まない'
 	        }),
-	        pets: profile.shareStyle.pets === 'ペットあり' ? 'ペットOK' : 'ペットNG',
+	        pets: systemOptionsEqual(profile.shareStyle.pets, 'ペットあり') ? 'ペットOK' : 'ペットNG',
 	        visitors: shHostValueMap(profile.shareStyle.visitors, {
 	          '自由にOK': '気にしない',
 	          '事前に共有すればOK': '事前に教えてくれればOK',
@@ -25838,7 +25842,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          '来客NG': '来客NG希望'
 	        }),
 	        overnightGuests: profile.shareStyle.overnightGuests,
-	        bathroom: profile.stay.bathroom === '専用' ? '専用バスルーム希望' : '共用でもOK',
+	        bathroom: systemOptionsEqual(profile.stay.bathroom, '専用') ? '専用バスルーム希望' : '共用でもOK',
 	        housemateCount: membersCount <= 1 ? '1人とのシェア希望' : membersCount <= 3 ? '2〜3人' : '4人以上でもOK',
 	        kitchen: shHostValueMap(profile.stay.kitchenRule, {
 	          '自由に利用可能': 'キッチンをよく使うので自由に使いたい',
@@ -25858,17 +25862,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function sharehouseHostRulesForDetail(profile) {
 	    const rules = [
-	      { ok: profile.rules.visitors === 'OK', warn: profile.rules.visitors !== 'OK' && profile.rules.visitors !== 'NG', text: `来客：${profile.rules.visitors}` },
-	      { ok: profile.rules.overnightGuests === 'OK', warn: profile.rules.overnightGuests !== 'OK' && profile.rules.overnightGuests !== 'NG', text: `宿泊客：${profile.rules.overnightGuests}` },
-	      { ok: profile.rules.smoking === 'OK', warn: profile.rules.smoking === '屋外のみ', text: `喫煙：${profile.rules.smoking}` },
-	      { ok: profile.rules.alcohol === 'OK', warn: profile.rules.alcohol === '節度を守る', text: `飲酒：${profile.rules.alcohol}` },
-	      { warn: profile.rules.quietHours !== '特に制限なし', ok: profile.rules.quietHours === '特に制限なし', text: `夜間の静かな時間：${profile.rules.quietHours}` },
-	      { warn: profile.rules.cleaning !== '特に決まりなし', ok: profile.rules.cleaning === '特に決まりなし', text: `共有スペース掃除：${profile.rules.cleaning}` }
+	      { ok: systemOptionsEqual(profile.rules.visitors, 'OK'), warn: !systemOptionsEqual(profile.rules.visitors, 'OK') && !systemOptionsEqual(profile.rules.visitors, 'NG'), text: `来客：${localizedSystemOption(profile.rules.visitors)}` },
+	      { ok: systemOptionsEqual(profile.rules.overnightGuests, 'OK'), warn: !systemOptionsEqual(profile.rules.overnightGuests, 'OK') && !systemOptionsEqual(profile.rules.overnightGuests, 'NG'), text: `宿泊客：${localizedSystemOption(profile.rules.overnightGuests)}` },
+	      { ok: systemOptionsEqual(profile.rules.smoking, 'OK'), warn: systemOptionsEqual(profile.rules.smoking, '屋外のみ'), text: `喫煙：${localizedSystemOption(profile.rules.smoking)}` },
+	      { ok: systemOptionsEqual(profile.rules.alcohol, 'OK'), warn: systemOptionsEqual(profile.rules.alcohol, '節度を守る'), text: `飲酒：${localizedSystemOption(profile.rules.alcohol)}` },
+	      { warn: !systemOptionsEqual(profile.rules.quietHours, '特に制限なし'), ok: systemOptionsEqual(profile.rules.quietHours, '特に制限なし'), text: `夜間の静かな時間：${localizedSystemOption(profile.rules.quietHours)}` },
+	      { warn: !systemOptionsEqual(profile.rules.cleaning, '特に決まりなし'), ok: systemOptionsEqual(profile.rules.cleaning, '特に決まりなし'), text: `共有スペース掃除：${localizedSystemOption(profile.rules.cleaning)}` }
 	    ];
-	    if (profile.stay.kitchenRule === '利用時間のルールあり') {
-	      rules.push({ warn: true, text: `キッチン利用：${profile.stay.kitchenHours || '利用時間のルールあり'}` });
+	    if (systemOptionsEqual(profile.stay.kitchenRule, '利用時間のルールあり')) {
+	      rules.push({ warn: true, text: `キッチン利用：${profile.stay.kitchenHours || localizedSystemOption('利用時間のルールあり')}` });
 	    } else {
-	      rules.push({ ok: profile.stay.kitchenRule === '自由に利用可能' || profile.stay.kitchenRule === '共用', warn: profile.stay.kitchenRule === '利用制限あり', text: `キッチン利用：${profile.stay.kitchenRule}` });
+	      rules.push({ ok: systemOptionsEqual(profile.stay.kitchenRule, '自由に利用可能') || systemOptionsEqual(profile.stay.kitchenRule, '共用'), warn: systemOptionsEqual(profile.stay.kitchenRule, '利用制限あり'), text: `キッチン利用：${localizedSystemOption(profile.stay.kitchenRule)}` });
 	    }
 	    if (profile.rules.other) rules.push({ warn: true, text: `その他ルール：${profile.rules.other}` });
 	    return rules;
@@ -25887,9 +25891,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const minStayText = profile.stay.minStay !== '' && profile.stay.minStay !== null && profile.stay.minStay !== undefined ? `${profile.stay.minStay}ヶ月` : '';
 	      const maxStayText = profile.stay.maxStay !== '' && profile.stay.maxStay !== null && profile.stay.maxStay !== undefined ? `${profile.stay.maxStay}ヶ月` : '';
 	      const availableText = profile.stay.availableStart || profile.stay.availableEnd ? `${profile.stay.availableStart || '—'}〜${profile.stay.availableEnd || '—'}` : '';
-	      const petText = profile.shareStyle.pets === 'ペットあり'
+	      const petText = systemOptionsEqual(profile.shareStyle.pets, 'ペットあり')
 	        ? `ペットあり${profile.shareStyle.petType ? `（${profile.shareStyle.petType}${profile.shareStyle.petCount ? ` ${profile.shareStyle.petCount}匹` : ''}）` : ''}`
-	        : profile.shareStyle.pets === 'ペットなし' ? 'ペットなし' : '';
+	        : systemOptionsEqual(profile.shareStyle.pets, 'ペットなし') ? localizedSystemOption('ペットなし') : '';
 	      return {
 	        id,
 	        name: profile.basic.name,
@@ -25908,15 +25912,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          { label: '入居可能期間', value: availableText },
 	          { label: '最短滞在期間', value: minStayText },
 	          { label: '最長滞在期間', value: maxStayText },
-	          { label: '長期滞在', value: profile.stay.longStay },
+	          { label: '長期滞在', value: localizedSystemOption(profile.stay.longStay) },
 	          { label: '月額料金 CAD', value: rentNumber === null ? '' : `C$${rentNumber.toLocaleString()} / month` },
-	          { label: '部屋タイプ', value: profile.stay.roomType },
-	          { label: '家具', value: profile.stay.furniture },
-	          { label: '階', value: profile.stay.floor },
-	          { label: 'バスルーム', value: profile.stay.bathroom },
-	          { label: '現在一緒に住んでいる人数', value: profile.stay.residentsCount },
-	          { label: '設備', value: amenities.join('、') || '未設定' },
-	          { label: 'キッチン利用', value: profile.stay.kitchenRule === '利用時間のルールあり' ? `${profile.stay.kitchenRule}（${profile.stay.kitchenHours || '時間未設定'}）` : profile.stay.kitchenRule },
+	          { label: '部屋タイプ', value: localizedSystemOption(profile.stay.roomType) },
+	          { label: '家具', value: localizedSystemOption(profile.stay.furniture) },
+	          { label: '階', value: localizedSystemOption(profile.stay.floor) },
+	          { label: 'バスルーム', value: localizedSystemOption(profile.stay.bathroom) },
+	          { label: '現在一緒に住んでいる人数', value: localizedSystemOption(profile.stay.residentsCount) },
+	          { label: '設備', value: amenities.map(localizedSystemOption).join('、') || '未設定' },
+	          { label: 'キッチン利用', value: systemOptionsEqual(profile.stay.kitchenRule, '利用時間のルールあり') ? `${localizedSystemOption(profile.stay.kitchenRule)}（${profile.stay.kitchenHours || localizeText('時間未設定')}）` : localizedSystemOption(profile.stay.kitchenRule) },
 	          { label: 'ペット', value: petText }
 	        ],
 	        houseRules: sharehouseHostRulesForDetail(profile),
@@ -26450,7 +26454,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      title: nullableText(profile.basic.name),
 	      description: nullableText(profile.basic.intro),
 	      country_code: 'CA',
-	      city: nullableText(profile.stay.area),
+	      city: hostPublicAreaDbValue(profile.stay.area),
 	      nearest_station: nullableText(profile.stay.station),
 	      station_walk_minutes: sharehouseHostFormInteger(profile.stay.walkMin),
 	      available_from: nullableText(profile.stay.availableStart),
@@ -26480,7 +26484,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      resident_count_group: toSharehouseListingDetailDbValue('resident_count_group', profile.stay.residentsCount),
 	      amenities: Array.isArray(profile.stay.amenities) ? profile.stay.amenities.filter(Boolean) : [],
 	      kitchen_rule: toSharehouseListingDetailDbValue('kitchen_rule', profile.stay.kitchenRule),
-	      kitchen_rule_details: profile.stay.kitchenRule === '利用時間のルールあり' ? nullableText(profile.stay.kitchenHours) : null,
+	      kitchen_rule_details: systemOptionsEqual(profile.stay.kitchenRule, '利用時間のルールあり') ? nullableText(profile.stay.kitchenHours) : null,
 	      interaction_level: toSharehouseListingDetailDbValue('interaction_level', profile.shareStyle.roommateInteraction),
 	      cleanliness_level: toSharehouseListingDetailDbValue('cleanliness_level', profile.shareStyle.cleanliness),
 	      cleaning_rule: toSharehouseListingDetailDbValue('cleaning_rule', profile.rules.cleaning || profile.shareStyle.cleaningFrequency),
@@ -30838,7 +30842,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function shouldSkipAutoTranslate(node) {
     const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!el) return true;
-    if (el.closest('script,style,svg,.hm-filter-shell,#hm-sort,[data-i18n],[data-i18n-html],[data-lang-option],[data-raw-text]')) return true;
+    if (el.closest('script,style,svg,.form-chip,.hm-filter-shell,#hm-sort,[data-i18n],[data-i18n-html],[data-lang-option],[data-raw-text]')) return true;
     if (el.closest('.bubble,.msg-name,.msg-preview,.chat-title,.chat-subtitle,.chat-banner-name,.match-card-name,.detail-info-value,#detail-name,#mypage-username,#mypage-useremail')) return true;
     return false;
   }
@@ -30879,6 +30883,145 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function localizeText(text) {
     return currentLang === 'ja' ? text : translateFreeText(text);
+  }
+
+  function normalizeSystemOptionLookupText(value) {
+    return String(value || '')
+      .replace(/^[^\p{L}\p{N}]+/u, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  function systemOptionLeadingDecoration(value) {
+    const match = String(value || '').match(/^[^\p{L}\p{N}]+\s*/u);
+    return match ? match[0] : '';
+  }
+
+  const SYSTEM_OPTION_ALIAS_MAP = {
+    Female: '女性',
+    Male: '男性',
+    'Do not select': '選択しない',
+    'Prefer not to say': '回答しない',
+    Other: 'その他',
+    Buddhism: '仏教',
+    Christianity: 'キリスト教',
+    Islam: 'イスラム教',
+    Hinduism: 'ヒンドゥー教',
+    Judaism: 'ユダヤ教',
+    'No religion': '無宗教',
+    Beginner: '初心者',
+    'Daily conversation': '日常会話',
+    Conversational: '日常会話',
+    'Business level': 'ビジネスレベル',
+    'Native level': 'ネイティブレベル',
+    English: '英語',
+    Japanese: '日本語',
+    Chinese: '中国語',
+    Korean: '韓国語',
+    Spanish: 'スペイン語',
+    French: 'フランス語',
+    Italian: 'イタリア語',
+    German: 'ドイツ語',
+    Student: '学生',
+    'Working holiday': 'ワーホリ',
+    'Working Holiday': 'ワーホリ',
+    Worker: '社会人',
+    'Full-time worker': '社会人',
+    Vancouver: 'バンクーバー',
+    Toronto: 'トロント',
+    Music: '音楽',
+    Movies: '映画',
+    Reading: '読書',
+    Cooking: '料理',
+    Sports: 'スポーツ',
+    Games: 'ゲーム',
+    Outdoors: 'アウトドア',
+    Outdoor: 'アウトドア',
+    Art: 'アート',
+    'Animal lover': '動物好き',
+    'Before 6 AM': '6時以前',
+    '6-7 AM': '6〜7時',
+    '6-8 AM': '6〜8時',
+    '7-8 AM': '7〜8時',
+    '8-9 AM': '8〜9時',
+    'After 9 AM': '9時以降',
+    'Before 10 PM': '22時以前',
+    '9-10 PM': '21〜22時',
+    '10-11 PM': '22〜23時',
+    '11 PM or later': '23時以降',
+    '11 PM-Midnight': '23〜24時',
+    'Midnight-1 AM': '0〜1時',
+    'After 1 AM': '1時以降',
+    'I do not smoke': '吸わない',
+    'Smoke outdoors': '屋外で吸う',
+    'Smoke indoors': '室内でも吸う',
+    'Drink often': 'よく飲む',
+    'Drink sometimes': 'たまに飲む',
+    'Do not drink': '飲まない',
+    OK: 'OK',
+    NG: 'NG',
+    'No preference': 'こだわらない',
+    'Private room preferred': '個室希望',
+    'Shared room is OK': '相部屋でもOK',
+    'Either is OK': 'どちらでもOK',
+    'Furnished preferred': '家具付き希望',
+    'Unfurnished is OK': '家具なしでもOK',
+    'Private room': '個室',
+    'Shared room': '相部屋',
+    Furnished: '家具付き',
+    Unfurnished: '家具なし'
+  };
+
+  function canonicalizeSystemOption(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (SYSTEM_OPTION_ALIAS_MAP[raw]) return SYSTEM_OPTION_ALIAS_MAP[raw];
+    const lookup = normalizeSystemOptionLookupText(raw);
+    const aliasEntry = Object.entries(SYSTEM_OPTION_ALIAS_MAP).find(([alias, canonical]) =>
+      normalizeSystemOptionLookupText(alias) === lookup || normalizeSystemOptionLookupText(canonical) === lookup
+    );
+    if (aliasEntry) return aliasEntry[1];
+    const translationEntry = Object.keys(autoTextTranslations).find(key => {
+      const translated = translateFreeText(key);
+      return key === raw
+        || translated === raw
+        || normalizeSystemOptionLookupText(key) === lookup
+        || normalizeSystemOptionLookupText(translated) === lookup;
+    });
+    return translationEntry || raw;
+  }
+
+  function localizedSystemOption(value) {
+    const prefix = systemOptionLeadingDecoration(value);
+    const canonical = canonicalizeSystemOption(value);
+    const label = currentLang === 'ja' ? canonical : localizeText(canonical);
+    return prefix && !String(label || '').startsWith(prefix) ? `${prefix}${label}` : label;
+  }
+
+  function systemOptionsEqual(a, b) {
+    const left = canonicalizeSystemOption(a);
+    const right = canonicalizeSystemOption(b);
+    return !!left && !!right && normalizeSystemOptionLookupText(left) === normalizeSystemOptionLookupText(right);
+  }
+
+  function relocalizeSystemOptionControls(root = document) {
+    root.querySelectorAll('.form-chip').forEach(chip => {
+      const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
+      const raw = chip.dataset.hostmatchOriginalText || textNode?.__hostmatchOriginalText || textNode?.nodeValue || chip.textContent || '';
+      const prefix = chip.dataset.hostmatchOptionPrefix || systemOptionLeadingDecoration(textNode?.nodeValue || chip.textContent || '');
+      const canonical = canonicalizeSystemOption(raw);
+      if (!canonical) return;
+      chip.dataset.hostmatchOriginalText = canonical;
+      chip.dataset.hostmatchOptionPrefix = prefix;
+      const nextText = `${prefix}${currentLang === 'ja' ? canonical : localizeText(canonical)}`;
+      if (textNode) {
+        textNode.__hostmatchOriginalText = canonical;
+        if (textNode.nodeValue.trim() !== nextText) textNode.nodeValue = nextText;
+      } else {
+        chip.textContent = nextText;
+      }
+    });
   }
 
   function localizePriceText(text) {
@@ -31003,6 +31146,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     });
     localizeHomestayFilterUi();
     applyAutoTextTranslations();
+    relocalizeSystemOptionControls();
     hydrateBirthDateComponents();
     updateSignupConsentLabels();
     updateSignupConsentState();
@@ -32792,7 +32936,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function sharehouseRoommateMetaText(rm = {}) {
     return [
       rm.age ? localizeText(rm.age) : '',
-      rm.gender ? localizeText(rm.gender) : '',
+      rm.gender ? localizedSystemOption(rm.gender) : '',
       rm.nationality || ''
     ].filter(Boolean).join(' · ');
   }
@@ -32814,12 +32958,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           <button onclick="resRemoveRoommate(${i})" style="background:none;border:none;color:var(--light);font-size:16px;cursor:pointer;padding:4px;">✕</button>
         </div>
         <div style="padding:10px 16px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:6px;">
-          <span class="ctag">${localizeText('起床時間')} ${localizeText(rm.wake || '未設定')}</span>
-          <span class="ctag">${localizeText('就寝時間')} ${localizeText(rm.sleep || '未設定')}</span>
-          <span class="ctag">${localizeText(rm.home || '未設定')}</span>
-          <span class="ctag">${localizeText(rm.cooking || '未設定')}</span>
-          <span class="ctag ${rm.smoke === '吸わない' ? 'ok' : ''}">${localizeText(rm.smoke || '喫煙未設定')}</span>
-          <span class="ctag">${localizeText(rm.alcohol || '飲酒未設定')}</span>
+          <span class="ctag">${localizeText('起床時間')} ${rm.wake ? localizedSystemOption(rm.wake) : localizeText('未設定')}</span>
+          <span class="ctag">${localizeText('就寝時間')} ${rm.sleep ? localizedSystemOption(rm.sleep) : localizeText('未設定')}</span>
+          <span class="ctag">${rm.home ? localizedSystemOption(rm.home) : localizeText('未設定')}</span>
+          <span class="ctag">${rm.cooking ? localizedSystemOption(rm.cooking) : localizeText('未設定')}</span>
+          <span class="ctag ${systemOptionsEqual(rm.smoke, '吸わない') ? 'ok' : ''}">${rm.smoke ? localizedSystemOption(rm.smoke) : localizeText('喫煙未設定')}</span>
+          <span class="ctag">${rm.alcohol ? localizedSystemOption(rm.alcohol) : localizeText('飲酒未設定')}</span>
         </div>
       </div>
     `).join('');
