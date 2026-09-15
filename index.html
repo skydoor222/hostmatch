@@ -30843,6 +30843,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return i18n.ja[key] || key;
   }
 
+  function i18nValueForKey(key) {
+    const normalizedKey = String(key || '').trim();
+    if (!normalizedKey) return '';
+    return currentLang === 'ja'
+      ? (i18n.ja?.[normalizedKey] || normalizedKey)
+      : t(normalizedKey);
+  }
+
   function shouldSkipAutoTranslate(node) {
     const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : node;
     if (!el) return true;
@@ -31092,17 +31100,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function applyAutoTextTranslations() {
     if (autoTranslating || !document.body) return;
     autoTranslating = true;
-    const canonicalAutoTextSource = value => {
+    const canonicalAutoTextKey = value => {
       const raw = String(value || '');
       const trimmed = raw.trim();
-      if (!trimmed) return raw;
+      if (!trimmed) return '';
       if (autoTextTranslations[trimmed]) return trimmed;
       const lookup = normalizeSystemOptionLookupText(trimmed);
       const source = Object.keys(autoTextTranslations).find(key => {
         const translated = translateFreeText(key);
         return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
       });
-      return source || raw;
+      return source || '';
     };
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
@@ -31115,19 +31123,23 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     while (walker.nextNode()) textNodes.push(walker.currentNode);
 
     textNodes.forEach(node => {
-      node.__hostmatchOriginalText = canonicalAutoTextSource(node.__hostmatchOriginalText || node.nodeValue);
+      const key = node.__hostmatchI18nKey || canonicalAutoTextKey(node.nodeValue);
+      if (!key) return;
+      node.__hostmatchI18nKey = key;
       const nextValue = currentLang === 'ja'
-        ? node.__hostmatchOriginalText
-        : translateFreeText(node.__hostmatchOriginalText);
+        ? key
+        : translateFreeText(key);
       if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
     });
 
     document.querySelectorAll('[placeholder]').forEach(el => {
       if (shouldSkipAutoTranslate(el)) return;
-      el.dataset.hostmatchOriginalPlaceholder = canonicalAutoTextSource(el.dataset.hostmatchOriginalPlaceholder || el.getAttribute('placeholder') || '');
+      const key = el.dataset.i18nPlaceholderKey || canonicalAutoTextKey(el.getAttribute('placeholder') || '');
+      if (!key) return;
+      el.dataset.i18nPlaceholderKey = key;
       const nextPlaceholder = currentLang === 'ja'
-        ? el.dataset.hostmatchOriginalPlaceholder
-        : translateFreeText(el.dataset.hostmatchOriginalPlaceholder);
+        ? key
+        : translateFreeText(key);
       if (el.getAttribute('placeholder') !== nextPlaceholder) el.setAttribute('placeholder', nextPlaceholder);
     });
     autoTranslating = false;
@@ -31138,15 +31150,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     updateSharehouseSortLanguage();
     document.querySelectorAll('.hm-filter-shell').forEach(root => {
       root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
-        el.dataset.hmfOriginalText = canonicalHostmatchUiText(el.dataset.hmfOriginalText || el.textContent.trim());
-        const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
+        const key = el.dataset.i18nKey || canonicalHostmatchUiKey(el.textContent.trim());
+        if (!key) return;
+        el.dataset.i18nKey = key;
+        const nextText = i18nValueForKey(key);
         if (el.textContent.trim() !== nextText) el.textContent = nextText;
       });
       root.querySelectorAll('.hm-filter-toggle').forEach(label => {
         const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-        label.dataset.hmfOriginalText = canonicalHostmatchUiText(label.dataset.hmfOriginalText || (textNode ? textNode.nodeValue.trim() : ''));
+        const key = label.dataset.i18nKey || canonicalHostmatchUiKey(textNode ? textNode.nodeValue.trim() : '');
+        if (!key) return;
+        label.dataset.i18nKey = key;
         if (textNode) {
-          const nextText = currentLang === 'ja' ? label.dataset.hmfOriginalText : localizeText(label.dataset.hmfOriginalText);
+          const nextText = i18nValueForKey(key);
           textNode.nodeValue = ` ${nextText}`;
         }
       });
@@ -31189,37 +31205,49 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     autoTranslateTimer = setTimeout(applyAutoTextTranslations, 0);
   }
 
-  function canonicalHostmatchUiText(value) {
+  function canonicalHostmatchUiKey(value) {
     const raw = String(value || '');
     const trimmed = raw.trim();
-    if (!trimmed) return raw;
+    if (!trimmed) return '';
     if (autoTextTranslations[trimmed]) return trimmed;
     const lookup = normalizeSystemOptionLookupText(trimmed);
     const source = Object.keys(autoTextTranslations).find(key => {
       const translated = translateFreeText(key);
       return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
     });
-    return source || raw;
+    return source || '';
+  }
+
+  function localizeKeyedSystemDom(root = document) {
+    root.querySelectorAll('[data-i18n],[data-i18n-key]').forEach(el => {
+      const key = el.getAttribute('data-i18n-key') || el.getAttribute('data-i18n') || '';
+      const value = i18nValueForKey(key);
+      if (value) el.textContent = value;
+    });
+    root.querySelectorAll('[data-i18n-html]').forEach(el => {
+      const key = el.getAttribute('data-i18n-html');
+      if (i18n[currentLang][key] || currentLang === 'en') el.innerHTML = t(key);
+    });
+    root.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      const value = i18nValueForKey(key);
+      if (value) el.placeholder = value;
+    });
+    root.querySelectorAll('[data-i18n-title]').forEach(el => {
+      const key = el.getAttribute('data-i18n-title');
+      const value = i18nValueForKey(key);
+      if (value) el.title = value;
+    });
+    root.querySelectorAll('[data-i18n-message]').forEach(el => {
+      const key = el.getAttribute('data-i18n-message');
+      const value = i18nValueForKey(key);
+      if (value) el.textContent = value;
+    });
   }
 
   function applyLang() {
     document.documentElement.lang = currentLang;
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      if (i18n[currentLang][key] || currentLang === 'en') el.textContent = t(key);
-    });
-    document.querySelectorAll('[data-i18n-html]').forEach(el => {
-      const key = el.getAttribute('data-i18n-html');
-      if (i18n[currentLang][key] || currentLang === 'en') el.innerHTML = t(key);
-    });
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-      const key = el.getAttribute('data-i18n-placeholder');
-      if (i18n[currentLang][key] || currentLang === 'en') el.placeholder = t(key);
-    });
-    document.querySelectorAll('[data-i18n-message]').forEach(el => {
-      const key = el.getAttribute('data-i18n-message');
-      if (i18n[currentLang][key] || currentLang === 'en') el.textContent = t(key);
-    });
+    localizeKeyedSystemDom();
     document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.langOption === currentLang);
       if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
@@ -31250,71 +31278,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function refreshLocalizedDynamicUi() {
-    setLoginMode(isSignupMode, true);
-    if (currentScreen === 'homestay-host-list') renderHomestayHostList();
-    if (currentScreen === 'search' && currentSearchCat === 'homestay') {
-      localizeHomestayFilterUi();
-      if (committedHomestayFilters) renderHomestaySearchFormFromFilters(committedHomestayFilters);
-      rerenderHomestayFilterResults();
-    }
-    if (currentScreen === 'search' && currentSearchCat === 'sharehouse') {
-      localizeHomestayFilterUi();
-      if (committedSharehouseFilters) renderSharehouseSearchFormFromFilters(committedSharehouseFilters);
-      rerenderSharehouseFilterResults();
-    }
-    if (currentScreen === 'host-applicants') syncHostFormalRequestCard();
-    if (currentScreen === 'detail' && currentHost) openDetail(currentHost, detailBackScreen);
-	    if (currentScreen === 'sharehouse-detail' && currentListing?.type === 'sharehouse') {
-	      renderGuestPreferenceSummary('sharehouse');
-	      renderSharehouseDetailRoommateBox();
-	    }
-	    if (currentScreen === 'chat' && currentHost && chatDetailMode === 'host') openChat(currentHost);
-	    if (currentScreen === 'chat' && chatDetailMode === 'sharehouse') openSharehouseChat();
-	    if (currentScreen === 'homestay-guest-detail' && currentHomestayGuestDetailData) {
-	      if (currentHomestayGuestDetailService === 'sharehouse' || currentHomestayGuestDetailData.service === 'sharehouse') {
-	        renderSharehouseGuestPublicDetail(currentHomestayGuestDetailData);
-	      } else {
-	        renderHomestayGuestPublicDetail(currentHomestayGuestDetailData);
-	      }
-	    }
-	    if (currentScreen === 'onboarding') renderOnboardStep();
-	    if (currentScreen === 'profile') {
-	      hydrateBirthDateComponents(document.getElementById('screen-profile') || document);
-	      if (typeof applyGuestModeProfileIdentityToCurrentUi === 'function' && typeof currentGuestModeProfileCache === 'function') {
-	        const profileHousingType = serviceModeForCurrentContext() === 'sharehouse' ? 'sharehouse' : 'homestay';
-	        applyGuestModeProfileIdentityToCurrentUi(profileHousingType, currentGuestModeProfileCache(profileHousingType));
-	      }
-	    }
-	    if (currentScreen === 'lifestyle') {
-	      hydrateBirthDateComponents(document.getElementById('screen-lifestyle') || document);
-	    }
-	    if (currentScreen === 'host-calendar') renderHostCalendar();
-	    if (currentScreen === 'host-dashboard') updateHostDashboardListing();
-	    if (currentScreen === 'host-profile') {
-	      renderHostFamilyEditors();
-	      renderHostStudentEditors();
-	      if (serviceModeForCurrentContext() === 'sharehouse') {
-	        resRenderRoommateList();
-	        renderHomestayHostAvatarPreview('share-profile');
-	        renderHomestayHostRoomPhotoPreview('share-profile');
-	      }
-	      hydrateBirthDateComponents(document.getElementById('screen-host-profile') || document);
-	    }
-	    if (currentScreen === 'host-onboarding') {
-	      renderHostFamilyEditors();
-	      renderHostStudentEditors();
-	      renderHostObStep();
-	    }
-	    if (currentScreen === 'ai-result') renderAiResult();
-	    if (currentScreen === 'role-select' && window._registrationStartScreenActive) renderRegistrationStartOptions();
-	    else if (currentScreen === 'role-select' && window._serviceType) chooseType(window._serviceType);
-	    if (currentScreen === 'search') updateSearchHeaderForCat(currentSearchCat);
+    localizeKeyedSystemDom();
+    localizeHomestayFilterUi();
+    applyAutoTextTranslations();
+    relocalizeSystemOptionControls();
+    hydrateBirthDateComponents();
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
-	    updateListingActionButtons();
-	    applyAutoTextTranslations();
-	    relocalizeSystemOptionControls();
-	    hydrateBirthDateComponents();
+    updateListingActionButtons();
 	  }
 
   async function saveCurrentUserPreferredLanguage(lang) {
@@ -31353,8 +31324,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function setLanguage(lang, options = {}) {
     currentLang = writeStoredLanguagePreference(lang);
     applyLang();
-    refreshLocalizedDynamicUi();
-    if (options.saveProfile !== false) saveCurrentUserPreferredLanguage(currentLang);
+    if (options.saveProfile !== false) {
+      saveCurrentUserPreferredLanguage(currentLang).catch?.(error => {
+        console.error('Preferred language save failed:', error);
+      });
+    }
   }
 
   window.applyLanguagePreferenceFromProfile = applyLanguagePreferenceFromProfile;
