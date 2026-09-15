@@ -1140,6 +1140,37 @@
     }
     .form-chip.selected { border-color: var(--primary); background: #FFF0F0; color: var(--primary); }
     .form-range-row { display: flex; gap: 10px; align-items: center; }
+    .hostmatch-native-birth-date {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+    }
+    .hostmatch-birth-date-component {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: 100%;
+      flex: 1;
+      min-width: 0;
+    }
+    .hostmatch-birth-date-segment {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 10px;
+      font-size: 14px;
+      outline: none;
+      background-color: white;
+      color: var(--dark);
+      font-family: inherit;
+      text-align: center;
+    }
+    .hostmatch-birth-date-segment:focus { border-color: var(--dark); }
     .form-range-input {
       flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
       padding: 12px 14px; font-size: 15px; outline: none; background: white;
@@ -4505,7 +4536,7 @@
         </div>
         <div class="form-group">
           <div class="form-label">名前</div>
-          <input class="form-input" id="hs-onboard-name" type="text" placeholder="山田 由紀" />
+          <input class="form-input" id="hs-onboard-name" type="text" />
         </div>
 	        <div class="form-group">
 	          <div class="form-label">生年月日</div>
@@ -4809,7 +4840,7 @@
         </div>
         <div class="form-group">
           <div class="form-label" data-i18n="name_plain">名前</div>
-          <input class="form-input" id="shg-name" type="text" placeholder="山田 由紀" value="中村 さくら" />
+          <input class="form-input" id="shg-name" type="text" />
         </div>
         <div class="form-group">
           <div class="form-label" data-i18n="age">年齢</div>
@@ -5335,7 +5366,7 @@
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">ホスト名</div>
-	        <input class="form-input" id="host-ob-name" type="text" placeholder="山田ファミリー" value="Sarah" />
+	        <input class="form-input" id="host-ob-name" type="text" />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">年齢</div>
@@ -8583,6 +8614,7 @@
       renderHostFamilyEditors();
       renderHostStudentEditors();
       applyCurrentHomestayHostDataToHostProfileScreen();
+      hydrateBirthDateComponents(body);
       applyLang();
       return;
     }
@@ -8599,6 +8631,7 @@
       setSharehouseHostProfileLegacyBlocksHidden(true);
       const shouldFreshLoad = isSupabaseSharehouseHostContext();
       renderSharehouseHostProfileEdit({ loading: shouldFreshLoad && !currentSharehouseHostDataLoaded });
+      hydrateBirthDateComponents(body);
       if (shouldFreshLoad) {
         const loadToken = String(Date.now());
         if (body) body.dataset.sharehouseHostProfileLoadToken = loadToken;
@@ -17324,7 +17357,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      window.renderAvatarElement(document.getElementById('share-guest-profile-avatar-preview'), identity.avatarUrl);
 	    } else {
 	      window.renderAvatarElement(document.getElementById('prof-avatar-preview'), identity.avatarUrl);
-	      window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), identity.avatarUrl);
+	      if (!isFreshOnboardingSelection('homestay', 'guest')) {
+	        window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), identity.avatarUrl);
+	      }
 	    }
 	  }
 
@@ -18186,9 +18221,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  const pendingSharehouseGuestAvatarFiles = { ob: null, profile: null };
 	  const pendingSharehouseGuestAvatarPreviewUrls = { ob: '', profile: '' };
 	  const pendingSharehouseGuestAvatarCrops = { ob: null, profile: null };
-	  const pendingHomestayGuestAvatarFiles = { profile: null };
-	  const pendingHomestayGuestAvatarPreviewUrls = { profile: '' };
-	  const pendingHomestayGuestAvatarCrops = { profile: null };
+	  const pendingHomestayGuestAvatarFiles = { ob: null, profile: null };
+	  const pendingHomestayGuestAvatarPreviewUrls = { ob: '', profile: '' };
+	  const pendingHomestayGuestAvatarCrops = { ob: null, profile: null };
 	  const pendingSharehouseRoomPhotoFiles = { res: [], profile: [] };
 	  const pendingSharehouseListingPhotoDeleteIds = new Set();
 	  const PROFILE_AVATAR_ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -19388,7 +19423,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return `
 	      <div class="form-section-title">👥 ホスト・家族について</div>
 	      ${hostAvatarUploadBoxHtml(scope)}
-	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" placeholder="山田ファミリー" /></div>
+	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" /></div>
 	      <div class="form-group"><div class="form-label">生年月日 / 年齢</div><div class="form-range-row"><input class="form-input" id="${prefix}-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('${scope}')" /><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly /></div></div>
 	      <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-nationality" type="text" placeholder="国籍を入力してください" /></div>
 	      <div class="form-group">
@@ -19545,6 +19580,120 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return age >= 0 ? age : null;
   }
 
+	  function birthDatePartsFromValue(value) {
+	    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	    if (!match) return { year: '', month: '', day: '' };
+	    return { year: match[1], month: match[2], day: match[3] };
+	  }
+
+	  function daysInBirthDateMonth(year, month) {
+	    const y = Number(year);
+	    const m = Number(month);
+	    if (!Number.isInteger(m) || m < 1 || m > 12) return 31;
+	    const safeYear = Number.isInteger(y) && y >= 1900 ? y : 2000;
+	    return new Date(safeYear, m, 0).getDate();
+	  }
+
+	  function isValidBirthDateParts(year, month, day) {
+	    const y = Number(year);
+	    const m = Number(month);
+	    const d = Number(day);
+	    if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+	    if (y < 1900 || y > new Date().getFullYear()) return false;
+	    if (m < 1 || m > 12) return false;
+	    if (d < 1 || d > daysInBirthDateMonth(y, m)) return false;
+	    const iso = `${String(y).padStart(4, '0')}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+	    return !isFutureDateInputValue(iso);
+	  }
+
+	  function birthDateIsoFromParts(year, month, day) {
+	    if (!isValidBirthDateParts(year, month, day)) return '';
+	    return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+	  }
+
+	  function birthDateSelectOptions(kind, selectedValue, parts = {}) {
+	    const currentYear = new Date().getFullYear();
+	    const labelMap = currentLang === 'en'
+	      ? { year: 'YYYY', month: 'MM', day: 'DD' }
+	      : { year: 'YYYY', month: 'MM', day: 'DD' };
+	    const values = [];
+	    if (kind === 'year') {
+	      for (let year = currentYear; year >= 1900; year--) values.push(String(year));
+	    } else if (kind === 'month') {
+	      for (let month = 1; month <= 12; month++) values.push(String(month).padStart(2, '0'));
+	    } else {
+	      const maxDay = daysInBirthDateMonth(parts.year, parts.month);
+	      for (let day = 1; day <= maxDay; day++) values.push(String(day).padStart(2, '0'));
+	    }
+	    return [`<option value="">${labelMap[kind]}</option>`]
+	      .concat(values.map(value => `<option value="${value}"${value === selectedValue ? ' selected' : ''}>${value}</option>`))
+	      .join('');
+	  }
+
+	  function birthDateComponentOrder() {
+	    return currentLang === 'en' ? ['month', 'day', 'year'] : ['year', 'month', 'day'];
+	  }
+
+	  function renderBirthDateComponent(input) {
+	    if (!input?.id) return null;
+	    input.classList.add('hostmatch-native-birth-date');
+	    input.setAttribute('aria-hidden', 'true');
+	    input.tabIndex = -1;
+	    input.max = todayDateInputValue();
+	    let component = input.nextElementSibling?.classList?.contains('hostmatch-birth-date-component')
+	      ? input.nextElementSibling
+	      : null;
+	    if (!component) {
+	      component = document.createElement('div');
+	      component.className = 'hostmatch-birth-date-component';
+	      component.dataset.birthDateFor = input.id;
+	      input.insertAdjacentElement('afterend', component);
+	    }
+	    const parts = birthDatePartsFromValue(input.value);
+	    component.innerHTML = birthDateComponentOrder().map(kind => `
+	      <select class="hostmatch-birth-date-segment" data-birth-part="${kind}" aria-label="${kind}">
+	        ${birthDateSelectOptions(kind, parts[kind], parts)}
+	      </select>
+	    `).join('');
+	    component.querySelectorAll('[data-birth-part]').forEach(select => {
+	      select.onchange = () => syncBirthDateComponentToInput(input);
+	    });
+	    return component;
+	  }
+
+	  function syncBirthDateComponentToInput(input) {
+	    const component = input?.nextElementSibling?.classList?.contains('hostmatch-birth-date-component')
+	      ? input.nextElementSibling
+	      : null;
+	    if (!input || !component) return;
+	    const year = component.querySelector('[data-birth-part="year"]')?.value || '';
+	    const month = component.querySelector('[data-birth-part="month"]')?.value || '';
+	    const day = component.querySelector('[data-birth-part="day"]')?.value || '';
+	    const hasPartialDate = !!(year || month || day);
+	    const iso = birthDateIsoFromParts(year, month, day);
+	    input.dataset.hostmatchDatePartial = hasPartialDate && !iso ? 'true' : '';
+	    if (input.value !== iso) {
+	      input.value = iso;
+	      input.dispatchEvent(new Event('change', { bubbles: true }));
+	    }
+	    hydrateBirthDateComponent(input);
+	  }
+
+	  function hydrateBirthDateComponent(input) {
+	    const focusedPart = document.activeElement?.dataset?.birthPart || '';
+	    const focusedFor = document.activeElement?.closest?.('.hostmatch-birth-date-component')?.dataset?.birthDateFor || '';
+	    const component = renderBirthDateComponent(input);
+	    if (component && focusedFor === input.id && focusedPart) {
+	      component.querySelector(`[data-birth-part="${focusedPart}"]`)?.focus();
+	    }
+	  }
+
+	  function hydrateBirthDateComponents(root = document) {
+	    root.querySelectorAll('input[id$="birth-date"], input[id*="-birth-date"]').forEach(input => {
+	      hydrateBirthDateComponent(input);
+	    });
+	  }
+
 	  function updateProfileAgeFromBirthDate() {
 	    const birthDateInput = document.getElementById('prof-birth-date');
 	    const ageInput = document.getElementById('prof-age');
@@ -19629,9 +19778,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function focusValidationField(fieldId) {
 	    const el = fieldId ? document.getElementById(fieldId) : null;
 	    if (!el) return;
-	    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-	    if (typeof el.focus === 'function') {
-	      setTimeout(() => el.focus({ preventScroll: true }), 180);
+	    const focusTarget = el.classList?.contains('hostmatch-native-birth-date')
+	      ? el.nextElementSibling?.querySelector('.hostmatch-birth-date-segment')
+	      : el;
+	    (focusTarget || el).scrollIntoView({ behavior: 'smooth', block: 'center' });
+	    if (typeof focusTarget?.focus === 'function') {
+	      setTimeout(() => focusTarget.focus({ preventScroll: true }), 180);
 	    }
 	  }
 
@@ -19654,9 +19806,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const errors = [];
 	    const name = formValue(nameId, '');
 	    const birthDate = formValue(birthDateId, '');
+	    const birthDateInput = document.getElementById(birthDateId);
+	    const hasPartialBirthDate = birthDateInput?.dataset?.hostmatchDatePartial === 'true';
 	    if (!name) errors.push(validationError(nameId, '名前を入力してください。', 'Please enter your name.'));
 	    if (!birthDate) {
-	      errors.push(validationError(birthDateId, '生年月日を入力してください。', 'Please enter your date of birth.'));
+	      errors.push(hasPartialBirthDate
+	        ? validationError(birthDateId, '生年月日を確認してください。', 'Please check your date of birth.')
+	        : validationError(birthDateId, '生年月日を入力してください。', 'Please enter your date of birth.'));
 	    } else if (!validCalculatedBirthDateAge(birthDate)) {
 	      errors.push(validationError(birthDateId, '生年月日を確認してください。', 'Please check your date of birth.'));
 	    }
@@ -19674,12 +19830,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const startId = isSharehouse ? `${prefix}-available-start` : hostFormAvailableStartId(scope);
 	    const endId = isSharehouse ? `${prefix}-available-end` : hostFormAvailableEndId(scope);
 	    const birthDate = formValue(`${prefix}-birth-date`, '');
+	    const birthDateInput = document.getElementById(`${prefix}-birth-date`);
+	    const hasPartialBirthDate = birthDateInput?.dataset?.hostmatchDatePartial === 'true';
 	    const calculatedAge = birthDate && !isFutureDateInputValue(birthDate) ? calculateAgeFromBirthDate(birthDate) : null;
 	    const nameFieldId = `${prefix}-name`;
 	    const addressFieldId = `${prefix}-address`;
 	    if (!nullableText(profilePayload?.display_name)) errors.push(validationError(nameFieldId, '名前を入力してください。', 'Please enter a name.'));
 	    if (!birthDate) {
-	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を入力してください。', 'Please enter your date of birth.'));
+	      errors.push(hasPartialBirthDate
+	        ? validationError(`${prefix}-birth-date`, '生年月日を確認してください。', 'Please check your date of birth.')
+	        : validationError(`${prefix}-birth-date`, '生年月日を入力してください。', 'Please enter your date of birth.'));
 	    } else if (!validCalculatedBirthDateAge(birthDate)) {
 	      errors.push(validationError(`${prefix}-birth-date`, '生年月日を確認してください。', 'Please check your date of birth.'));
 	    } else if (calculatedAge < 18) {
@@ -19709,7 +19869,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function setInputValueById(id, value) {
     const el = document.getElementById(id);
-    if (el) el.value = value ?? '';
+    if (el) {
+      el.value = value ?? '';
+      if (String(id || '').includes('birth-date')) hydrateBirthDateComponent(el);
+    }
   }
 
   function chipStoredText(chip) {
@@ -20015,27 +20178,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  function handleHomestayOnboardingAvatarSelection(event) {
-	    const input = event?.target;
-	    const file = input?.files?.[0] || null;
-	    setHomestayOnboardingAvatarMessage('');
-	    pendingHomestayOnboardingAvatarFile = null;
-
-	    if (!file) return;
-	    if (!PROFILE_AVATAR_ALLOWED_TYPES.has(file.type)) {
-	      if (input) input.value = '';
-	      setHomestayOnboardingAvatarMessage(profileAvatarErrorMessage('type'));
-	      return;
-	    }
-	    if (file.size > PROFILE_AVATAR_MAX_SIZE) {
-	      if (input) input.value = '';
-	      setHomestayOnboardingAvatarMessage(profileAvatarErrorMessage('size'));
-	      return;
-	    }
-
-	    pendingHomestayOnboardingAvatarFile = file;
-	    if (pendingHomestayOnboardingAvatarPreviewUrl) URL.revokeObjectURL(pendingHomestayOnboardingAvatarPreviewUrl);
-	    pendingHomestayOnboardingAvatarPreviewUrl = URL.createObjectURL(file);
-	    window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), pendingHomestayOnboardingAvatarPreviewUrl);
+	    handleHomestayHostAvatarSelection(event, 'homestay-guest-ob');
 	  }
 
 	  async function uploadProfileAvatarFileToSupabase(file, setMessage = setProfileAvatarMessage) {
@@ -20229,21 +20372,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
 	  async function saveHomestayOnboardingAvatarToSupabase() {
-	    if (!pendingHomestayOnboardingAvatarFile) return true;
-
-	    const publicUrl = await uploadGuestModeAvatarFileToSupabase(pendingHomestayOnboardingAvatarFile, 'homestay', setHomestayOnboardingAvatarMessage);
-	    if (!publicUrl) return false;
-
-	    pendingHomestayOnboardingAvatarFile = null;
-	    if (pendingHomestayOnboardingAvatarPreviewUrl) {
-	      URL.revokeObjectURL(pendingHomestayOnboardingAvatarPreviewUrl);
-	      pendingHomestayOnboardingAvatarPreviewUrl = '';
-	    }
-	    const input = document.getElementById('hs-onboard-avatar-input');
-	    if (input) input.value = '';
-	    window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), publicUrl);
-	    setHomestayOnboardingAvatarMessage('');
-	    return true;
+	    return saveHomestayHostAvatarToSupabase('homestay-guest-ob');
 	  }
 
 	  function homestayHostPhotoScope(scope) {
@@ -20267,6 +20396,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    if (raw === 'homestay-guest-profile') {
 	      return { service: 'homestay-guest', key: 'profile', prefix: 'prof' };
+	    }
+	    if (raw === 'homestay-guest-ob') {
+	      return { service: 'homestay-guest', key: 'ob', prefix: 'hs-onboard' };
 	    }
 	    const key = raw === 'profile' ? 'profile' : 'ob';
 	    return { service: 'homestay', key, prefix: hostFormPrefix(key) };
@@ -20329,7 +20461,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function hostPhotoElement(scope, suffix) {
 	    const info = hostPhotoScopeInfo(scope);
 	    if (info.service === 'homestay-guest' && suffix === 'avatar-message') {
-	      return document.getElementById('profile-avatar-message');
+	      return document.getElementById(info.key === 'ob' ? 'hs-onboard-avatar-message' : 'profile-avatar-message');
 	    }
 	    const id = `${info.prefix}-${suffix}`;
 	    return hostPhotoDomRoot(scope)?.querySelector(`[id="${id}"]`) || document.getElementById(id);
@@ -20367,6 +20499,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      return;
 	    }
 	    const suppressFallback = (info.service === 'sharehouse-guest' && key === 'ob' && isFreshOnboardingSelection('sharehouse', 'guest'))
+	      || (info.service === 'homestay-guest' && key === 'ob' && isFreshOnboardingSelection('homestay', 'guest'))
 	      || (info.service === 'sharehouse' && key === 'res' && isFreshOnboardingSelection('sharehouse', 'host'))
 	      || (info.service === 'homestay' && key === 'ob' && isFreshOnboardingSelection('homestay', 'host'));
 	    const fallbackAvatarUrl = suppressFallback
@@ -24008,6 +24141,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    });
 	    root.querySelectorAll('.form-chip.selected').forEach(chip => chip.classList.remove('selected'));
 	    root.querySelectorAll('[contenteditable="true"]').forEach(el => { el.textContent = ''; });
+	    hydrateBirthDateComponents(root);
 	  }
 
 	  function hideElementsByIds(ids) {
@@ -24025,6 +24159,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }
 	    const input = document.getElementById('hs-onboard-avatar-input');
 	    if (input) input.value = '';
+	    clearPendingHomestayHostAvatar('homestay-guest-ob');
 	    if (typeof window.renderAvatarElement === 'function') {
 	      window.renderAvatarElement(document.getElementById('hs-onboard-avatar-preview'), '');
 	    }
@@ -24423,7 +24558,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function emptySharehouseGuestProfile() {
 	    return {
 	      basic: {
-	        name: window._currentProfile?.display_name || '',
+	        name: '',
 	        birthDate: '',
 	        age: '',
 	        nationality: '',
@@ -25006,12 +25141,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      const profile = hasCurrentSharehouseGuestProfile && currentSharehouseGuestUiProfile ? currentSharehouseGuestUiProfile : emptySharehouseGuestProfile();
 	      body.innerHTML = sharehouseGuestEditProfileHtml(profile);
 	      rehydrateGuestProfileIdentityFields();
+	      hydrateBirthDateComponents(body);
 	      renderHomestayHostAvatarPreview('share-guest-profile');
 	      if (!currentSharehouseGuestDataLoaded || currentSharehouseGuestDataCacheUserId !== (window._currentUser?.id || '')) {
 	        loadCurrentSharehouseGuestData({ force: true }).then(loaded => {
 	          if (loaded && currentScreen === 'profile' && isSharehouseGuestContext()) {
 	            body.innerHTML = sharehouseGuestEditProfileHtml(currentSharehouseGuestUiProfile || emptySharehouseGuestProfile());
 	            rehydrateGuestProfileIdentityFields();
+	            hydrateBirthDateComponents(body);
 	            renderHomestayHostAvatarPreview('share-guest-profile');
 	            applyLang();
 	          }
@@ -25020,10 +25157,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    } else if (body.innerHTML !== homestayProfileBodyHtml) {
       body.innerHTML = homestayProfileBodyHtml;
       rehydrateGuestProfileIdentityFields();
+      hydrateBirthDateComponents(body);
       loadHomestayGuestProfileEditData();
       return;
     }
     rehydrateGuestProfileIdentityFields();
+    hydrateBirthDateComponents(body);
     if (!isSharehouseGuestContext()) loadHomestayGuestProfileEditData();
   }
 
@@ -27333,11 +27472,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    onboardBackBtn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
 	    document.getElementById('onboard-next-btn').textContent = onboardStep === onboardTotal ? (currentLang === 'ja' ? '探す' : 'Search') : t('next');
 	    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
+	    hydrateBirthDateComponents(document.getElementById('screen-onboarding') || document);
 	    if (type === 'homestay' && onboardStep === 1 && typeof window.renderAvatarElement === 'function') {
-	      window.renderAvatarElement(
-	        document.getElementById('hs-onboard-avatar-preview'),
-	        pendingHomestayOnboardingAvatarPreviewUrl || (isFreshOnboardingSelection('homestay', 'guest') ? '' : window._currentProfile?.avatar_url || '')
-	      );
+	      renderHomestayHostAvatarPreview('homestay-guest-ob');
 	      updateHomestayOnboardingAgeFromBirthDate();
 	    }
 	    if (type === 'sharehouse' && onboardStep === 1) {
@@ -30657,6 +30794,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     });
     localizeHomestayFilterUi();
     applyAutoTextTranslations();
+    hydrateBirthDateComponents();
     updateSignupConsentLabels();
     updateSignupConsentState();
     localizeHomestayRoomPhotoCropModal();
@@ -32242,6 +32380,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('host-ob-back-btn').textContent = localizeText('← 戻る');
     document.getElementById('host-ob-next-btn').textContent = localizeText(hostObStep === hostObTotal ? '登録完了 ✓' : '次へ →');
     if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
+    hydrateBirthDateComponents(document.getElementById('screen-host-onboarding') || document);
     if (hostObStep === 1) renderHomestayHostAvatarPreview('ob');
     if (hostObStep === 2) {
       renderHomestayHostRoomPhotoPreview('ob');
@@ -32315,6 +32454,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       ? (currentLang === 'en' ? 'Complete ✓' : '登録完了 ✓')
       : (currentLang === 'en' ? 'Next →' : '次へ →');
 	    if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
+	    hydrateBirthDateComponents(document.getElementById('screen-resident-onboarding') || document);
 	    if (resStep === 1) {
 	      renderHomestayHostAvatarPreview('res');
 	      clearSharehouseHostLocationEditorMap('res');
