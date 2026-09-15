@@ -30816,7 +30816,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '⑲ 共有スペースの掃除について':'⑲ Shared Space Cleaning',
     '⑳ 友人・パートナーなどの宿泊について':'⑳ Overnight Guests',
     '検索結果':'Search Results',
-    '結果':'Results'
+    '結果':'Results',
+    '③ 月額予算':'③ Monthly Budget',
+    '⑬ 起床時間':'⑬ Wake-up Time',
+    '⑭ 就寝時間':'⑭ Bedtime',
+    'どのくらい会話したい？':'How much would you like to talk?',
+    '生活スタイルで絞り込む':'Filter by Lifestyle',
+    'ハウスルールで絞り込む':'Filter by House Rules',
+    '条件をリセット':'Reset Filters',
+    '検索する':'Search',
+    '並び替え':'Sort by',
+    '新着順':'Newest',
+    '条件一致が多い順':'Most conditions matched',
+    '料金が安い順':'Lowest price',
+    'ハウスルールの希望':'House Rule Preferences',
+    '希望エリア（複数可）':'Preferred Area (multiple selections allowed)',
+    '趣味・興味（複数可）':'Hobbies / Interests (multiple selections allowed)'
   });
   const HOSTMATCH_LANGUAGE_STORAGE_KEY = 'hostmatch_lang';
 
@@ -30859,9 +30874,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function i18nValueForKey(key) {
     const normalizedKey = String(key || '').trim();
     if (!normalizedKey) return '';
-    return currentLang === 'ja'
-      ? (i18n.ja?.[normalizedKey] || normalizedKey)
-      : t(normalizedKey);
+    if (Object.prototype.hasOwnProperty.call(autoTextTranslations, normalizedKey)) {
+      const value = currentLang === 'ja' ? normalizedKey : autoTextTranslations[normalizedKey];
+      if (!value) console.warn('Missing system text label', { lang: currentLang, key: normalizedKey });
+      return value || normalizedKey;
+    }
+    const dictionary = i18n[currentLang] || {};
+    if (Object.prototype.hasOwnProperty.call(dictionary, normalizedKey)) return dictionary[normalizedKey];
+    console.warn('Missing i18n system text key', { lang: currentLang, key: normalizedKey });
+    return normalizedKey;
   }
 
   function shouldSkipAutoTranslate(node) {
@@ -31167,9 +31188,17 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const normalizedKey = String(key || '').trim();
     if (!normalizedKey) return localizedSystemOption(fallback);
     const knownEntry = systemOptionEntryForKey(normalizedKey);
-    if (knownEntry) return currentLang === 'ja' ? knownEntry.ja : knownEntry.en;
+    if (knownEntry) {
+      const label = currentLang === 'ja' ? knownEntry.ja : knownEntry.en;
+      if (!label) console.warn('Missing system option label', { lang: currentLang, key: normalizedKey });
+      return label || normalizedKey;
+    }
     const labels = systemOptionLabelRegistry.get(normalizedKey);
-    if (labels) return currentLang === 'ja' ? labels.ja : labels.en;
+    if (labels) {
+      const label = currentLang === 'ja' ? labels.ja : labels.en;
+      if (!label) console.warn('Missing registered system option label', { lang: currentLang, key: normalizedKey });
+      return label || normalizedKey;
+    }
     const canonical = canonicalizeSystemOption(normalizedKey);
     const registeredKey = registerSystemOptionLabel(canonical, normalizedKey);
     const registeredLabels = systemOptionLabelRegistry.get(registeredKey);
@@ -31490,6 +31519,56 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     });
   }
 
+  function isVisibleSystemUiElement(el) {
+    if (!el || !el.isConnected) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  function auditVisibleUiLanguage(root = document) {
+    const scope = root || document;
+    const hasJapanese = value => /[ぁ-んァ-ン一-龥]/.test(String(value || ''));
+    const normalizeVisible = value => normalizeSystemOptionLookupText(String(value || '').replace(/[✓✔]/g, ''));
+    scope.querySelectorAll('[data-i18n],[data-i18n-key],[data-i18n-message],[data-option-key],[data-hostmatch-option-key]').forEach(el => {
+      if (!isVisibleSystemUiElement(el)) return;
+      if (el.closest('[data-raw-text],.bubble,.msg-name,.msg-preview,.chat-title,.chat-subtitle,.chat-banner-name,.match-card-name,.detail-info-value,#detail-name,#mypage-username,#mypage-useremail')) return;
+      const optionKey = el.dataset.optionKey || el.dataset.hostmatchOptionKey || '';
+      const i18nKey = el.getAttribute('data-i18n-key') || el.getAttribute('data-i18n') || el.getAttribute('data-i18n-message') || '';
+      const expected = optionKey ? localizedSystemOptionByKey(optionKey, el.dataset.hostmatchOriginalText || '') : i18nValueForKey(i18nKey);
+      if (!expected) return;
+      const visible = el.textContent || '';
+      if (normalizeVisible(visible) !== normalizeVisible(expected) && !visible.includes(expected)) {
+        console.warn('System UI language mismatch', { lang: currentLang, key: optionKey || i18nKey, expected, visible: visible.trim(), element: el });
+        return;
+      }
+      if (currentLang === 'en' && hasJapanese(visible)) {
+        console.warn('Japanese system text visible in English UI', el, optionKey || i18nKey);
+      }
+    });
+    const walker = document.createTreeWalker(scope.body || scope, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (!node.__hostmatchI18nKey) return NodeFilter.FILTER_REJECT;
+        if (shouldSkipAutoTranslate(node)) return NodeFilter.FILTER_REJECT;
+        if (!isVisibleSystemUiElement(node.parentElement)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      const expected = i18nValueForKey(node.__hostmatchI18nKey);
+      const visible = node.nodeValue || '';
+      if (expected && normalizeVisible(visible) !== normalizeVisible(expected)) {
+        console.warn('System UI text-node language mismatch', { lang: currentLang, key: node.__hostmatchI18nKey, expected, visible: visible.trim(), element: node.parentElement });
+      } else if (currentLang === 'en' && hasJapanese(visible)) {
+        console.warn('Japanese system text visible in English UI', node.parentElement, node.__hostmatchI18nKey);
+      }
+    }
+  }
+
+  window.auditVisibleUiLanguage = auditVisibleUiLanguage;
+
   function applyLang() {
     document.documentElement.lang = currentLang;
     localizeKeyedSystemDom();
@@ -31520,6 +31599,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (title) title.textContent = getLegalTitle(currentLegalModalView);
       if (content) content.innerHTML = legalDocumentHtml(currentLegalModalView);
     }
+    setTimeout(() => auditVisibleUiLanguage(), 0);
   }
 
   function refreshLocalizedDynamicUi() {
@@ -31531,6 +31611,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
     updateListingActionButtons();
+    setTimeout(() => auditVisibleUiLanguage(), 0);
 	  }
 
   async function saveCurrentUserPreferredLanguage(lang) {
