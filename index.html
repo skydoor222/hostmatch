@@ -10853,7 +10853,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return Array.from(scope.querySelectorAll('.form-chip.selected'))
 	      .map(el => {
 	        const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-	        return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
+	        return canonicalizeSystemOption(el.dataset.optionKey || el.dataset.hostmatchOptionKey || textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
 	      })
 	      .filter(Boolean);
 	  }
@@ -15721,13 +15721,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const selected = row?.querySelector('.form-chip.selected');
     if (!selected) return shouldSuppressFreshOnboardingFallbackForId(rowId) ? '' : fallback;
     const textNode = Array.from(selected.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || selected.dataset.hostmatchOriginalText || selected.textContent);
+    return canonicalizeSystemOption(selected.dataset.optionKey || selected.dataset.hostmatchOptionKey || textNode?.__hostmatchOriginalText || selected.dataset.hostmatchOriginalText || selected.textContent);
   }
 
   function selectedChipTextsFromRow(rowId) {
     return Array.from(document.querySelectorAll('#' + rowId + ' .form-chip.selected')).map(el => {
       const textNode = Array.from(el.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-      return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
+      return canonicalizeSystemOption(el.dataset.optionKey || el.dataset.hostmatchOptionKey || textNode?.__hostmatchOriginalText || el.dataset.hostmatchOriginalText || el.textContent);
     });
   }
 
@@ -19460,7 +19460,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function formChipHtml(text, onclick = 'toggleChip(this)') {
 	    const prefix = systemOptionLeadingDecoration(text);
-	    return `<div class="form-chip" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(text))}" data-hostmatch-option-prefix="${escapeHtml(prefix)}" onclick="${onclick}">${localizedSystemOption(text)}</div>`;
+	    const canonical = canonicalizeSystemOption(text);
+	    const optionKey = registerSystemOptionLabel(canonical);
+	    return `<div class="form-chip" ${systemOptionChipAttributes(text)} onclick="${onclick}">${prefix}${localizedSystemOptionByKey(optionKey, canonical)}</div>`;
 	  }
 
 	  function hostChipRowHtml(id, values, onclick = 'toggleChip(this)') {
@@ -20085,7 +20087,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function chipStoredText(chip) {
     const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent || '');
+    return canonicalizeSystemOption(chip.dataset.optionKey || chip.dataset.hostmatchOptionKey || textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent || '');
   }
 
   function setSingleFormChip(rowId, value) {
@@ -24287,7 +24289,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const chip = document.querySelector('#' + id + ' .form-chip.selected');
 	    if (!chip) return shouldSuppressFreshOnboardingFallbackForId(id) ? '' : fallback;
 	    const textNode = Array.from(chip.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-	    return canonicalizeSystemOption(textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent);
+	    return canonicalizeSystemOption(chip.dataset.optionKey || chip.dataset.hostmatchOptionKey || textNode?.__hostmatchOriginalText || chip.dataset.hostmatchOriginalText || chip.textContent);
 	  }
 
 	  function normalizeFreshOnboardingRole(role) {
@@ -24501,6 +24503,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function sharehouseGuestCanonicalChipText(chip, fallback = '') {
 	    if (!chip) return fallback;
+	    const optionKey = chip.dataset.optionKey || chip.dataset.hostmatchOptionKey || '';
+	    if (optionKey) return canonicalizeSystemOption(optionKey);
 	    const original = chip.dataset.hostmatchOriginalText || '';
 	    if (original) return canonicalizeSystemOption(original);
 	    const i18nKey = chip.getAttribute('data-i18n');
@@ -25238,7 +25242,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const handler = onClick || (multi ? 'toggleMultiChip(this)' : 'toggleChip(this)');
 	    return `
 	      <div class="form-chip-row" id="${prefix}-${key}">
-	        ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(option))}" data-hostmatch-option-prefix="${escapeHtml(systemOptionLeadingDecoration(option))}" onclick="${handler}">${localizedSystemOption(option)}</div>`).join('')}
+	        ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option)} onclick="${handler}">${localizedSystemOption(option)}</div>`).join('')}
 	      </div>
 	    `;
 	  }
@@ -25552,7 +25556,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const selectedValues = Array.isArray(selected) ? selected : [selected];
 	    const handler = multi ? 'toggleMultiChip(this)' : 'toggleChip(this)';
 	    return `<div class="form-chip-row" id="${prefix}-${key}">
-	      ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" data-hostmatch-original-text="${escapeHtml(canonicalizeSystemOption(option))}" data-hostmatch-option-prefix="${escapeHtml(systemOptionLeadingDecoration(option))}" onclick="${handler};${extra}">${localizedSystemOption(option)}</div>`).join('')}
+	      ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option)} onclick="${handler};${extra}">${localizedSystemOption(option)}</div>`).join('')}
 	    </div>`;
 	  }
 
@@ -30888,6 +30892,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function normalizeSystemOptionLookupText(value) {
     return String(value || '')
       .replace(/^[^\p{L}\p{N}]+/u, '')
+      .replace(/[_-]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim()
       .toLowerCase();
@@ -30896,6 +30901,57 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function systemOptionLeadingDecoration(value) {
     const match = String(value || '').match(/^[^\p{L}\p{N}]+\s*/u);
     return match ? match[0] : '';
+  }
+
+  const systemOptionLabelRegistry = new Map();
+  const SYSTEM_OPTION_KEY_OVERRIDES = {
+    '選択しない': 'do_not_select',
+    '回答しない': 'prefer_not_to_say',
+    '日常会話': 'conversational'
+  };
+
+  function systemOptionKeyFromLabel(value) {
+    const canonical = canonicalizeSystemOption(value);
+    if (!canonical) return '';
+    if (SYSTEM_OPTION_KEY_OVERRIDES[canonical]) return SYSTEM_OPTION_KEY_OVERRIDES[canonical];
+    const english = translateFreeText(canonical);
+    const keySource = english && english !== canonical ? english : canonical;
+    return normalizeSystemOptionLookupText(keySource)
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+  }
+
+  function registerSystemOptionLabel(value, preferredKey = '') {
+    const canonical = canonicalizeSystemOption(value);
+    if (!canonical) return '';
+    const key = preferredKey || systemOptionKeyFromLabel(canonical);
+    if (!key) return '';
+    if (!systemOptionLabelRegistry.has(key)) {
+      systemOptionLabelRegistry.set(key, {
+        ja: canonical,
+        en: translateFreeText(canonical)
+      });
+    }
+    return key;
+  }
+
+  function localizedSystemOptionByKey(key, fallback = '') {
+    const normalizedKey = String(key || '').trim();
+    if (!normalizedKey) return localizedSystemOption(fallback);
+    const labels = systemOptionLabelRegistry.get(normalizedKey);
+    if (labels) return currentLang === 'ja' ? labels.ja : labels.en;
+    const canonical = canonicalizeSystemOption(normalizedKey);
+    const registeredKey = registerSystemOptionLabel(canonical, normalizedKey);
+    const registeredLabels = systemOptionLabelRegistry.get(registeredKey);
+    if (registeredLabels) return currentLang === 'ja' ? registeredLabels.ja : registeredLabels.en;
+    return currentLang === 'ja' ? canonical : localizeText(canonical);
+  }
+
+  function systemOptionChipAttributes(value) {
+    const canonical = canonicalizeSystemOption(value);
+    const optionKey = registerSystemOptionLabel(canonical);
+    const prefix = systemOptionLeadingDecoration(value);
+    return `data-option-key="${escapeHtml(optionKey)}" data-hostmatch-option-key="${escapeHtml(optionKey)}" data-hostmatch-original-text="${escapeHtml(canonical)}" data-hostmatch-option-prefix="${escapeHtml(prefix)}"`;
   }
 
   const SYSTEM_OPTION_ALIAS_MAP = {
@@ -30976,6 +31032,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function canonicalizeSystemOption(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
+    if (systemOptionLabelRegistry.has(raw)) return systemOptionLabelRegistry.get(raw).ja;
     if (SYSTEM_OPTION_ALIAS_MAP[raw]) return SYSTEM_OPTION_ALIAS_MAP[raw];
     const lookup = normalizeSystemOptionLookupText(raw);
     const aliasEntry = Object.entries(SYSTEM_OPTION_ALIAS_MAP).find(([alias, canonical]) =>
@@ -30995,6 +31052,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function localizedSystemOption(value) {
     const prefix = systemOptionLeadingDecoration(value);
     const canonical = canonicalizeSystemOption(value);
+    registerSystemOptionLabel(canonical);
     const label = currentLang === 'ja' ? canonical : localizeText(canonical);
     return prefix && !String(label || '').startsWith(prefix) ? `${prefix}${label}` : label;
   }
@@ -31012,9 +31070,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const prefix = chip.dataset.hostmatchOptionPrefix || systemOptionLeadingDecoration(textNode?.nodeValue || chip.textContent || '');
       const canonical = canonicalizeSystemOption(raw);
       if (!canonical) return;
+      const optionKey = chip.dataset.optionKey || chip.dataset.hostmatchOptionKey || registerSystemOptionLabel(canonical);
       chip.dataset.hostmatchOriginalText = canonical;
+      chip.dataset.optionKey = optionKey;
+      chip.dataset.hostmatchOptionKey = optionKey;
       chip.dataset.hostmatchOptionPrefix = prefix;
-      const nextText = `${prefix}${currentLang === 'ja' ? canonical : localizeText(canonical)}`;
+      const nextText = `${prefix}${localizedSystemOptionByKey(optionKey, canonical)}`;
       if (textNode) {
         textNode.__hostmatchOriginalText = canonical;
         if (textNode.nodeValue.trim() !== nextText) textNode.nodeValue = nextText;
