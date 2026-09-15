@@ -7235,6 +7235,7 @@
     const serviceType = state.serviceType === 'sharehouse' ? 'sharehouse' : state.serviceType === 'homestay' ? 'homestay' : '';
     const role = normalizedModeChangeRole(state.role);
     const onboardingStep = Math.max(1, Number.parseInt(state.onboardingStep || 1, 10) || 1);
+    const birthDate = /^\d{4}-\d{2}-\d{2}$/.test(String(state.birthDate || '')) ? String(state.birthDate) : '';
     if (screen === 'role-select') {
       const stage = state.stage === 'role-select' && serviceType ? 'role-select' : 'service-select';
       return {
@@ -7247,15 +7248,24 @@
       };
     }
     if (screen === 'onboarding' && serviceType && role === 'guest') {
-      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep, birthDate };
     }
     if (screen === 'host-onboarding' && serviceType === 'homestay' && role === 'host') {
-      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep, birthDate };
     }
     if (screen === 'resident-onboarding' && serviceType === 'sharehouse' && role === 'host') {
-      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep };
+      return { userId: state.userId, screen, stage: 'onboarding', serviceType, role, onboardingStep, birthDate };
     }
     return null;
+  }
+
+  function sameRegistrationFlowPosition(a, b) {
+    return !!a && !!b
+      && a.userId === b.userId
+      && a.screen === b.screen
+      && a.serviceType === b.serviceType
+      && a.role === b.role
+      && a.onboardingStep === b.onboardingStep;
   }
 
   function removeRegistrationFlowStateFromSession() {
@@ -7269,7 +7279,13 @@
   function saveRegistrationFlowState(state) {
     const userId = window._currentUser?.id || '';
     if (!userId) return null;
-    const normalized = normalizeRegistrationFlowState({ ...state, userId }, userId);
+    const previous = normalizeRegistrationFlowState(window._registrationFlowState, userId);
+    const candidate = { ...state, userId };
+    const candidatePosition = normalizeRegistrationFlowState(candidate, userId);
+    if (candidate.birthDate === undefined && previous?.birthDate && sameRegistrationFlowPosition(candidatePosition, previous)) {
+      candidate.birthDate = previous.birthDate;
+    }
+    const normalized = normalizeRegistrationFlowState(candidate, userId);
     if (!normalized) return null;
     window._registrationFlowState = normalized;
     try {
@@ -7305,6 +7321,41 @@
     }
   }
 
+  function registrationFlowBirthDateInputId(state) {
+    if (!state) return '';
+    if (state.screen === 'onboarding' && state.serviceType === 'homestay' && state.role === 'guest') return 'hs-onboard-birth-date';
+    if (state.screen === 'onboarding' && state.serviceType === 'sharehouse' && state.role === 'guest') return 'shg-birth-date';
+    if (state.screen === 'host-onboarding' && state.serviceType === 'homestay' && state.role === 'host') return 'host-ob-birth-date';
+    if (state.screen === 'resident-onboarding' && state.serviceType === 'sharehouse' && state.role === 'host') return 'res-birth-date';
+    return '';
+  }
+
+  function restoreRegistrationFlowBirthDateValue(state) {
+    const inputId = registrationFlowBirthDateInputId(state);
+    if (!inputId || !state?.birthDate) return;
+    if (typeof setInputValueById === 'function') {
+      setInputValueById(inputId, state.birthDate);
+    } else {
+      const input = document.getElementById(inputId);
+      if (input) input.value = state.birthDate;
+    }
+    const input = document.getElementById(inputId);
+    if (input) input.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+
+  function saveRegistrationFlowBirthDateFromInput(input) {
+    if (!input?.id || !window._registrationFlowState) return;
+    const currentState = normalizeRegistrationFlowState(window._registrationFlowState);
+    if (!currentState || registrationFlowBirthDateInputId(currentState) !== input.id) return;
+    saveRegistrationFlowState({ ...currentState, birthDate: input.value || '' });
+  }
+
+  function clearRegistrationFlowBirthDateState() {
+    const currentState = normalizeRegistrationFlowState(window._registrationFlowState);
+    if (!currentState?.birthDate) return;
+    saveRegistrationFlowState({ ...currentState, birthDate: '' });
+  }
+
   async function restoreRegistrationFlowStateForUser(user) {
     const restored = readRegistrationFlowStateFromSession(user);
     if (!restored) return false;
@@ -7318,34 +7369,37 @@
       return true;
     }
     if (restored.screen === 'onboarding') {
-      if (restored.serviceType === 'sharehouse') resetSharehouseGuestOnboardingForFreshStart();
-      else resetHomestayGuestOnboardingForFreshStart();
+      if (restored.serviceType === 'sharehouse') resetSharehouseGuestOnboardingForFreshStart({ preserveRegistrationBirthDate: true });
+      else resetHomestayGuestOnboardingForFreshStart({ preserveRegistrationBirthDate: true });
       currentRole = 'guest';
       currentSearchCat = restored.serviceType;
       window._serviceType = restored.serviceType;
       onboardStep = Math.min(restored.onboardingStep, restored.serviceType === 'sharehouse' ? sharehouseOnboardTotal : homestayOnboardTotal);
       navigate(currentScreen || 'role-select', 'onboarding');
       renderOnboardStep();
+      restoreRegistrationFlowBirthDateValue(restored);
       return true;
     }
     if (restored.screen === 'host-onboarding') {
-      resetHomestayHostOnboardingForFreshStart();
+      resetHomestayHostOnboardingForFreshStart({ preserveRegistrationBirthDate: true });
       currentRole = 'host';
       currentSearchCat = 'homestay';
       window._serviceType = 'homestay';
       hostObStep = Math.min(restored.onboardingStep, hostObTotal);
       navigate(currentScreen || 'role-select', 'host-onboarding');
       renderHostObStep();
+      restoreRegistrationFlowBirthDateValue(restored);
       return true;
     }
     if (restored.screen === 'resident-onboarding') {
-      resetSharehouseHostOnboardingForFreshStart();
+      resetSharehouseHostOnboardingForFreshStart({ preserveRegistrationBirthDate: true });
       currentRole = 'resident';
       currentSearchCat = 'sharehouse';
       window._serviceType = 'sharehouse';
       resStep = Math.min(restored.onboardingStep, resTotal);
       navigate(currentScreen || 'role-select', 'resident-onboarding');
       renderResStep();
+      restoreRegistrationFlowBirthDateValue(restored);
       return true;
     }
     return false;
@@ -19586,6 +19640,38 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return { year: match[1], month: match[2], day: match[3] };
 	  }
 
+	  function birthDatePartsFromDraft(input) {
+	    return {
+	      year: input?.dataset?.hostmatchBirthYear || '',
+	      month: input?.dataset?.hostmatchBirthMonth || '',
+	      day: input?.dataset?.hostmatchBirthDay || ''
+	    };
+	  }
+
+	  function setBirthDateDraftParts(input, parts = {}) {
+	    if (!input) return;
+	    input.dataset.hostmatchBirthYear = parts.year || '';
+	    input.dataset.hostmatchBirthMonth = parts.month || '';
+	    input.dataset.hostmatchBirthDay = parts.day || '';
+	  }
+
+	  function clearBirthDateDraftParts(input) {
+	    if (!input) return;
+	    delete input.dataset.hostmatchBirthYear;
+	    delete input.dataset.hostmatchBirthMonth;
+	    delete input.dataset.hostmatchBirthDay;
+	    delete input.dataset.hostmatchDatePartial;
+	  }
+
+	  function birthDatePartsForRender(input) {
+	    const valueParts = birthDatePartsFromValue(input?.value);
+	    if (valueParts.year && valueParts.month && valueParts.day) {
+	      setBirthDateDraftParts(input, valueParts);
+	      return valueParts;
+	    }
+	    return birthDatePartsFromDraft(input);
+	  }
+
 	  function daysInBirthDateMonth(year, month) {
 	    const y = Number(year);
 	    const m = Number(month);
@@ -19649,7 +19735,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      component.dataset.birthDateFor = input.id;
 	      input.insertAdjacentElement('afterend', component);
 	    }
-	    const parts = birthDatePartsFromValue(input.value);
+	    const parts = birthDatePartsForRender(input);
 	    component.innerHTML = birthDateComponentOrder().map(kind => `
 	      <select class="hostmatch-birth-date-segment" data-birth-part="${kind}" aria-label="${kind}">
 	        ${birthDateSelectOptions(kind, parts[kind], parts)}
@@ -19668,14 +19754,24 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!input || !component) return;
 	    const year = component.querySelector('[data-birth-part="year"]')?.value || '';
 	    const month = component.querySelector('[data-birth-part="month"]')?.value || '';
-	    const day = component.querySelector('[data-birth-part="day"]')?.value || '';
-	    const hasPartialDate = !!(year || month || day);
+	    let day = component.querySelector('[data-birth-part="day"]')?.value || '';
+	    if (day && month && Number(day) > daysInBirthDateMonth(year, month)) {
+	      day = '';
+	    }
+	    const parts = { year, month, day };
+	    const hasPartialDate = !!(parts.year || parts.month || parts.day);
 	    const iso = birthDateIsoFromParts(year, month, day);
+	    setBirthDateDraftParts(input, parts);
 	    input.dataset.hostmatchDatePartial = hasPartialDate && !iso ? 'true' : '';
 	    if (input.value !== iso) {
 	      input.value = iso;
+	      input.dispatchEvent(new Event('input', { bubbles: true }));
+	      input.dispatchEvent(new Event('change', { bubbles: true }));
+	    } else if (iso) {
+	      input.dispatchEvent(new Event('input', { bubbles: true }));
 	      input.dispatchEvent(new Event('change', { bubbles: true }));
 	    }
+	    saveRegistrationFlowBirthDateFromInput(input);
 	    hydrateBirthDateComponent(input);
 	  }
 
@@ -19871,7 +19967,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const el = document.getElementById(id);
     if (el) {
       el.value = value ?? '';
-      if (String(id || '').includes('birth-date')) hydrateBirthDateComponent(el);
+      if (String(id || '').includes('birth-date')) {
+        const parts = birthDatePartsFromValue(el.value);
+        if (parts.year && parts.month && parts.day) {
+          setBirthDateDraftParts(el, parts);
+        } else {
+          clearBirthDateDraftParts(el);
+        }
+        hydrateBirthDateComponent(el);
+      }
     }
   }
 
@@ -24134,6 +24238,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      } else {
 	        el.value = '';
 	      }
+	      if (String(el.id || '').includes('birth-date')) clearBirthDateDraftParts(el);
 	    });
 	    root.querySelectorAll('select').forEach(el => {
 	      el.value = '';
@@ -24166,7 +24271,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (typeof setHomestayOnboardingAvatarMessage === 'function') setHomestayOnboardingAvatarMessage('');
 	  }
 
-	  function resetHomestayGuestOnboardingForFreshStart() {
+	  function resetHomestayGuestOnboardingForFreshStart(options = {}) {
 	    setFreshOnboardingSelection({ housingType: 'homestay', role: 'guest' });
 	    onboardStep = 1;
 	    currentGuestProfileData = null;
@@ -24175,6 +24280,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentGuestProfileData = null;
 	    window._currentHomestayGuestModeProfile = null;
 	    window._currentHomestayGuestPreferences = null;
+	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
 	    resetOnboardingDom('#screen-onboarding');
 	    resetHomestayOnboardingAvatarState();
 	    hideElementsByIds([
@@ -24184,7 +24290,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    ]);
 	  }
 
-	  function resetSharehouseGuestOnboardingForFreshStart() {
+	  function resetSharehouseGuestOnboardingForFreshStart(options = {}) {
 	    setFreshOnboardingSelection({ housingType: 'sharehouse', role: 'guest' });
 	    onboardStep = 1;
 	    currentSharehouseGuestProfile = null;
@@ -24195,6 +24301,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    currentSharehouseGuestDataCacheUserId = '';
 	    window._currentSharehouseGuestProfile = null;
 	    window._currentSharehouseGuestModeProfile = null;
+	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
 	    resetOnboardingDom('#screen-onboarding');
 	    clearPendingHomestayHostAvatar('share-guest-ob');
 	    if (typeof window.renderAvatarElement === 'function') {
@@ -24207,7 +24314,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    ]);
 	  }
 
-	  function resetHomestayHostOnboardingForFreshStart() {
+	  function resetHomestayHostOnboardingForFreshStart(options = {}) {
 	    setFreshOnboardingSelection({ housingType: 'homestay', role: 'host' });
 	    hostObStep = 1;
 	    currentHomestayHostProfile = null;
@@ -24223,6 +24330,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    hostFamilyMembers.splice(0, hostFamilyMembers.length);
 	    hostInternationalStudents.splice(0, hostInternationalStudents.length);
 	    pendingHomestayListingPhotoDeleteIds.clear();
+	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
 	    resetOnboardingDom('#screen-host-onboarding');
 	    clearPendingHomestayHostAvatar('ob');
 	    clearPendingHomestayRoomPhotos('ob');
@@ -24250,7 +24358,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    ]);
 	  }
 
-	  function resetSharehouseHostOnboardingForFreshStart() {
+	  function resetSharehouseHostOnboardingForFreshStart(options = {}) {
 	    setFreshOnboardingSelection({ housingType: 'sharehouse', role: 'host' });
 	    resStep = 1;
 	    currentSharehouseHostProfile = null;
@@ -24264,6 +24372,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentSharehouseHostProfile = null;
 	    window._currentSharehouseHostRoommates = [];
 	    resRoommates = [];
+	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
 	    resetOnboardingDom('#screen-resident-onboarding');
 	    clearPendingHomestayHostAvatar('res');
 	    clearPendingHomestayRoomPhotos('res');
