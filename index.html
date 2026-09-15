@@ -1171,6 +1171,33 @@
       text-align: center;
     }
     .hostmatch-birth-date-segment:focus { border-color: var(--dark); }
+    .hostmatch-native-display-date {
+      position: absolute !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+    }
+    .hostmatch-date-display-control {
+      flex: 1;
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+      background: white;
+      color: var(--dark);
+      font-family: inherit;
+      text-align: center;
+      cursor: pointer;
+      min-width: 0;
+    }
+    .hostmatch-date-display-control.empty { color: var(--light); }
+    .hostmatch-date-display-control:focus { border-color: var(--dark); }
     .form-range-input {
       flex: 1; border: 1.5px solid var(--border); border-radius: 12px;
       padding: 12px 14px; font-size: 15px; outline: none; background: white;
@@ -19788,6 +19815,75 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    root.querySelectorAll('input[id$="birth-date"], input[id*="-birth-date"]').forEach(input => {
 	      hydrateBirthDateComponent(input);
 	    });
+	    hydrateHostmatchDateDisplayComponents(root);
+	  }
+
+	  function shouldUseHostmatchDateDisplay(input) {
+	    if (!input || input.type !== 'date') return false;
+	    const id = String(input.id || '');
+	    if (!id || id.includes('birth-date')) return false;
+	    if (['hmf-start', 'hmf-end', 'shf-start', 'shf-end'].includes(id)) return false;
+	    return /(^|-)stay-(start|end)$/.test(id)
+	      || /(^|-)available-(start|end)$/.test(id)
+	      || /(^|-)move-(in|out)$/.test(id);
+	  }
+
+	  function formatHostmatchDisplayDate(value) {
+	    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+	    if (!match) return '';
+	    return `${match[1].slice(-2)} / ${match[2]} / ${match[3]}`;
+	  }
+
+	  function openHostmatchNativeDatePicker(input) {
+	    if (!input) return;
+	    input.focus({ preventScroll: true });
+	    if (typeof input.showPicker === 'function') {
+	      try {
+	        input.showPicker();
+	        return;
+	      } catch (error) {}
+	    }
+	    input.click();
+	  }
+
+	  function syncHostmatchDateDisplay(input) {
+	    const component = input?.nextElementSibling?.classList?.contains('hostmatch-date-display-control')
+	      ? input.nextElementSibling
+	      : null;
+	    if (!input || !component) return;
+	    const displayValue = formatHostmatchDisplayDate(input.value);
+	    component.textContent = displayValue || 'YY / MM / DD';
+	    component.classList.toggle('empty', !displayValue);
+	  }
+
+	  function hydrateHostmatchDateDisplayComponent(input) {
+	    if (!shouldUseHostmatchDateDisplay(input)) return null;
+	    input.classList.add('hostmatch-native-display-date');
+	    let component = input.nextElementSibling?.classList?.contains('hostmatch-date-display-control')
+	      ? input.nextElementSibling
+	      : null;
+	    if (!component) {
+	      component = document.createElement('button');
+	      component.type = 'button';
+	      component.className = 'hostmatch-date-display-control';
+	      component.dataset.dateDisplayFor = input.id;
+	      if (input.style?.marginTop) component.style.marginTop = input.style.marginTop;
+	      input.insertAdjacentElement('afterend', component);
+	    }
+	    component.onclick = () => openHostmatchNativeDatePicker(input);
+	    if (!input.dataset.hostmatchDateDisplayBound) {
+	      input.addEventListener('change', () => syncHostmatchDateDisplay(input));
+	      input.addEventListener('input', () => syncHostmatchDateDisplay(input));
+	      input.dataset.hostmatchDateDisplayBound = 'true';
+	    }
+	    syncHostmatchDateDisplay(input);
+	    return component;
+	  }
+
+	  function hydrateHostmatchDateDisplayComponents(root = document) {
+	    root.querySelectorAll('input[type="date"]').forEach(input => {
+	      hydrateHostmatchDateDisplayComponent(input);
+	    });
 	  }
 
 	  function updateProfileAgeFromBirthDate() {
@@ -19876,7 +19972,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!el) return;
 	    const focusTarget = el.classList?.contains('hostmatch-native-birth-date')
 	      ? el.nextElementSibling?.querySelector('.hostmatch-birth-date-segment')
-	      : el;
+	      : el.classList?.contains('hostmatch-native-display-date')
+	        ? el.nextElementSibling
+	        : el;
 	    (focusTarget || el).scrollIntoView({ behavior: 'smooth', block: 'center' });
 	    if (typeof focusTarget?.focus === 'function') {
 	      setTimeout(() => focusTarget.focus({ preventScroll: true }), 180);
@@ -19975,6 +20073,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           clearBirthDateDraftParts(el);
         }
         hydrateBirthDateComponent(el);
+      } else if (shouldUseHostmatchDateDisplay(el)) {
+        hydrateHostmatchDateDisplayComponent(el);
       }
     }
   }
@@ -32962,6 +33062,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const guestEnd = document.getElementById('guest-stay-end');
 	    if (profileStart?.value && guestStart) guestStart.value = profileStart.value;
 	    if (profileEnd?.value && guestEnd) guestEnd.value = profileEnd.value;
+	    hydrateHostmatchDateDisplayComponent(guestStart);
+	    hydrateHostmatchDateDisplayComponent(guestEnd);
 	  }
 
 		  function getHostAvailability(hostId) {
