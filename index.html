@@ -2939,15 +2939,16 @@
 
 <div id="app-loading">
   <div class="loading-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
-  <div class="loading-text" data-i18n="loading">読み込み中...</div>
+  <div class="loading-text" data-i18n="loading">Loading...</div>
 </div>
 <script>
   (function applyInitialStoredLanguage() {
     try {
-      var storedLang = localStorage.getItem('hostmatch_lang') === 'en' ? 'en' : 'ja';
-      document.documentElement.lang = storedLang;
+      var storedLang = localStorage.getItem('hostmatch_lang');
+      var normalizedLang = storedLang === 'en' ? 'en' : storedLang === 'ja' ? 'ja' : '';
+      if (normalizedLang) document.documentElement.lang = normalizedLang;
       var loadingText = document.querySelector('#app-loading .loading-text');
-      if (loadingText) loadingText.textContent = storedLang === 'en' ? 'Loading...' : '読み込み中...';
+      if (loadingText && normalizedLang) loadingText.textContent = normalizedLang === 'en' ? 'Loading...' : '読み込み中...';
     } catch (error) {}
   })();
 </script>
@@ -5296,13 +5297,13 @@
       <img id="room-photo-crop-image" alt="Room photo preview" draggable="false" style="position:absolute;left:50%;top:50%;user-select:none;-webkit-user-drag:none;max-width:none;max-height:none;" />
     </div>
     <div style="margin-top:14px;">
-      <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--light);font-weight:800;margin-bottom:6px;"><span>拡大率</span><span id="room-photo-crop-zoom-label">100%</span></div>
-      <input id="room-photo-crop-zoom" type="range" min="1" max="3" step="0.01" value="1" oninput="updateHomestayRoomPhotoCropZoom(this.value)" style="width:100%;" />
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--light);font-weight:800;margin-bottom:6px;"><span id="room-photo-crop-zoom-text">拡大率</span><span id="room-photo-crop-zoom-label">100%</span></div>
+      <input id="room-photo-crop-zoom" type="range" min="1" max="3" step="0.01" value="1" style="width:100%;" />
     </div>
     <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;">
-      <button type="button" onclick="resetHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">リセット</button>
-      <button type="button" onclick="cancelHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">キャンセル</button>
-      <button type="button" onclick="confirmHomestayRoomPhotoCrop()" style="flex:1;min-width:150px;background:var(--primary);color:white;border:none;border-radius:12px;padding:12px;font-weight:900;cursor:pointer;">この表示で決定</button>
+      <button id="room-photo-crop-reset-btn" type="button" onclick="resetHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">リセット</button>
+      <button id="room-photo-crop-cancel-btn" type="button" onclick="cancelHomestayRoomPhotoCrop()" style="flex:1;min-width:130px;background:white;border:1.5px solid var(--border);border-radius:12px;padding:12px;font-weight:800;cursor:pointer;">キャンセル</button>
+      <button id="room-photo-crop-confirm-btn" type="button" onclick="confirmHomestayRoomPhotoCrop()" style="flex:1;min-width:150px;background:var(--primary);color:white;border:none;border-radius:12px;padding:12px;font-weight:900;cursor:pointer;">この表示で決定</button>
     </div>
   </div>
 </div>
@@ -7023,7 +7024,12 @@
       return data;
     } catch (error) {
       console.warn('Supabase profiles fetch error:', error);
-      if (window._currentUser?.id === userId) applyCurrentUserProfile(user, null, options);
+      if (window._currentUser?.id === userId) {
+        if (typeof window.applyLanguagePreferenceFromProfile === 'function') {
+          window.applyLanguagePreferenceFromProfile(null, user);
+        }
+        applyCurrentUserProfile(user, null, options);
+      }
       return null;
     }
   }
@@ -20463,9 +20469,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    urls[key] = URL.createObjectURL(file);
 	    loadHomestayHostAvatarNaturalSize(scope);
 	    renderHomestayHostAvatarPreview(scope);
-	    if (info.service === 'sharehouse' || info.service === 'sharehouse-guest' || info.service === 'homestay-guest') {
-	      window.setTimeout(() => openHomestayHostAvatarCropEditor(scope, { discardAvatarOnCancel: true }), 0);
-	    }
+	    window.setTimeout(() => openHomestayHostAvatarCropEditor(scope, { discardAvatarOnCancel: true }), 0);
 	  }
 
 	  async function saveHomestayHostAvatarToSupabase(scope) {
@@ -21946,12 +21950,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      frame.style.aspectRatio = '16 / 10';
 	      frame.style.borderRadius = '14px';
 	      frame.style.background = '#111827';
-	      frame.style.touchAction = 'none';
-	      frame.onpointerdown = startHomestayRoomPhotoCropDrag;
-	      frame.onpointermove = moveHomestayRoomPhotoCropDrag;
-	      frame.onpointerup = endHomestayRoomPhotoCropDrag;
-	      frame.onpointercancel = endHomestayRoomPhotoCropDrag;
 	    }
+	    localizeHomestayRoomPhotoCropModal();
+	    bindHomestayRoomPhotoCropEditorEvents();
 	    renderHomestayRoomPhotoCropEditorImage();
 	    if (modal) modal.style.display = 'flex';
 	  }
@@ -22007,14 +22008,50 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      frame.style.aspectRatio = '1 / 1';
 	      frame.style.borderRadius = '50%';
 	      frame.style.background = 'var(--bg)';
+	    }
+	    localizeHomestayRoomPhotoCropModal();
+	    bindHomestayRoomPhotoCropEditorEvents();
+	    renderHomestayRoomPhotoCropEditorImage();
+	    if (modal) modal.style.display = 'flex';
+	  }
+
+	  function localizeHomestayRoomPhotoCropModal() {
+	    const state = homestayRoomPhotoCropEditorState;
+	    const title = document.getElementById('room-photo-crop-title');
+	    const subtitle = document.getElementById('room-photo-crop-subtitle');
+	    const zoomText = document.getElementById('room-photo-crop-zoom-text');
+	    const resetBtn = document.getElementById('room-photo-crop-reset-btn');
+	    const cancelBtn = document.getElementById('room-photo-crop-cancel-btn');
+	    const confirmBtn = document.getElementById('room-photo-crop-confirm-btn');
+	    if (title && state) {
+	      title.textContent = state.kind === 'avatar'
+	        ? (currentLang === 'en' ? 'Adjust profile photo framing' : 'プロフィール写真の表示範囲を調整')
+	        : (currentLang === 'en' ? 'Adjust photo framing' : '写真の表示範囲を調整');
+	    }
+	    if (subtitle && state) {
+	      subtitle.textContent = state.kind === 'avatar'
+	        ? (currentLang === 'en' ? 'Adjust the area shown as your circular profile photo.' : '丸いプロフィール画像として見える範囲を調整できます')
+	        : (currentLang === 'en' ? 'Drag to adjust the position.' : 'ドラッグして位置を調整できます');
+	    }
+	    if (zoomText) zoomText.textContent = currentLang === 'en' ? 'Zoom' : '拡大率';
+	    if (resetBtn) resetBtn.textContent = currentLang === 'en' ? 'Reset' : 'リセット';
+	    if (cancelBtn) cancelBtn.textContent = currentLang === 'en' ? 'Cancel' : 'キャンセル';
+	    if (confirmBtn) confirmBtn.textContent = currentLang === 'en' ? 'Apply' : 'この表示で決定';
+	  }
+
+	  function bindHomestayRoomPhotoCropEditorEvents() {
+	    const frame = document.getElementById('room-photo-crop-frame');
+	    const zoom = document.getElementById('room-photo-crop-zoom');
+	    if (frame) {
 	      frame.style.touchAction = 'none';
 	      frame.onpointerdown = startHomestayRoomPhotoCropDrag;
 	      frame.onpointermove = moveHomestayRoomPhotoCropDrag;
 	      frame.onpointerup = endHomestayRoomPhotoCropDrag;
 	      frame.onpointercancel = endHomestayRoomPhotoCropDrag;
 	    }
-	    renderHomestayRoomPhotoCropEditorImage();
-	    if (modal) modal.style.display = 'flex';
+	    if (zoom) {
+	      zoom.oninput = event => updateHomestayRoomPhotoCropZoom(event.currentTarget.value);
+	    }
 	  }
 
 	  function cropAspectForEditorState(state = homestayRoomPhotoCropEditorState) {
@@ -25177,7 +25214,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return `
 	      <div class="form-range-row">
 	        <input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" />
-	        <input class="form-input" id="${prefix}-age" type="number" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('年齢'))}" readonly />
+	        <input class="form-input" id="${prefix}-age" type="number" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly />
 	      </div>
 	    `;
 	  }
@@ -30263,6 +30300,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '自分の簡単な情報':'Basic Information',
     '生年月日':'Date of Birth',
     '生年月日 / 年齢':'Date of Birth / Age',
+    '生年月日から自動計算':'Calculated automatically from your date of birth',
     '希望エリア・期間・予算':'Preferred Area, Period, and Budget',
     '滞在開始日':'Stay Start Date',
     '滞在終了日':'Stay End Date',
@@ -30621,6 +30659,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     applyAutoTextTranslations();
     updateSignupConsentLabels();
     updateSignupConsentState();
+    localizeHomestayRoomPhotoCropModal();
+    bindHomestayRoomPhotoCropEditorEvents();
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
     const legalModal = document.getElementById('legal-modal');
@@ -30702,12 +30742,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const stored = readStoredLanguagePreference();
     const profileLang = normalizeLanguagePreference(profile?.preferred_language);
     const metadataLang = normalizeLanguagePreference(user?.user_metadata?.preferred_language);
-    const nextLang = stored || profileLang || metadataLang || 'ja';
+    const profileLooksLikeDefaultJa = !stored && profileLang === 'ja' && metadataLang === 'en';
+    const nextLang = stored || (profileLooksLikeDefaultJa ? metadataLang : profileLang) || metadataLang || 'ja';
     if (nextLang !== currentLang) {
       setLanguage(nextLang, { saveProfile: false });
     } else if (!stored) {
       writeStoredLanguagePreference(nextLang);
     }
+    if (profileLooksLikeDefaultJa) saveCurrentUserPreferredLanguage(nextLang);
     return nextLang;
   }
 
