@@ -31092,6 +31092,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function applyAutoTextTranslations() {
     if (autoTranslating || !document.body) return;
     autoTranslating = true;
+    const canonicalAutoTextSource = value => {
+      const raw = String(value || '');
+      const trimmed = raw.trim();
+      if (!trimmed) return raw;
+      if (autoTextTranslations[trimmed]) return trimmed;
+      const lookup = normalizeSystemOptionLookupText(trimmed);
+      const source = Object.keys(autoTextTranslations).find(key => {
+        const translated = translateFreeText(key);
+        return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
+      });
+      return source || raw;
+    };
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
@@ -31103,7 +31115,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     while (walker.nextNode()) textNodes.push(walker.currentNode);
 
     textNodes.forEach(node => {
-      if (!node.__hostmatchOriginalText) node.__hostmatchOriginalText = node.nodeValue;
+      node.__hostmatchOriginalText = canonicalAutoTextSource(node.__hostmatchOriginalText || node.nodeValue);
       const nextValue = currentLang === 'ja'
         ? node.__hostmatchOriginalText
         : translateFreeText(node.__hostmatchOriginalText);
@@ -31112,7 +31124,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
     document.querySelectorAll('[placeholder]').forEach(el => {
       if (shouldSkipAutoTranslate(el)) return;
-      if (!el.dataset.hostmatchOriginalPlaceholder) el.dataset.hostmatchOriginalPlaceholder = el.getAttribute('placeholder') || '';
+      el.dataset.hostmatchOriginalPlaceholder = canonicalAutoTextSource(el.dataset.hostmatchOriginalPlaceholder || el.getAttribute('placeholder') || '');
       const nextPlaceholder = currentLang === 'ja'
         ? el.dataset.hostmatchOriginalPlaceholder
         : translateFreeText(el.dataset.hostmatchOriginalPlaceholder);
@@ -31126,13 +31138,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     updateSharehouseSortLanguage();
     document.querySelectorAll('.hm-filter-shell').forEach(root => {
       root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
-        if (!el.dataset.hmfOriginalText) el.dataset.hmfOriginalText = el.textContent.trim();
+        el.dataset.hmfOriginalText = canonicalHostmatchUiText(el.dataset.hmfOriginalText || el.textContent.trim());
         const nextText = currentLang === 'ja' ? el.dataset.hmfOriginalText : localizeText(el.dataset.hmfOriginalText);
         if (el.textContent.trim() !== nextText) el.textContent = nextText;
       });
       root.querySelectorAll('.hm-filter-toggle').forEach(label => {
         const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
-        if (!label.dataset.hmfOriginalText) label.dataset.hmfOriginalText = textNode ? textNode.nodeValue.trim() : '';
+        label.dataset.hmfOriginalText = canonicalHostmatchUiText(label.dataset.hmfOriginalText || (textNode ? textNode.nodeValue.trim() : ''));
         if (textNode) {
           const nextText = currentLang === 'ja' ? label.dataset.hmfOriginalText : localizeText(label.dataset.hmfOriginalText);
           textNode.nodeValue = ` ${nextText}`;
@@ -31175,6 +31187,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (autoTranslating) return;
     clearTimeout(autoTranslateTimer);
     autoTranslateTimer = setTimeout(applyAutoTextTranslations, 0);
+  }
+
+  function canonicalHostmatchUiText(value) {
+    const raw = String(value || '');
+    const trimmed = raw.trim();
+    if (!trimmed) return raw;
+    if (autoTextTranslations[trimmed]) return trimmed;
+    const lookup = normalizeSystemOptionLookupText(trimmed);
+    const source = Object.keys(autoTextTranslations).find(key => {
+      const translated = translateFreeText(key);
+      return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
+    });
+    return source || raw;
   }
 
   function applyLang() {
@@ -31253,11 +31278,29 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      }
 	    }
 	    if (currentScreen === 'onboarding') renderOnboardStep();
-	    if (currentScreen === 'profile') updateGuestProfileMode();
-	    if (currentScreen === 'lifestyle') updateGuestLifestyleMode();
+	    if (currentScreen === 'profile') {
+	      hydrateBirthDateComponents(document.getElementById('screen-profile') || document);
+	      if (typeof applyGuestModeProfileIdentityToCurrentUi === 'function' && typeof currentGuestModeProfileCache === 'function') {
+	        const profileHousingType = serviceModeForCurrentContext() === 'sharehouse' ? 'sharehouse' : 'homestay';
+	        applyGuestModeProfileIdentityToCurrentUi(profileHousingType, currentGuestModeProfileCache(profileHousingType));
+	      }
+	    }
+	    if (currentScreen === 'lifestyle') {
+	      hydrateBirthDateComponents(document.getElementById('screen-lifestyle') || document);
+	    }
 	    if (currentScreen === 'host-calendar') renderHostCalendar();
 	    if (currentScreen === 'host-dashboard') updateHostDashboardListing();
-	    if (currentScreen === 'host-profile' || currentScreen === 'host-onboarding') {
+	    if (currentScreen === 'host-profile') {
+	      renderHostFamilyEditors();
+	      renderHostStudentEditors();
+	      if (serviceModeForCurrentContext() === 'sharehouse') {
+	        resRenderRoommateList();
+	        renderHomestayHostAvatarPreview('share-profile');
+	        renderHomestayHostRoomPhotoPreview('share-profile');
+	      }
+	      hydrateBirthDateComponents(document.getElementById('screen-host-profile') || document);
+	    }
+	    if (currentScreen === 'host-onboarding') {
 	      renderHostFamilyEditors();
 	      renderHostStudentEditors();
 	      renderHostObStep();
@@ -31270,6 +31313,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
 	    updateListingActionButtons();
 	    applyAutoTextTranslations();
+	    relocalizeSystemOptionControls();
+	    hydrateBirthDateComponents();
 	  }
 
   async function saveCurrentUserPreferredLanguage(lang) {
