@@ -2939,7 +2939,7 @@
 
 <div id="app-loading">
   <div class="loading-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
-  <div class="loading-text">読み込み中...</div>
+  <div class="loading-text" data-i18n="loading">読み込み中...</div>
 </div>
 
 <!-- ==================== ① 検索画面 ==================== -->
@@ -6908,7 +6908,10 @@
   window._fbServerTimestamp = serverTimestamp;
 
   function fallbackAuthDisplayName(user) {
-    return user?.user_metadata?.display_name || user?.user_metadata?.name || user?.email?.split('@')[0] || 'ゲスト';
+    return user?.user_metadata?.display_name
+      || user?.user_metadata?.name
+      || user?.email?.split('@')[0]
+      || (typeof currentLang !== 'undefined' && currentLang === 'en' ? 'Guest' : 'ゲスト');
   }
 
   function identityLoadingLabel() {
@@ -15155,14 +15158,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     header.querySelector('.chat-subtitle').textContent = applicant.age + ' · ' + applicant.nationality;
 
     document.getElementById('chat-banner-name').textContent = applicant.name;
-    document.querySelector('.chat-banner-sub').textContent = service === 'sharehouse' ? localizeText('シェアハウスゲスト詳細はこちら') : '応募者詳細はこちら';
+    document.querySelector('.chat-banner-sub').textContent = service === 'sharehouse' ? localizeText('シェアハウスゲスト詳細はこちら') : localizeText('応募者詳細はこちら');
 
     const messages = applicant.chatMessages || [
       { from: 'them', text: '入居について相談したいです。よろしくお願いします。', time: '14:32' },
       { from: 'me', text: 'ご連絡ありがとうございます。希望時期を教えてください。', time: '14:40' }
     ];
     const area = document.querySelector('.chat-messages');
-    area.innerHTML = '<div class="date-label">会話履歴</div>' +
+    area.innerHTML = `<div class="date-label">${currentLang === 'en' ? 'Conversation history' : '会話履歴'}</div>` +
       messages.map(m => `
         <div class="bubble-wrap ${m.from}">
           <div class="bubble ${m.from}">${m.text}</div>
@@ -15481,7 +15484,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (calMode === 'from') {
       selectedFrom = dateStr;
       selectedTo = null;
-      document.getElementById('date-to-val').textContent = '日付を追加';
+      document.getElementById('date-to-val').textContent = currentLang === 'en' ? 'Add date' : '日付を追加';
       document.getElementById('date-to-val').classList.add('placeholder');
       document.getElementById('date-to-btn').classList.remove('selected');
     } else {
@@ -15492,7 +15495,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       }
     }
     const d = new Date(dateStr + 'T00:00:00');
-    const label = (d.getMonth()+1) + '月' + d.getDate() + '日';
+    const label = currentLang === 'en'
+      ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : (d.getMonth()+1) + '月' + d.getDate() + '日';
     const key = calMode === 'from' ? 'from' : 'to';
     const el = document.getElementById('date-' + key + '-val');
     el.textContent = label;
@@ -15524,14 +15529,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const pMax = document.getElementById('price-max').value;
 
     const pillMain = document.getElementById('pill-main');
-    if (pillMain) pillMain.textContent = dest || 'どこでも';
+    if (pillMain) pillMain.textContent = dest || (currentLang === 'en' ? 'Anywhere' : 'どこでも');
     const parts = [];
-    if (from !== '日付を追加') parts.push(from + (to !== '日付を追加' ? ' – ' + to : ''));
+    const datePlaceholder = currentLang === 'en' ? 'Add date' : '日付を追加';
+    if (from !== datePlaceholder) parts.push(from + (to !== datePlaceholder ? ' – ' + to : ''));
     if (pMin || pMax) parts.push('$' + (pMin||'0') + '–$' + (pMax||'∞'));
     const pillSub = document.getElementById('pill-sub');
-    if (pillSub) pillSub.textContent = parts.length ? parts.join(' · ') : '日付・予算・条件を設定済み';
+    if (pillSub) pillSub.textContent = parts.length ? parts.join(' · ') : (currentLang === 'en' ? 'Dates, budget, and conditions set' : '日付・予算・条件を設定済み');
 
-    const label = (dest || 'アメリカ全土') + ' · 124件';
+    const label = (dest || (currentLang === 'en' ? 'All areas' : 'アメリカ全土')) + (currentLang === 'en' ? ' · 124 results' : ' · 124件');
     document.querySelector('.map-search-chip').textContent = '📍 ' + label;
 
     document.getElementById('search-modal-overlay').classList.remove('open');
@@ -15545,7 +15551,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     filterSuggests('');
     ['from','to'].forEach(t => {
       const el = document.getElementById('date-' + t + '-val');
-      el.textContent = '日付を追加'; el.classList.add('placeholder');
+      el.textContent = currentLang === 'en' ? 'Add date' : '日付を追加'; el.classList.add('placeholder');
       document.getElementById('date-' + t + '-btn').classList.remove('selected');
     });
     document.getElementById('price-min').value = '';
@@ -15554,8 +15560,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     document.getElementById('t4').classList.add('on');
     const pillMain = document.getElementById('pill-main');
     const pillSub = document.getElementById('pill-sub');
-    if (pillMain) pillMain.textContent = '検索を開始';
-    if (pillSub) pillSub.textContent = '目的地・日付・条件を選ぶ';
+    if (pillMain) pillMain.textContent = currentLang === 'en' ? 'Start search' : '検索を開始';
+    if (pillSub) pillSub.textContent = currentLang === 'en' ? 'Choose destination, dates, and preferences' : '目的地・日付・条件を選ぶ';
   }
 
   const HOMESTAY_FILTER_HOST_META = {
@@ -21906,8 +21912,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const subtitle = document.getElementById('room-photo-crop-subtitle');
 	    const image = document.getElementById('room-photo-crop-image');
 	    const frame = document.getElementById('room-photo-crop-frame');
-	    if (title) title.textContent = '写真の表示範囲を調整';
-	    if (subtitle) subtitle.textContent = 'ドラッグして位置を調整できます';
+	    if (title) title.textContent = currentLang === 'en' ? 'Adjust photo framing' : '写真の表示範囲を調整';
+	    if (subtitle) subtitle.textContent = currentLang === 'en' ? 'Drag to adjust the position.' : 'ドラッグして位置を調整できます';
 	    if (image) {
 	      image.onload = () => {
 	        item.crop = {
@@ -21966,8 +21972,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const subtitle = document.getElementById('room-photo-crop-subtitle');
 	    const image = document.getElementById('room-photo-crop-image');
 	    const frame = document.getElementById('room-photo-crop-frame');
-	    if (title) title.textContent = 'プロフィール写真の表示範囲を調整';
-	    if (subtitle) subtitle.textContent = '丸いプロフィール画像として見える範囲を調整できます';
+	    if (title) title.textContent = currentLang === 'en' ? 'Adjust profile photo framing' : 'プロフィール写真の表示範囲を調整';
+	    if (subtitle) subtitle.textContent = currentLang === 'en' ? 'Adjust the area shown as your circular profile photo.' : '丸いプロフィール画像として見える範囲を調整できます';
 	    if (image) {
 	      image.onload = () => {
 	        crops[key] = {
@@ -27006,13 +27012,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function showLoginError(msg) {
     const el = document.getElementById('login-error');
     el.classList.remove('success');
+    delete el.dataset.i18nMessage;
     el.textContent = msg;
   }
 
   function showLoginSuccess(msg) {
     const el = document.getElementById('login-error');
     el.classList.add('success');
+    delete el.dataset.i18nMessage;
     el.textContent = msg;
+  }
+
+  function showLoginMessageKey(key, isSuccess = false) {
+    const el = document.getElementById('login-error');
+    el.classList.toggle('success', !!isSuccess);
+    el.dataset.i18nMessage = key;
+    el.textContent = t(key);
   }
 
   function setAuthMessage(id, msg, isSuccess = false) {
@@ -27181,9 +27196,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         });
         if (error) throw error;
         if (!data.session) {
-          showLoginError(currentLang === 'ja'
-            ? '確認メールを送信しました。メール内のリンクを開いて登録を完了してください。'
-            : 'A confirmation email has been sent. Please open the link in the email to complete registration.');
+          showLoginMessageKey('signup_confirmation_sent');
           return;
         }
         window._currentSession = data.session;
@@ -27429,7 +27442,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       name_label:'お名前', name_placeholder:'山田 太郎', email_label:'メールアドレス',
       password_label:'パスワード', password_placeholder:'6文字以上',
       no_account:'アカウントをお持ちでない方は', already_have_account:'すでにアカウントをお持ちの方は',
-      processing:'処理中...', login_missing:'メールアドレスとパスワードを入力してください',
+      processing:'処理中...', loading:'読み込み中...', login_missing:'メールアドレスとパスワードを入力してください',
+      signup_confirmation_sent:'確認メールを送信しました。メール内のリンクを開いて登録を完了してください。',
       google_preparing:'Googleログインは現在準備中です',
       brand:'HostMatch', service_select_sub:'あなたの目的を教えてください',
       svc_homestay_guest:'ホームステイ先を探す', svc_homestay_guest_sub:'ホストファミリーと一緒に暮らす',
@@ -27543,7 +27557,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       name_label:'Name', name_placeholder:'Taro Yamada', email_label:'Email Address',
       password_label:'Password', password_placeholder:'At least 6 characters',
       no_account:"Don't have an account?", already_have_account:'Already have an account?',
-      processing:'Processing...', login_missing:'Please enter your email address and password',
+      processing:'Processing...', loading:'Loading...', login_missing:'Please enter your email address and password',
+      signup_confirmation_sent:'We sent you a confirmation email. Please open the link in the email to complete your registration.',
       google_preparing:'Google login is currently being prepared',
       brand:'HostMatch', service_select_sub:'What would you like to do?',
       svc_homestay_guest:'Find a Homestay', svc_homestay_guest_sub:'Live with a host family',
@@ -30549,6 +30564,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const key = el.getAttribute('data-i18n-placeholder');
       if (i18n[currentLang][key] || currentLang === 'en') el.placeholder = t(key);
     });
+    document.querySelectorAll('[data-i18n-message]').forEach(el => {
+      const key = el.getAttribute('data-i18n-message');
+      if (i18n[currentLang][key] || currentLang === 'en') el.textContent = t(key);
+    });
     document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.langOption === currentLang);
       if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
@@ -32755,7 +32774,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合う掲載が見つかりませんでした。' : 'No listings matched your preferences.'}</div>`;
       return;
       if (titleEl) titleEl.textContent = t('condition_comparison_results');
-      if (subtitleEl) subtitleEl.textContent = 'あなたのライフスタイルに合うシェアハウス · 3件';
+      if (subtitleEl) subtitleEl.textContent = currentLang === 'en' ? 'Sharehouses matching your lifestyle · 3 listings' : 'あなたのライフスタイルに合うシェアハウス · 3件';
       listEl.innerHTML = `
         <!-- sh1 -->
         <div class="match-card" onclick="openSharehouseDetail('sh1')">
