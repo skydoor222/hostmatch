@@ -19458,15 +19458,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return Object.fromEntries(Object.entries(payload).filter(([, value]) => value !== undefined));
 	  }
 
-	  function formChipHtml(text, onclick = 'toggleChip(this)') {
+	  function formChipHtml(text, onclick = 'toggleChip(this)', contextId = '') {
 	    const prefix = systemOptionLeadingDecoration(text);
 	    const canonical = canonicalizeSystemOption(text);
-	    const optionKey = registerSystemOptionLabel(canonical);
-	    return `<div class="form-chip" ${systemOptionChipAttributes(text)} onclick="${onclick}">${prefix}${localizedSystemOptionByKey(optionKey, canonical)}</div>`;
+	    const optionKey = systemOptionKeyForContext(contextId, canonical);
+	    registerSystemOptionLabel(canonical, optionKey);
+	    return `<div class="form-chip" ${systemOptionChipAttributes(text, contextId)} onclick="${onclick}">${prefix}${localizedSystemOptionByKey(optionKey, canonical)}</div>`;
 	  }
 
 	  function hostChipRowHtml(id, values, onclick = 'toggleChip(this)') {
-	    return `<div class="form-chip-row" id="${id}">${values.map(value => formChipHtml(value, onclick)).join('')}</div>`;
+	    return `<div class="form-chip-row" id="${id}">${values.map(value => formChipHtml(value, onclick, id)).join('')}</div>`;
 	  }
 
 	  function hostAvatarUploadBoxHtml(scope) {
@@ -25240,9 +25241,15 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function shChipRow(prefix, key, options, selected, multi = false, onClick = '') {
 	    const selectedValues = Array.isArray(selected) ? selected : [selected];
 	    const handler = onClick || (multi ? 'toggleMultiChip(this)' : 'toggleChip(this)');
+	    const rowId = `${prefix}-${key}`;
 	    return `
-	      <div class="form-chip-row" id="${prefix}-${key}">
-	        ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option)} onclick="${handler}">${localizedSystemOption(option)}</div>`).join('')}
+	      <div class="form-chip-row" id="${rowId}">
+	        ${options.map(option => {
+	          const canonical = canonicalizeSystemOption(option);
+	          const optionKey = systemOptionKeyForContext(rowId, canonical);
+	          registerSystemOptionLabel(canonical, optionKey);
+	          return `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option, rowId)} onclick="${handler}">${systemOptionLeadingDecoration(option)}${localizedSystemOptionByKey(optionKey, canonical)}</div>`;
+	        }).join('')}
 	      </div>
 	    `;
 	  }
@@ -25555,8 +25562,14 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function shHostChipRow(prefix, key, options, selected, multi = false, extra = '') {
 	    const selectedValues = Array.isArray(selected) ? selected : [selected];
 	    const handler = multi ? 'toggleMultiChip(this)' : 'toggleChip(this)';
-	    return `<div class="form-chip-row" id="${prefix}-${key}">
-	      ${options.map(option => `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option)} onclick="${handler};${extra}">${localizedSystemOption(option)}</div>`).join('')}
+	    const rowId = `${prefix}-${key}`;
+	    return `<div class="form-chip-row" id="${rowId}">
+	      ${options.map(option => {
+	        const canonical = canonicalizeSystemOption(option);
+	        const optionKey = systemOptionKeyForContext(rowId, canonical);
+	        registerSystemOptionLabel(canonical, optionKey);
+	        return `<div class="form-chip ${selectedValues.some(value => systemOptionsEqual(value, option)) ? 'selected' : ''}" ${systemOptionChipAttributes(option, rowId)} onclick="${handler};${extra}">${systemOptionLeadingDecoration(option)}${localizedSystemOptionByKey(optionKey, canonical)}</div>`;
+	      }).join('')}
 	    </div>`;
 	  }
 
@@ -30911,17 +30924,222 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return match ? match[0] : '';
   }
 
+  const SYSTEM_OPTIONS = {
+    female: { ja: '女性', en: 'Female', aliases: ['女性', 'Female'] },
+    male: { ja: '男性', en: 'Male', aliases: ['男性', 'Male'] },
+    do_not_select: { ja: '選択しない', en: 'Prefer not to say', aliases: ['選択しない', 'Do not select', 'Prefer not to say'] },
+    prefer_not_to_say: { ja: '回答しない', en: 'Prefer not to say', aliases: ['回答しない', 'Prefer not to say'] },
+    other: { ja: 'その他', en: 'Other', aliases: ['その他', 'Other'] },
+    buddhism: { ja: '仏教', en: 'Buddhism', aliases: ['仏教', 'Buddhism'] },
+    christianity: { ja: 'キリスト教', en: 'Christianity', aliases: ['キリスト教', 'Christianity'] },
+    islam: { ja: 'イスラム教', en: 'Islam', aliases: ['イスラム教', 'Islam'] },
+    hinduism: { ja: 'ヒンドゥー教', en: 'Hinduism', aliases: ['ヒンドゥー教', 'Hinduism'] },
+    judaism: { ja: 'ユダヤ教', en: 'Judaism', aliases: ['ユダヤ教', 'Judaism'] },
+    no_religion: { ja: '無宗教', en: 'No religion', aliases: ['無宗教', 'No religion'] },
+    beginner: { ja: '初心者', en: 'Beginner', aliases: ['初心者', 'Beginner'] },
+    conversational: { ja: '日常会話', en: 'Conversational', aliases: ['日常会話', 'Daily conversation', 'Conversational'] },
+    business: { ja: 'ビジネスレベル', en: 'Business level', aliases: ['ビジネスレベル', 'Business level'] },
+    native: { ja: 'ネイティブレベル', en: 'Native level', aliases: ['ネイティブレベル', 'Native level'] },
+    english: { ja: '英語', en: 'English', aliases: ['英語', 'English'] },
+    japanese: { ja: '日本語', en: 'Japanese', aliases: ['日本語', 'Japanese'] },
+    chinese: { ja: '中国語', en: 'Chinese', aliases: ['中国語', 'Chinese'] },
+    korean: { ja: '韓国語', en: 'Korean', aliases: ['韓国語', 'Korean'] },
+    spanish: { ja: 'スペイン語', en: 'Spanish', aliases: ['スペイン語', 'Spanish'] },
+    french: { ja: 'フランス語', en: 'French', aliases: ['フランス語', 'French'] },
+    italian: { ja: 'イタリア語', en: 'Italian', aliases: ['イタリア語', 'Italian'] },
+    german: { ja: 'ドイツ語', en: 'German', aliases: ['ドイツ語', 'German'] },
+    student: { ja: '学生', en: 'Student', aliases: ['学生', 'Student'] },
+    working_holiday: { ja: 'ワーホリ', en: 'Working Holiday', aliases: ['ワーホリ', 'Working holiday', 'Working Holiday'] },
+    working_professional: { ja: '社会人', en: 'Working Professional', aliases: ['社会人', 'Worker', 'Full-time worker', 'Working Professional'] },
+    vancouver: { ja: 'バンクーバー', en: 'Vancouver', aliases: ['バンクーバー', 'Vancouver', 'vancouver'] },
+    toronto: { ja: 'トロント', en: 'Toronto', aliases: ['トロント', 'Toronto', 'toronto'] },
+    music: { ja: '音楽', en: 'Music', aliases: ['音楽', 'Music'] },
+    movies: { ja: '映画', en: 'Movies', aliases: ['映画', 'Movies'] },
+    reading: { ja: '読書', en: 'Reading', aliases: ['読書', 'Reading'] },
+    cooking: { ja: '料理', en: 'Cooking', aliases: ['料理', 'Cooking'] },
+    sports: { ja: 'スポーツ', en: 'Sports', aliases: ['スポーツ', 'Sports'] },
+    games: { ja: 'ゲーム', en: 'Games', aliases: ['ゲーム', 'Games'] },
+    outdoors: { ja: 'アウトドア', en: 'Outdoors', aliases: ['アウトドア', 'Outdoors', 'Outdoor'] },
+    art: { ja: 'アート', en: 'Art', aliases: ['アート', 'Art'] },
+    animal_lover: { ja: '動物好き', en: 'Animal lover', aliases: ['動物好き', 'Animal lover'] },
+    before_6: { ja: '6時以前', en: 'Before 6 AM', aliases: ['6時以前', 'Before 6 AM'] },
+    '6_7': { ja: '6〜7時', en: '6-7 AM', aliases: ['6〜7時', '6-7 AM'] },
+    '6_8': { ja: '6〜8時', en: '6–8 AM', aliases: ['6〜8時', '6-8 AM', '6–8 AM'] },
+    '7_8': { ja: '7〜8時', en: '7-8 AM', aliases: ['7〜8時', '7-8 AM'] },
+    '8_9': { ja: '8〜9時', en: '8–9 AM', aliases: ['8〜9時', '8-9 AM', '8–9 AM'] },
+    after_9: { ja: '9時以降', en: 'After 9 AM', aliases: ['9時以降', 'After 9 AM'] },
+    before_22: { ja: '22時以前', en: 'Before 10 PM', aliases: ['22時以前', 'Before 10 PM'] },
+    '21_22': { ja: '21〜22時', en: '9–10 PM', aliases: ['21〜22時', '9-10 PM', '9–10 PM'] },
+    '22_23': { ja: '22〜23時', en: '10–11 PM', aliases: ['22〜23時', '10-11 PM', '10–11 PM'] },
+    '23_24': { ja: '23〜24時', en: '11 PM-midnight', aliases: ['23〜24時', '11 PM-midnight', '11 PM-Midnight'] },
+    '0_1': { ja: '0〜1時', en: 'Midnight-1 AM', aliases: ['0〜1時', 'Midnight-1 AM'] },
+    after_1: { ja: '1時以降', en: 'After 1 AM', aliases: ['1時以降', 'After 1 AM'] },
+    after_23: { ja: '23時以降', en: 'After 11 PM', aliases: ['23時以降', 'After 11 PM', '11 PM or later'] },
+    minimum: { ja: '必要最低限', en: 'Minimal interaction', aliases: ['必要最低限', 'Minimal interaction'] },
+    moderate: { ja: '適度に話したい', en: 'Chat occasionally', aliases: ['適度に話したい', 'Chat occasionally'] },
+    daily: { ja: '毎日話したい', en: 'Talk every day', aliases: ['毎日話したい', 'Talk every day'] },
+    like_family: { ja: '家族のように過ごしたい', en: 'Spend time like a family', aliases: ['家族のように過ごしたい', 'Spend time like a family'] },
+    family_like_interaction: { ja: '家族のように交流したい', en: 'Interact like family', aliases: ['家族のように交流したい', 'Interact like family'] },
+    pet_ok: { ja: 'ペットOK', en: 'Pets are fine', aliases: ['ペットOK', 'Pets OK', 'Pets are fine'] },
+    prefer_no_pets: { ja: 'できればいない方がいい', en: 'Prefer no pets', aliases: ['できればいない方がいい', 'Prefer no pets'] },
+    pet_ng: { ja: 'ペットNG', en: 'No pets', aliases: ['ペットNG', 'No pets'] },
+    students_ok: { ja: 'いてもOK', en: 'Other students are fine', aliases: ['いてもOK', 'Other students are fine'] },
+    other_students_ok: { ja: '他の留学生がいてもOK', en: 'OK with other international students', aliases: ['他の留学生がいてもOK', 'OK with other international students'] },
+    prefer_no_international_students: { ja: '他の留学生なし希望', en: 'Prefer no other international students', aliases: ['他の留学生なし希望', 'Prefer no other international students'] },
+    prefer_no_students: { ja: 'できればいない方がいい', en: 'Prefer no other students', aliases: ['できればいない方がいい', 'Prefer no other students'] },
+    no_students: { ja: 'いない家庭を希望', en: 'Prefer a home without other students', aliases: ['いない家庭を希望', 'Prefer a home without other students'] },
+    smoking_ok: { ja: '喫煙OK', en: 'Smoking is fine', aliases: ['喫煙OK', 'Smoking is fine'] },
+    outdoor_only: { ja: '屋外ならOK', en: 'Outdoor smoking only', aliases: ['屋外ならOK', '屋外のみならOK', 'Outdoor only OK', 'Outdoor smoking only'] },
+    outdoor_smoking_ok: { ja: '屋外喫煙ならOK', en: 'Outdoor smoking is OK', aliases: ['屋外喫煙ならOK', 'Outdoor smoking is OK'] },
+    smoking_ng: { ja: '喫煙NG', en: 'No smoking', aliases: ['喫煙NG', 'No smoking'] },
+    completely_non_smoking: { ja: '完全禁煙', en: 'Completely non-smoking', aliases: ['完全禁煙', 'Completely non-smoking'] },
+    mostly_independent: { ja: '基本それぞれで過ごしたい', en: 'Mostly spend time separately', aliases: ['基本それぞれで過ごしたい', 'Mostly independent', 'Mostly spend time separately'] },
+    sometimes_meals: { ja: '食事の時など時々', en: 'Spend time together occasionally, such as at meals', aliases: ['食事の時など時々', 'Spend time together occasionally, such as at meals'] },
+    sometimes_weekends: { ja: '休日にたまに一緒に過ごしたい', en: 'Spend time together occasionally on weekends', aliases: ['休日にたまに一緒に過ごしたい', 'Spend time together occasionally on weekends'] },
+    family_like: { ja: '家族の一員のように交流したい', en: 'Interact like a member of the family', aliases: ['家族の一員のように交流したい', 'Interact like a member of the family'] },
+    single_female: { ja: '一人暮らし（女性）', en: 'Single woman', aliases: ['一人暮らし（女性）', 'Single woman'] },
+    single_male: { ja: '一人暮らし（男性）', en: 'Single man', aliases: ['一人暮らし（男性）', 'Single man'] },
+    couple: { ja: 'カップル', en: 'Couple', aliases: ['カップル', 'Couple'] },
+    couple_children: { ja: 'カップル＋子ども', en: 'Couple with children', aliases: ['カップル＋子ども', 'Couple with children'] },
+    single_parent_children: { ja: 'ひとり親＋子ども', en: 'Single parent with children', aliases: ['ひとり親＋子ども', 'Single parent with children'] },
+    family_with_children: { ja: '子どものいる家庭', en: 'Family with children', aliases: ['子どものいる家庭', 'Family with children'] },
+    no_preference: { ja: 'こだわらない', en: 'No preference', aliases: ['こだわらない', 'No preference'] },
+    no_meals: { ja: '不要', en: 'No meals', aliases: ['不要', 'No meals'] },
+    no_meals_preference: { ja: '食事なし', en: 'No meals', aliases: ['食事なし', 'No meals'] },
+    no_meal_service: { ja: '食事提供なし', en: 'No meals', aliases: ['食事提供なし', 'No meals'] },
+    breakfast: { ja: '朝食のみ', en: 'Breakfast only', aliases: ['朝食のみ', 'Breakfast only'] },
+    breakfast_dinner: { ja: '朝夕食', en: 'Breakfast & dinner', aliases: ['朝夕食', '朝・夕食', 'Breakfast & dinner', 'Breakfast and dinner'] },
+    three_meals: { ja: '3食', en: 'Three meals', aliases: ['3食', 'Three meals'] },
+    eat_together: { ja: '一緒に食べたい', en: 'Prefer to eat together', aliases: ['一緒に食べたい', 'Prefer to eat together'] },
+    sometimes_together: { ja: 'たまに一緒', en: 'Sometimes eat together', aliases: ['たまに一緒', 'Sometimes eat together'] },
+    separate_ok: { ja: '別々でOK', en: 'Eating separately is fine', aliases: ['別々でOK', 'Eating separately is fine'] },
+    none: { ja: 'なし', en: 'None', aliases: ['なし', 'None'] },
+    vegetarian: { ja: 'ベジタリアン', en: 'Vegetarian', aliases: ['ベジタリアン', 'Vegetarian'] },
+    vegan: { ja: 'ヴィーガン', en: 'Vegan', aliases: ['ヴィーガン', 'Vegan'] },
+    halal: { ja: 'ハラール', en: 'Halal', aliases: ['ハラール', 'Halal'] },
+    gluten_free: { ja: 'グルテンフリー', en: 'Gluten-free', aliases: ['グルテンフリー', 'Gluten-free'] },
+    allergy: { ja: 'アレルギー', en: 'Allergy', aliases: ['アレルギー', 'Allergy'] },
+    allergy_support: { ja: 'アレルギー対応', en: 'Allergy support', aliases: ['アレルギー対応', 'アレルギー対応可', 'Allergy support'] },
+    no_curfew: { ja: '門限なし希望', en: 'Prefer no curfew', aliases: ['門限なし希望', 'Prefer no curfew'] },
+    curfew_ok: { ja: '門限ありでもOK', en: 'Curfew is acceptable', aliases: ['門限ありでもOK', 'Curfew is acceptable'] },
+    visitors_ok: { ja: '来客OKの家庭を希望', en: 'Prefer a home where visitors are allowed', aliases: ['来客OKの家庭を希望', 'Prefer a home where visitors are allowed'] },
+    notice_required_ok: { ja: '事前連絡が必要でもOK', en: 'Prior notice is acceptable', aliases: ['事前連絡が必要でもOK', 'Prior notice is acceptable'] },
+    visitors_ng_ok: { ja: '来客NGでもOK', en: 'No visitors is acceptable', aliases: ['来客NGでもOK', 'No visitors is acceptable'] },
+    no_limit: { ja: '時間制限なし希望', en: 'Prefer no time limit', aliases: ['時間制限なし希望', 'Prefer no time limit'] },
+    '10_15_minutes': { ja: '10〜15分程度ならOK', en: '10–15 minutes is fine', aliases: ['10〜15分程度ならOK', '10-15 minutes is fine', '10–15 minutes is fine'] },
+    '5_10_minutes': { ja: '5〜10分程度でもOK', en: '5–10 minutes is fine', aliases: ['5〜10分程度でもOK', '5-10 minutes is fine', '5–10 minutes is fine'] },
+    within_5_minutes: { ja: '5分以内でもOK', en: 'Within 5 minutes is fine', aliases: ['5分以内でもOK', 'Within 5 minutes is fine'] },
+    free_use: { ja: '自由に使える家庭を希望', en: 'Prefer unrestricted kitchen use', aliases: ['自由に使える家庭を希望', 'Prefer unrestricted kitchen use'] },
+    time_restriction_ok: { ja: '時間制限があってもOK', en: 'Time restrictions are acceptable', aliases: ['時間制限があってもOK', 'Time restrictions are acceptable'] },
+    no_kitchen_ok: { ja: 'キッチンを使えなくてもOK', en: 'No kitchen access is acceptable', aliases: ['キッチンを使えなくてもOK', 'No kitchen access is acceptable'] },
+    daily_ok: { ja: '毎日でもOK', en: 'Daily cleaning is fine', aliases: ['毎日でもOK', 'Daily cleaning is fine'] },
+    weekly_ok: { ja: '週1回程度ならOK', en: 'About once a week is fine', aliases: ['週1回程度ならOK', 'About once a week is fine'] },
+    monthly_ok: { ja: '月1回程度ならOK', en: 'About once a month is fine', aliases: ['月1回程度ならOK', 'About once a month is fine'] },
+    no_rota: { ja: '掃除当番なし希望', en: 'Prefer no cleaning rota', aliases: ['掃除当番なし希望', 'Prefer no cleaning rota'] },
+    overnight_ok: { ja: '宿泊OKの家庭を希望', en: 'Prefer a home where overnight guests are allowed', aliases: ['宿泊OKの家庭を希望', 'Prefer a home where overnight guests are allowed'] },
+    consultation_required_ok: { ja: '事前相談が必要でもOK', en: 'Prior consultation is acceptable', aliases: ['事前相談が必要でもOK', 'Prior consultation is acceptable'] },
+    overnight_ng_ok: { ja: '宿泊NGでもOK', en: 'No overnight guests is acceptable', aliases: ['宿泊NGでもOK', 'No overnight guests is acceptable'] },
+    private_room: { ja: '個室', en: 'Private room', aliases: ['個室', 'Private room', 'Private Room'] },
+    shared_room: { ja: '相部屋', en: 'Shared room', aliases: ['相部屋', 'Shared room', 'Shared Room'] },
+    furnished: { ja: '家具付き', en: 'Furnished', aliases: ['家具付き', 'Furnished'] },
+    unfurnished: { ja: '家具なし', en: 'Unfurnished', aliases: ['家具なし', 'Unfurnished'] },
+    furnished_preferred: { ja: '家具付き希望', en: 'Furnished preferred', aliases: ['家具付き希望', 'Furnished preferred'] },
+    unfurnished_ok: { ja: '家具なしでもOK', en: 'Unfurnished OK', aliases: ['家具なしでもOK', 'Unfurnished OK'] },
+    either_ok: { ja: 'どちらでもOK', en: 'Either is OK', aliases: ['どちらでもOK', 'Either is OK'] },
+    present: { ja: 'いる', en: 'Yes', aliases: ['いる', 'Yes'] },
+    absent: { ja: 'いない', en: 'No', aliases: ['いない', 'No'] },
+    no_smoking_person: { ja: '吸わない', en: 'I do not smoke', aliases: ['吸わない', 'I do not smoke'] },
+    smoke_outdoors: { ja: '屋外で吸う', en: 'Smoke outdoors', aliases: ['屋外で吸う', 'Smoke outdoors'] },
+    smoke_indoors: { ja: '室内でも吸う', en: 'Smoke indoors', aliases: ['室内でも吸う', 'Smoke indoors'] },
+    drink_often: { ja: 'よく飲む', en: 'Drink often', aliases: ['よく飲む', 'Drink often'] },
+    drink_sometimes: { ja: 'たまに飲む', en: 'Drink sometimes', aliases: ['たまに飲む', 'Drink sometimes'] },
+    do_not_drink: { ja: '飲まない', en: 'Do not drink', aliases: ['飲まない', 'Do not drink'] },
+    long_stay_available: { ja: '長期滞在可能', en: 'Long stays available', aliases: ['長期滞在可能', 'Long stays available'] },
+    long_stay_unavailable: { ja: '長期滞在不可', en: 'Long stays unavailable', aliases: ['長期滞在不可', 'Long stays unavailable'] },
+    mostly_separate: { ja: '基本それぞれで過ごす', en: 'Mostly spend time separately', aliases: ['基本それぞれで過ごす', 'Mostly spend time separately'] },
+    sometimes_at_meals: { ja: '食事の時など時々', en: 'Sometimes, such as at meals', aliases: ['食事の時など時々', 'Sometimes, such as at meals'] },
+    weekend_outings: { ja: '休日に一緒に出かける', en: 'Go out together on weekends', aliases: ['休日に一緒に出かける', 'Go out together on weekends'] },
+    family_member_interaction: { ja: '家族の一員のように交流する', en: 'Interact like a member of the family', aliases: ['家族の一員のように交流する', 'Interact like a member of the family'] },
+    breakfast_dinner_middle_dot: { ja: '朝・夕食', en: 'Breakfast & dinner', aliases: ['朝・夕食', 'Breakfast & dinner'] },
+    usually_with_family: { ja: '家族と一緒に食べることが多い', en: 'Usually eat with family', aliases: ['家族と一緒に食べることが多い', 'Usually eat with family'] },
+    sometimes_eat_together: { ja: '時々一緒に食べる', en: 'Sometimes eat together', aliases: ['時々一緒に食べる', 'Sometimes eat together'] },
+    usually_separate: { ja: '基本別々', en: 'Usually separate', aliases: ['基本別々', 'Usually separate'] },
+    prepared_or_self_serve: { ja: '作り置き・各自で食べることが多い', en: 'Often prepared meals or self-serve', aliases: ['作り置き・各自で食べることが多い', 'Often prepared meals or self-serve'] },
+    basement: { ja: 'ベースメント', en: 'Basement', aliases: ['ベースメント', 'Basement'] },
+    first_floor: { ja: '1階', en: '1st floor', aliases: ['1階', '1st floor'] },
+    second_floor: { ja: '2階', en: '2nd floor', aliases: ['2階', '2nd floor'] },
+    third_floor_or_above: { ja: '3階以上', en: '3rd floor or above', aliases: ['3階以上', '3rd floor or above'] },
+    private_bathroom: { ja: '専用', en: 'Private', aliases: ['専用', 'Private'] },
+    shared_with_family: { ja: '家族と共有', en: 'Shared with family', aliases: ['家族と共有', 'Shared with family'] },
+    shared_with_students: { ja: '他の留学生と共有', en: 'Shared with other students', aliases: ['他の留学生と共有', 'Shared with other students'] },
+    washer: { ja: '洗濯機', en: 'Washer', aliases: ['洗濯機', 'Washer'] },
+    dryer: { ja: '乾燥機', en: 'Dryer', aliases: ['乾燥機', 'Dryer'] },
+    kitchen: { ja: 'キッチン', en: 'Kitchen', aliases: ['キッチン', 'Kitchen'] },
+    refrigerator: { ja: '冷蔵庫', en: 'Refrigerator', aliases: ['冷蔵庫', 'Refrigerator', 'Fridge'] },
+    air_conditioning: { ja: 'エアコン', en: 'Air conditioning', aliases: ['エアコン', 'Air conditioning'] }
+  };
+
   const systemOptionLabelRegistry = new Map();
+  const systemOptionAliasRegistry = new Map();
   const SYSTEM_OPTION_KEY_OVERRIDES = {
     '選択しない': 'do_not_select',
     '回答しない': 'prefer_not_to_say',
     '日常会話': 'conversational'
   };
 
+  Object.entries(SYSTEM_OPTIONS).forEach(([key, option]) => {
+    const labels = [key, option.ja, option.en, ...(option.aliases || [])].filter(Boolean);
+    labels.forEach(label => {
+      const lookup = normalizeSystemOptionLookupText(label);
+      if (lookup && !systemOptionAliasRegistry.has(lookup)) systemOptionAliasRegistry.set(lookup, key);
+    });
+    systemOptionLabelRegistry.set(key, { ja: option.ja, en: option.en });
+  });
+
+  function systemOptionEntryForKey(key) {
+    const normalizedKey = String(key || '').trim();
+    return normalizedKey ? SYSTEM_OPTIONS[normalizedKey] || null : null;
+  }
+
+  function systemOptionEntryForValue(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+    if (SYSTEM_OPTIONS[raw]) return SYSTEM_OPTIONS[raw];
+    const key = systemOptionAliasRegistry.get(normalizeSystemOptionLookupText(raw));
+    return key ? SYSTEM_OPTIONS[key] || null : null;
+  }
+
+  function systemOptionKeyForContext(contextId, value) {
+    const context = String(contextId || '').toLowerCase();
+    const canonical = canonicalizeSystemOption(value);
+    if (!canonical) return '';
+    if (canonical === 'できればいない方がいい') {
+      if (context.includes('student')) return 'prefer_no_students';
+      if (context.includes('pet')) return 'prefer_no_pets';
+    }
+    if (canonical === 'いてもOK' && context.includes('student')) return 'students_ok';
+    if (canonical === 'ペットOK' && context.includes('pet')) return 'pet_ok';
+    return systemOptionKeyFromLabel(canonical);
+  }
+
+  function validateSystemOptionLocalizationRegistry() {
+    const missingLabels = Object.entries(SYSTEM_OPTIONS).filter(([, option]) => !option.ja || !option.en);
+    if (missingLabels.length) {
+      console.warn('HostMatch system option localization missing labels:', missingLabels.map(([key]) => key));
+    }
+    return missingLabels.length;
+  }
+
+  validateSystemOptionLocalizationRegistry();
+
   function systemOptionKeyFromLabel(value) {
+    const knownKey = systemOptionAliasRegistry.get(normalizeSystemOptionLookupText(value));
+    if (knownKey) return knownKey;
     const canonical = canonicalizeSystemOption(value);
     if (!canonical) return '';
     if (SYSTEM_OPTION_KEY_OVERRIDES[canonical]) return SYSTEM_OPTION_KEY_OVERRIDES[canonical];
+    const knownCanonicalKey = systemOptionAliasRegistry.get(normalizeSystemOptionLookupText(canonical));
+    if (knownCanonicalKey) return knownCanonicalKey;
     const english = translateFreeText(canonical);
     const keySource = english && english !== canonical ? english : canonical;
     return normalizeSystemOptionLookupText(keySource)
@@ -30930,14 +31148,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function registerSystemOptionLabel(value, preferredKey = '') {
-    const canonical = canonicalizeSystemOption(value);
+    const knownKey = preferredKey || systemOptionAliasRegistry.get(normalizeSystemOptionLookupText(value));
+    const knownEntry = knownKey ? systemOptionEntryForKey(knownKey) : systemOptionEntryForValue(value);
+    const canonical = knownEntry?.ja || canonicalizeSystemOption(value);
     if (!canonical) return '';
-    const key = preferredKey || systemOptionKeyFromLabel(canonical);
+    const key = knownKey || systemOptionKeyFromLabel(canonical);
     if (!key) return '';
     if (!systemOptionLabelRegistry.has(key)) {
       systemOptionLabelRegistry.set(key, {
-        ja: canonical,
-        en: translateFreeText(canonical)
+        ja: knownEntry?.ja || canonical,
+        en: knownEntry?.en || translateFreeText(canonical)
       });
     }
     return key;
@@ -30946,6 +31166,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function localizedSystemOptionByKey(key, fallback = '') {
     const normalizedKey = String(key || '').trim();
     if (!normalizedKey) return localizedSystemOption(fallback);
+    const knownEntry = systemOptionEntryForKey(normalizedKey);
+    if (knownEntry) return currentLang === 'ja' ? knownEntry.ja : knownEntry.en;
     const labels = systemOptionLabelRegistry.get(normalizedKey);
     if (labels) return currentLang === 'ja' ? labels.ja : labels.en;
     const canonical = canonicalizeSystemOption(normalizedKey);
@@ -30955,9 +31177,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return currentLang === 'ja' ? canonical : localizeText(canonical);
   }
 
-  function systemOptionChipAttributes(value) {
+  function systemOptionChipAttributes(value, contextId = '') {
     const canonical = canonicalizeSystemOption(value);
-    const optionKey = registerSystemOptionLabel(canonical);
+    const optionKey = systemOptionKeyForContext(contextId, canonical);
+    registerSystemOptionLabel(canonical, optionKey);
     const prefix = systemOptionLeadingDecoration(value);
     return `data-option-key="${escapeHtml(optionKey)}" data-hostmatch-option-key="${escapeHtml(optionKey)}" data-hostmatch-original-text="${escapeHtml(canonical)}" data-hostmatch-option-prefix="${escapeHtml(prefix)}"`;
   }
@@ -31040,6 +31263,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function canonicalizeSystemOption(value) {
     const raw = String(value || '').trim();
     if (!raw) return '';
+    const knownEntry = systemOptionEntryForValue(raw);
+    if (knownEntry) return knownEntry.ja;
     if (systemOptionLabelRegistry.has(raw)) return systemOptionLabelRegistry.get(raw).ja;
     if (SYSTEM_OPTION_ALIAS_MAP[raw]) return SYSTEM_OPTION_ALIAS_MAP[raw];
     const lookup = normalizeSystemOptionLookupText(raw);
@@ -31060,8 +31285,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function localizedSystemOption(value) {
     const prefix = systemOptionLeadingDecoration(value);
     const canonical = canonicalizeSystemOption(value);
-    registerSystemOptionLabel(canonical);
-    const label = currentLang === 'ja' ? canonical : localizeText(canonical);
+    const optionKey = registerSystemOptionLabel(canonical);
+    const label = localizedSystemOptionByKey(optionKey, canonical);
     return prefix && !String(label || '').startsWith(prefix) ? `${prefix}${label}` : label;
   }
 
@@ -31078,7 +31303,11 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const prefix = chip.dataset.hostmatchOptionPrefix || systemOptionLeadingDecoration(textNode?.nodeValue || chip.textContent || '');
       const canonical = canonicalizeSystemOption(raw);
       if (!canonical) return;
-      const optionKey = chip.dataset.optionKey || chip.dataset.hostmatchOptionKey || registerSystemOptionLabel(canonical);
+      const contextId = chip.closest('.form-chip-row')?.id || '';
+      const optionKey = systemOptionKeyForContext(contextId, canonical)
+        || chip.dataset.optionKey
+        || chip.dataset.hostmatchOptionKey
+        || registerSystemOptionLabel(canonical);
       chip.dataset.hostmatchOriginalText = canonical;
       chip.dataset.optionKey = optionKey;
       chip.dataset.hostmatchOptionKey = optionKey;
@@ -31150,6 +31379,22 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     updateSharehouseSortLanguage();
     document.querySelectorAll('.hm-filter-shell').forEach(root => {
       root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
+        if (el.classList.contains('hm-filter-chip')) {
+          const rowId = el.closest('[id]')?.id || '';
+          const raw = el.dataset.hmfOriginalText || el.dataset.hostmatchOriginalText || el.textContent.trim();
+          const optionCanonical = canonicalizeSystemOption(raw);
+          const optionKey = systemOptionKeyForContext(rowId, optionCanonical);
+          if (optionKey) {
+            registerSystemOptionLabel(optionCanonical, optionKey);
+            el.dataset.hmfOriginalText = optionCanonical;
+            el.dataset.hostmatchOriginalText = optionCanonical;
+            el.dataset.hostmatchOptionKey = optionKey;
+            el.dataset.optionKey = optionKey;
+            const nextChipText = localizedSystemOptionByKey(optionKey, optionCanonical);
+            if (el.textContent.trim() !== nextChipText) el.textContent = nextChipText;
+            return;
+          }
+        }
         const key = el.dataset.i18nKey || canonicalHostmatchUiKey(el.textContent.trim());
         if (!key) return;
         el.dataset.i18nKey = key;
