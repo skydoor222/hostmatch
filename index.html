@@ -2941,6 +2941,16 @@
   <div class="loading-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
   <div class="loading-text" data-i18n="loading">読み込み中...</div>
 </div>
+<script>
+  (function applyInitialStoredLanguage() {
+    try {
+      var storedLang = localStorage.getItem('hostmatch_lang') === 'en' ? 'en' : 'ja';
+      document.documentElement.lang = storedLang;
+      var loadingText = document.querySelector('#app-loading .loading-text');
+      if (loadingText) loadingText.textContent = storedLang === 'en' ? 'Loading...' : '読み込み中...';
+    } catch (error) {}
+  })();
+</script>
 
 <!-- ==================== ① 検索画面 ==================== -->
 <div id="screen-search" class="screen">
@@ -4390,15 +4400,15 @@
     <div class="login-form">
       <div class="form-group" id="login-name-group" style="text-align:left; display:none;">
         <div class="form-label" data-i18n="name_label">お名前</div>
-        <input class="form-input" id="login-name" type="text" placeholder="山田 太郎" data-i18n-placeholder="name_placeholder" />
+        <input class="form-input" id="login-name" type="text" />
       </div>
       <div class="form-group" style="text-align:left;">
         <div class="form-label" data-i18n="email_label">メールアドレス</div>
-        <input class="form-input" id="login-email" type="email" placeholder="example@email.com" />
+        <input class="form-input" id="login-email" type="email" />
       </div>
       <div class="form-group" style="text-align:left;">
         <div class="form-label" data-i18n="password_label">パスワード</div>
-        <input class="form-input" id="login-password" type="password" placeholder="6文字以上" data-i18n-placeholder="password_placeholder" />
+        <input class="form-input" id="login-password" type="password" />
         <button type="button" class="forgot-password-link" onclick="openPasswordResetRequest()" data-i18n="forgot_password">パスワードを忘れた方</button>
       </div>
       <div class="signup-consent-box" id="signup-consent-box">
@@ -7006,6 +7016,9 @@
       if (error) throw error;
       if (window._currentUser?.id !== userId) return null;
       window._currentProfile = data;
+      if (typeof window.applyLanguagePreferenceFromProfile === 'function') {
+        window.applyLanguagePreferenceFromProfile(data, user);
+      }
       applyCurrentUserProfile(user, data, options);
       return data;
     } catch (error) {
@@ -27181,7 +27194,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (!window._supabase?.auth) throw new Error('Supabase client is not initialized');
       if (isSignupMode) {
         recordSignupConsent();
-        const name = document.getElementById('login-name').value.trim() || 'ゲスト';
+        const signupLanguage = normalizeLanguagePreference(currentLang) || 'ja';
+        const name = document.getElementById('login-name').value.trim() || (signupLanguage === 'en' ? 'Guest' : 'ゲスト');
         const { data, error } = await window._supabase.auth.signUp({
           email,
           password,
@@ -27189,6 +27203,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
             emailRedirectTo: window._supabaseAuthRedirectTo,
             data: {
               display_name: name,
+              preferred_language: signupLanguage,
               terms_accepted: true,
               privacy_accepted: true
             }
@@ -30398,7 +30413,31 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '検索結果':'Search Results',
     '結果':'Results'
   });
-  let currentLang = localStorage.getItem('hostmatch_lang') || 'ja';
+  const HOSTMATCH_LANGUAGE_STORAGE_KEY = 'hostmatch_lang';
+
+  function normalizeLanguagePreference(value) {
+    return value === 'en' ? 'en' : value === 'ja' ? 'ja' : '';
+  }
+
+  function readStoredLanguagePreference() {
+    try {
+      return normalizeLanguagePreference(localStorage.getItem(HOSTMATCH_LANGUAGE_STORAGE_KEY));
+    } catch (error) {
+      return '';
+    }
+  }
+
+  function writeStoredLanguagePreference(lang) {
+    const normalized = normalizeLanguagePreference(lang) || 'ja';
+    try {
+      localStorage.setItem(HOSTMATCH_LANGUAGE_STORAGE_KEY, normalized);
+    } catch (error) {
+      console.warn('Language preference save failed:', error);
+    }
+    return normalized;
+  }
+
+  let currentLang = readStoredLanguagePreference() || 'ja';
   let autoTranslating = false;
   let autoTranslateTimer = null;
 
@@ -30641,12 +30680,47 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    applyAutoTextTranslations();
 	  }
 
-  function setLanguage(lang) {
-    currentLang = lang === 'en' ? 'en' : 'ja';
-    localStorage.setItem('hostmatch_lang', currentLang);
+  async function saveCurrentUserPreferredLanguage(lang) {
+    const userId = window._currentUser?.id || '';
+    const normalized = normalizeLanguagePreference(lang);
+    if (!userId || !normalized || !window._supabase?.from) return false;
+    try {
+      const { error } = await window._supabase
+        .from('profiles')
+        .update({ preferred_language: normalized })
+        .eq('id', userId);
+      if (error) throw error;
+      if (window._currentProfile) window._currentProfile.preferred_language = normalized;
+      return true;
+    } catch (error) {
+      console.warn('Supabase preferred_language save error:', error);
+      return false;
+    }
+  }
+
+  function applyLanguagePreferenceFromProfile(profile, user) {
+    const stored = readStoredLanguagePreference();
+    const profileLang = normalizeLanguagePreference(profile?.preferred_language);
+    const metadataLang = normalizeLanguagePreference(user?.user_metadata?.preferred_language);
+    const nextLang = stored || profileLang || metadataLang || 'ja';
+    if (nextLang !== currentLang) {
+      setLanguage(nextLang, { saveProfile: false });
+    } else if (!stored) {
+      writeStoredLanguagePreference(nextLang);
+    }
+    return nextLang;
+  }
+
+  function setLanguage(lang, options = {}) {
+    currentLang = writeStoredLanguagePreference(lang);
     applyLang();
     refreshLocalizedDynamicUi();
+    if (options.saveProfile !== false) saveCurrentUserPreferredLanguage(currentLang);
   }
+
+  window.applyLanguagePreferenceFromProfile = applyLanguagePreferenceFromProfile;
+  window.readStoredLanguagePreference = readStoredLanguagePreference;
+  window.setLanguage = setLanguage;
 
   function toggleLang() {
     setLanguage(currentLang === 'ja' ? 'en' : 'ja');
