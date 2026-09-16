@@ -31800,7 +31800,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (sub) sub.innerHTML = '&nbsp;';
     if (backControl) backControl.style.display = 'none';
     if (container) container.innerHTML = `
-      <div class="role-card guest no-desc" onclick="chooseType('homestay')">
+      <div class="role-card guest no-desc" data-registration-type="homestay">
         <div class="role-card-icon">🏡</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('homestay')}</div>
@@ -31808,7 +31808,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         </div>
         <div class="role-card-arrow">›</div>
       </div>
-      <div class="role-card host no-desc" onclick="chooseType('sharehouse')">
+      <div class="role-card host no-desc" data-registration-type="sharehouse">
         <div class="role-card-icon">🏢</div>
         <div class="role-card-text">
           <div class="role-card-title">${t('sharehouse')}</div>
@@ -31823,6 +31823,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function backToRegistrationStartOptions() {
     showRegistrationStartScreen({ preserveModeChangeOrigin: true });
   }
+  window.backToRegistrationStartOptions = backToRegistrationStartOptions;
 
   /* ===== サービス種別選択 ===== */
   function chooseType(type) {
@@ -31843,7 +31844,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
       }
       if (container) container.innerHTML = `
-        <div class="role-card guest no-desc" onclick="chooseRole('guest')">
+        <div class="role-card guest no-desc" data-registration-role="guest">
           <div class="role-card-icon">🧳</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('svc_homestay_guest')}</div>
@@ -31851,7 +31852,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           </div>
           <div class="role-card-arrow">›</div>
         </div>
-        <div class="role-card host no-desc" onclick="chooseRole('host')">
+        <div class="role-card host no-desc" data-registration-role="host">
           <div class="role-card-icon">🏠</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('register_as_host')}</div>
@@ -31869,7 +31870,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         if (btn) btn.textContent = currentLang === 'en' ? '← Back' : '← 戻る';
       }
       if (container) container.innerHTML = `
-        <div class="role-card guest no-desc" onclick="chooseRole('guest')">
+        <div class="role-card guest no-desc" data-registration-role="guest">
           <div class="role-card-icon">🔍</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('looking_for_room')}</div>
@@ -31877,7 +31878,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
           </div>
           <div class="role-card-arrow">›</div>
         </div>
-        <div class="role-card host no-desc" onclick="chooseRole('host')">
+        <div class="role-card host no-desc" data-registration-role="host">
           <div class="role-card-icon">🤝</div>
           <div class="role-card-text">
             <div class="role-card-title">${t('register_as_host')}</div>
@@ -31893,6 +31894,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     navigate(currentScreen || 'login', 'role-select');
     if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
   }
+  window.chooseType = chooseType;
 
   /* ===== ロール選択 ===== */
   let currentRole = 'guest'; // 'guest' | 'host' | 'resident'
@@ -31950,6 +31952,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (isRestoringSelectedUserMode) return;
     window._registrationStartScreenActive = false;
     const selectedMode = selectedUserModeFromRoleChoice(role);
+    const normalizedRole = selectedMode.housingType === 'sharehouse' && selectedMode.role === 'resident' ? 'host' : selectedMode.role;
     isRestoringSelectedUserMode = true;
     try {
       const registered = await registeredUserModeForSelection(selectedMode);
@@ -31967,6 +31970,16 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       isRestoringSelectedUserMode = false;
     }
 
+    saveRegistrationFlowState({
+      screen: selectedMode.housingType === 'sharehouse' && normalizedRole === 'host'
+        ? 'resident-onboarding'
+        : normalizedRole === 'host'
+          ? 'host-onboarding'
+          : 'onboarding',
+      serviceType: selectedMode.housingType,
+      role: normalizedRole,
+      onboardingStep: 1
+    });
     if (selectedMode.housingType === 'sharehouse' && selectedMode.role === 'host') {
       resetSharehouseHostOnboardingForFreshStart();
       currentRole = 'resident';
@@ -31998,6 +32011,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       renderResStep();
     }
   }
+  window.chooseRole = chooseRole;
+
+  function handleRegistrationRoleCardClick(event) {
+    const card = event.target?.closest?.('[data-registration-role],[data-registration-type]');
+    if (!card || !card.closest('#role-cards-container')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const role = card.dataset.registrationRole;
+    const type = card.dataset.registrationType;
+    if (role) chooseRole(role);
+    else if (type) chooseType(type);
+  }
+
+  document.getElementById('role-cards-container')?.addEventListener('click', handleRegistrationRoleCardClick);
 
   /* ===== ホスト専用ナビ ===== */
   function hostNavigate(screen) {
