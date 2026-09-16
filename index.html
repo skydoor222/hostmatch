@@ -11573,7 +11573,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 		    const h = HOSTS[currentHost] || HOSTS.sarah;
 		    const isPublishedHost = isPublishedHomestayDetailHost(currentHost);
-		    const comparisonFilters = homestayRegisteredComparisonFilters();
+		    const comparisonFilters = homestayDetailComparisonFilters(isPublishedHost);
 		    const comparison = hmEvaluateHost(currentHost, comparisonFilters);
 		    if (isPublishedHost && !comparison.activeTotal) {
 		      container.innerHTML = `
@@ -11763,7 +11763,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       detailAvatar.textContent = h.avatar;
     }
     document.getElementById('detail-name').textContent = h.name;
-		    const detailComparison = hmEvaluateHost(hostId, isPublishedHost ? homestayRegisteredComparisonFilters() : hmFilters());
+		    const detailComparison = hmEvaluateHost(hostId, homestayDetailComparisonFilters(isPublishedHost));
 	    const detailFallbackComparison = detailComparison.activeTotal || isPublishedHost ? detailComparison : hmEvaluateHost(hostId, homestayInitialFilters());
 	    document.getElementById('detail-match-badge').textContent = detailFallbackComparison.activeTotal
 	      ? (currentLang === 'ja' ? `あなたの条件と${detailFallbackComparison.matchedTotal}/${detailFallbackComparison.activeTotal}項目一致` : `${detailFallbackComparison.matchedTotal} of ${detailFallbackComparison.activeTotal} conditions match`)
@@ -16338,6 +16338,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return { hostId, hardPass, activeTotal, matchedTotal, items, score: activeTotal ? Math.round((matchedTotal / activeTotal) * 100) : h.match };
   }
 
+  function homestayComparisonHasNoOut(result) {
+    return !result?.items?.some(item => item.status === 'out');
+  }
+
   function homestayInitialFilters() {
     return homestayInitialCoreSearchFilters();
   }
@@ -16508,7 +16512,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const sortMode = document.getElementById('hm-sort')?.value || 'newest';
     const results = homestaySearchHostIds()
       .map(id => hmEvaluateHost(id, filters))
-      .filter(result => result.hardPass);
+      .filter(homestayComparisonHasNoOut);
     if (sortMode === 'conditions') {
       results.sort((a, b) => b.matchedTotal - a.matchedTotal || b.activeTotal - a.activeTotal);
     } else if (sortMode === 'price') {
@@ -17623,6 +17627,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      cleaning: canonicalFilterValue('hmf-cleaning', fromHomestayPreferenceDbValue('cleaning_preference', prefs.cleaning_preference) || stored.cleaning || ''),
 	      overnight: canonicalFilterValue('hmf-overnight', fromHomestayPreferenceDbValue('overnight_guest_preference', prefs.overnight_guest_preference) || stored.overnight || '')
 	    });
+	  }
+
+	  function homestayDetailComparisonFilters(isPublishedHost) {
+	    if (isPublishedHost && (detailBackScreen || 'search') === 'search' && committedHomestayFilters) {
+	      return cloneFilterState(committedHomestayFilters);
+	    }
+	    return isPublishedHost ? homestayRegisteredComparisonFilters() : hmFilters();
 	  }
 
 	  async function loadHomestayGuestComparisonData({ force = false } = {}) {
