@@ -16459,7 +16459,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function renderHomestaySearchFormFromFilters(filters) {
     const next = normalizeHomestayFilterState(filters);
     suppressFilterAutoApply = true;
-    localizeHomestayFilterUi();
+    localizeHomestayFilterUi(document.getElementById('search-content-homestay') || document);
     document.querySelectorAll('#search-content-homestay .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
     setFilterChip('hmf-area', next.area);
     const start = document.getElementById('hmf-start');
@@ -18132,7 +18132,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function renderSharehouseSearchFormFromFilters(filters) {
     const next = normalizeSharehouseFilterState(filters);
     suppressFilterAutoApply = true;
-    localizeHomestayFilterUi();
+    localizeHomestayFilterUi(document.getElementById('search-content-sharehouse') || document);
     document.querySelectorAll('#search-content-sharehouse .hm-filter-chip.selected').forEach(el => el.classList.remove('selected'));
     setFilterChip('shf-area', next.area);
     const start = document.getElementById('shf-start');
@@ -31447,60 +31447,63 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return localizeText(text).replace(/\/月/g, '/mo');
   }
 
-  function applyAutoTextTranslations(root = document.body) {
-    if (autoTranslating || !document.body) return;
+  function applyAutoTextTranslations(root) {
+    if (autoTranslating || !document.body || !root) return;
     autoTranslating = true;
-    const translationRoot = root || document.body;
-    const canonicalAutoTextKey = value => {
-      const raw = String(value || '');
-      const trimmed = raw.trim();
-      if (!trimmed) return '';
-      if (autoTextTranslations[trimmed]) return trimmed;
-      const lookup = normalizeSystemOptionLookupText(trimmed);
-      const source = Object.keys(autoTextTranslations).find(key => {
-        const translated = translateFreeText(key);
-        return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
+    try {
+      const translationRoot = root;
+      const canonicalAutoTextKey = value => {
+        const raw = String(value || '');
+        const trimmed = raw.trim();
+        if (!trimmed) return '';
+        if (autoTextTranslations[trimmed]) return trimmed;
+        const lookup = normalizeSystemOptionLookupText(trimmed);
+        const source = Object.keys(autoTextTranslations).find(key => {
+          const translated = translateFreeText(key);
+          return translated === trimmed || normalizeSystemOptionLookupText(translated) === lookup;
+        });
+        return source || '';
+      };
+      const walker = document.createTreeWalker(translationRoot, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+          if (shouldSkipAutoTranslate(node)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
       });
-      return source || '';
-    };
-    const walker = document.createTreeWalker(translationRoot, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-        if (shouldSkipAutoTranslate(node)) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
-    const textNodes = [];
-    while (walker.nextNode()) textNodes.push(walker.currentNode);
+      const textNodes = [];
+      while (walker.nextNode()) textNodes.push(walker.currentNode);
 
-    textNodes.forEach(node => {
-      const key = node.__hostmatchI18nKey || canonicalAutoTextKey(node.nodeValue);
-      if (!key) return;
-      node.__hostmatchI18nKey = key;
-      const nextValue = currentLang === 'ja'
-        ? key
-        : translateFreeText(key);
-      if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
-    });
+      textNodes.forEach(node => {
+        const key = node.__hostmatchI18nKey || canonicalAutoTextKey(node.nodeValue);
+        if (!key) return;
+        node.__hostmatchI18nKey = key;
+        const nextValue = currentLang === 'ja'
+          ? key
+          : translateFreeText(key);
+        if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
+      });
 
-    translationRoot.querySelectorAll('[placeholder]').forEach(el => {
-      if (shouldSkipAutoTranslate(el)) return;
-      const key = el.dataset.i18nPlaceholderKey || canonicalAutoTextKey(el.getAttribute('placeholder') || '');
-      if (!key) return;
-      el.dataset.i18nPlaceholderKey = key;
-      const nextPlaceholder = currentLang === 'ja'
-        ? key
-        : translateFreeText(key);
-      if (el.getAttribute('placeholder') !== nextPlaceholder) el.setAttribute('placeholder', nextPlaceholder);
-    });
-    autoTranslating = false;
+      translationRoot.querySelectorAll('[placeholder]').forEach(el => {
+        if (shouldSkipAutoTranslate(el)) return;
+        const key = el.dataset.i18nPlaceholderKey || canonicalAutoTextKey(el.getAttribute('placeholder') || '');
+        if (!key) return;
+        el.dataset.i18nPlaceholderKey = key;
+        const nextPlaceholder = currentLang === 'ja'
+          ? key
+          : translateFreeText(key);
+        if (el.getAttribute('placeholder') !== nextPlaceholder) el.setAttribute('placeholder', nextPlaceholder);
+      });
+    } finally {
+      autoTranslating = false;
+    }
   }
 
-  function localizeHomestayFilterUi() {
+  function localizeHomestayFilterUi(root = document) {
     updateHomestaySortLanguage();
     updateSharehouseSortLanguage();
-    document.querySelectorAll('.hm-filter-shell').forEach(root => {
-      root.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
+    root.querySelectorAll('.hm-filter-shell').forEach(shell => {
+      shell.querySelectorAll('.hm-filter-title,.hm-filter-sub,.hm-filter-section-title,.hm-filter-label,.hm-filter-chip,.hm-filter-actions button,.price-input-label').forEach(el => {
         if (el.classList.contains('hm-filter-chip')) {
           const rowId = el.closest('[id]')?.id || '';
           const raw = el.dataset.hmfOriginalText || el.dataset.hostmatchOriginalText || el.textContent.trim();
@@ -31523,7 +31526,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
         const nextText = i18nValueForKey(key);
         if (el.textContent.trim() !== nextText) el.textContent = nextText;
       });
-      root.querySelectorAll('.hm-filter-toggle').forEach(label => {
+      shell.querySelectorAll('.hm-filter-toggle').forEach(label => {
         const textNode = Array.from(label.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.nodeValue.trim());
         const key = label.dataset.i18nKey || canonicalHostmatchUiKey(textNode ? textNode.nodeValue.trim() : '');
         if (!key) return;
@@ -31566,10 +31569,56 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     sort.value = selectedValue;
   }
 
+  function visibleLocalizationRoots() {
+    if (!document.body) return [];
+    const roots = [];
+    const addRoot = root => {
+      if (!root || !root.isConnected) return;
+      if (roots.some(existing => existing === root || existing.contains(root))) return;
+      for (let i = roots.length - 1; i >= 0; i--) {
+        if (root.contains(roots[i])) roots.splice(i, 1);
+      }
+      roots.push(root);
+    };
+    document.querySelectorAll('.screen.active').forEach(addRoot);
+    const appLoading = document.getElementById('app-loading');
+    if (isVisibleSystemUiElement(appLoading)) addRoot(appLoading);
+    ['bottom-nav', 'host-bottom-nav'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && window.getComputedStyle(el).display !== 'none') addRoot(el);
+    });
+    document.querySelectorAll('.modal, .modal-overlay, .crop-modal, .legal-modal, [role="dialog"]').forEach(el => {
+      if (isVisibleSystemUiElement(el)) addRoot(el);
+    });
+    return roots;
+  }
+
+  function updateLanguageToggleLabels() {
+    document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.langOption === currentLang);
+      if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
+      if (btn.dataset.langOption === 'en') btn.textContent = 'English';
+    });
+    ['lang-btn','lang-btn-sh','lang-btn-rm','lang-btn-hd'].forEach(id => {
+      const btn = document.getElementById(id);
+      if (btn) btn.textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
+    });
+  }
+
+  function localizeVisibleSystemUi() {
+    visibleLocalizationRoots().forEach(root => {
+      localizeKeyedSystemDom(root);
+      localizeHomestayFilterUi(root);
+      applyAutoTextTranslations(root);
+      relocalizeSystemOptionControls(root);
+      hydrateBirthDateComponents(root);
+    });
+  }
+
   function scheduleAutoTextTranslations() {
     if (autoTranslating) return;
     clearTimeout(autoTranslateTimer);
-    autoTranslateTimer = setTimeout(applyAutoTextTranslations, 0);
+    autoTranslateTimer = setTimeout(localizeVisibleSystemUi, 0);
   }
 
   function canonicalHostmatchUiKey(value) {
@@ -31664,21 +31713,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function applyLang() {
     document.documentElement.lang = currentLang;
-    localizeKeyedSystemDom();
-    document.querySelectorAll('.lang-segment-btn[data-lang-option]').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.langOption === currentLang);
-      if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
-      if (btn.dataset.langOption === 'en') btn.textContent = 'English';
-    });
-    // 言語ボタン表示更新
-    ['lang-btn','lang-btn-sh','lang-btn-rm','lang-btn-hd'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) btn.textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
-    });
-    localizeHomestayFilterUi();
-    applyAutoTextTranslations();
-    relocalizeSystemOptionControls();
-    hydrateBirthDateComponents();
+    updateLanguageToggleLabels();
+    localizeVisibleSystemUi();
     updateSignupConsentLabels();
     updateSignupConsentState();
     localizeHomestayRoomPhotoCropModal();
@@ -31695,11 +31731,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function refreshLocalizedDynamicUi() {
-    localizeKeyedSystemDom();
-    localizeHomestayFilterUi();
-    applyAutoTextTranslations();
-    relocalizeSystemOptionControls();
-    hydrateBirthDateComponents();
+    updateLanguageToggleLabels();
+    localizeVisibleSystemUi();
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
     updateListingActionButtons();
@@ -34047,13 +34080,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (e.key === 'Enter') sendMessage();
   });
   document.getElementById('detail-save').addEventListener('click', toggleDetailFav);
-  new MutationObserver(scheduleAutoTextTranslations).observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ['placeholder']
-  });
   applyLang();
   setLoginMode(isSignupMode, true);
   setupPublishedHomestayCardClickDelegation();
