@@ -8749,6 +8749,10 @@
       el.style.display = 'none';
     });
     loadHomestayGuestLifestyleEditData();
+    const lifestyleScreen = document.getElementById('screen-lifestyle') || document;
+    localizeKeyedSystemDom(lifestyleScreen);
+    applyAutoTextTranslations(lifestyleScreen);
+    relocalizeSystemOptionControls(lifestyleScreen);
   }
 
   const HOMESTAY_NEW_HOST_IDS = ['emily', 'jennifer', 'robert', 'sarah', 'michael', 'thompson'];
@@ -25383,11 +25387,21 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       rehydrateGuestProfileIdentityFields();
       hydrateBirthDateComponents(body);
       loadHomestayGuestProfileEditData();
+      const profileScreen = document.getElementById('screen-profile') || document;
+      localizeKeyedSystemDom(profileScreen);
+      applyAutoTextTranslations(profileScreen);
+      relocalizeSystemOptionControls(profileScreen);
       return;
     }
     rehydrateGuestProfileIdentityFields();
     hydrateBirthDateComponents(body);
     if (!isSharehouseGuestContext()) loadHomestayGuestProfileEditData();
+    if (!isSharehouseGuestContext()) {
+      const profileScreen = document.getElementById('screen-profile') || document;
+      localizeKeyedSystemDom(profileScreen);
+      applyAutoTextTranslations(profileScreen);
+      relocalizeSystemOptionControls(profileScreen);
+    }
   }
 
 	  const SH_HOST_LANGUAGE_OPTIONS = ['英語','日本語','中国語','韓国語','スペイン語','フランス語','イタリア語','ドイツ語'];
@@ -31359,9 +31373,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return localizeText(text).replace(/\/月/g, '/mo');
   }
 
-  function applyAutoTextTranslations() {
+  function applyAutoTextTranslations(root = document.body) {
     if (autoTranslating || !document.body) return;
     autoTranslating = true;
+    const translationRoot = root || document.body;
     const canonicalAutoTextKey = value => {
       const raw = String(value || '');
       const trimmed = raw.trim();
@@ -31374,7 +31389,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       });
       return source || '';
     };
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    const walker = document.createTreeWalker(translationRoot, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
         if (!node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
         if (shouldSkipAutoTranslate(node)) return NodeFilter.FILTER_REJECT;
@@ -31394,7 +31409,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
     });
 
-    document.querySelectorAll('[placeholder]').forEach(el => {
+    translationRoot.querySelectorAll('[placeholder]').forEach(el => {
       if (shouldSkipAutoTranslate(el)) return;
       const key = el.dataset.i18nPlaceholderKey || canonicalAutoTextKey(el.getAttribute('placeholder') || '');
       if (!key) return;
