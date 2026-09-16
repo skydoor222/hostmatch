@@ -31134,6 +31134,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const context = String(contextId || '').toLowerCase();
     const canonical = canonicalizeSystemOption(value);
     if (!canonical) return '';
+    if (canonical === '選択しない' || canonical === '回答しない') {
+      if (context.includes('religion') || context.includes('english-level')) return 'prefer_not_to_say';
+      return 'do_not_select';
+    }
     if (canonical === 'できればいない方がいい') {
       if (context.includes('student')) return 'prefer_no_students';
       if (context.includes('pet')) return 'prefer_no_pets';
@@ -31599,7 +31603,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (title) title.textContent = getLegalTitle(currentLegalModalView);
       if (content) content.innerHTML = legalDocumentHtml(currentLegalModalView);
     }
-    setTimeout(() => auditVisibleUiLanguage(), 0);
   }
 
   function refreshLocalizedDynamicUi() {
@@ -31611,7 +31614,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (currentScreen === 'privacy-security') setLegalView(currentLegalView);
     if (currentScreen === 'notification-settings') setNotificationPreferenceUi(currentMessageNotificationsEnabled);
     updateListingActionButtons();
-    setTimeout(() => auditVisibleUiLanguage(), 0);
 	  }
 
   async function saveCurrentUserPreferredLanguage(lang) {
