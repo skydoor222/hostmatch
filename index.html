@@ -16263,6 +16263,58 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return guestValue === hostValue;
   }
 
+  function hmExactStatus(guestValue, hostValue) {
+    return guestValue && guestValue === hostValue ? 'ok' : 'out';
+  }
+
+  function hmCompatibleStatus(guestValue, hostValue, compatible) {
+    if (!guestValue) return 'ok';
+    if (guestValue === hostValue) return 'ok';
+    return compatible ? 'near' : 'out';
+  }
+
+  function hmRuleComparisonStatus(type, guestValue, hostValue) {
+    if (!guestValue) return 'ok';
+    if (guestValue === hostValue) return 'ok';
+    if (type === 'curfew') {
+      if (guestValue === 'allowed' && hostValue === 'none') return 'near';
+      return 'out';
+    }
+    if (type === 'visitor' || type === 'overnight') {
+      const guestTolerance = { ok: 0, notice_required: 1, ng: 2 };
+      const hostRestriction = { ok: 0, notice_required: 1, ng: 2 };
+      const guestRank = guestTolerance[guestValue];
+      const hostRank = hostRestriction[hostValue];
+      if (guestRank === undefined || hostRank === undefined) return 'out';
+      return hostRank <= guestRank ? 'near' : 'out';
+    }
+    if (type === 'shower') {
+      const guestTolerance = { unlimited: 3, ten_to_fifteen: 2, five_to_ten: 1, under_5: 0 };
+      const hostRestriction = { unlimited: 3, ten_to_fifteen: 2, five_to_ten: 1, under_5: 0 };
+      const guestRank = guestTolerance[guestValue];
+      const hostRank = hostRestriction[hostValue];
+      if (guestRank === undefined || hostRank === undefined) return 'out';
+      return hostRank >= guestRank ? 'near' : 'out';
+    }
+    if (type === 'kitchen') {
+      const guestTolerance = { ok: 2, restricted: 1, ng: 0 };
+      const hostAccess = { ok: 2, restricted: 1, ng: 0 };
+      const guestRank = guestTolerance[guestValue];
+      const hostRank = hostAccess[hostValue];
+      if (guestRank === undefined || hostRank === undefined) return 'out';
+      return hostRank >= guestRank ? 'near' : 'out';
+    }
+    if (type === 'cleaning') {
+      const guestTolerance = { none: 0, monthly: 1, weekly: 2, daily: 3 };
+      const hostBurden = { none: 0, monthly: 1, weekly: 2, daily: 3 };
+      const guestRank = guestTolerance[guestValue];
+      const hostRank = hostBurden[hostValue];
+      if (guestRank === undefined || hostRank === undefined) return 'out';
+      return hostRank <= guestRank ? 'near' : 'out';
+    }
+    return 'out';
+  }
+
   function hmRuleComparisonLabel(type, guestValue, meta) {
     const hostText = hmHostRuleLabel(type, meta);
     const guestText = hmRuleLabel(type, guestValue);
@@ -16293,7 +16345,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (ok) matchedNear++;
       hmAddCondition(items, filters, true, label, ok, true);
     };
-    const pref = near;
+    const compare = (active, label, status) => {
+      if (!active) return;
+      activeNear++;
+      if (status === 'ok') matchedNear++;
+      items.push({ label, status });
+    };
+    const exact = (active, label, ok) => compare(active, label, ok ? 'ok' : 'out');
 
     hard(
       filters.area,
@@ -16308,30 +16366,32 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (!overlapsGuestRange) {
         hardPass = false;
         hmAddCondition(items, filters, true, currentLang === 'ja' ? '期間重複なし' : 'No overlapping dates', false);
-      } else {
+      } else if (isDateRangeCovered(guestRange, range)) {
         matchedHard++;
         hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), true);
+      } else {
+        hmAddCondition(items, filters, true, availabilityMatchLabel(guestRange, range), false, true);
       }
     }
 	    const hostPrice = Number(h.price);
 	    hard(filters.budgetOnly, '予算内', Number.isFinite(hostPrice) && hostPrice <= filters.budget);
-    pref(filters.meal, filters.meal, meta.meal === filters.meal);
-    pref(filters.dining, hmMealStyleComparisonLabel(filters.dining, meta.dining), hmMealStyleCompatible(filters.dining, meta.dining));
-    filters.diet.forEach(d => pref(true, d, (meta.diet || []).includes(d)));
-    pref(filters.pets, filters.pets, filters.pets === 'ペットOK' ? true : meta.pets === 'なし');
-    pref(filters.smoking, filters.smoking, filters.smoking === '完全禁煙' ? meta.smoking === '完全禁煙' : ['完全禁煙','屋外喫煙ならOK'].includes(meta.smoking));
-    pref(filters.students, filters.students, filters.students.includes('いてもOK') ? true : meta.students === 'いない');
-    pref(filters.family, filters.family, hmFamilyCompatible(filters.family, meta.familyType || hmHostFamilyValue(meta.family)));
-    pref(filters.curfew, hmRuleComparisonLabel('curfew', filters.curfew, meta), hmRuleCompatible('curfew', filters.curfew, meta.curfew));
-    pref(filters.visitor, hmRuleComparisonLabel('visitor', filters.visitor, meta), hmRuleCompatible('visitor', filters.visitor, meta.visitor));
-    pref(filters.shower, hmRuleComparisonLabel('shower', filters.shower, meta), hmRuleCompatible('shower', filters.shower, meta.shower));
-    pref(filters.kitchen, hmRuleComparisonLabel('kitchen', filters.kitchen, meta), hmRuleCompatible('kitchen', filters.kitchen, meta.kitchen));
-    pref(filters.cleaning, hmRuleComparisonLabel('cleaning', filters.cleaning, meta), hmRuleCompatible('cleaning', filters.cleaning, meta.cleaning));
-    pref(filters.overnight, hmRuleComparisonLabel('overnight', filters.overnight, meta), hmRuleCompatible('overnight', filters.overnight, meta.overnight));
-    pref(filters.talk, '会話量が近い', meta.talk === filters.talk || (filters.talk === '毎日会話したい' && meta.talk === '家族のように過ごしたい'));
-    pref(filters.frequency, '交流頻度が近い', meta.frequency === filters.frequency);
-    pref(filters.wake, '起床時間が近い', meta.wake === filters.wake);
-    pref(filters.sleep, '就寝時間が近い', meta.sleep === filters.sleep);
+    exact(filters.meal, filters.meal, meta.meal === filters.meal);
+    compare(filters.dining, hmMealStyleComparisonLabel(filters.dining, meta.dining), hmCompatibleStatus(filters.dining, meta.dining, hmMealStyleCompatible(filters.dining, meta.dining)));
+    filters.diet.forEach(d => exact(true, d, (meta.diet || []).includes(d)));
+    exact(filters.pets, filters.pets, filters.pets === 'ペットOK' ? meta.pets === 'あり' : meta.pets === 'なし');
+    exact(filters.smoking, filters.smoking, meta.smoking === filters.smoking);
+    compare(filters.students, filters.students, filters.students.includes('いてもOK') ? (meta.students === 'いる' ? 'ok' : 'near') : (meta.students === 'いない' ? 'ok' : 'out'));
+    exact(filters.family, filters.family, hmFamilyCompatible(filters.family, meta.familyType || hmHostFamilyValue(meta.family)));
+    compare(filters.curfew, hmRuleComparisonLabel('curfew', filters.curfew, meta), hmRuleComparisonStatus('curfew', filters.curfew, meta.curfew));
+    compare(filters.visitor, hmRuleComparisonLabel('visitor', filters.visitor, meta), hmRuleComparisonStatus('visitor', filters.visitor, meta.visitor));
+    compare(filters.shower, hmRuleComparisonLabel('shower', filters.shower, meta), hmRuleComparisonStatus('shower', filters.shower, meta.shower));
+    compare(filters.kitchen, hmRuleComparisonLabel('kitchen', filters.kitchen, meta), hmRuleComparisonStatus('kitchen', filters.kitchen, meta.kitchen));
+    compare(filters.cleaning, hmRuleComparisonLabel('cleaning', filters.cleaning, meta), hmRuleComparisonStatus('cleaning', filters.cleaning, meta.cleaning));
+    compare(filters.overnight, hmRuleComparisonLabel('overnight', filters.overnight, meta), hmRuleComparisonStatus('overnight', filters.overnight, meta.overnight));
+    exact(filters.talk, '会話量が近い', meta.talk === filters.talk);
+    exact(filters.frequency, '交流頻度が近い', meta.frequency === filters.frequency);
+    exact(filters.wake, '起床時間が近い', meta.wake === filters.wake);
+    exact(filters.sleep, '就寝時間が近い', meta.sleep === filters.sleep);
 
     const activeTotal = activeHard + activeNear;
     const matchedTotal = matchedHard + matchedNear;
