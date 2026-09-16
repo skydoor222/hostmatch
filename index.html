@@ -16530,6 +16530,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       : `<div class="hm-empty-result">${hasCurrentPublishedHomestayCache && !activeHomestayFilterCount(filters)
         ? (currentLang === 'ja' ? '現在公開中のホームステイはありません。' : 'There are no published homestays right now.')
         : (currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No hosts match your selected conditions.<br>Try adjusting your filters and search again.')}</div>`;
+    setupPublishedHomestayCardClickDelegation();
   }
 
   function applyHomestayFilters() {
