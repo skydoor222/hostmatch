@@ -7466,16 +7466,36 @@
 
   async function cancelModeChangeAndReturn() {
     const origin = currentModeChangeOrigin();
-    if (!origin) return false;
-    clearFreshOnboardingStateForModeChangeCancel();
-    const returnScreen = modeChangeReturnScreen(origin);
-    const restored = await restoreSelectedRegisteredUserMode({ housingType: origin.housingType, role: origin.role });
-    if (!restored) return false;
-    clearModeChangeOrigin();
-    if (returnScreen && returnScreen !== currentScreen && document.getElementById('screen-' + returnScreen)) {
-      navigate(currentScreen || restoredHomeScreenForMode(origin) || 'search', returnScreen);
+    if (!origin) {
+      console.warn('Mode change return cancelled: origin is missing');
+      return false;
     }
-    return true;
+    const returnScreen = modeChangeReturnScreen(origin);
+    try {
+      clearFreshOnboardingStateForModeChangeCancel();
+      clearRegistrationFlowState();
+      const restored = await restoreSelectedRegisteredUserMode({ housingType: origin.housingType, role: origin.role });
+      if (!restored) {
+        console.warn('Mode change return restore failed', {
+          origin,
+          returnScreen,
+          restored
+        });
+        return false;
+      }
+      if (returnScreen && returnScreen !== currentScreen && document.getElementById('screen-' + returnScreen)) {
+        navigate(currentScreen || restoredHomeScreenForMode(origin) || 'search', returnScreen);
+      }
+      clearModeChangeOrigin();
+      return true;
+    } catch (error) {
+      console.error('Mode change return failed', {
+        origin,
+        returnScreen,
+        error
+      });
+      return false;
+    }
   }
 
   function showRegistrationStartScreen(options = {}) {
@@ -31948,6 +31968,26 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     return restored;
   }
 
+  function applyRegistrationModeContext(selectedMode) {
+    const housingType = selectedMode?.housingType === 'sharehouse' ? 'sharehouse' : 'homestay';
+    const role = selectedMode?.role === 'resident' ? 'host' : selectedMode?.role;
+    if (role === 'guest') {
+      currentRole = 'guest';
+      currentSearchCat = housingType;
+      window._serviceType = housingType;
+      return;
+    }
+    if (housingType === 'sharehouse') {
+      currentRole = 'resident';
+      currentSearchCat = 'sharehouse';
+      window._serviceType = 'sharehouse';
+      return;
+    }
+    currentRole = 'host';
+    currentSearchCat = 'homestay';
+    window._serviceType = 'homestay';
+  }
+
   async function chooseRole(role) {
     if (isRestoringSelectedUserMode) return;
     window._registrationStartScreenActive = false;
@@ -31970,6 +32010,18 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       isRestoringSelectedUserMode = false;
     }
 
+    applyRegistrationModeContext(selectedMode);
+    if (selectedMode.housingType === 'sharehouse' && normalizedRole === 'host') {
+      resetSharehouseHostOnboardingForFreshStart();
+    } else if (normalizedRole === 'guest') {
+      if (selectedMode.housingType === 'sharehouse') {
+        resetSharehouseGuestOnboardingForFreshStart();
+      } else {
+        resetHomestayGuestOnboardingForFreshStart();
+      }
+    } else {
+      resetHomestayHostOnboardingForFreshStart();
+    }
     saveRegistrationFlowState({
       screen: selectedMode.housingType === 'sharehouse' && normalizedRole === 'host'
         ? 'resident-onboarding'
@@ -31981,33 +32033,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       onboardingStep: 1
     });
     if (selectedMode.housingType === 'sharehouse' && selectedMode.role === 'host') {
-      resetSharehouseHostOnboardingForFreshStart();
-      currentRole = 'resident';
-      currentSearchCat = 'sharehouse';
-      window._serviceType = 'sharehouse';
       resStep = 1;
-      navigate('role-select', 'resident-onboarding');
+      navigate(currentScreen || 'role-select', 'resident-onboarding');
       renderResStep();
     } else if (role === 'guest') {
-      if (selectedMode.housingType === 'sharehouse') {
-        resetSharehouseGuestOnboardingForFreshStart();
-      } else {
-        resetHomestayGuestOnboardingForFreshStart();
-      }
-      currentRole = 'guest';
-      navigate('role-select', 'onboarding');
       onboardStep = 1;
+      navigate(currentScreen || 'role-select', 'onboarding');
       renderOnboardStep();
     } else if (role === 'host') {
-      resetHomestayHostOnboardingForFreshStart();
-      currentRole = 'host';
       hostObStep = 1;
-      navigate('role-select', 'host-onboarding');
+      navigate(currentScreen || 'role-select', 'host-onboarding');
       renderHostObStep();
     } else if (role === 'resident') {
-      resetSharehouseHostOnboardingForFreshStart();
       resStep = 1;
-      navigate('role-select', 'resident-onboarding');
+      navigate(currentScreen || 'role-select', 'resident-onboarding');
       renderResStep();
     }
   }
