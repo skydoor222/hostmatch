@@ -4878,11 +4878,12 @@
           <input class="form-input" id="shg-name" type="text" />
         </div>
         <div class="form-group">
-          <div class="form-label" data-i18n="age">年齢</div>
-          <div class="form-range-row">
-            <input class="form-input" id="shg-birth-date" type="date" onchange="updateSharehouseGuestOnboardingAgeFromBirthDate()" />
-            <input class="form-input" id="shg-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
-          </div>
+          <div class="form-label">生年月日</div>
+          <input class="form-input" id="shg-birth-date" type="date" onchange="updateSharehouseGuestOnboardingAgeFromBirthDate()" />
+        </div>
+        <div class="form-group">
+          <div class="form-label">年齢</div>
+          <input class="form-input" id="shg-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
         </div>
         <div class="form-group">
           <div class="form-label" data-i18n="nationality">国籍</div>
@@ -5404,11 +5405,12 @@
 	        <input class="form-input" id="host-ob-name" type="text" />
 	      </div>
 	      <div class="form-group">
+	        <div class="form-label">生年月日</div>
+	        <input class="form-input" id="host-ob-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('ob')" />
+	      </div>
+	      <div class="form-group">
 	        <div class="form-label">年齢</div>
-	        <div class="form-range-row">
-	          <input class="form-input" id="host-ob-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('ob')" />
-	          <input class="form-input" id="host-ob-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
-	        </div>
+	        <input class="form-input" id="host-ob-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly />
 	      </div>
 	      <div class="form-group">
 	        <div class="form-label">国籍</div>
@@ -6449,11 +6451,12 @@
 		        <div id="share-profile-avatar-message" style="font-size:12px;color:var(--primary);margin-top:6px;"></div>
 	      </div>
 	      <div>
+	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">生年月日</div>
+	        <input id="host-profile-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('profile')" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
+	      </div>
+	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">年齢</div>
-	        <div class="form-range-row">
-	          <input id="host-profile-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('profile')" style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
-	          <input id="host-profile-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
-	        </div>
+	        <input id="host-profile-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly style="width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px;font-size:14px;outline:none;" />
 	      </div>
 	      <div>
 	        <div style="font-size:12px;font-weight:700;color:var(--light);margin-bottom:6px;">国籍</div>
@@ -19615,7 +19618,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      <div class="form-section-title">👥 ホスト・家族について</div>
 	      ${hostAvatarUploadBoxHtml(scope)}
 	      <div class="form-group"><div class="form-label">ホスト名</div><input class="form-input" id="${prefix}-name" type="text" /></div>
-	      <div class="form-group"><div class="form-label">生年月日 / 年齢</div><div class="form-range-row"><input class="form-input" id="${prefix}-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('${scope}')" /><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly /></div></div>
+	      <div class="form-group"><div class="form-label">生年月日</div><input class="form-input" id="${prefix}-birth-date" type="date" onchange="updateHomestayHostAgeFromBirthDate('${scope}')" /></div>
+	      <div class="form-group"><div class="form-label">年齢</div><input class="form-input" id="${prefix}-age" type="number" min="0" inputmode="numeric" placeholder="生年月日から自動計算" readonly /></div>
 	      <div class="form-group"><div class="form-label">国籍</div><input class="form-input" id="${prefix}-nationality" type="text" placeholder="国籍を入力してください" /></div>
 	      <div class="form-group">
 	        <div class="form-label">話せる言語</div>
@@ -25378,7 +25382,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	          <div class="profile-avatar-message" id="share-guest-profile-avatar-message"></div>
 	        </div>
 	        <div class="form-group"><div class="form-label">${localizeText('名前')}</div><input class="form-input" id="prof-name" type="text" value="${escapeHtml(profile.basic.name)}" placeholder="${localizeText('名前')}" /></div>
-	        <div class="form-group"><div class="form-label">${localizeText('生年月日 / 年齢')}</div><div class="form-range-row"><input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" /><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly /></div></div>
+	        <div class="form-group"><div class="form-label">${localizeText('生年月日')}</div><input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" /></div>
+	        <div class="form-group"><div class="form-label">${localizeText('年齢')}</div><input class="form-input" id="${prefix}-age" type="number" min="0" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly /></div>
 	        <div class="form-group"><div class="form-label">${localizeText('国籍')}</div>${shTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')}</div>
 	        <div class="form-group"><div class="form-label">${localizeText('性別')}</div>${shChipRow(prefix, 'gender', ['女性','男性','選択しない'], profile.basic.gender)}</div>
 	        <div class="form-group"><div class="form-label">${localizeText('宗教')}</div>${sensitiveInfoNoteHtml()}${shChipRow(prefix, 'religion', ['仏教','キリスト教','イスラム教','ヒンドゥー教','ユダヤ教','無宗教','その他','回答しない'], profile.basic.religion)}</div>
@@ -25694,10 +25699,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const birthDate = profile.basic?.birthDate || '';
 	    const age = birthDate ? calculateAgeFromBirthDate(birthDate) : (profile.basic?.age ?? '');
 	    return `
-	      <div class="form-range-row">
-	        <input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" />
-	        <input class="form-input" id="${prefix}-age" type="number" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly />
-	      </div>
+	      ${shHostField('生年月日', `<input class="form-input" id="${prefix}-birth-date" type="date" value="${escapeHtml(birthDate)}" onchange="updateSharehouseHostAgeFromBirthDate('${prefix}')" />`)}
+	      ${shHostField('年齢', `<input class="form-input" id="${prefix}-age" type="number" value="${escapeHtml(age ?? '')}" placeholder="${escapeHtml(localizeText('生年月日から自動計算'))}" readonly />`)}
 	    `;
 	  }
 
@@ -25752,7 +25755,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      shHostSection('基本情報', [
 	        shHostField('プロフィール写真', shHostAvatarUploadBoxHtml(prefix)),
 	        shHostField('名前', shHostTextInput(`${prefix}-name`, profile.basic.name, '名前')),
-	        shHostField('生年月日 / 年齢', shHostBirthDateAgeHtml(prefix, profile)),
+	        shHostBirthDateAgeHtml(prefix, profile),
 	        shHostField('国籍', shHostTextInput(`${prefix}-nationality`, profile.basic.nationality, '国籍')),
 	        shHostField('性別', shHostChipRow(prefix, 'gender', SH_HOST_GENDER_OPTIONS, profile.basic.gender)),
 	        shHostField('宗教', `${sensitiveInfoNoteHtml()}${shHostChipRow(prefix, 'religion', SH_HOST_RELIGION_OPTIONS, profile.basic.religion)}`),
