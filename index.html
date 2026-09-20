@@ -1330,6 +1330,15 @@
       accent-color: var(--primary);
       flex-shrink: 0;
     }
+    .signup-language-fixed-note {
+      display: none;
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--light);
+      font-weight: 700;
+      text-align: right;
+    }
     .legal-inline-link,
     .text-link-btn {
       color: var(--primary);
@@ -1686,8 +1695,7 @@
     font-size: 12px; font-weight: 800; color: var(--light); cursor: pointer;
   }
   .lang-segment-btn.active { background: var(--primary); color: white; }
-  .login-lang-wrap { position: absolute; top: 18px; right: 18px; z-index: 2; }
-  .mypage-lang-control { display: flex; align-items: center; gap: 8px; }
+  .login-lang-wrap { display: none; position: absolute; top: 18px; right: 18px; z-index: 2; }
   #app-loading {
     position: fixed; inset: 0; background: white; z-index: 9999;
     display: flex; align-items: center; justify-content: center;
@@ -4020,7 +4028,6 @@
     <div class="mypage-item" onclick="navigate(currentScreen,'lifestyle')"><span class="mypage-item-icon">🎯</span><span class="mypage-item-label" data-i18n="lifestyle_settings">生活スタイル・希望条件</span><span class="mypage-item-arrow">›</span></div>
 
     <div class="mypage-section-title" data-i18n="settings">設定</div>
-    <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language">言語</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
     <div class="mypage-item" onclick="openPrivacySecurity()"><span class="mypage-item-icon">🔒</span><span class="mypage-item-label" data-i18n="terms_privacy">利用規約・プライバシーポリシー</span><span class="mypage-item-arrow">›</span></div>
     <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
 
@@ -4452,6 +4459,7 @@
         <button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button>
         <button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button>
       </div>
+      <div class="signup-language-fixed-note" id="signup-language-fixed-note"></div>
     </div>
     <div class="login-logo"><img class="hostmatch-brand-logo" src="assets/hostmatch-logo.jpeg" alt="HostMatch" /></div>
     <div class="login-tagline" data-i18n-html="login_tagline">条件に合う人と<br>住まいを探せます</div>
@@ -6056,7 +6064,6 @@
     </div>
 
     <div style="margin-top:24px;display:flex;gap:12px;align-items:center;">
-      <button onclick="toggleLang()" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;" id="lang-btn">🌐 English</button>
       <button onclick="doLogout()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:white;border-radius:20px;padding:8px 20px;font-size:13px;font-weight:700;cursor:pointer;">🚪 ログアウト</button>
     </div>
   </div>
@@ -6076,7 +6083,6 @@
 <div class="screen" id="screen-roommate">
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
     <h1 data-i18n="svc_roommate">ルームメイトを探す</h1>
-    <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-rm">🌐</button>
   </div>
   <div style="padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:100px;">
     <div style="background:white;border-radius:16px;padding:16px;border:1px solid var(--border);display:flex;gap:10px;align-items:center;">
@@ -6157,7 +6163,6 @@
   <div class="screen-header" style="position:sticky;top:0;z-index:100;background:white;">
     <h1 data-i18n="host_dashboard">ホストダッシュボード</h1>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button class="lang-toggle-btn" onclick="toggleLang()" id="lang-btn-hd">🌐</button>
       <button onclick="doLogout()" style="background:none;border:1.5px solid #FF5A5F;color:#FF5A5F;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">ログアウト</button>
     </div>
   </div>
@@ -6809,7 +6814,6 @@
       <div class="mypage-item" onclick="openBlockedUsers()"><span class="mypage-item-icon">🚫</span><span class="mypage-item-label" data-i18n="blocked_users">ブロックしたユーザー</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="navigate(currentScreen,'support')"><span class="mypage-item-icon">📖</span><span class="mypage-item-label" data-i18n="faq">よくある質問（FAQ）</span><span class="mypage-item-arrow">›</span></div>
       <a class="mypage-item mypage-item-link" href="https://forms.gle/qReg8VrHaNLdmdZ3A" target="_blank" rel="noopener"><span class="mypage-item-icon">📝</span><span class="mypage-item-label" data-i18n="contact_us">お問い合わせ</span><span class="mypage-item-arrow">›</span></a>
-      <div class="mypage-item"><span class="mypage-item-icon">🌐</span><span class="mypage-item-label" data-i18n="language_setting">言語設定</span><div class="mypage-lang-control"><button type="button" class="lang-segment-btn active" data-lang-option="ja" onclick="setLanguage('ja')">日本語</button><button type="button" class="lang-segment-btn" data-lang-option="en" onclick="setLanguage('en')">English</button></div></div>
       <div class="mypage-item" onclick="beginModeChangeFromSettings()"><span class="mypage-item-icon">🔄</span><span class="mypage-item-label" data-i18n="change_service">ホームステイ／シェアハウスを変更</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="openDeleteAccountModal()"><span class="mypage-item-icon">🗑</span><span class="mypage-item-label" data-i18n="delete_account">アカウント削除</span><span class="mypage-item-arrow">›</span></div>
       <div class="mypage-item" onclick="doLogout()" style="color:var(--primary);"><span class="mypage-item-icon">🚪</span><span class="mypage-item-label" data-i18n="logout">ログアウト</span></div>
@@ -7722,6 +7726,7 @@
         window.clearRuntimeSessionState({ preserveModeChangeOrigin: true });
       }
       window._currentUser = user;
+      if (typeof forceAuthenticatedJapaneseUi === 'function') forceAuthenticatedJapaneseUi();
       window._suppressLegacyIdentityRender = true;
       clearCurrentPersonalIdentityUi(user);
       await loadCurrentUserProfile(user, { applyToUi: false });
@@ -7795,6 +7800,7 @@
     document.getElementById('screen-login').classList.add('active');
     window.currentScreen = 'login';
     if (typeof currentScreen !== 'undefined') currentScreen = 'login';
+    if (typeof setLoginMode === 'function') setLoginMode(false, true);
     if (typeof applyLang === 'function') applyLang();
   }
 
@@ -27503,6 +27509,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const switchText = document.getElementById('login-switch-text');
     const switchLink = document.getElementById('login-switch-link');
     const consentBox = document.getElementById('signup-consent-box');
+    const langWrap = document.querySelector('#screen-login .login-lang-wrap');
+    const langNote = document.getElementById('signup-language-fixed-note');
     if (!nameGroup || !submitBtn || !switchText || !switchLink) return;
     updateSignupConsentLabels();
     if (isSignupMode) {
@@ -27511,6 +27519,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       switchText.textContent = t('already_have_account');
       switchLink.textContent = ' ' + t('login');
       if (consentBox) consentBox.style.display = 'flex';
+      if (langWrap) langWrap.style.display = 'block';
+      if (langNote) langNote.style.display = 'block';
+      updateSignupLanguageFixedNote();
       updateSignupConsentState();
     } else {
       nameGroup.style.display = 'none';
@@ -27518,6 +27529,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       switchText.textContent = t('no_account');
       switchLink.textContent = ' ' + t('signup');
       if (consentBox) consentBox.style.display = 'none';
+      if (langWrap) langWrap.style.display = 'none';
+      if (langNote) langNote.style.display = 'none';
       submitBtn.disabled = false;
     }
     if (!keepError) {
@@ -30971,6 +30984,20 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   let autoTranslating = false;
   let autoTranslateTimer = null;
 
+  const AUTHENTICATED_APP_LANGUAGE = 'ja';
+
+  function forceAuthenticatedJapaneseUi() {
+    currentLang = AUTHENTICATED_APP_LANGUAGE;
+    try {
+      localStorage.setItem(HOSTMATCH_LANGUAGE_STORAGE_KEY, AUTHENTICATED_APP_LANGUAGE);
+    } catch (error) {
+      console.warn('Language preference save failed:', error);
+    }
+    document.documentElement.lang = AUTHENTICATED_APP_LANGUAGE;
+    if (typeof applyLang === 'function') applyLang();
+    return AUTHENTICATED_APP_LANGUAGE;
+  }
+
   function t(key) {
     if (i18n[currentLang]?.[key]) return i18n[currentLang][key];
     if (currentLang === 'en') {
@@ -31621,10 +31648,19 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (btn.dataset.langOption === 'ja') btn.textContent = currentLang === 'ja' ? '日本語' : 'Japanese';
       if (btn.dataset.langOption === 'en') btn.textContent = 'English';
     });
-    ['lang-btn','lang-btn-sh','lang-btn-rm','lang-btn-hd'].forEach(id => {
-      const btn = document.getElementById(id);
-      if (btn) btn.textContent = currentLang === 'ja' ? '🌐 English' : '🌐 日本語';
-    });
+  }
+
+  function signupLanguageFixedNoteText() {
+    return currentLang === 'en'
+      ? 'The display language cannot be changed after registration.'
+      : '表示言語は登録後に変更できません。';
+  }
+
+  function updateSignupLanguageFixedNote() {
+    const note = document.getElementById('signup-language-fixed-note');
+    if (!note) return;
+    note.textContent = signupLanguageFixedNoteText();
+    note.style.display = isSignupMode ? 'block' : 'none';
   }
 
   function localizeVisibleSystemUi() {
@@ -31736,6 +31772,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   function applyLang() {
     document.documentElement.lang = currentLang;
     updateLanguageToggleLabels();
+    updateSignupLanguageFixedNote();
     localizeVisibleSystemUi();
     updateSignupConsentLabels();
     updateSignupConsentState();
@@ -31779,28 +31816,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function applyLanguagePreferenceFromProfile(profile, user) {
-    const stored = readStoredLanguagePreference();
-    const profileLang = normalizeLanguagePreference(profile?.preferred_language);
-    const metadataLang = normalizeLanguagePreference(user?.user_metadata?.preferred_language);
-    const profileLooksLikeDefaultJa = !stored && profileLang === 'ja' && metadataLang === 'en';
-    const nextLang = stored || (profileLooksLikeDefaultJa ? metadataLang : profileLang) || metadataLang || 'ja';
-    if (nextLang !== currentLang) {
-      setLanguage(nextLang, { saveProfile: false });
-    } else if (!stored) {
-      writeStoredLanguagePreference(nextLang);
-    }
-    if (profileLooksLikeDefaultJa) saveCurrentUserPreferredLanguage(nextLang);
-    return nextLang;
+    return forceAuthenticatedJapaneseUi();
   }
 
   function setLanguage(lang, options = {}) {
     currentLang = writeStoredLanguagePreference(lang);
     applyLang();
-    if (options.saveProfile !== false) {
-      saveCurrentUserPreferredLanguage(currentLang).catch?.(error => {
-        console.error('Preferred language save failed:', error);
-      });
-    }
   }
 
   window.applyLanguagePreferenceFromProfile = applyLanguagePreferenceFromProfile;
@@ -31808,6 +31829,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   window.setLanguage = setLanguage;
 
   function toggleLang() {
+    if (window._currentUser?.id) return;
     setLanguage(currentLang === 'ja' ? 'en' : 'ja');
   }
 
