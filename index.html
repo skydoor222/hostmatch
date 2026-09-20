@@ -1302,6 +1302,7 @@
       margin: -4px 0 8px;
       min-height: 18px;
       color: #FF5A5F;
+      white-space: pre-line;
     }
     .auth-message.success { color: #00875A; }
     .signup-consent-box {
@@ -4476,7 +4477,7 @@
       <div class="form-group" style="text-align:left;">
         <div class="form-label" data-i18n="password_label">パスワード</div>
         <input class="form-input" id="login-password" type="password" />
-        <button type="button" class="forgot-password-link" onclick="openPasswordResetRequest()" data-i18n="forgot_password">パスワードを忘れた方</button>
+        <button type="button" class="forgot-password-link" id="forgot-password-link" onclick="openPasswordResetRequest()" data-i18n="forgot_password">パスワードを忘れた方</button>
       </div>
       <div class="signup-consent-box" id="signup-consent-box">
         <label class="signup-consent-row">
@@ -27514,6 +27515,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const consentBox = document.getElementById('signup-consent-box');
     const langWrap = document.querySelector('#screen-login .login-lang-wrap');
     const langNote = document.getElementById('signup-language-fixed-note');
+    const forgotPasswordLink = document.getElementById('forgot-password-link');
     if (!nameGroup || !submitBtn || !switchText || !switchLink) return;
     updateSignupConsentLabels();
     if (isSignupMode) {
@@ -27524,6 +27526,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (consentBox) consentBox.style.display = 'flex';
       if (langWrap) langWrap.style.display = 'block';
       if (langNote) langNote.style.display = 'block';
+      if (forgotPasswordLink) forgotPasswordLink.style.display = 'none';
       updateSignupLanguageFixedNote();
       updateSignupConsentState();
     } else {
@@ -27534,6 +27537,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       if (consentBox) consentBox.style.display = 'none';
       if (langWrap) langWrap.style.display = 'none';
       if (langNote) langNote.style.display = 'none';
+      if (forgotPasswordLink) forgotPasswordLink.style.display = '';
       submitBtn.disabled = false;
     }
     if (!keepError) {
@@ -27688,11 +27692,31 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const message = String(error?.message || '');
     if (message.includes('Invalid login credentials')) return currentLang === 'ja' ? 'メールアドレスまたはパスワードが間違っています' : 'The email address or password is incorrect.';
     if (message.includes('Email not confirmed')) return currentLang === 'ja' ? 'メール確認が完了していません。確認メール内のリンクを開いて登録を完了してください。' : 'Your email has not been confirmed. Please open the link in the confirmation email.';
-    if (message.includes('User already registered') || message.includes('already registered')) return currentLang === 'ja' ? 'このメールアドレスはすでに登録されています' : 'This email address is already registered.';
+    if (isSignupEmailAlreadyUsedError(error)) return t('signup_email_already_used');
     if (message.includes('Password should be')) return currentLang === 'ja' ? 'パスワードは6文字以上で入力してください' : 'Please enter a password with at least 6 characters.';
     if (message.includes('Invalid email')) return currentLang === 'ja' ? '正しいメールアドレスを入力してください' : 'Please enter a valid email address.';
     if (message.includes('Failed to fetch')) return currentLang === 'ja' ? 'Supabaseに接続できません。Project URLとanon keyを確認してください。' : 'Could not connect to Supabase. Please check the Project URL and anon key.';
     return currentLang === 'ja' ? `${mode === 'signup' ? '新規登録' : 'ログイン'}に失敗しました。入力内容を確認してください。` : `${mode === 'signup' ? 'Sign up' : 'Login'} failed. Please check your details.`;
+  }
+
+  function isSignupEmailAlreadyUsedError(error) {
+    const message = String(error?.message || '').toLowerCase();
+    const code = String(error?.code || error?.status || '').toLowerCase();
+    return !!error && (
+      message.includes('user already registered')
+      || message.includes('already registered')
+      || message.includes('already exists')
+      || message.includes('already in use')
+      || message.includes('duplicate')
+      || code === 'user_already_exists'
+      || code === 'email_exists'
+    );
+  }
+
+  function isSignupEmailAlreadyUsedResult(error, data) {
+    if (isSignupEmailAlreadyUsedError(error)) return true;
+    const identities = data?.user?.identities;
+    return !!data?.user && Array.isArray(identities) && identities.length === 0;
   }
 
   async function doLogin() {
@@ -27738,6 +27762,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
             }
           }
         });
+        if (isSignupEmailAlreadyUsedResult(error, data)) {
+          showLoginMessageKey('signup_email_already_used');
+          return;
+        }
         if (error) throw error;
         if (!data.session) {
           showLoginMessageKey('signup_confirmation_sent');
@@ -27987,6 +28015,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       no_account:'アカウントをお持ちでない方は', already_have_account:'すでにアカウントをお持ちの方は',
       processing:'処理中...', loading:'読み込み中...', login_missing:'メールアドレスとパスワードを入力してください',
       signup_confirmation_sent:'確認メールを送信しました。メール内のリンクを開いて登録を完了してください。',
+      signup_email_already_used:'このメールアドレスはすでに使用されています。\nログイン画面よりログインしてください。',
       google_preparing:'Googleログインは現在準備中です',
       brand:'HostMatch', service_select_sub:'あなたの目的を教えてください',
       svc_homestay_guest:'ホームステイ先を探す', svc_homestay_guest_sub:'ホストファミリーと一緒に暮らす',
@@ -28108,6 +28137,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       no_account:"Don't have an account?", already_have_account:'Already have an account?',
       processing:'Processing...', loading:'Loading...', login_missing:'Please enter your email address and password',
       signup_confirmation_sent:'We sent you a confirmation email. Please open the link in the email to complete your registration.',
+      signup_email_already_used:'This email address is already in use.\nPlease log in from the login screen.',
       google_preparing:'Google login is currently being prepared',
       brand:'HostMatch', service_select_sub:'What would you like to do?',
       svc_homestay_guest:'Find a Homestay', svc_homestay_guest_sub:'Live with a host family',
