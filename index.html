@@ -3794,12 +3794,12 @@
     <div class="divider"></div>
 
     <div class="detail-section">
-      <div class="detail-section-title">👤 基本プロフィール</div>
+      <div class="detail-section-title" data-i18n="basic_profile">👤 基本プロフィール</div>
       <div class="detail-info-card"><div class="detail-info-grid" id="detail-basic-profile"></div></div>
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">👨‍👩‍👧 ホスト・家族情報</div>
+      <div class="detail-section-title" data-i18n="host_family_info">👨‍👩‍👧 ホスト・家族情報</div>
       <div class="detail-info-card">
         <div class="detail-info-grid" id="detail-household-summary"></div>
         <div class="detail-member-list" id="detail-host-family"></div>
@@ -3807,17 +3807,17 @@
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">🌙 生活スタイル</div>
+      <div class="detail-section-title" data-i18n="lifestyle">🌙 生活スタイル</div>
       <div class="detail-info-card"><div class="detail-info-grid" id="detail-lifestyle-info"></div></div>
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">🍽️ 食事・交流</div>
+      <div class="detail-section-title" data-i18n="meal_interaction">🍽️ 食事・交流</div>
       <div class="detail-info-card"><div class="detail-info-grid" id="detail-meal-info"></div></div>
     </div>
 
     <div class="detail-section">
-      <div class="detail-section-title">🏠 滞在・部屋情報</div>
+      <div class="detail-section-title" data-i18n="stay_room_info">🏠 滞在・部屋情報</div>
       <div class="detail-info-card"><div class="detail-info-grid" id="detail-stay-room-info"></div></div>
     </div>
 
@@ -5289,12 +5289,12 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:12px;">
-	      <div class="detail-section-title">👤 基本プロフィール</div>
+	      <div class="detail-section-title" data-i18n="basic_profile">👤 基本プロフィール</div>
 	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-basic-profile"></div></div>
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title" id="sharehouse-members-title">👥 入居者メンバー</div>
+	      <div class="detail-section-title" id="sharehouse-members-title" data-i18n="resident_members">👥 入居者メンバー</div>
 	      <div class="detail-member-list" id="sharehouse-roommates"></div>
 	    </div>
 
@@ -5309,17 +5309,17 @@
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">🧺 設備</div>
+	      <div class="detail-section-title" data-i18n="amenities">🧺 設備</div>
 	      <div class="detail-info-card"><div class="detail-info-grid" id="sharehouse-room-info"></div></div>
 	    </div>
 
 	    <div class="detail-section" style="padding-top:0;">
-	      <div class="detail-section-title">📋 ハウスルール</div>
+	      <div class="detail-section-title" data-i18n="house_rules">📋 ハウスルール</div>
 	      <div class="rule-list" id="sharehouse-rules"></div>
 	    </div>
 
 	    <div class="detail-section" style="padding-bottom:16px;">
-	      <div class="detail-section-title">📍 ロケーション</div>
+	      <div class="detail-section-title" data-i18n="location">📍 ロケーション</div>
 	      <div id="sharehouse-leaflet-map" class="detail-osm-map" aria-label="おおよその位置"></div>
 	      <div id="sharehouse-map-pin" style="font-size:12px;color:var(--mid);font-weight:800;margin-top:8px;">おおよその位置</div>
 	      <div id="sharehouse-map-note" style="font-size:12px;color:var(--light);margin-top:4px;">最寄り駅：Central Station 徒歩8分</div>
@@ -5329,7 +5329,7 @@
 
   <!-- CTA -->
   <div class="detail-cta">
-    <button class="btn-outline" id="sharehouse-message-btn" onclick="openSharehouseChat()">💬 メッセージ</button>
+    <button class="btn-outline" id="sharehouse-message-btn" onclick="openSharehouseChat()" data-i18n="message_button">💬 メッセージ</button>
   </div>
 </div>
 
@@ -7729,7 +7729,6 @@
         window.clearRuntimeSessionState({ preserveModeChangeOrigin: true });
       }
       window._currentUser = user;
-      if (typeof forceAuthenticatedJapaneseUi === 'function') forceAuthenticatedJapaneseUi();
       window._suppressLegacyIdentityRender = true;
       clearCurrentPersonalIdentityUi(user);
       await loadCurrentUserProfile(user, { applyToUi: false });
@@ -8419,6 +8418,7 @@
     if (hostNavMap[to]) { const el = document.getElementById(hostNavMap[to]); if(el) el.classList.add('active'); }
     if (typeof scheduleMessageUnreadDotRefresh === 'function') scheduleMessageUnreadDotRefresh();
     if (typeof saveAuthenticatedRoute === 'function') saveAuthenticatedRoute();
+    if (typeof refreshLocalizedDynamicUi === 'function') refreshLocalizedDynamicUi();
   }
 
   function updateSharehouseManagerProfileCard() {
@@ -19015,9 +19015,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }).setView(startCenter, hasDraft ? 14 : 12);
 	    sharehouseHostLocationEditorMaps[key] = map;
 
-	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 	      maxZoom: 19,
-	      attribution: '&copy; OpenStreetMap contributors'
+	      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 	    }).addTo(map);
 
 	    const updateDraftCenter = latlng => {
@@ -19261,9 +19261,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    }).setView(startCenter, hasSetLocation ? 14 : 12);
 	    homestayHostApproxLocationMaps[key] = map;
 
-	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 	      maxZoom: 19,
-	      attribution: '&copy; OpenStreetMap contributors'
+	      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 	    }).addTo(map);
 
 	    let circle = null;
@@ -28055,7 +28055,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       review_tag_fast_reply:'返信が早い', review_tag_kind:'親切', review_tag_hospitality:'ホスピタリティ高い',
       review_tag_talkative:'会話が多い', review_tag_breakfast:'朝食が充実',
       review_tag_study:'勉強に集中できる', review_tag_quiet:'静かな環境',
-      guest_profile:'ゲストプロフィール', basic_profile:'基本プロフィール',
+      guest_profile:'ゲストプロフィール', basic_profile:'👤 基本プロフィール',
+      host_family_info:'👨‍👩‍👧 ホスト・家族情報',
+      meal_interaction:'🍽️ 食事・交流',
+      stay_room_info:'🏠 滞在・部屋情報',
+      resident_members:'👥 入居者メンバー',
+      amenities:'🧺 設備',
       back_to_messages:'メッセージに戻る',
       notif_messages:'メッセージが届いた時', notif_messages_sub:'ホストからの新着メッセージを通知',
       notif_approved:'リクエストが承諾された時', notif_approved_sub:'申請が承諾された時に通知',
@@ -28171,7 +28176,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       review_tag_fast_reply:'Fast Reply', review_tag_kind:'Kind', review_tag_hospitality:'Great Hospitality',
       review_tag_talkative:'Good Conversation', review_tag_breakfast:'Great Breakfast',
       review_tag_study:'Good for Studying', review_tag_quiet:'Quiet Environment',
-      guest_profile:'Guest Profile', basic_profile:'Basic Profile',
+      guest_profile:'Guest Profile', basic_profile:'👤 Basic Profile',
+      host_family_info:'👨‍👩‍👧 Host & Family Information',
+      meal_interaction:'🍽️ Meals & Interaction',
+      stay_room_info:'🏠 Stay & Room Information',
+      resident_members:'👥 Residents',
+      amenities:'🧺 Amenities',
       back_to_messages:'Back to Messages',
       notif_messages:'When a message arrives', notif_messages_sub:'Notify me about new messages from hosts',
       notif_approved:'When a request is approved', notif_approved_sub:'Notify me when an application is approved',
@@ -30987,20 +30997,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   let autoTranslating = false;
   let autoTranslateTimer = null;
 
-  const AUTHENTICATED_APP_LANGUAGE = 'ja';
-
-  function forceAuthenticatedJapaneseUi() {
-    currentLang = AUTHENTICATED_APP_LANGUAGE;
-    try {
-      localStorage.setItem(HOSTMATCH_LANGUAGE_STORAGE_KEY, AUTHENTICATED_APP_LANGUAGE);
-    } catch (error) {
-      console.warn('Language preference save failed:', error);
-    }
-    document.documentElement.lang = AUTHENTICATED_APP_LANGUAGE;
-    if (typeof applyLang === 'function') applyLang();
-    return AUTHENTICATED_APP_LANGUAGE;
-  }
-
   function t(key) {
     if (i18n[currentLang]?.[key]) return i18n[currentLang][key];
     if (currentLang === 'en') {
@@ -31819,7 +31815,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function applyLanguagePreferenceFromProfile(profile, user) {
-    return forceAuthenticatedJapaneseUi();
+    const profileLang = normalizeLanguagePreference(profile?.preferred_language);
+    const metadataLang = normalizeLanguagePreference(user?.user_metadata?.preferred_language);
+    const nextLang = profileLang || metadataLang || 'ja';
+    currentLang = writeStoredLanguagePreference(nextLang);
+    applyLang();
+    return nextLang;
   }
 
   function setLanguage(lang, options = {}) {
@@ -33705,9 +33706,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      tap: true
 	    }).setView(loc.center, 13);
 
-	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 	      maxZoom: 19,
-	      attribution: '&copy; OpenStreetMap contributors'
+	      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 	    }).addTo(homestayDetailMap);
 
 	    const circle = L.circle(loc.center, {
@@ -33790,9 +33791,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      tap: true
 	    }).setView(loc.center, 13);
 
-	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
 	      maxZoom: 19,
-	      attribution: '&copy; OpenStreetMap contributors'
+	      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
 	    }).addTo(sharehouseDetailMap);
 
 	    const circle = L.circle(loc.center, {
