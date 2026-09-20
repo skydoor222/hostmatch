@@ -7382,6 +7382,7 @@
     if (!currentState?.birthDate) return;
     saveRegistrationFlowState({ ...currentState, birthDate: '' });
   }
+  window.clearRegistrationFlowBirthDateState = clearRegistrationFlowBirthDateState;
 
   async function restoreRegistrationFlowStateForUser(user) {
     const restored = readRegistrationFlowStateFromSession(user);
@@ -24483,7 +24484,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentGuestProfileData = null;
 	    window._currentHomestayGuestModeProfile = null;
 	    window._currentHomestayGuestPreferences = null;
-	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
+	    if (!options.preserveRegistrationBirthDate) window.clearRegistrationFlowBirthDateState?.();
 	    resetOnboardingDom('#screen-onboarding');
 	    resetHomestayOnboardingAvatarState();
 	    hideElementsByIds([
@@ -24504,7 +24505,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    currentSharehouseGuestDataCacheUserId = '';
 	    window._currentSharehouseGuestProfile = null;
 	    window._currentSharehouseGuestModeProfile = null;
-	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
+	    if (!options.preserveRegistrationBirthDate) window.clearRegistrationFlowBirthDateState?.();
 	    resetOnboardingDom('#screen-onboarding');
 	    clearPendingHomestayHostAvatar('share-guest-ob');
 	    if (typeof window.renderAvatarElement === 'function') {
@@ -24533,7 +24534,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    hostFamilyMembers.splice(0, hostFamilyMembers.length);
 	    hostInternationalStudents.splice(0, hostInternationalStudents.length);
 	    pendingHomestayListingPhotoDeleteIds.clear();
-	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
+	    if (!options.preserveRegistrationBirthDate) window.clearRegistrationFlowBirthDateState?.();
 	    resetOnboardingDom('#screen-host-onboarding');
 	    clearPendingHomestayHostAvatar('ob');
 	    clearPendingHomestayRoomPhotos('ob');
@@ -24575,7 +24576,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    window._currentSharehouseHostProfile = null;
 	    window._currentSharehouseHostRoommates = [];
 	    resRoommates = [];
-	    if (!options.preserveRegistrationBirthDate) clearRegistrationFlowBirthDateState();
+	    if (!options.preserveRegistrationBirthDate) window.clearRegistrationFlowBirthDateState?.();
 	    resetOnboardingDom('#screen-resident-onboarding');
 	    clearPendingHomestayHostAvatar('res');
 	    clearPendingHomestayRoomPhotos('res');
