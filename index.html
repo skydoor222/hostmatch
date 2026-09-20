@@ -27817,6 +27817,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (type === 'sharehouse' && onboardStep === 1) {
 	      renderHomestayHostAvatarPreview('share-guest-ob');
 	    }
+	    if (typeof localizeVisibleSystemUi === 'function') localizeVisibleSystemUi();
 	  }
 
 	  async function saveGuestUserModeToSupabase(housingType) {
@@ -31914,6 +31915,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (typeLabel) typeLabel.textContent = type === 'homestay' ? t('homestay') : t('sharehouse');
     navigate(currentScreen || 'login', 'role-select');
     if (typeof window.renderModeChangeReturnControls === 'function') window.renderModeChangeReturnControls();
+    if (typeof localizeVisibleSystemUi === 'function') localizeVisibleSystemUi();
   }
   window.chooseType = chooseType;
 
@@ -33336,6 +33338,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       renderHomestayHostRoomPhotoPreview('ob');
       setTimeout(() => renderHomestayHostApproxLocationMap('ob'), 0);
     }
+    if (typeof localizeVisibleSystemUi === 'function') localizeVisibleSystemUi();
   }
 
   async function hostObNext() {
@@ -33413,6 +33416,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      renderHomestayHostRoomPhotoPreview('res');
 	      initializeSharehouseHostLocationEditor('res');
 	    }
+	    if (typeof localizeVisibleSystemUi === 'function') localizeVisibleSystemUi();
 	  }
 
   async function resOnboardNext() {
