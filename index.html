@@ -9771,7 +9771,7 @@
 	    [
 	      ['日本国', 'JP'], ['日本', 'JP'], ['Japan', 'JP'], ['Japanese', 'JP'],
 	      ['カナダ', 'CA'], ['Canada', 'CA'], ['Canadian', 'CA'],
-	      ['アメリカ', 'US'], ['米国', 'US'], ['United States', 'US'], ['United States of America', 'US'], ['USA', 'US'], ['U.S.A.', 'US'], ['America', 'US'],
+	      ['アメリカ', 'US'], ['米国', 'US'], ['The US', 'US'], ['United States', 'US'], ['United States of America', 'US'], ['USA', 'US'], ['U.S.A.', 'US'], ['America', 'US'],
 	      ['韓国', 'KR'], ['大韓民国', 'KR'], ['South Korea', 'KR'], ['Korea', 'KR'], ['Republic of Korea', 'KR'],
 	      ['中国', 'CN'], ['China', 'CN'], ['People’s Republic of China', 'CN'], ["People's Republic of China", 'CN'],
 	      ['台湾', 'TW'], ['Taiwan', 'TW'],
@@ -9808,14 +9808,9 @@
 
 	  function countrySelectOptionsHtml(selectedValue = '') {
 	    const normalized = normalizeCountryCode(selectedValue);
-	    const raw = String(selectedValue || '').trim();
-	    const unknownSelected = raw && !normalized;
 	    const options = [
-	      `<option value="" disabled${normalized || unknownSelected ? '' : ' selected'}>${escapeHtml(countryPlaceholderLabel())}</option>`
+	      `<option value="" disabled${normalized ? '' : ' selected'}>${escapeHtml(countryPlaceholderLabel())}</option>`
 	    ];
-	    if (unknownSelected) {
-	      options.push(`<option value="${escapeHtml(raw)}" selected>${escapeHtml(raw)}</option>`);
-	    }
 	    COUNTRY_OPTIONS.forEach(option => {
 	      const selected = normalized === option.code ? ' selected' : '';
 	      options.push(`<option value="${option.code}"${selected}>${escapeHtml(currentLang === 'en' ? option.en : option.ja)}</option>`);
@@ -9855,7 +9850,7 @@
 
 	  function countryFieldValue(id) {
 	    const raw = document.getElementById(id)?.value || '';
-	    return normalizeCountryCode(raw) || String(raw || '').trim();
+	    return normalizeCountryCode(raw);
 	  }
 
   const TERMS_VERSION = '1.0';
@@ -19568,7 +19563,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      display_name: hostFormTextInput(scope, 'name'),
 	      birth_date: birthDate,
 	      age: computedAge,
-	      nationality: countryFieldValue(`${hostFormPrefix(scope)}-nationality`) || hostFormTextInput(scope, 'nationality'),
+	      nationality: countryFieldValue(`${hostFormPrefix(scope)}-nationality`),
 	      spoken_languages: hostFormListWithOther(scope, 'spoken-languages', 'spoken-language-other'),
 	      home_languages: hostFormListWithOther(scope, 'home-languages', 'home-language-other'),
 	      gender: toHostProfileDbValue('gender', selectedHostFormChipText(scope, 'gender', '')),
@@ -19577,7 +19572,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      household_type: householdType,
 	      partner_age: hasPartner ? hostFormIntegerInput(scope, 'partner-age') : null,
 	      partner_gender: hasPartner ? toHostProfileDbValue('partner_gender', selectedHostFormChipText(scope, 'partner-gender', '')) : null,
-	      partner_nationality: hasPartner ? (countryFieldValue(`${hostFormPrefix(scope)}-partner-nationality`) || hostFormTextInput(scope, 'partner-nationality')) : null,
+	      partner_nationality: hasPartner ? countryFieldValue(`${hostFormPrefix(scope)}-partner-nationality`) : null,
 	      partner_wake_time: hasPartner ? toHostProfileDbValue('partner_wake_time', selectedHostFormChipText(scope, 'partner-wake', '')) : null,
 	      partner_bedtime: hasPartner ? toHostProfileDbValue('partner_bedtime', selectedHostFormChipText(scope, 'partner-sleep', '')) : null,
 	      partner_hobbies: hasPartner ? splitFreeTextList(document.getElementById(`${hostFormPrefix(scope)}-partner-hobbies`)?.value) : [],
@@ -19684,7 +19679,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      host_user_id: userId,
 	      age: nullableInteger(student.age),
 	      gender: toHostProfileDbValue('gender', student.gender),
-	      nationality: nullableText(normalizeCountryCode(student.nationality) || student.nationality),
+	      nationality: nullableText(normalizeCountryCode(student.nationality)),
 	      wake_time: toHostProfileDbValue('wake_time', student.wake),
 	      bedtime: toHostProfileDbValue('bedtime', student.sleep),
 	      hobbies: hostStudentHobbiesArray(student.hobbies),
@@ -19722,7 +19717,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      name: nullableText(member.name) || '子供',
 	      age: nullableInteger(member.age),
 	      gender: toHostProfileDbValue('gender', member.gender),
-	      nationality: nullableText(normalizeCountryCode(member.nationality) || member.nationality),
+	      nationality: nullableText(normalizeCountryCode(member.nationality)),
 	      wake_time: toHostProfileDbValue('wake_time', member.wake),
 	      bedtime: toHostProfileDbValue('bedtime', member.sleep),
 	      hobbies: hostStudentHobbiesArray(member.hobbies),
@@ -20363,11 +20358,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       const idText = String(id || '');
       if (idText.includes('nationality')) {
         const normalized = normalizeCountryCode(value);
-        const countryValue = normalized || (value ?? '');
         if (el.tagName === 'SELECT') {
-          hydrateCountrySelectElement(el, countryValue);
+          hydrateCountrySelectElement(el, normalized);
         } else {
-          el.value = countryValue;
+          el.value = normalized;
           replaceNationalityInputWithCountrySelect(el);
         }
         return;
@@ -24469,7 +24463,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      name: nameEl?.value || '未入力',
 	      age: ageEl?.value || '未入力',
 	      gender: genderEl ? chipStoredText(genderEl) : '選択しない',
-	      nationality: countryFieldValue(prefix + '-member-nationality') || '未入力',
+	      nationality: countryFieldValue(prefix + '-member-nationality'),
 	      hobbies: hobbiesEl?.value || '未入力',
 	      wake,
 	      sleep,
@@ -24962,7 +24956,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        name: formValue(ids.name, fieldFallback(existing.basic?.name, '中村 さくら')),
 	        birthDate,
 	        age: computedAge === null || computedAge === undefined ? '' : String(computedAge),
-	        nationality: countryFieldValue(ids.nationality) || (shouldSuppressFreshOnboardingFallbackForId(ids.nationality) ? '' : (normalizeCountryCode(nationalityFallback) || nationalityFallback)),
+	        nationality: countryFieldValue(ids.nationality) || (shouldSuppressFreshOnboardingFallbackForId(ids.nationality) ? '' : normalizeCountryCode(nationalityFallback)),
 	        gender: sharehouseGuestSelectedChipText(ids.gender, fieldFallback(existing.basic?.gender, '女性')),
 	        religion: sharehouseGuestSelectedChipText(ids.religion, fieldFallback(existing.basic?.religion, '無宗教')),
 	        languages: sharehouseGuestSelectedChipTexts(ids.languages, existing.basic?.languages || []),
@@ -25218,7 +25212,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    return omitUndefinedFields({
 	      birth_date: nullableText(basic.birthDate),
 	      age: sharehouseGuestAgeForDb(basic.age),
-	      nationality: nullableText(normalizeCountryCode(basic.nationality) || basic.nationality),
+	      nationality: nullableText(normalizeCountryCode(basic.nationality)),
 	      gender: toSharehouseGuestProfileDbValue('gender', basic.gender),
 	      religion: toSharehouseGuestProfileDbValue('religion', basic.religion),
 	      english_level: toSharehouseGuestProfileDbValue('english_level', basic.englishLevel),
@@ -26538,7 +26532,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    const host = HOSTS.sarah;
 	    const hostName = formValue(prefix + '-name', host.name);
 	    const age = formValue(prefix + '-age', '43');
-	    const nationality = countryFieldValue(prefix + '-nationality') || formValue(prefix + '-nationality', 'アメリカ');
+	    const nationality = countryFieldValue(prefix + '-nationality');
 	    const gender = selectedChipText(prefix + '-gender', '女性');
 	    const religion = selectedChipText(prefix + '-religion', '回答しない');
 	    const englishLevel = selectedChipText(prefix + '-english-level', '日常会話');
@@ -26602,7 +26596,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      partner: {
 	        age: formValue(prefix + '-partner-age', '45'),
 	        gender: selectedChipText(prefix + '-partner-gender', '男性'),
-	        nationality: countryFieldValue(prefix + '-partner-nationality') || formValue(prefix + '-partner-nationality', 'カナダ'),
+	        nationality: countryFieldValue(prefix + '-partner-nationality'),
 	        wake: selectedChipText(prefix + '-partner-wake', '6〜8時'),
 	        sleep: selectedChipText(prefix + '-partner-sleep', '22〜23時'),
 	        lifestyle: `起床時間：${selectedChipText(prefix + '-partner-wake', '6〜8時')} / 就寝時間：${selectedChipText(prefix + '-partner-sleep', '22〜23時')}`,
@@ -26682,7 +26676,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	        name: formValue(prefix + '-name', defaults.basic.name),
 	        birthDate,
 	        age: computedAge === null || computedAge === undefined ? '' : String(computedAge),
-	        nationality: countryFieldValue(prefix + '-nationality') || (shouldSuppressFreshOnboardingFallbackForId(prefix + '-nationality') ? '' : (normalizeCountryCode(defaults.basic.nationality) || defaults.basic.nationality)),
+	        nationality: countryFieldValue(prefix + '-nationality') || (shouldSuppressFreshOnboardingFallbackForId(prefix + '-nationality') ? '' : normalizeCountryCode(defaults.basic.nationality)),
 	        gender: selectedChipText(prefix + '-gender', defaults.basic.gender),
 	        religion: selectedChipText(prefix + '-religion', defaults.basic.religion),
 	        languages: selectedChipTexts('#' + prefix + '-languages'),
@@ -26759,7 +26753,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      display_name: nullableText(profile.basic.name),
 	      birth_date: nullableText(profile.basic.birthDate),
 	      age: sharehouseHostFormInteger(profile.basic.age),
-	      nationality: nullableText(normalizeCountryCode(profile.basic.nationality) || profile.basic.nationality),
+	      nationality: nullableText(normalizeCountryCode(profile.basic.nationality)),
 	      gender: toSharehouseHostProfileDbValue('gender', profile.basic.gender),
 	      religion: toSharehouseHostProfileDbValue('religion', profile.basic.religion),
 	      languages: Array.isArray(profile.basic.languages) ? profile.basic.languages.filter(Boolean) : [],
@@ -26846,7 +26840,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      name: nullableText(roommate?.name),
 	      age: sharehouseRoommateAgeForDb(roommate?.age),
 	      gender: toSharehouseHostProfileDbValue('gender', roommate?.gender),
-	      nationality: nullableText(normalizeCountryCode(roommate?.nationality) || roommate?.nationality),
+	      nationality: nullableText(normalizeCountryCode(roommate?.nationality)),
 	      religion: toSharehouseHostProfileDbValue('religion', roommate?.religion),
 	      languages: sharehouseRoommateLanguagesForDb(roommate?.languages),
 	      english_level: toSharehouseHostProfileDbValue('english_level', roommate?.englishLevel),
@@ -33755,7 +33749,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       name,
       age: formValue('rm-age', '年齢未回答'),
       gender: selectedChipText('rm-gender', '未回答'),
-      nationality: countryFieldValue('rm-nationality') || '未回答',
+      nationality: countryFieldValue('rm-nationality'),
       religion: selectedChipText('rm-religion', '回答しない'),
       languages: selectedChipTexts('#rm-languages'),
       englishLevel: selectedChipText('rm-english-level', '日常会話'),
