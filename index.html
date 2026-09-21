@@ -3054,7 +3054,6 @@
           <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--light);margin-bottom:6px;"><span>C$500</span><span>C$2,000+</span></div>
           <input id="hmf-budget" type="range" min="500" max="2000" step="50" value="2000" style="width:100%;accent-color:var(--primary);" oninput="hmUpdateBudgetLabel()" />
           <div class="hm-budget-value" id="hmf-budget-label">C$2,000+</div>
-          <label class="hm-filter-toggle"><input id="hmf-budget-only" type="checkbox" onchange="autoApplyActiveFilters()" />予算内のみ表示</label>
         </div>
 
         <div class="hm-filter-group">
@@ -3265,7 +3264,6 @@
           <div class="hm-filter-label">月額予算（CAD）</div>
           <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--light);font-weight:800;margin-bottom:8px;"><span>C$500</span><span id="shf-budget-label">C$2,000+</span></div>
           <input id="shf-budget" type="range" min="500" max="2000" step="50" value="2000" oninput="shUpdateBudgetLabel()" style="width:100%;accent-color:var(--primary);" />
-          <label class="hm-filter-toggle"><input id="shf-budget-only" type="checkbox" onchange="autoApplyActiveFilters()" />予算内のみ表示</label>
         </div>
 
         <div class="hm-filter-group">
@@ -16381,7 +16379,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       start: document.getElementById('hmf-start')?.value || '',
       end: document.getElementById('hmf-end')?.value || '',
       budget: Number(document.getElementById('hmf-budget')?.value || 2000),
-      budgetOnly: !!document.getElementById('hmf-budget-only')?.checked,
+      budgetOnly: false,
       meal: hmSelected('hmf-meal'),
       dining: hmSelected('hmf-dining'),
       diet: hmSelectedMany('hmf-diet'),
@@ -16618,7 +16616,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       ...emptyHomestayFilters(),
       ...filters,
       budget: Number(filters.budget || 2000),
-      budgetOnly: !!filters.budgetOnly,
+      budgetOnly: false,
       diet: Array.isArray(filters.diet) ? filters.diet : (filters.diet ? [filters.diet] : [])
     };
     next.curfew = canonicalFilterValue('hmf-curfew', next.curfew);
@@ -16644,8 +16642,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (end) end.value = next.end || '';
     const budget = document.getElementById('hmf-budget');
     if (budget) budget.value = Math.min(2000, Math.max(500, next.budget || 2000));
-    const budgetOnly = document.getElementById('hmf-budget-only');
-    if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
     setFilterChip('hmf-meal', next.meal);
     setFilterChip('hmf-dining', next.dining);
     setFilterChips('hmf-diet', next.diet);
@@ -18142,7 +18138,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       start: document.getElementById('shf-start')?.value || '',
       end: document.getElementById('shf-end')?.value || '',
       budget: Number(document.getElementById('shf-budget')?.value || 2000),
-      budgetOnly: !!document.getElementById('shf-budget-only')?.checked,
+      budgetOnly: false,
       room: hmSelected('shf-room'),
       furniture: hmSelected('shf-furniture'),
       bathroom: hmSelected('shf-bathroom'),
@@ -18316,7 +18312,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       ...emptySharehouseFilters(),
       ...filters,
       budget: Number.isFinite(budgetNumber) && budgetNumber > 0 ? budgetNumber : 2000,
-      budgetOnly: !!filters.budgetOnly
+      budgetOnly: false
     };
     next.area = canonicalFilterValue('shf-area', next.area);
     return next;
@@ -18334,8 +18330,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (end) end.value = next.end || '';
     const budget = document.getElementById('shf-budget');
     if (budget) budget.value = Math.min(2000, Math.max(500, next.budget || 2000));
-    const budgetOnly = document.getElementById('shf-budget-only');
-    if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
     setFilterChip('shf-room', next.room);
     setFilterChip('shf-furniture', next.furniture);
     setFilterChip('shf-bathroom', next.bathroom);
@@ -30602,7 +30596,6 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '入居希望日':'Desired Move-in Date',
     '退去希望日':'Desired Move-out Date',
     '③ 月額予算':'③ Monthly Budget',
-    '予算内のみ表示':'Show only hosts within budget',
     '④ 食事':'④ Meals',
     '食事なし':'No meals',
     '朝食あり':'Breakfast included',
