@@ -3031,6 +3031,7 @@
       <div class="hm-filter-panel">
         <div class="hm-filter-title">条件比較検索</div>
         <div class="hm-filter-sub">絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。</div>
+        <div class="hm-filter-sub">ホストが表示されない場合は、絞り込み条件を減らしてください。</div>
 
         <div class="hm-filter-group">
           <div class="hm-filter-label">① エリア</div>
@@ -3050,8 +3051,8 @@
 
         <div class="hm-filter-group">
           <div class="hm-filter-label">③ 月額予算</div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--light);margin-bottom:6px;"><span>C$800</span><span>C$2,000+</span></div>
-          <input id="hmf-budget" type="range" min="800" max="2000" step="50" value="2000" style="width:100%;accent-color:var(--primary);" oninput="hmUpdateBudgetLabel()" />
+          <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:var(--light);margin-bottom:6px;"><span>C$500</span><span>C$2,000+</span></div>
+          <input id="hmf-budget" type="range" min="500" max="2000" step="50" value="2000" style="width:100%;accent-color:var(--primary);" oninput="hmUpdateBudgetLabel()" />
           <div class="hm-budget-value" id="hmf-budget-label">C$2,000+</div>
           <label class="hm-filter-toggle"><input id="hmf-budget-only" type="checkbox" onchange="autoApplyActiveFilters()" />予算内のみ表示</label>
         </div>
@@ -3242,6 +3243,7 @@
       <div class="hm-filter-panel">
         <div class="hm-filter-title">条件比較検索</div>
         <div class="hm-filter-sub">絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。</div>
+        <div class="hm-filter-sub">掲載が表示されない場合は、絞り込み条件を減らしてください。</div>
 
         <div class="hm-filter-group">
           <div class="hm-filter-label">エリア</div>
@@ -3261,8 +3263,8 @@
 
         <div class="hm-filter-group">
           <div class="hm-filter-label">月額予算（CAD）</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--light);font-weight:800;margin-bottom:8px;"><span>C$800</span><span id="shf-budget-label">C$2,000+</span></div>
-          <input id="shf-budget" type="range" min="800" max="2000" step="50" value="2000" oninput="shUpdateBudgetLabel()" style="width:100%;accent-color:var(--primary);" />
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--light);font-weight:800;margin-bottom:8px;"><span>C$500</span><span id="shf-budget-label">C$2,000+</span></div>
+          <input id="shf-budget" type="range" min="500" max="2000" step="50" value="2000" oninput="shUpdateBudgetLabel()" style="width:100%;accent-color:var(--primary);" />
           <label class="hm-filter-toggle"><input id="shf-budget-only" type="checkbox" onchange="autoApplyActiveFilters()" />予算内のみ表示</label>
         </div>
 
@@ -4157,10 +4159,10 @@
 	    <div class="form-section">
 	      <div class="form-section-title">✅ 希望エリア・期間・予算</div>
       <div class="form-group">
-        <div class="form-label">希望エリア（複数可）</div>
+        <div class="form-label">希望エリア</div>
         <div class="form-chip-row" id="hs-profile-area">
-          <div class="form-chip" onclick="toggleMultiChip(this)">バンクーバー</div>
-          <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
+          <div class="form-chip" onclick="toggleChip(this)">バンクーバー</div>
+          <div class="form-chip" onclick="toggleChip(this)">トロント</div>
         </div>
 	      </div>
 	      <div class="form-group">
@@ -4553,7 +4555,7 @@
       <div class="onboard-progress-bar"><div class="onboard-progress-fill" id="onboard-progress" style="width:25%"></div></div>
     </div>
     <div class="onboard-title" id="onboard-title">渡航先を教えてください</div>
-    <div class="onboard-sub" id="onboard-sub">希望する都市を選んでください（複数可）</div>
+    <div class="onboard-sub" id="onboard-sub">希望する都市を選んでください</div>
   </div>
 
   <div class="onboard-body">
@@ -4646,10 +4648,10 @@
     <div class="onboard-step-panel" id="onboard-panel-2">
       <div class="form-section" style="padding-top:0;">
         <div class="form-group">
-          <div class="form-label">希望エリア（複数可）</div>
+          <div class="form-label">希望エリア</div>
           <div class="form-chip-row" id="hs-onboard-area">
-            <div class="form-chip selected" onclick="toggleMultiChip(this)">バンクーバー</div>
-            <div class="form-chip" onclick="toggleMultiChip(this)">トロント</div>
+            <div class="form-chip selected" onclick="toggleChip(this)">バンクーバー</div>
+            <div class="form-chip" onclick="toggleChip(this)">トロント</div>
           </div>
         </div>
         <div class="form-group">
@@ -16641,7 +16643,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (start) start.value = next.start || '';
     if (end) end.value = next.end || '';
     const budget = document.getElementById('hmf-budget');
-    if (budget) budget.value = Math.min(2000, Math.max(800, next.budget || 2000));
+    if (budget) budget.value = Math.min(2000, Math.max(500, next.budget || 2000));
     const budgetOnly = document.getElementById('hmf-budget-only');
     if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
     setFilterChip('hmf-meal', next.meal);
@@ -16767,7 +16769,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       ? results.map(renderHomestayFilterCard).join('')
       : `<div class="hm-empty-result">${hasCurrentPublishedHomestayCache && !activeHomestayFilterCount(filters)
         ? (currentLang === 'ja' ? '現在公開中のホームステイはありません。' : 'There are no published homestays right now.')
-        : (currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No hosts match your selected conditions.<br>Try adjusting your filters and search again.')}</div>`;
+        : (currentLang === 'ja' ? '条件に合うホストが見つかりませんでした。<br>絞り込み条件を減らしてお試しください。' : 'No hosts matched your filters.<br>Try selecting fewer filters.')}</div>`;
     setupPublishedHomestayCardClickDelegation();
   }
 
@@ -17498,7 +17500,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function homestayGuestPreferencesPayloadFromOnboarding() {
 	    return {
-	      preferred_cities: selectedChipTextsFromRow('hs-onboard-area'),
+	      preferred_cities: (() => {
+	        const selectedCity = selectedChipTextFromRow('hs-onboard-area', '');
+	        return selectedCity ? [selectedCity] : [];
+	      })(),
 	      stay_start_date: nullableText(document.getElementById('guest-stay-start')?.value),
 	      stay_end_date: nullableText(document.getElementById('guest-stay-end')?.value),
 	      budget_min: nullableNumber(document.getElementById('hs-onboard-budget-min')?.value),
@@ -17588,25 +17593,12 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     const registeredProfile = homestayRegisteredFilterProfile();
     return normalizeHomestayFilterState({
       ...registeredProfile,
-      budgetOnly: !!registeredProfile.budget
+      budgetOnly: false
     });
   }
 
 	  function homestayInitialCoreSearchFilters() {
-	    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || null;
-	    const registeredProfile = storedHomestayRegisteredFilterProfile();
-    const preferredCities = Array.isArray(prefs?.preferred_cities) ? prefs.preferred_cities.filter(Boolean) : [];
-    const budgetMax = prefs?.budget_max ?? registeredProfile?.budget ?? null;
-    const budgetNumber = Number(budgetMax);
-    const hasBudget = Number.isFinite(budgetNumber) && budgetNumber > 0 && budgetNumber < 2000;
-    return normalizeHomestayFilterState({
-      ...createDefaultHomestayFilterState(),
-      area: preferredCities[0] || registeredProfile?.area || '',
-      start: prefs?.stay_start_date || registeredProfile?.start || '',
-      end: prefs?.stay_end_date || registeredProfile?.end || '',
-      budget: hasBudget ? budgetNumber : 2000,
-	      budgetOnly: false
-	    });
+	    return homestayRegisteredComparisonFilters();
 	  }
 
 	  const GUEST_MODE_PROFILE_SELECT_COLUMNS = 'user_id, housing_type, display_name, avatar_url, birth_date, age, nationality, gender, religion, english_level, languages, stay_status, wake_time, bedtime, hobbies, bio, created_at, updated_at';
@@ -17823,12 +17815,13 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  function homestayRegisteredComparisonFilters() {
 	    const prefs = currentHomestayGuestPreferences || window._currentHomestayGuestPreferences || {};
 	    const guestProfile = currentGuestProfileData || window._currentGuestProfileData || {};
-	    const stored = storedHomestayRegisteredFilterProfile() || {};
+	    const stored = isLoggedInHomestayGuestSearchContext() ? {} : (storedHomestayRegisteredFilterProfile() || {});
 	    const preferredCities = Array.isArray(prefs.preferred_cities) ? prefs.preferred_cities.filter(Boolean) : [];
 	    const budgetMax = prefs.budget_max ?? stored.budget ?? null;
 	    const budgetNumber = Number(budgetMax);
 	    const meal = fromHomestayPreferenceDbValue('meal_plan_preference', prefs.meal_plan_preference);
 	    const dining = fromHomestayPreferenceDbValue('meal_style_preference', prefs.meal_style_preference);
+	    const diet = fromHomestayPreferenceDbValue('dietary_restriction', prefs.dietary_restriction);
 	    const pets = fromHomestayPreferenceDbValue('pet_preference', prefs.pet_preference);
 	    const smoking = fromHomestayPreferenceDbValue('smoking_preference', prefs.smoking_preference);
 	    const students = fromHomestayPreferenceDbValue('other_students_preference', prefs.other_students_preference);
@@ -17842,10 +17835,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	      start: prefs.stay_start_date || stored.start || '',
 	      end: prefs.stay_end_date || stored.end || '',
 	      budget: Number.isFinite(budgetNumber) && budgetNumber > 0 ? budgetNumber : 2000,
-	      budgetOnly: Number.isFinite(budgetNumber) && budgetNumber > 0,
+	      budgetOnly: false,
 	      meal: meal ? hmNormalizeMeal(meal) : (stored.meal || ''),
 	      dining: dining ? hmNormalizeMealStyle(dining) : (stored.dining || ''),
-	      diet: [],
+	      diet: diet && diet !== 'なし' ? [canonicalFilterValue('hmf-diet', diet)] : (stored.diet || []),
 	      pets: pets === 'ペットOK' ? 'ペットOK' : ['できればいない方がいい', 'ペットNG'].includes(pets) ? 'ペットなし希望' : (stored.pets || ''),
 	      smoking: smoking === '喫煙NG' ? '完全禁煙' : smoking === '屋外ならOK' ? '屋外喫煙ならOK' : (stored.smoking || ''),
 	      students: students === 'いない家庭を希望' ? '他の留学生なし希望' : students ? '他の留学生がいてもOK' : (stored.students || ''),
@@ -17974,6 +17967,32 @@ If a change requires new consent, the Operator will obtain the User's consent ag
   }
 
   function prepareHomestaySearchForDisplay() {
+    if (isLoggedInHomestayGuestSearchContext()) {
+      const userId = window._currentUser?.id || '';
+      const shouldApplyInitial = shouldApplyRegisteredFilters.homestay || !committedHomestayFilters;
+      shouldApplyRegisteredFilters.homestay = false;
+      const hasCurrentPrefs = currentHomestayGuestPreferences?.user_id === userId;
+      const hasCurrentProfile = currentGuestProfileData?.user_id === userId;
+      if (shouldApplyInitial && (!hasCurrentPrefs || !hasCurrentProfile)) {
+        const summary = document.getElementById('hm-filter-summary');
+        const list = document.getElementById('hm-filter-results');
+        if (summary) summary.textContent = currentLang === 'ja' ? '登録条件を読み込み中...' : 'Loading your search preferences...';
+        if (list) list.innerHTML = `<div class="hm-empty-result">${currentLang === 'ja' ? '登録した検索条件を読み込んでいます。' : 'Loading your registered search preferences.'}</div>`;
+        loadHomestayGuestComparisonData({ force: true }).then(() => {
+          if (currentScreen !== 'search' || currentSearchCat !== 'homestay') return;
+          if (committedHomestayFilters) return;
+          applyHomestayInitialCoreFiltersToSearch();
+        });
+        return;
+      }
+      if (shouldApplyInitial) {
+        applyHomestayInitialCoreFiltersToSearch();
+        return;
+      }
+      committedHomestayFilters = cloneFilterState(renderHomestaySearchFormFromFilters(committedHomestayFilters));
+      renderHomestayFilterResults(committedHomestayFilters);
+      return;
+    }
     if (shouldApplyRegisteredFilters.homestay) {
       applyHomestayInitialCoreFiltersToSearch();
       shouldApplyRegisteredFilters.homestay = false;
@@ -18314,7 +18333,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     if (start) start.value = next.start || '';
     if (end) end.value = next.end || '';
     const budget = document.getElementById('shf-budget');
-    if (budget) budget.value = Math.min(2000, Math.max(800, next.budget || 2000));
+    if (budget) budget.value = Math.min(2000, Math.max(500, next.budget || 2000));
     const budgetOnly = document.getElementById('shf-budget-only');
     if (budgetOnly) budgetOnly.checked = !!next.budgetOnly;
     setFilterChip('shf-room', next.room);
@@ -18344,15 +18363,40 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
 	  function sharehouseInitialCoreSearchFilters() {
 	    const prefs = currentSharehouseGuestPreferences || window._currentSharehouseGuestPreferences || {};
+	    const profile = currentSharehouseGuestUiProfile || window._currentSharehouseGuestUiProfile || sharehouseGuestUiProfileFromDbRows(
+	      currentSharehouseGuestProfile || window._currentSharehouseGuestProfile || {},
+	      currentSharehouseGuestProfile || window._currentSharehouseGuestProfile || {},
+	      prefs || {}
+	    );
 	    const budgetNumber = Number(prefs?.budget_max);
 	    const hasBudget = Number.isFinite(budgetNumber) && budgetNumber > 0 && budgetNumber < 2000;
 	    return normalizeSharehouseFilterState({
 	      ...emptySharehouseFilters(),
-	      area: fromSharehouseGuestPreferenceDbValue('preferred_city', prefs?.preferred_city) || '',
-	      start: prefs?.move_in_date || '',
-	      end: prefs?.move_out_date || '',
+	      area: profile?.stay?.area || fromSharehouseGuestPreferenceDbValue('preferred_city', prefs?.preferred_city) || '',
+	      start: profile?.stay?.moveIn || prefs?.move_in_date || '',
+	      end: profile?.stay?.moveOut || prefs?.move_out_date || '',
 	      budget: hasBudget ? budgetNumber : 2000,
-	      budgetOnly: false
+	      budgetOnly: false,
+	      room: profile?.stay?.room || '',
+	      furniture: profile?.stay?.furniture || '',
+	      bathroom: profile?.ideal?.bathroom || '',
+	      pets: profile?.ideal?.pets || '',
+	      smoking: profile?.ideal?.roommateSmoking || '',
+	      roommateInteraction: profile?.ideal?.roommateInteraction || '',
+	      alcohol: profile?.ideal?.roommateAlcohol || '',
+	      visitors: profile?.ideal?.visitors || '',
+	      overnightGuests: profile?.ideal?.overnightGuests || '',
+	      housemateCount: profile?.ideal?.housemateCount || '',
+	      kitchen: profile?.ideal?.kitchen || '',
+	      mbti: profile?.ideal?.mbti || '',
+	      wake: profile?.lifestyle?.wakeTime || '',
+	      sleep: profile?.lifestyle?.bedtime || '',
+	      homeTime: profile?.lifestyle?.homeTime || '',
+	      cooking: profile?.lifestyle?.cookingFrequency || '',
+	      cleanliness: profile?.ideal?.cleanliness || '',
+	      cleaningFrequency: profile?.ideal?.cleaningFrequency || '',
+	      lifeNoise: profile?.ideal?.lifeNoise || '',
+	      quietHours: profile?.ideal?.quietHours || ''
 	    });
 	  }
 
@@ -18411,7 +18455,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
       start: profile.stay?.moveIn || '',
       end: profile.stay?.moveOut || '',
       budget: hasBudget ? budgetNumber : 2000,
-      budgetOnly: hasBudget
+      budgetOnly: false
     });
   }
 
@@ -18473,7 +18517,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	    if (!list) return;
     list.innerHTML = results.length
       ? results.map(renderSharehouseFilterCard).join('')
-      : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合う掲載が見つかりませんでした。<br>条件を変更してもう一度検索してください。' : 'No listings match your selected conditions.<br>Try adjusting your filters and search again.'}</div>`;
+      : `<div class="hm-empty-result">${currentLang === 'ja' ? '条件に合う掲載が見つかりませんでした。<br>絞り込み条件を減らしてお試しください。' : 'No listings matched your filters.<br>Try selecting fewer filters.'}</div>`;
   }
 
   function applySharehouseFilters() {
@@ -20403,7 +20447,8 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 
   function applyHomestayGuestPreferencesToProfileScreen(data) {
     const prefs = data || {};
-    setMultiFormChips('hs-profile-area', prefs.preferred_cities || []);
+    const preferredCity = Array.isArray(prefs.preferred_cities) ? (prefs.preferred_cities.filter(Boolean)[0] || '') : '';
+    setSingleFormChip('hs-profile-area', preferredCity);
     setInputValueById('profile-stay-start', prefs.stay_start_date || '');
     setInputValueById('profile-stay-end', prefs.stay_end_date || '');
     setInputValueById('hs-profile-budget-min', prefs.budget_min ?? '');
@@ -23011,8 +23056,9 @@ If a change requires new consent, the Operator will obtain the User's consent ag
 	  }
 
   function homestayGuestPreferencesPayloadFromProfileScreen() {
+    const selectedCity = selectedChipText('hs-profile-area', '');
     return {
-      preferred_cities: selectedChipTexts('#hs-profile-area'),
+      preferred_cities: selectedCity ? [selectedCity] : [],
       stay_start_date: nullableText(document.getElementById('profile-stay-start')?.value),
       stay_end_date: nullableText(document.getElementById('profile-stay-end')?.value),
       budget_min: nullableNumber(document.getElementById('hs-profile-budget-min')?.value),
@@ -29280,6 +29326,7 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '部屋の広さと、バスルームを何人でシェアするか教えてください。':'Could you tell me the room size and how many people share the bathroom?',
     'ありがとうございます！朝食は毎日ありますか？':'Thank you! Is breakfast available every day?',
     'お気に入りはまだありません':'No saved hosts yet',
+    '希望エリア':'Preferred Area',
     '希望エリア（複数可）':'Preferred Area (multiple selections allowed)',
     '滞在期間':'Stay Period',
     '数日':'A few days',
@@ -30546,6 +30593,10 @@ If a change requires new consent, the Operator will obtain the User's consent ag
     '← 戻る':'← Back',
     '条件比較検索':'Condition Comparison Search',
     '絞りたい条件だけ選択してください。未選択の条件は検索判定に使いません。':'Select only the conditions you want to filter by. Unselected conditions are not used for search matching.',
+    'ホストが表示されない場合は、絞り込み条件を減らしてください。':'If no hosts are shown, try selecting fewer filters.',
+    '掲載が表示されない場合は、絞り込み条件を減らしてください。':'If no listings are shown, try selecting fewer filters.',
+    '条件に合うホストが見つかりませんでした。絞り込み条件を減らしてお試しください。':'No hosts matched your filters. Try selecting fewer filters.',
+    '条件に合う掲載が見つかりませんでした。絞り込み条件を減らしてお試しください。':'No listings matched your filters. Try selecting fewer filters.',
     '① エリア':'① Area',
     '② 滞在期間':'② Stay Period',
     '入居希望日':'Desired Move-in Date',
